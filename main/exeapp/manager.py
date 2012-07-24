@@ -24,6 +24,7 @@ import SocketServer
 import unicodedata
 import sqlite3
 import base64
+import select
 from main import settings
 from main.exeapp import models # modelo de banco de dados
 
@@ -579,160 +580,177 @@ class FlvPlayer( threading.Thread):
 			self.is_running = False
 
 ################################ STREAMHANDLE ################################
-class StreamHandler( SocketServer.BaseRequestHandler):
+
+class StreamHandler( threading.Thread ):
 	""" Essa classe controla as requisições feitas pelo player.
-	Uma vez estabelecida a conexão, a medida que novos dados vão chegando, 
-	estes vão sendo enviados ao player. """
+	Uma vez estabelecida a conexão, a medida que novos dados vão chegando, estes vão sendo enviados ao player. """
 
-	def setup(self):
-		self.manage = self.server.manage
+	HEADER_OK_200 = "\r\n".join([
+		"HTTP/1.1 200 OK", 
+		"Server: Python/2.7", 
+		"Connection: keep-alive",
+		"Content-Length: %s", 
+		"Content-Type: video/flv", 
+		"Content-Disposition: attachment", 
+		"Content-Transfer-Encoding: binary",
+		"Accept-Ranges: bytes", 
+	"\n"])
+	
+	HEADER_PARTIAL_206 = "\r\n".join([
+		"HTTP/1.1 206 OK Partial Content", 
+		'Content-type: video/flv',
+		'Content-Length: %s' ,
+		'Content-Range: bytes %d-%d/%d',
+	'\n'])
 
-		# ponteiro para fechar essa conexão pelo servidor
-		self.server.clienteRequest = self.request
-		self.server.setShutdown(False)
+	def __init__(self, server, request):
+		threading.Thread.__init__(self)
+		self.request = request
+		
+		server.set_need_stop(False)
+		self.manage = server.manage
+		self.server = server
+		
+		self.nb_sended = self.streamPos = 0
+		self.get_string = ''; self.headers = {}
+		
+	def get_headers(self, request_data):
+		headers = dict( re.findall(r"(.+?):\s*(.*?)(?:\r)?\n+", request_data) )
+		get = re.search(r"(GET\s*.*?(?:start=)?\d*)(?:\r)?\n+", request_data).group(1)
+		return get, headers
 
-		self.numBytesEnviados = self.seekpos = 0
-		self.get_string = ""; self.headers = {}
+	def get_range(self, get="", headers={}):
+		if headers.has_key("Range"):
+			matchobj = re.search("bytes=(?:<range>\d+)-?\d*", rb_str)
+		else:
+			matchobj = re.search("GET.*(?:start=)(?:<range>\d+).*", get)
+		if matchobj: seekpos = search.group("range")
+		else: seekpos = 0
+		return long(seekpos)
 
-		header = ["HTTP/1.1 200 OK", 
-				  "Server: Python/2.7", 
-				  "Connection: keep-alive",
-				  "Content-Length: %s", 
-				  "Content-Type: video/flv", 
-				  "Content-Disposition: attachment", 
-				  "Content-Transfer-Encoding: binary",
-				  "Accept-Ranges: bytes", 
-				  "\n"]
+	def send_206_PARTIAL(self, streamPos, streamSize):
+		headers = self.HEADER_PARTIAL_206 %(str(streamSize-streamPos), streamPos, (streamSize-1), streamSize)
+		self.request.send( headers )
 
-		partialHeader = ["HTTP/1.1 206 OK Partial Content", 
-				         'Content-type: video/flv',
-				         'Content-Length: %s' ,
-				         'Content-Range: bytes %d-%d/%d',
-				         '\n']
-
-		self.responseHeader = "\r\n".join(header)
-		self.responseHeaderPartial = "\r\n".join(partialHeader)
-
-	def getHeader(self, headers):
-		headers_ = dict( re.findall(r"(.+?):\s*(.*?)(?:\r)?\n+", headers) )
-		get_header = re.search(r"(GET\s*.*?(?:start=)?\d*)(?:\r)?\n+", headers).group(1)
-		return get_header, headers_
-
-	def getRequestRange(self, rangebytes):
-		search = re.search('bytes=(\d+)-*(\d*)', rangebytes)
-		if search:
-			rangeIni = search.group(1)
-			return long(rangeIni)
-		return 0
-
-	def sendPartialResponse(self, pos, contentLength):
-		header = self.responseHeaderPartial %( str(contentLength - pos), pos, 
-				                               (contentLength-1), contentLength )
-
-		self.request.send(header)
-
-	def sendResponse(self):
-		length = self.manage.getVideoSize()
-		self.request.send( self.responseHeader %length)
-
-	def requisicaoMetaDados( self):
-		""" O player está requisitando metadados """
-		connectionState = self.headers.get("Connection","").lower()
-
-		if connectionState != "keep-alive":
-			if self.numBytesEnviados > (1024*256) and not self.server.sendMeta():
+	def send_200_OK(self):
+		headers = self.HEADER_OK_200 % self.manage.getVideoSize()
+		self.request.send( headers )
+		
+	def request_meta_data( self):
+		""" envia apenas uma sequencia de bytes como amostra """
+		if self.headers.get("Connection","").lower() != "keep-alive":
+			if self.nb_sended > 262144 and not self.server.sendMeta(): # 256 k
 				self.server.setMeta(True)
-				raise BufferError, "MetaData"
-
-	def handle(self):
+				raise BufferError, "Err: meta-data"
+		
+	def get_request_data(self, timeout=60):
+		request_data = ""
+		ready = select.select([self.request],[],[],timeout)[0]
+		while ready:
+			request_data += self.request.recv(1024)
+			ready = select.select([self.request],[],[],0)[0]
+		return request_data
+	
+	def run(self):
 		try:
-			data = self.request.recv(1024)
-			self.get_string, self.headers = self.getHeader(data)
-			if self.headers.has_key("Range"):
-				self.seekpos = self.getRequestRange( self.headers["Range"])
-			else:
-				self.seekpos = int(re.search("GET.*(?:start=)(\d*).*", self.get_string).group(1))
-			print "Request [GET: %s | RANGE: %s]"%(self.get_string, self.seekpos)
-		except: pass
-
-		if self.seekpos > 0 and self.manage.videoManager.suportaSeekBar():
-			self.manage.setRandomRead( self.seekpos )
-			self.sendPartialResponse( self.seekpos, self.manage.getVideoSize())
-			self.request.send( self.manage.streamHeader)
+			request_data = self.get_request_data()
+		except:
+			self.request.close()
+			self.server.unlock_clients()
+			return
+		try:
+			self.get_string, self.headers = self.get_headers( request_data )
+			self.streamPos = self.get_range(self.get_string, self.headers)
+			print "REQUEST: %s RANGE: %s"%(self.get_string, self.streamPos)
+		except:
+			pass
+		if self.streamPos > 0 and self.manage.videoManager.suportaSeekBar():
+			self.manage.setRandomRead( self.streamPos )
+			
+			self.send_206_PARTIAL(self.streamPos, self.manage.getVideoSize())
+			self.request.send( self.manage.streamHeader )
 		else:
 			self.manage.reloadSettings()
-			self.sendResponse()
-
-		# guarda o número de byte enviados para o player
-		self.numBytesEnviados = self.seekpos
-
-		while not self.server.isShutdown():
+			self.send_200_OK()
+			
+		# número de bytes já enviados ao cliente(player)
+		self.nb_sended = self.streamPos
+		# =========================
+		while not self.server.need_stop():
 			try:
-				stream = self.manage.getStream()
-
-				if not stream:
-					time.sleep(0.5); continue
-
-				self.numBytesEnviados += self.request.send( stream )
-				self.requisicaoMetaDados()
+				cached_stream = self.manage.getStream()
+				if cached_stream:
+					self.nb_sended += self.request.send( cached_stream )
+					self.request_meta_data()
+				else:
+					if self.nb_sended >= self.manage.getVideoSize():
+						break # all data sended!
+					time.sleep(0.5)
+					continue
 			except Exception, err:
 				print "Erro[Player] %s"%err
 				break
-
 			if self.manage.isComplete(): # diminui a sobrecarga
-				time.sleep(0.1)
-
+				time.sleep(0.01)
+		# =========================
 		self.request.close()
-
+		self.server.unlock_clients()
+		
 ################################### SERVER ####################################
-class Server( threading.Thread, SocketServer.TCPServer):
+class Server( threading.Thread ):
 	def __init__(self, manage, host="localhost", port=80):
-
-		SocketServer.TCPServer.__init__(self, (host, port), StreamHandler)
 		threading.Thread.__init__(self)
 		self.setDaemon(True)
-
-		# cliente único servido por este servidor
-		self.clienteRequest = None
-		self.clienteShutdown = False
+		
+		self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		self.server.bind((host, port))
+		self.server.listen(1)
+		
 		self.manage = manage
+		self._need_stop = False
 		self.enviouMeta = False
-
+		self.client = None
+		
 	def __del__(self):
-		if hasattr(self,"clienteRequest"): del self.clienteRequest
-		if hasattr(self,"clienteShutdown"): del self.clienteShutdown
-		if hasattr(self,"enviouMeta"): del self.enviouMeta
-		if hasattr(self,"manage"): del self.manage
+		del self.manage
 
 	def clienteStop(self):
 		""" Fecha o cliente único conectado ao servidor """
-		if hasattr(self.clienteRequest,"close"):
-			self.clienteRequest.close()
-		# estado de fechamento
-		self.setShutdown(True)
+		if hasattr(self.client,"close"): self.client.close()
+		self.set_need_stop(True) # informa o cliente para fechar a conexão.
 		self.setMeta(False)
+		
+	def unlock_clients(self):
+		self.client = None
+	
+	def need_stop(self):
+		return self._need_stop
 
-	def isShutdown(self):
-		return self.clienteShutdown
-
-	def setShutdown(self, _bool = False):
-		self.clienteShutdown = _bool
+	def set_need_stop(self, flag=False):
+		self._need_stop = flag
 
 	def stop(self):
-		self.server_close()
+		self.server.close()
 
-	def setMeta(self, _bool):
-		self.enviouMeta = _bool
+	def setMeta(self, flag):
+		self.enviouMeta = flag
 
 	def sendMeta(self):
 		return self.enviouMeta
 
 	def run(self):
-		print "*** Servidor ativado"
-		try: self.serve_forever()
-		except: pass
-		print "Servidor desativado ***"
-
+		print "Starting server..."
+		while True:
+			rlist, wlist, xlist = select.select([self.server],[],[])
+			if len(rlist) == 0: continue
+			client, addr = self.server.accept()
+			if self.client is None:
+				StreamHandler(self, client).start()
+				self.client = client
+			else: # a conexão com o servidor deve ser única
+				client.close()
+		print "Server stoped!"
+		
 ################################ PROXYMANAGER ################################
 # PROXY MANAGER: TRABALHA OS IPS DE SERVIDORES PROXY
 class ProxyManager:
