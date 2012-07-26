@@ -580,7 +580,16 @@ class FlvPlayer( threading.Thread):
 			self.is_running = False
 
 ################################ STREAMHANDLE ################################
-
+class run_locked:
+	""" decorador usado para sincronizar as conexões com o servidor """
+	SYNC_THREAD = threading.Lock()
+	
+	def __call__(_self, method):
+		def wrap(self, *args): # magic!
+			with _self.SYNC_THREAD:
+				method( self )
+		return wrap
+		
 class StreamHandler( threading.Thread ):
 	""" Essa classe controla as requisições feitas pelo player.
 	Uma vez estabelecida a conexão, a medida que novos dados vão chegando, estes vão sendo enviados ao player. """
@@ -602,32 +611,31 @@ class StreamHandler( threading.Thread ):
 		'Content-Length: %s' ,
 		'Content-Range: bytes %d-%d/%d',
 	'\n'])
-
+	
 	def __init__(self, server, request):
 		threading.Thread.__init__(self)
 		self.request = request
-		
-		server.set_need_stop(False)
 		self.manage = server.manage
 		self.server = server
-		
-		self.nb_sended = self.streamPos = 0
-		self.get_string = ''; self.headers = {}
+		self.nb_sended = 0
+		self.streamPos = 0	
+		self.headers = {}
+		self.GET = ""
 		
 	def get_headers(self, request_data):
 		headers = dict( re.findall(r"(.+?):\s*(.*?)(?:\r)?\n+", request_data) )
-		get = re.search(r"(GET\s*.*?(?:start=)?\d*)(?:\r)?\n+", request_data).group(1)
+		get = re.search(r"(GET.+?(?:start=)?\d*)(?:\r)?\n+", request_data).group(1)
 		return get, headers
 
 	def get_range(self, get="", headers={}):
 		if headers.has_key("Range"):
-			matchobj = re.search("bytes=(?:<range>\d+)-?\d*", rb_str)
+			matchobj = re.search("bytes=(?P<range>\d+)-?\d*", headers["Range"])
 		else:
-			matchobj = re.search("GET.*(?:start=)(?:<range>\d+).*", get)
-		if matchobj: seekpos = search.group("range")
+			matchobj = re.search("GET.+?(?:start=)?(?P<range>\d+).+", get)
+		if matchobj: seekpos = matchobj.group("range")
 		else: seekpos = 0
 		return long(seekpos)
-
+	
 	def send_206_PARTIAL(self, streamPos, streamSize):
 		headers = self.HEADER_PARTIAL_206 %(str(streamSize-streamPos), streamPos, (streamSize-1), streamSize)
 		self.request.send( headers )
@@ -644,26 +652,29 @@ class StreamHandler( threading.Thread ):
 				raise BufferError, "Err: meta-data"
 		
 	def get_request_data(self, timeout=60):
-		request_data = ""
+		data = ""
 		ready = select.select([self.request],[],[],timeout)[0]
 		while ready:
-			request_data += self.request.recv(1024)
+			data += self.request.recv(1024)
 			ready = select.select([self.request],[],[],0)[0]
-		return request_data
+		return data
 	
-	def run(self):
-		try:
-			request_data = self.get_request_data()
-		except:
-			self.request.close()
-			self.server.unlock_clients()
-			return
-		try:
-			self.get_string, self.headers = self.get_headers( request_data )
-			self.streamPos = self.get_range(self.get_string, self.headers)
-			print "REQUEST: %s RANGE: %s"%(self.get_string, self.streamPos)
-		except:
-			pass
+	@run_locked()
+	def run( self):
+		self.server.client = self.request
+		try: self.handle()
+		except: pass
+		self.server.set_need_stop(False)
+		self.server.client = None
+		self.request.close()
+		
+	def handle( self):
+		data = self.get_request_data()
+		
+		self.GET, self.headers = self.get_headers( data )
+		self.streamPos = self.get_range(self.GET, self.headers)
+		print "REQUEST: %s RANGE: %s"%(self.GET, self.streamPos)
+		
 		if self.streamPos > 0 and self.manage.videoManager.suportaSeekBar():
 			self.manage.setRandomRead( self.streamPos )
 			
@@ -692,10 +703,7 @@ class StreamHandler( threading.Thread ):
 				break
 			if self.manage.isComplete(): # diminui a sobrecarga
 				time.sleep(0.01)
-		# =========================
-		self.request.close()
-		self.server.unlock_clients()
-		
+			
 ################################### SERVER ####################################
 class Server( threading.Thread ):
 	def __init__(self, manage, host="localhost", port=80):
@@ -704,7 +712,7 @@ class Server( threading.Thread ):
 		
 		self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		self.server.bind((host, port))
-		self.server.listen(1)
+		self.server.listen(5)
 		
 		self.manage = manage
 		self._need_stop = False
@@ -720,9 +728,6 @@ class Server( threading.Thread ):
 		self.set_need_stop(True) # informa o cliente para fechar a conexão.
 		self.setMeta(False)
 		
-	def unlock_clients(self):
-		self.client = None
-	
 	def need_stop(self):
 		return self._need_stop
 
@@ -741,14 +746,12 @@ class Server( threading.Thread ):
 	def run(self):
 		print "Starting server..."
 		while True:
-			rlist, wlist, xlist = select.select([self.server],[],[])
-			if len(rlist) == 0: continue
-			client, addr = self.server.accept()
-			if self.client is None:
-				StreamHandler(self, client).start()
-				self.client = client
-			else: # a conexão com o servidor deve ser única
-				client.close()
+			try:
+				rlist, wlist, xlist = select.select([self.server],[],[])
+				if len(rlist) == 0: continue
+				client, addr = self.server.accept()
+			except: break
+			StreamHandler(self, client).start()
 		print "Server stoped!"
 		
 ################################ PROXYMANAGER ################################
