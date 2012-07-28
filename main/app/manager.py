@@ -44,11 +44,12 @@ def installTranslation(configs = None):
 	
 	menus = configs.get("Menus", {})
 	lang = menus.get("language", "en")
+	
 	localepath = os.path.join(settings.APPDIR, "locale")
-	transl = gettext.translation("ba_trans", localepath, languages=[lang])
-
+	language = gettext.translation("ba_trans", localepath, languages=[lang])
+	
 	# instala no espaço de nomes embutidos
-	transl.install(unicode=True)
+	language.install(unicode=True)
 #######################################################################################
 
 def get_filename(filepath, fullname=True):
