@@ -7,8 +7,8 @@ import string
 import random
 import wx.html2 as Webview
 from main import settings
-from django.template import Context, Template, loader
 
+from django.template import Context, Template, loader, defaulttags, defaultfilters, loader_tags
 ########################################################################
 def getPlayerPage(swf_player, flashvar):
     tmpl = loader.get_template("template-player.html")
