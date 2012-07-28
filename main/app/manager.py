@@ -26,15 +26,14 @@ import sqlite3
 import base64
 import select
 from main import settings
-from main.exeapp import models # modelo de banco de dados
+from main.app import models # modelo de banco de dados
 
 # INTERNACIONALIZATION
 def installTranslation(configs = None):
 	""" instala as traduções apartir do arquivo de configurações. """
 	if not isinstance(configs, configobj.ConfigObj):
-		cwd = settings.PROJECTPATH
 		try:
-			path = os.path.join(cwd, "exeapp", "configs", "configs.cfg")
+			path = os.path.join(settings.CONFIGS_DIR, "configs.cfg")
 			configs = configobj.ConfigObj( path )
 		except:
 			configs = {}
@@ -42,13 +41,11 @@ def installTranslation(configs = None):
 	except ImportError, err:
 		print "Error[import gettext] %s"%err
 		raise err
-
+	
 	menus = configs.get("Menus", {})
 	lang = menus.get("language", "en")
-
-	transl = gettext.translation("BaixeAssistaTrans", 
-		                         os.path.join(cwd, "exeapp", "locale"), 
-		                         languages=[lang])
+	localepath = os.path.join(settings.APPDIR, "locale")
+	transl = gettext.translation("ba_trans", localepath, languages=[lang])
 
 	# instala no espaço de nomes embutidos
 	transl.install(unicode=True)

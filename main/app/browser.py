@@ -30,7 +30,7 @@ if __name__ == "__main__":
 
 import gerador, manager
 from main import settings
-from main.exeapp import models
+from main.app import models
 
 PROGRAM_VERSION = gerador.PROGRAM_VERSION
 ######################################################################################
