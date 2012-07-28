@@ -22,15 +22,13 @@ if __name__ == "__main__":
     os.environ['DJANGO_SETTINGS_MODULE'] = "main.settings"	
     pardir = os.path.split(curdir)[0]
     maindir = os.path.split(pardir)[0]
-
+    
     if not maindir in sys.path: sys.path.append(maindir)
     if not pardir in sys.path: sys.path.append(pardir)
     if not curdir in sys.path: sys.path.append(curdir)
     os.chdir( maindir )
 
-import gerador
-from manager import installTranslation, security_save
-import manager
+import gerador, manager
 from main import settings
 from main.exeapp import models
 
@@ -273,10 +271,10 @@ class Browser(wx.Panel):
         webview.js_script_run = False
 
         # events
+        self.Bind(Webview.EVT_WEB_VIEW_LOADED, self.OnWebViewLoaded, webview)
         self.Bind(Webview.EVT_WEB_VIEW_NEWWINDOW, self.OnWebViewNewWindow, webview)
         self.Bind(Webview.EVT_WEB_VIEW_NAVIGATING, self.OnWebViewNavigating, webview)
-        webview.Bind(Webview.EVT_WEB_VIEW_LOADED, self.OnWebViewLoaded)
-        self.Bind(Webview.EVT_WEB_VIEW_TITLE_CHANGED, self.OnWebViewTitleChange)
+        self.Bind(Webview.EVT_WEB_VIEW_TITLE_CHANGED, self.OnWebViewTitleChange, webview)
 
         # add new page
         self.abasControl.AddPage(webview, "Loading...", select = defaut)
@@ -574,16 +572,15 @@ class Browser(wx.Panel):
         webview = event.GetEventObject()
         webviewUrl = webview.GetCurrentURL()
         
-        # configura os dados para a animação da progress animate
-        webview.loading, webview.isNullBitmap = True, False
-        
         if webviewUrl != webview.Url and webviewUrl.startswith("http"):
             if not webview.historyUrl.isBrowsing():
                 webview.historyUrl.append( webviewUrl )
 
             webview.js_script_run = False
             self.controlEmbedUrls.Clear()
-
+            # configura os dados para a animação da progress animate
+            webview.loading, webview.isNullBitmap = True, False        
+            
             webview.historyUrl.setBrowsing(False)
 
             self.historySites.remove( webview.Url )
@@ -659,7 +656,7 @@ class Browser(wx.Panel):
         """ chamado sempre que a página termina de carregar """
         webview = evt.GetEventObject()
         self.setNavStopLoading(webview)
-
+        
     # Control bar events
     def OnLocationSelect(self, event):
         """ controla a seleção de uma url, carrega a url selecionada """
@@ -704,6 +701,7 @@ class Browser(wx.Panel):
 
 
 if __name__=='__main__':
+    from manager import installTranslation
     # instala as traduções.
     installTranslation()
 
