@@ -6,8 +6,8 @@ os.environ['DJANGO_SETTINGS_MODULE'] = "main.settings"
 
 import wx
 import main
-from main.exeapp import *
-from main.exeapp.window import mainWin
+from main.app import *
+from main.app.window import mainWin
 
 def run():
 	if len(sys.argv) > 1:
