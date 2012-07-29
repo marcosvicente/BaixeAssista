@@ -551,9 +551,9 @@ class FlvPlayer( threading.Thread):
 	def __init__(self, cmd="", porta=80, filename="stream", videoPath=""):
 		threading.Thread.__init__(self)
 		self.setDaemon(True)
-
+		
 		self.is_running = False
-
+		
 		if not videoPath:
 			local = "http://localhost:%d/%s"%(porta, filename)
 			self.args = (cmd, local)
@@ -629,7 +629,7 @@ class StreamHandler( threading.Thread ):
 		if headers.has_key("Range"):
 			matchobj = re.search("bytes=(?P<range>\d+)-?\d*", headers["Range"])
 		else:
-			matchobj = re.search("GET.+?(?:start=)?(?P<range>\d+).+", get)
+			matchobj = re.search("GET.+?(?:start=)?(?P<range>\d+)\s+HTTP.+", get)
 		if matchobj: seekpos = matchobj.group("range")
 		else: seekpos = 0
 		return long(seekpos)
