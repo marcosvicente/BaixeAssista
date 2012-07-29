@@ -6,7 +6,7 @@ import compileall
 import shutil
 import re
 
-BUILD_DIR = os.path.join(os.getcwd(), "build") # build exe
+BUILD_DIR = os.path.join(os.getcwd(), os.environ["HOMEPATH"], "BaixeAssistaBuild") # build exe
 DIST_DIR = os.path.join(BUILD_DIR, "dist") # final exe
 TARGET_DIR = packer.TARGET_DIR
 
@@ -25,9 +25,9 @@ def find_compiler(compilername = "pyinstaller.py"):
 def start_build():
 	""" inica a contrução do executável """
 	COMPILER = 'python "%s"' % find_compiler()
-	COMMANDS = '--windowed --out="%s" --onefile BaixeAssista.py'%(BUILD_DIR)
-	CMD = COMPILER + " " + COMMANDS	
-
+	COMMANDS = '-c --out="%s" --icon=%s --onefile BaixeAssista.py'%(BUILD_DIR, "movies.ico")
+	CMD = COMPILER + " " + COMMANDS
+	
 	# remove all .pyc / .pyo
 	packer.clean_all_nopy( TARGET_DIR )
 	
@@ -49,6 +49,9 @@ def copy_to_dest(source, destination):
 		try:
 			relativedir = root.split(sourcedir + os.sep)[-1]
 			destdir = os.path.join(destination, relativedir)
+			
+			# não inclui pastas que contenham o arquivo "__ignore__"
+			if "__ignore__" in files: continue
 			
 			if not os.path.exists( destdir ):
 				print "Making dir: ", destdir
@@ -74,13 +77,21 @@ def copy_to_dest(source, destination):
 
 # ---------------------------------------------------------------
 if __name__ == "__main__":
+	if not os.path.exists(BUILD_DIR):
+		os.mkdir( BUILD_DIR )	
+
 	if start_build() == 0:
 		print "Compile sucessfully!"
 		
 		print "Exporting files to exe"
 		packer.clean_all_nopy( TARGET_DIR )
 		copy_to_dest( TARGET_DIR, DIST_DIR )
+		
+		try:
+			os.chdir( DIST_DIR ) # vai para o diretorio do executável.
+			subprocess.call(os.path.join(DIST_DIR, "BaixeAssista.exe"))
+		except Exception, err:
+			print "Err[exe start] %s"%err
 	else:
-		print "Compile Err: %d"%retcode
-	
+		print "Error Compiling..."
 	raw_input("Press enter to exit...")
