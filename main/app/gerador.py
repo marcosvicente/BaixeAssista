@@ -1504,7 +1504,7 @@ class PutLocker( SiteBase ):
 		    re.compile("(?P<inner_url>(?:http://)?www\.putlocker\.com/file/(?P<id>\w+))"),
 		    [re.compile("(?P<inner_url>(?:http://)?www\.putlocker\.com/embed/(?P<id>\w+))")]
 		    ),
-		"control": "SM_SEEK",
+		"control": "SM_RANGE",
 		"video_control": None
 	}
 	patternForm = re.compile(
@@ -1516,8 +1516,7 @@ class PutLocker( SiteBase ):
 	def __init__(self, url, **params):
 		"""Constructor"""
 		SiteBase.__init__(self, **params)
-
-		self.streamHeaderSize = 13
+		self.streamHeaderSize = 0
 		self.basename = "putlocker.com"
 		self.getFileBaseUrl = "http://www.putlocker.com"
 		self.url = url
@@ -1582,9 +1581,9 @@ class PutLocker( SiteBase ):
 
 		try: ext = re.search("type=\"video/([\w-]+)", rssData).group(1)
 		except: pass # usa a extensão padrão.
-
-		self.configs = {"url": (url+"&start="), "title":title, "ext": ext}
-		self.headers = {"Referer": "http://static.putlocker.com/video_player.swf?%s"%time.time()}
+		
+		self.configs = {"url": url, "title":title, "ext": ext}
+		## self.headers = {"Referer": "http://static.putlocker.com/video_player.swf?%s"%time.time()}
 
 ###################################### PUTLOCKER ######################################
 class Sockshare( PutLocker ):
@@ -1603,7 +1602,6 @@ class Sockshare( PutLocker ):
 	def __init__(self, url, **params):
 		"""Constructor"""
 		PutLocker.__init__(self, url, **params)
-
 		self.streamHeaderSize = 0
 		self.getFileBaseUrl = "http://www.sockshare.com"
 		self.basename = "sockshare.com"
@@ -2265,7 +2263,7 @@ if __name__ == "__main__":
 		print proxies["http"]
 		proxies = {}
 
-		if not checkSite("http://www.youtube.com/watch?v=H6oIuXs1bRs", proxies=proxies, quality=3):
+		if not checkSite("http://www.putlocker.com/embed/394133DD84A589BB", proxies=proxies, quality=3):
 			proxyManager.setBadIp( proxies )
 
 	del proxyManager
