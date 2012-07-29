@@ -2285,26 +2285,24 @@ class StreamManager_( StreamManager ):
 
 		globalInfo.set_info(self.ident, "estado", _("Reconfigurando"))
 		time.sleep(0.5)
-
+		
 		if self.usingProxy:
 			if typechange is True:
-				self.proxies = proxyManager.proxyFormatado()
-				self.usingProxy = False
+				self.usingProxy, self.proxies = False, proxyManager.proxyFormatado()
 		elif errornumber == 1 or bytesnumber < 524288:
 			if typechange is True:
 				self.usingProxy, self.proxies = True, {}
 			else:
-				self.proxies = proxyManager.proxyFormatado()
-				self.usingProxy = False
-
+				self.usingProxy, self.proxies = False, proxyManager.proxyFormatado()
+				
 		globalInfo.set_info(self.ident,"http",self.proxies.get("http",_(u"Conexão Padrão")))
 
 	def conecte(self):
 		videoManager = self.manage.videoManager
 		seekpos = self.manage.interval.get_start( self.ident) # posição inicial de leitura
 		reconexao = self.params.get("reconexao", 1)
-
 		nfalhas = 0
+		
 		while nfalhas < reconexao:
 			try:
 				waittime = self.params.get("waittime", 2)
@@ -2320,10 +2318,8 @@ class StreamManager_( StreamManager ):
 					time.sleep(1)
 
 				globalInfo.set_info(self.ident, "estado", _("Conectando"))
-
-				self.streamSocket = videoManager.conecte(link, 
-								                         proxies = self.proxies, headers={"Range":"bytes=%s-"%seekpos})
-
+				self.streamSocket = videoManager.conecte(link, proxies=self.proxies, headers={"Range":"bytes=%s-"%seekpos})
+				
 				if self.streamSocket.code == 200 or self.streamSocket.code == 206:
 					if seekpos == 0: # anula o tamanho aproximado pelo real do arquivo
 						tamanho_aproximado = self.manage.getVideoSize()
