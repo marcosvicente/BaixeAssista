@@ -25,6 +25,18 @@ import unicodedata
 import sqlite3
 import base64
 import select
+
+if __name__ == "__main__":
+	os.environ['DJANGO_SETTINGS_MODULE'] = "main.settings"
+	curdir = os.path.dirname(os.path.abspath(__file__))
+	pardir = os.path.split(curdir)[0]
+	maindir = os.path.split(pardir)[0]
+
+	if not maindir in sys.path: sys.path.append(maindir)
+	if not pardir in sys.path: sys.path.append(pardir)
+	if not curdir in sys.path: sys.path.append(curdir)
+	os.chdir( maindir )
+	
 from main import settings
 from main.app import models # modelo de banco de dados
 
@@ -290,30 +302,26 @@ class UpdateSearch:
 		except Exception, err:
 			return (None, _(u"Houve um erro ao procura por uma nova versão."))
 
-class PackSearch:
+class Updater(object):
 	""" Procura por pacotes de atualização """
 	#----------------------------------------------------------------------
 	## old: packet_v0.0.1_0.1.3.zip - new: packet_oswinv0.0.1_0.1.3.zip
-
 	def __init__(self, **params):
-		""" params = {} - packetVersion: versão corrente do pacote """
-		assert  params.get("packetVersion",None), u"informe a versão do pacote atual!"
-		self.packetVersion = params["packetVersion"]
-
-		self.downloadListUrl = "http://code.google.com/p/gerenciador-de-videos-online/downloads/list"
-		self.downloadUrl = "http://gerenciador-de-videos-online.googlecode.com/files/"
-		self.matchPacketsList = re.compile("packet_(?:oswin|oslinux)?v.+?_.+?\.zip")
-		self.matchPacketVersion = re.compile("packet_(?P<os>(?:oswin|oslinux)?)v(?P<packer>.+?)_(?P<program>.+?)\.zip")
+		""" params: {}
+		- packetVersion: versão atual do pacote de atualização.
+		"""
+		self.packetVersion = params.get("packetVersion", None)
+		assert self.packetVersion, u"informe a versão do pacote atual!"
+		
+		self.sourcesLink = "https://dl.dropbox.com/u/67269258/BaixeAssistaUpdateSources"
+		self.pl_pattern = re.compile("packet_(?:oswin|oslinux)?v.+?_.+?\.zip")
+		self.pv_pattern = re.compile("packet_(?P<os>(?:oswin|oslinux)?)v(?P<pk>.+?)_(?P<pg>.+?)\.zip")
+		
+		self.newVersion = ""
 		self.updateDir = os.path.join(settings.APPDIR, "update")
-		self.libDir = os.path.join(settings.APPDIR, "lib", "shared.zip")
-
-		self.packetsGroupsNames = []
-		self.packetsGroupsPaths = []
-		self.newPacketVersion = ""
-
-		self.packetFound = self.is_old = False
-		self.excludes = {"dirs": ("imagens", "configs", "locale"), "files": ("changes.txt", )}
-
+		self.packetsLinks = []; self.packetsPaths = []
+		self.packetFound = self.oldRelease = False
+		
 		self.updateSucess = (True, _(u"O programa foi atualizado com sucesso!"))
 		self.sucessWarning = _(u"Um novo pacote de atualização está disponível: packet_v%s_%s.zip.")
 		self.errorUpdateSearching = (None, _(u"Erro procurando por pacotes de atualização."))
@@ -322,136 +330,70 @@ class PackSearch:
 		self.updatedWarning = (False, _(u"O programa já está atualizado."))
 
 	def getNewVersion(self):
-		return self.newPacketVersion
-
-	def isValidFileName(self, filename):
-		""" avalia se filename é um script .pyc """
-		for dirname in self.excludes["dirs"]:
-			if re.match(r"%s(?:\\|/).*"%dirname, filename):
-				return False
-
-		if filename in self.excludes["files"]:
-			return False
-
-		return True
-
-	def updateLib(self, updateZip):
-		""" cria uma nova biblioteca inserindo os scripts de atualização """
-		# nomes dos arquivos que serão atualizados.
-		updateFileNames = updateZip.namelist()
-		print "Updating files: " + " - ".join(updateFileNames)
-
-		# zip com todos os arquivo da biblioteca.
-		with zipfile.ZipFile( self.libDir ) as libZip:
-
-			# arquivo zip de montagem da nova biblioteca.
-			zipSharedPath = os.path.join(self.updateDir, "shared.zip")
-
-			with zipfile.ZipFile(zipSharedPath, "w") as zipShared:
-				# move para zipShared só os arquivos que não serão atualizados.
-				for zinfo in libZip.infolist():
-					if not zinfo.filename in updateFileNames:
-						bytes = libZip.read( zinfo.filename )
-						zipShared.writestr(zinfo, bytes)
-
-				# adiciona os novos scripts para zipShared, 
-				# desconsiderando os que não forem scrits(como imagens, configs, etc)
-				for zinfo in updateZip.infolist():
-					if self.isValidFileName( zinfo.filename ):
-						bytes = updateZip.read( zinfo.filename )
-						zipShared.writestr(zinfo, bytes)
-
-		# remove a biblioteca antiga.
-		os.remove( libZip.filename )
-
-		# salva a nova biblioteca, na pasta padrão lib.
-		import shutil
-		path = os.path.join(settings.APPDIR, "lib")
-		shutil.move(zipShared.filename, path)
-		return True
+		return self.newVersion
 
 	def getLastChanges(self, language="en"):
 		""" retorna o texto informativo das últimas alterações do programa """
-		lastchanges = []
-		try:
-			for packetPath in self.packetsGroupsPaths:
+		changes = []
+		for packetPath in self.packetsPaths:
+			try:
 				with zipfile.ZipFile(packetPath) as updateZip:
 					zipinfo = updateZip.getinfo("changes.txt")
 					rawText = updateZip.read( zipinfo )
-
+					
 					pattern = "<{language}>(.*)</{language}>".format(language=language)
 					matchobj = re.search(pattern, rawText, re.DOTALL)
-
+					
 					text = matchobj.group(1)
 					text = text.strip("\r\n ")
-
+					
 					header = "%s:\n"%get_filename(packetPath, False)
-					lastchanges.append( header + text )
-		except Exception, err:
-			print "Error[Update changes] %s"%err
-		return lastchanges
-
+					changes.append(header + text)
+			except: break
+		return changes
+	
 	def cleanUpdateDir(self):
 		""" remove todos os arquivos da pasta de atualização """
 		for name in os.listdir(self.updateDir):
-			path = os.path.join(self.updateDir, name)
-			try: os.remove( path )
+			try: os.remove(os.path.join(self.updateDir, name))
 			except Exception, err:
-				print "Error[Packer.cleanUpdateDir] %s"%path
-
-	def updateFiles(self, updateZip):
-		""" atualiza tudo que não for script, no programa """
-		for zipinfo in updateZip.infolist():
-			if re.match(r"(?:imagens|configs|locale)(?:\\|/).+", zipinfo.filename):
-				# extrai no diretório principal, atualizando os arquivo
-				updateZip.extract(zipinfo, settings.APPDIR)
-		return True
-
+				print "Err[update clean: %s]: %s"%(path, err)
+				
 	def update(self):
-		""" Com o pacote de atualizações já baixado, e 
-		pronto para ser lido, instala as atualizações.
-		"""
-		assert len(self.packetsGroupsPaths), "Warning: no packets paths!"
-
-		for index, packetPath in enumerate(self.packetsGroupsPaths):
+		""" Com o pacote de atualizações já baixado, e pronto para ser lido, instala as atualizações """
+		assert len(self.packetsPaths), "No packets!"
+		for index, path in enumerate(self.packetsPaths):
 			try:
-				with zipfile.ZipFile( packetPath ) as updateZip:
-					assert not updateZip.testzip(), "Corrupt: %s"%packetPath
-
-					# atualizando a lib de scripts
-					self.updateLib( updateZip )
-
-					# atualizando as pastas de arquivos(imagens,locale,configs)
-					self.updateFiles( updateZip )
-
+				with zipfile.ZipFile( path ) as updateZip:
+					assert not updateZip.testzip()
+					
+					updateZip.extractall( os.getcwd() )
+					
 					# guarda a versão do último pacote atualizado
-					packetName = get_filename(packetPath)
-					self.newPacketVersion, programVer = self.get_versions(packetName)
-			except Exception, err:
+					self.newVersion, pgv = self.get_versions(get_filename( path ))
+			except:
 				if index == 0: return self.errorUpdating
 				else:
 					# considera só o grupo atualizado com sucesso
-					self.packetsGroupsPaths = self.packetsGroupsPaths[:index]
+					self.packetsPaths = self.packetsPaths[:index]
 					break
 		# informa: atualizado com sucesso
 		return self.updateSucess
-
-	def packetDown(self):
+	
+	def download(self):
 		""" baixa o pacote de atulizações """
-		assert self.packetFound, "Warning: no packets!"
-
-		for index, packetName in enumerate(self.packetsGroupsNames):
+		assert self.packetFound, "Packets not found!"
+		for index, link in enumerate(self.packetsLinks):
 			try:
-				url = self.downloadUrl + packetName
-				print "Baixando: " + url
-
-				fd = urllib2.urlopen( url )
-
+				print "Baixando: " + link
+				packetname = os.path.split( link )[-1]
+				fd = urllib2.urlopen( link )
+				
 				if fd.code == 200:
 					block_size = 1024
-					packetPath = os.path.join(self.updateDir, packetName)
-
-					with open(packetPath, "wb") as updateFile:
+					packetpath = os.path.join(self.updateDir, packetname)
+					
+					with open(packetpath, "wb") as updateFile:
 						while True:
 							before = time.time()
 							stream = fd.read(block_size)
@@ -462,85 +404,76 @@ class PackSearch:
 
 							# ajusta a velocidade de download
 							block_size = StreamManager.best_block_size((after-before), streamLen)
-
 							updateFile.write( stream )
-
+							
 						# guarda o caminho do pacote baixado com sucesso
-						self.packetsGroupsPaths.append( packetPath )
-
+						self.packetsPaths.append( packetpath )
+						
 					fd.close()
 				# erro no primeiro pacote pára todo o processo de atulização
 				elif index == 0: return self.errorUpdating
 				else: break
-			except Exception, err:
+			except:
 				if index == 0: return self.errorUpdating
 				break
 		return (True, _("Baixado com sucesso!"))
-
-	def loadPage(self):
-		""" carrega a página da lista de pacotes """
-		fd = urllib2.urlopen( self.downloadListUrl )
-		webpage = fd.read(); fd.close()
-		return webpage
-
-	def get_versions(self, packetStr):
+	
+	def get_versions(self, link):
 		""" packet_0.1.5_0.1.3.zip -> (0.1.5, 0.1.3) """
-		matchobj = self.matchPacketVersion.match( packetStr )
-		try:
-			packer = matchobj.group("packer")
-			program = matchobj.group("program")
-		except:
-			packer = program = ""
-		return packer, program
+		matchobj = self.pv_pattern.search( link )
+		pk = pg = ""
+		if matchobj:
+			pk = matchobj.group("pk")
+			pg = matchobj.group("pg")
+		return (pk, pg)
+	
+	def get_system_name(self, link):
+		matchobj = self.pv_pattern.search( link )
+		if matchobj: os = matchobj.group("os")
+		else: os = ""
+		return os
 
-	def get_system_name(self, packetStr):
-		matchobj = self.matchPacketVersion.match( packetStr )
-		try: system = matchobj.group("os")
-		except: system = ""
-		return system
-
-	def packetListFilter(self, packets):
+	def packetFilter(self, links):
 		""" remove as repetições das versões de pacotes e 
 		pacotes que não pertencem a versão atual """
-		validPacketsNames = []
-
-		for packetName in packets:
-			packet, program = self.get_versions( packetName )
-
+		v_links = []
+		
+		for link in links:
+			packet, program = self.get_versions( link )
+			
 			if program == PROGRAM_VERSION:
-				if packet > self.packetVersion and not packetName in validPacketsNames:
-					osystem = self.get_system_name( packetName )
-
-					if not osystem or PROGRAM_SYSTEM.get(platform.system(),"") == osystem:
-						validPacketsNames.append( packetName )
-
+				if packet > self.packetVersion and not link in v_links:
+					osystem = self.get_system_name( link )
+					
+					if PROGRAM_SYSTEM.get(platform.system(),"") == osystem:
+						v_links.append( link )
+					
 			elif program > PROGRAM_VERSION:
 				# caso a versão atual seja mais antiga, avisa o usuário para atualizar
 				# isso ocorrerá caso não haja mais atualizações para a versão atual
-				self.is_old = True
+				self.oldRelease = True
 		# organiza do menor pacote para o maior
-		validPacketsNames.sort()
-		return validPacketsNames
+		v_links.sort()
+		return v_links
 
-	def is_old_program(self):
+	def isOldRelease(self):
 		""" avalia se o programa é antigo, após não encontrar novas atualizações """
-		return self.is_old and not self.packetFound
-
-	def search(self, webpage=None):
+		return (self.oldRelease and not self.packetFound)
+	
+	def search(self):
 		""" packet_version: pacote que o programa está usando """
 		try:
-			# quando webpage for dado como parametro, 
-			# será em conjunto com UpdateSearch.
-			if not webpage: webpage = self.loadPage()
-
-			# lista de pacotes, sem repetições
-			packetList = self.matchPacketsList.findall( webpage )
-			packetList = self.packetListFilter( packetList )
-
-			# guarda o grupo de pacotes com versão maior que a atual
-			self.packetsGroupsNames = packetList
-			self.packetFound = bool(len(packetList))
-		except Exception, err: pass
+			s = urllib2.urlopen(self.sourcesLink)
+			contenty = s.read(); s.close()
+			assert contenty
+		except: return False
+		
+		links = contenty.split("\r\n")
+		if not any(links): links = contenty.split("\n")
+		
+		# guarda o grupo de pacotes com versão maior que a atual
+		self.packetsLinks = self.packetFilter( links )
+		self.packetFound = bool(len(self.packetsLinks))
 		return self.packetFound
 
 ################################## FLVPLAYER ##################################
