@@ -135,7 +135,7 @@ class Packer(object):
         self.path = params.get("path", self.timer.path)
         self.pycompile = params.get("pycompile",True)
         filename = params.get("filename", "packet_test.zip")
-        if not re.match(".+zip", filename): filename += ".zip" # adiciona a extensão
+        if not re.match(".+zip$", filename): filename += ".zip" # adiciona a extensão
         self.f_path = os.path.join(PACKER_DIR, filename)
         self.p_file = self.get_packet()
         
