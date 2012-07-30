@@ -1,6 +1,7 @@
 # -*- coding: UTF-8 -*-
 import os
 import re
+import sys
 import compileall
 import zipfile
 import datetime
@@ -134,6 +135,7 @@ class Packer(object):
         self.path = params.get("path", self.timer.path)
         self.pycompile = params.get("pycompile",True)
         filename = params.get("filename", "packet_test.zip")
+        if not re.match(".+zip", filename): filename += ".zip" # adiciona a extensão
         self.f_path = os.path.join(PACKER_DIR, filename)
         self.p_file = self.get_packet()
         
@@ -147,7 +149,7 @@ class Packer(object):
     
     def add_file(self, path):
         if self.timer.has_mtime(path) and self.timer.modified(path):
-            if self.pycompile and re.match(path, ".+py$"):
+            if self.pycompile and re.match(".+py$", path):
                 compileall.compile_file(path, force=True)
                 path = path.replace(".py", ".pyc")
             relpath = path.split(os.getcwd()+os.sep)[-1]
@@ -184,11 +186,18 @@ def clean_all_nopy(rootpath):
 
 #----------------------------------------------------------------------
 if __name__ == "__main__":
+    try: filename = sys.argv[1]
+    except IndexError: filename = ''
+    # remove todos .pyc .pyo por segurança
+    clean_all_nopy( TARGET_DIR )
+    
     # cria tabela mtime para os arquivos que ainda não existirem.
     timer = create_mtime_table(TARGET_DIR)
-    packer = Packer(timer = timer)
-    packer.save()
-    packer.close()
+    
+    if filename: packer = Packer(filename=filename, timer=timer)
+    else: packer = Packer(timer=timer)
+    packer.save(); packer.close()
+    
     # atualiza a tabela para os arquivos já trabalhados.
     create_mtime_table(TARGET_DIR, update=True)
     print "Finish!"
