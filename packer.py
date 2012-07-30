@@ -38,16 +38,21 @@ class Timer(object):
         self.t_conf_path = os.path.join(PACKER_DIR, filename)
         self.t_conf = configobj.ConfigObj(self.t_conf_path)
         
-        self.excludes = (".+pyc$", ".+pyo$", ".+po$")
+        self.excludes = self.p_compile(*(".+pyc$", ".+pyo$", ".+po$"))
         excludes = params.get("excludes", tuple())
-        self.excludes += excludes
-
+        self.excludes += self.p_compile(*excludes)
+    
+    def p_compile(self, *args):
+        return tuple([re.compile(p) for p in args])
+        
     def get_base_name(self, path):
         """ C:\somedir\somefile.txt -> (somedir, somefile.txt)"""
-        base = os.path.basename(os.path.dirname(path))
+        parts = os.path.dirname( path ).split( os.sep )
+        if len(parts) >= 3: base = "_".join(parts[-2:])
+        else: base = os.path.basename(os.path.dirname(path))
         name = os.path.basename( path )
         return (base, name)
-
+    
     def get_relative_name(self, path):
         """ C:\somedir\somefile.txt -> somedir.somefile.txt"""
         base, name = self.get_base_name(path)
@@ -61,7 +66,7 @@ class Timer(object):
         if path: rname = self.get_relative_name(path)
         else: rname = name
         for pattern in self.excludes:
-            if re.match(pattern, rname):
+            if pattern.match( rname ):
                 return True
         return False
 
