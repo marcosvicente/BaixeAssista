@@ -460,6 +460,7 @@ class BaixeAssistaWin( wx.Frame ):
 			dlg.ShowModal(); dlg.Destroy()
 
 	def searchUpdateNow(self, noInfo):
+		## _("Erro!")
 		# Iniciando ao procura por uma nova versão do programa.
 		rel = updater.Release()
 		status, msg = rel.search()
@@ -531,13 +532,7 @@ class BaixeAssistaWin( wx.Frame ):
 					msg = upd.warning, title=_("Programa atualizado."),
 					style = wx.ICON_INFORMATION|wx.OK
 				)
-		elif noInfo is False:
-			wx.CallAfter(
-				self.showSafeMessageDialog,
-				msg = msg, title=_("Erro!"),
-				style = wx.ICON_ERROR|wx.OK
-			)
-
+				
 	def showSafeMessageDialog(self, **kwargs):
 		dlg = GMD.GenericMessageDialog(self, kwargs["msg"], kwargs["title"], kwargs["style"])					
 		dlgModal = dlg.ShowModal(); dlg.Destroy()
