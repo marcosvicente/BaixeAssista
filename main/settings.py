@@ -18,7 +18,7 @@ else:
 APPDIR = os.path.join(PROJECTPATH, "app")
 CONFIGS_DIR = os.path.join(APPDIR, "configs")
 IMAGES_DIR = os.path.join(APPDIR, "imagens")
-DEFAULT_VIDEOS_DIR = os.path.join(APPDIR, "videos")
+DEFAULT_VIDEOS_DIR = os.path.join(PROJECTPATH,"STREAM_VIDEOS")
 
 if not PROJECTPATH in sys.path: # import do projeto
 	sys.path.append( PROJECTPATH )
