@@ -6,13 +6,16 @@ import compileall
 import zipfile
 import datetime
 import configobj
+import platform
+
+os.environ['DJANGO_SETTINGS_MODULE'] = "main.settings"
+from main.app import manager
 
 EXTS_PATTERN = [".+pyc$", ".+pyo$"] # ext final
 TARGET_DIR = os.path.join(os.getcwd(), "main")
 PACKER_DIR = os.path.join(os.getcwd(), "packer_files")
 LOG_PATH = os.path.join(PACKER_DIR, "packer.log")
 # ---------------------------------------------------------------
-
 if not os.path.exists( PACKER_DIR ):
     os.mkdir( PACKER_DIR )
 
@@ -38,14 +41,14 @@ class Timer(object):
         filename = params.get("filename", "t_file.txt")
         self.t_conf_path = os.path.join(PACKER_DIR, filename)
         self.t_conf = configobj.ConfigObj(self.t_conf_path)
-        
+
         self.excludes = self.p_compile(*(".+pyc$", ".+pyo$", ".+po$"))
         excludes = params.get("excludes", tuple())
         self.excludes += self.p_compile(*excludes)
-    
+
     def p_compile(self, *args):
         return tuple([re.compile(p) for p in args])
-        
+
     def get_base_name(self, path):
         """ C:\somedir\somefile.txt -> (somedir, somefile.txt)"""
         parts = os.path.dirname( path ).split( os.sep )
@@ -53,7 +56,7 @@ class Timer(object):
         else: base = os.path.basename(os.path.dirname(path))
         name = os.path.basename( path )
         return (base, name)
-    
+
     def get_relative_name(self, path):
         """ C:\somedir\somefile.txt -> somedir.somefile.txt"""
         base, name = self.get_base_name(path)
@@ -127,18 +130,22 @@ class Packer(object):
     def __init__(self, **params):
         """params: {}
         - timer: objeto monitorador das modificação no diretório em questão
-        - filename: nome do pacote gerado na saída
-        - path: caminho alvo
+        - pkv: versão do pacote gerado na saída.
+        - pgv: versão do programa, para o qual, se destina o pacote.
+        - system: sistema operacional do programa final.
         - pycompile: booleano indicando se arquivos .py devem ser compilados para .pyc
         """
         self.timer = params.get("timer", Timer(path=TARGET_DIR))
         self.path = params.get("path", self.timer.path)
         self.pycompile = params.get("pycompile",True)
-        filename = params.get("filename", "packet_test.zip")
+        filename = "packet_%sv%s_%s.zip"%(
+            params.get("system", "0.0.0"), params.get("pkv", "0.0.0"), 
+            params.get("pgv", "0.0.0")
+        )
         if not re.match(".+zip$", filename): filename += ".zip" # adiciona a extensão
         self.f_path = os.path.join(PACKER_DIR, filename)
         self.p_file = self.get_packet()
-        
+
     def get_packet(self):
         try: p_file = zipfile.ZipFile(self.f_path, "w")
         except Exception, err:
@@ -146,7 +153,7 @@ class Packer(object):
             log.write(msg+"\n")
             print msg; exit(1)
         return p_file
-    
+
     def add_file(self, path):
         if self.timer.has_mtime(path) and self.timer.modified(path):
             if self.pycompile and re.match(".+py$", path):
@@ -154,17 +161,17 @@ class Packer(object):
                 path = path.replace(".py", ".pyc")
             relpath = path.split(os.getcwd()+os.sep)[-1]
             self.p_file.write(path, relpath)
-            
+
     def save(self):
         for root, dirs, files in os.walk(self.path):
-            if "__ignore__" in files: continue
+            if ("__ignore__" in files) or ("__pass__" in files): continue
             for filename in files:
                 path = os.path.join(root, filename)
                 self.add_file( path )
-                
+
     def close(self ):
         self.p_file.close()
-        
+
 #----------------------------------------------------------------------
 def remove(filepath):
     """ removendo o arquivo compilado do disco """
@@ -186,16 +193,33 @@ def clean_all_nopy(rootpath):
 
 #----------------------------------------------------------------------
 if __name__ == "__main__":
-    try: filename = sys.argv[1]
-    except IndexError: filename = ''
+    def help():
+        print """
+List of options:
+ --pkv= -> packet version
+"""
+    try:
+        import getopt
+        optlist, args = getopt.getopt(sys.argv[1:], "h", ["pkv="])
+        params = dict(optlist)
+    except getopt.GetoptError, err:
+        print "GetoptError: %s"%err
+        sys.exit(1)
+        
+    if not optlist or params.has_key("-h"):
+        help(); sys.exit(0)
+        
+    pkv = params.get("--pkv","0.0.0")
+    pgv = manager.PROGRAM_VERSION
+    system = manager.PROGRAM_SYSTEM[platform.system()]
+    
     # remove todos .pyc .pyo por segurança
     clean_all_nopy( TARGET_DIR )
-    
+
     # cria tabela mtime para os arquivos que ainda não existirem.
     timer = create_mtime_table(TARGET_DIR)
-    
-    if filename: packer = Packer(filename=filename, timer=timer)
-    else: packer = Packer(timer=timer)
+
+    packer = Packer(pkv=pkv, pgv=pgv, system=system, timer=timer)
     packer.save(); packer.close()
     
     # atualiza a tabela para os arquivos já trabalhados.
