@@ -103,9 +103,9 @@ class StartDown(threading.Thread):
 class BaixeAssistaWin( wx.Frame ):
 	def __init__(self):
 		""" BaixeAssistaWin: representação principal da interface gráfica """
-		wx.Frame.__init__(self, None, wx.ID_ANY, "Baixe&Assista v%s"%PROGRAM_VERSION, size=(800,600))
+		wx.Frame.__init__(self, None, wx.ID_ANY, "BaixeAssista v%s"%PROGRAM_VERSION, size=(800,600))
 		self.SetIcon( self.getMovieIcon() )
-
+		
 		# configurações gerais da aplicação
 		self.configPath = os.path.join(settings.APPDIR,"configs","configs.cfg")
 		self.configs = self.getConfigs()
@@ -484,36 +484,33 @@ class BaixeAssistaWin( wx.Frame ):
 				style = wx.ICON_ERROR|wx.OK
 			)
 		# Inicia a procura por pacotes de atualização.
-		version = self.configs["Controles"]["packetVersion"]
-		packSearch = manager.PackSearch(packetVersion = version)
-
-		# usa a página carregada de updateSearch.getWebPage
-		searchResult = packSearch.search(webpage=updateSearch.getWebPage())
-
-		if searchResult is True:
+		packetVersion = self.configs["Controles"]["packetVersion"]
+		updater = manager.Updater(packetVersion = packetVersion)
+		
+		if updater.search() is True:
 			# começa o download da atualização
-			downResult, msg = packSearch.packetDown()
-
-			if downResult is True:
+			sucess, msg = updater.download()
+			
+			if sucess is True:
 				language = self.configs["Menus"]["language"]
 				# texto informando as mudanças que a nova atualização fez.
-				lastchanges = packSearch.getLastChanges( language)
-
+				changes = updater.getLastChanges( language)
+				
 				# aplica a atualização
-				updateResult, msg = packSearch.update()
-
+				sucess, msg = updater.update()
+				
 				# remove todos os arquivos
-				packSearch.cleanUpdateDir()
-
-				if updateResult is True:
+				updater.cleanUpdateDir()
+				
+				if sucess is True:
 					## ======================================================
-					newVersion = packSearch.getNewVersion()
-
+					newVersion = updater.getNewVersion()
+					
 					if newVersion: # guarda a versão do pacote recebido.
 						self.configs["Controles"]["packetVersion"] = newVersion
 					## ======================================================
-
-					wx.CallAfter(self.showDialogUpdate, msg, "\n\n".join(lastchanges))
+					
+					wx.CallAfter(self.showDialogUpdate, msg, "\n\n".join(changes))
 					## ======================================================
 				elif noInfo is False:
 					wx.CallAfter(
@@ -528,10 +525,10 @@ class BaixeAssistaWin( wx.Frame ):
 					style = wx.ICON_ERROR|wx.OK
 				)
 		elif noInfo is False:
-			if packSearch.is_old_program():
+			if updater.isOldRelease():
 				wx.CallAfter(
 					self.showSafeMessageDialog,
-					msg = packSearch.warning, title=_("Programa atualizado."),
+					msg = updater.warning, title=_("Programa atualizado."),
 					style = wx.ICON_INFORMATION|wx.OK
 				)
 		elif noInfo is False:
