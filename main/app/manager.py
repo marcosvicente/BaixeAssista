@@ -31,7 +31,6 @@ if __name__ == "__main__":
 	curdir = os.path.dirname(os.path.abspath(__file__))
 	pardir = os.path.split(curdir)[0]
 	maindir = os.path.split(pardir)[0]
-
 	if not maindir in sys.path: sys.path.append(maindir)
 	if not pardir in sys.path: sys.path.append(pardir)
 	if not curdir in sys.path: sys.path.append(curdir)
@@ -338,7 +337,7 @@ class Updater(object):
 		for packetPath in self.packetsPaths:
 			try:
 				with zipfile.ZipFile(packetPath) as updateZip:
-					zipinfo = updateZip.getinfo("changes.txt")
+					zipinfo = updateZip.getinfo("main/changes.txt")
 					rawText = updateZip.read( zipinfo )
 					
 					pattern = "<{language}>(.*)</{language}>".format(language=language)
@@ -349,7 +348,7 @@ class Updater(object):
 					
 					header = "%s:\n"%get_filename(packetPath, False)
 					changes.append(header + text)
-			except: break
+			except: continue
 		return changes
 	
 	def cleanUpdateDir(self):
@@ -357,18 +356,19 @@ class Updater(object):
 		for name in os.listdir(self.updateDir):
 			try: os.remove(os.path.join(self.updateDir, name))
 			except Exception, err:
-				print "Err[update clean: %s]: %s"%(path, err)
+				print "Err[clean: %s]: %s"%(path, err)
 				
 	def update(self):
 		""" Com o pacote de atualizações já baixado, e pronto para ser lido, instala as atualizações """
 		assert len(self.packetsPaths), "No packets!"
+		pattern = re.compile("main/changes\.txt")
 		for index, path in enumerate(self.packetsPaths):
 			try:
 				with zipfile.ZipFile( path ) as updateZip:
 					assert not updateZip.testzip()
-					
-					updateZip.extractall( os.getcwd() )
-					
+					for zipinfo in updateZip.infolist():
+						if not pattern.match(zipinfo.filename):
+							updateZip.extract(zipinfo, os.getcwd())
 					# guarda a versão do último pacote atualizado
 					self.newVersion, pgv = self.get_versions(get_filename( path ))
 			except:
@@ -461,7 +461,7 @@ class Updater(object):
 		return (self.oldRelease and not self.packetFound)
 	
 	def search(self):
-		""" packet_version: pacote que o programa está usando """
+		""" inicia a busca por novos pacotes de atualização """
 		try:
 			s = urllib2.urlopen(self.sourcesLink)
 			contenty = s.read(); s.close()
