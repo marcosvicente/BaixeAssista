@@ -60,6 +60,7 @@ def copy_to_dest(source, destination):
 				print "Dir already exist: ", destdir
 				
 			for filename in files:
+				if filename == "__pass__": continue
 				filepath = os.path.join(root, filename)
 				filedestdir = os.path.join(destdir, filename)
 				
