@@ -22,6 +22,7 @@ if not curdir in sys.path: sys.path.append( curdir )
 
 # módulos do projeto
 import manager
+import updater
 
 # Instalando a tradução
 manager.installTranslation()
@@ -459,10 +460,10 @@ class BaixeAssistaWin( wx.Frame ):
 			dlg.ShowModal(); dlg.Destroy()
 
 	def searchUpdateNow(self, noInfo):
-		# *** Procurando por uma nova versão do programa ***
-		updateSearch = manager.UpdateSearch()
-		status, msg = updateSearch.search()
-
+		# Iniciando ao procura por uma nova versão do programa.
+		rel = updater.Release()
+		status, msg = rel.search()
+		
 		if status is True:
 			msg += _(u"\nPressione OK para ir a página de download.")
 			wx.CallAfter(
@@ -484,27 +485,26 @@ class BaixeAssistaWin( wx.Frame ):
 				style = wx.ICON_ERROR|wx.OK
 			)
 		# Inicia a procura por pacotes de atualização.
-		packetVersion = self.configs["Controles"]["packetVersion"]
-		updater = manager.Updater(packetVersion = packetVersion)
+		upd = updater.Updater(packetVersion = self.configs["Controles"]["packetVersion"])
 		
-		if updater.search() is True:
+		if upd.search() is True:
 			# começa o download da atualização
-			sucess, msg = updater.download()
+			sucess, msg = upd.download()
 			
 			if sucess is True:
 				language = self.configs["Menus"]["language"]
 				# texto informando as mudanças que a nova atualização fez.
-				changes = updater.getLastChanges( language)
+				changes = upd.getLastChanges( language)
 				
 				# aplica a atualização
-				sucess, msg = updater.update()
+				sucess, msg = upd.update()
 				
 				# remove todos os arquivos
-				updater.cleanUpdateDir()
+				upd.cleanUpdateDir()
 				
 				if sucess is True:
 					## ======================================================
-					newVersion = updater.getNewVersion()
+					newVersion = upd.getNewVersion()
 					
 					if newVersion: # guarda a versão do pacote recebido.
 						self.configs["Controles"]["packetVersion"] = newVersion
@@ -525,10 +525,10 @@ class BaixeAssistaWin( wx.Frame ):
 					style = wx.ICON_ERROR|wx.OK
 				)
 		elif noInfo is False:
-			if updater.isOldRelease():
+			if upd.isOldRelease():
 				wx.CallAfter(
 					self.showSafeMessageDialog,
-					msg = updater.warning, title=_("Programa atualizado."),
+					msg = upd.warning, title=_("Programa atualizado."),
 					style = wx.ICON_INFORMATION|wx.OK
 				)
 		elif noInfo is False:
