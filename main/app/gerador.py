@@ -1645,7 +1645,11 @@ class Moviezer( SiteBase ):
 ###################################### MOEVIDEO #######################################
 class MoeVideo( SiteBase ):
 	## http://moevideo.net/video.php?file=64141.60e02b3b80c5e95e2e4ac85f0838&width=600&height=450
-	patterns = re.compile("(?P<inner_url>http://moevideo\.net/video\.php\?file=(?P<id>\w+\.\w+))")
+	## http://moevideo.net/?page=video&uid=79316.7cd2a2d4b5e02fd77f017bbc1f01
+	patterns = (
+	    re.compile("(?P<inner_url>http://moevideo\.net/video\.php\?file=(?P<id>\w+\.\w+))"),
+	    re.compile("(?P<inner_url>http://moevideo\.net/\?page=video&uid=(?P<id>\w+\.\w+))")
+	)
 
 	def __init__(self, url, **params):
 		"""Constructor"""
@@ -2261,9 +2265,9 @@ if __name__ == "__main__":
 	for n in range(proxyManager.getNumIps()):
 		proxies = proxyManager.proxyFormatado()
 		print proxies["http"]
-		proxies = {}
+		#proxies = {}
 
-		if not checkSite("http://www.putlocker.com/embed/394133DD84A589BB", proxies=proxies, quality=3):
+		if not checkSite("http://www.userporn.com/watch_video.php?v=xmG7ZnJmBPnB", proxies=proxies, quality=3):
 			proxyManager.setBadIp( proxies )
 
 	del proxyManager
