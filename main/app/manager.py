@@ -750,7 +750,7 @@ class FileManager:
 		- videoId: id do arquivo de vídeo(deve ser dado ao iniciar o objeto).
 		"""
 		self.params = params
-		self.filePath = os.path.join(settings.APPDIR, "videos")
+		self.filePath = settings.DEFAULT_VIDEOS_DIR
 		self.resumeInfo = ResumeInfo()
 		
 	def __del__(self):
