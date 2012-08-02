@@ -6,8 +6,10 @@ import compileall
 import shutil
 import re
 
+EXE_NAME = 'BaixeAssista_v%s'%packer.manager.PROGRAM_VERSION
 BUILD_DIR = os.path.join(os.getcwd(), os.environ["HOMEPATH"], "BaixeAssistaBuild") # build exe
-DIST_DIR = os.path.join(BUILD_DIR, "dist") # final exe
+DIST_DIR = os.path.join(BUILD_DIR, "dist")
+EXE_DIR = os.path.join(BUILD_DIR, EXE_NAME)
 TARGET_DIR = packer.TARGET_DIR
 
 # ---------------------------------------------------------------
@@ -25,7 +27,9 @@ def find_compiler(compilername = "pyinstaller.py"):
 def start_build():
 	""" inica a contrução do executável """
 	COMPILER = 'python "%s"' % find_compiler()
-	COMMANDS = '-c --out="%s" --icon=%s --onefile BaixeAssista.py'%(BUILD_DIR, "movies.ico")
+	COMMANDS = '-w --out="{outdir}" --icon={ico} --onefile BaixeAssista.py --name={exename}'.format(
+	    outdir = BUILD_DIR, ico="movies.ico", exename=EXE_NAME
+	)
 	CMD = COMPILER + " " + COMMANDS
 	
 	# remove all .pyc / .pyo
@@ -60,7 +64,7 @@ def copy_to_dest(source, destination):
 				print "Dir already exist: ", destdir
 				
 			for filename in files:
-				if filename == "__pass__": continue
+				if (filename == "__pass__") or (filename == "changes.txt"): continue
 				filepath = os.path.join(root, filename)
 				filedestdir = os.path.join(destdir, filename)
 				
@@ -89,8 +93,9 @@ if __name__ == "__main__":
 		copy_to_dest( TARGET_DIR, DIST_DIR )
 		
 		try:
-			os.chdir( DIST_DIR ) # vai para o diretorio do executável.
-			subprocess.call(os.path.join(DIST_DIR, "BaixeAssista.exe"))
+			os.rename(DIST_DIR, EXE_DIR)
+			os.chdir( EXE_DIR ) # vai para o diretorio do executável.
+			subprocess.call(os.path.join(EXE_DIR, EXE_NAME+".exe"))
 		except Exception, err:
 			print "Err[exe start] %s"%err
 	else:
