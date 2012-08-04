@@ -183,7 +183,7 @@ class MovieManager(wx.MiniFrame):
 		if self.playerPath:
 			filename = self.controlMovies.GetStringSelection()
 			filepath = self.fileManager.getFilePath(filename)
-			player = manager.FlvPlayer(self.playerPath, videoPath = filepath)
+			player = manager.FlvPlayer(self.playerPath, filepath = filepath)
 			player.start()
 
 	def OnCancel(self, event):
