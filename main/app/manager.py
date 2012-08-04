@@ -234,39 +234,59 @@ class SqliteOperation:
 		self.database.close()
 		
 ################################## FLVPLAYER ##################################
+def runElevated(cmd, params, processWait=False):
+	""" executa um processo, porém requistando permissões. """
+	import win32com.shell.shell as shell
+	from win32com.shell import shellcon
+	from win32con import SW_NORMAL
+	import win32event, win32api
+	
+	process = shell.ShellExecuteEx(
+	    lpVerb="runas", lpFile=cmd, fMask=shellcon.SEE_MASK_NOCLOSEPROCESS, 
+	    lpParameters=params, nShow=SW_NORMAL
+	)
+	hProcess = process["hProcess"]
+	class Process:
+		processHandle = hProcess
+		@staticmethod
+		def terminate(): win32api.TerminateProcess(hProcess,0)
+		@staticmethod
+		def wait(): win32event.WaitForSingleObject(hProcess, win32event.INFINITE)
+	return Process
+
 class FlvPlayer( threading.Thread):
 	""" Classe de controle para player externo. 
 	O objetivo é abrir o player exeterno e indicar a ele o que fazer.
 	"""
-	def __init__(self, cmd="", porta=80, filename="stream", videoPath=""):
+	def __init__(self, cmd="", filename="streamFlv", filepath="", port=80):
 		threading.Thread.__init__(self)
 		self.setDaemon(True)
+		self.cmd = cmd
+		self.process, self.running = None, False
 		
-		self.is_running = False
-		
-		if not videoPath:
-			local = "http://localhost:%d/%s"%(porta, filename)
-			self.args = (cmd, local)
+		if not filepath:
+			self.url="http://localhost:%d/%s"%(port, filename)
 		else:
-			self.args = (cmd, videoPath)
-
+			self.url = filepath
+		
 	def playerStop(self):
 		""" pára a execução do player """
-		try: self.playerProcess.terminate()
+		try: self.process.terminate()
 		except: pass
-
+		
 	def isRunning(self):
-		return self.is_running
-
+		return self.running
+	
 	def run(self):
-		self.is_running = False
-		self.playerProcess = subprocess.Popen( self.args)
-		self.is_running = True
-
-		# aguarda o processo do player terminar
-		if not self.playerProcess.wait() is None: 
-			self.is_running = False
-
+		try:
+			self.process = runElevated(self.cmd, self.url)
+			self.running = True; self.process.wait()
+		except ImportError:
+			self.process = subprocess.Popen(self.url, executable=self.cmd)
+			self.running = True; self.process.wait()
+		finally:
+			self.running = False
+		
 ################################ STREAMHANDLE ################################
 class run_locked:
 	""" decorador usado para sincronizar as conexões com o servidor """
