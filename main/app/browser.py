@@ -9,6 +9,7 @@ import configobj
 import wx.animate
 import wx.html2 as Webview
 import wx.lib.agw.genericmessagedialog as GMD
+import wx.lib.agw.flatnotebook as FNB
 
 curdir = os.path.dirname(os.path.abspath(__file__))
 
@@ -17,6 +18,9 @@ with open(os.path.join(curdir,"js","ml.js"), "r") as js_file:
 
 with open(os.path.join(curdir,"js","el.js"), "r") as js_file:
     JS_LINK_EXTRACTOR = js_file.read()
+    
+with open(os.path.join(curdir,"js","rl.js"), "r") as js_file:
+    JS_LINK_REGISTER = js_file.read()
 
 if __name__ == "__main__":
     os.environ['DJANGO_SETTINGS_MODULE'] = "main.settings"	
@@ -97,6 +101,7 @@ POPUP_BLOCK = [
     "www.protetor.info",
     #"",
 ]
+SEARCH_ENGINE = "http://www.google.com.br/webhp?hl=pt-BR"
 ##############################################################################
 class HistoryUrl:
     """ Classe criada com o objetivo de corrigir o problema de histórico 
@@ -179,20 +184,35 @@ class Browser(wx.Panel):
 
         if mainWindow:
             self.titleBase = mainWindow.GetTitle()
-
-        self.progressAni = wx.animate.Animation(
-            os.path.join(settings.APPDIR,"imagens", "progress.gif") )
-
+        
+        self.progressAni = wx.animate.Animation(os.path.join(settings.IMAGES_DIR,"progress.gif"))
+        self._ImageList = wx.ImageList(*self.progressAni.GetSize())
+        
+        for index in range(self.progressAni.GetFrameCount()):
+            img = self.progressAni.GetFrame( index )
+            self._ImageList.Add( img.ConvertToBitmap() )
+            
         self.filtroUrl = FiltroUrl()
 
         self.objects = models.Browser.objects # queryset
         self.historySites = [] # preenchido ao abrir um novo site
         self.current = self.getLastSite()
-
-        self.abasControl = wx.aui.AuiNotebook(self)
-        self.abasControl.Bind(wx.aui.EVT_AUINOTEBOOK_PAGE_CHANGED, self.setTabFocus)
-        self.abasControl.Bind(wx.aui.EVT_AUINOTEBOOK_PAGE_CLOSE, self.OnTabClose)
-
+        
+        self.rmenuNewTab = wx.Menu()
+        item = wx.MenuItem(self.rmenuNewTab, wx.ID_ANY, _("Adicionar nova aba"), "")
+        self.Bind(wx.EVT_MENU, lambda evt: self.addNewTab( SEARCH_ENGINE ), item)
+        self.rmenuNewTab.AppendItem(item)
+        
+        item = wx.MenuItem(self.rmenuNewTab, wx.ID_ANY, _("Fechar"), "")
+        self.Bind(wx.EVT_MENU, self.closeCurrentPage, item)
+        self.rmenuNewTab.AppendItem(item)
+        
+        self.abasControl = FNB.FlatNotebook(self, wx.ID_ANY, agwStyle=FNB.FNB_VC8) #wx.aui.AuiNotebook(self)
+        self.abasControl.Bind(FNB.EVT_FLATNOTEBOOK_PAGE_CHANGED, self.setTabFocus)
+        self.abasControl.Bind(FNB.EVT_FLATNOTEBOOK_PAGE_CLOSING, self.OnTabClose)
+        self.abasControl.SetRightClickMenu( self.rmenuNewTab )
+        self.abasControl.SetImageList( self._ImageList )
+        
         # construção da barra de ferramentas
         toolBarSizer = self.createToolBar()
 
@@ -211,7 +231,11 @@ class Browser(wx.Panel):
         mainBoxSizer.Layout()
         self.SetSizer( mainBoxSizer )
         self.SetAutoLayout(True)
-
+    
+    def closeCurrentPage(self, evt):
+        """ Fecha a página pelo menu """
+        self.abasControl.DeletePage(self.abasControl.GetSelection())
+        
     def getLastSite(self):
         try: return self.objects.get(
             site=None, historysite=None).lastsite
@@ -252,6 +276,8 @@ class Browser(wx.Panel):
 
     def addNewTab(self, url, defaut=False):
         """ abre uma nova aba de navegação """
+        self.Freeze()
+        
         webview = Webview.WebView.New( self.abasControl)
 
         # gera histórico das urls navegadas. Usado pelos botões de navegação
@@ -284,7 +310,8 @@ class Browser(wx.Panel):
 
         # guarda com o objetivo de gera uma lista de histórico
         self.historySites.append(url)
-
+        self.Thaw()
+        
     def setShortTitle(self, title, titleSize=25):
         if len(title) > titleSize: title = title[:titleSize]+"..."
         return title
@@ -314,29 +341,27 @@ class Browser(wx.Panel):
         self.location.SetToolTip(wx.ToolTip(self.webview.GetCurrentURL()))
         evt.Skip()
 
-    def updateNavProgress(self):
+    def progressAnimate(self):
         """ atualiza a animação de carregamento de todas a páginas ainda não carregadas """
-        for index in range(self.abasControl.GetPageCount()):
+        num_of_pages = self.abasControl.GetPageCount()
+        num_of_frames = self.progressAni.GetFrameCount()
+        
+        for index in range(num_of_pages):
             webview = self.abasControl.GetPage(index)
-            # Start: OnWebViewNavigating - Stop: OnWebViewLoaded
             if webview.loading:
                 if (time.time() - webview.timeCount) > 0.1:
                     webview.timeCount = time.time()
-
+                    
                     # limita o contador de frames ao numero suportado por animate
-                    if webview.progressFrameNum == self.progressAni.GetFrameCount():
+                    if webview.progressFrameNum == num_of_frames:
                         webview.progressFrameNum = 0
-
-                    frameImage = self.progressAni.GetFrame( webview.progressFrameNum )
-                    ##frameImage.Rescale(20, 20)
-                    bmp = frameImage.ConvertToBitmap()
-
+                        
                     # muda o bitmap de animação
-                    self.abasControl.SetPageBitmap(index, bmp)
+                    self.abasControl.SetPageImage(index, webview.progressFrameNum)
                     webview.progressFrameNum += 1
-
+                    
             elif not webview.isNullBitmap: # fixa o o bitmap nulo somente uma vez
-                self.abasControl.SetPageBitmap(index, wx.NullBitmap)
+                self.abasControl.SetPageImage(index, -1)
                 webview.isNullBitmap = True
 
     def setNavStopLoading(self, webview):
@@ -372,7 +397,7 @@ class Browser(wx.Panel):
         # ---------------------------------------------------------------------------------
 
         # botão go_back
-        imgpath = os.path.join(settings.APPDIR, "imagens", "go-previous24x24.png")
+        imgpath = os.path.join(settings.IMAGES_DIR, "go-previous24x24.png")
         bmp = wx.Image(imgpath, wx.BITMAP_TYPE_PNG)
         #bmp.Rescale(width, height)
 
@@ -384,7 +409,7 @@ class Browser(wx.Panel):
         # ---------------------------------------------------------------------------------
 
         # botão go_forward
-        imgpath = os.path.join(settings.APPDIR, "imagens", "go-next24x24.png")
+        imgpath = os.path.join(settings.IMAGES_DIR, "go-next24x24.png")
         bmp = wx.Image(imgpath, wx.BITMAP_TYPE_PNG)
 
         btn = wx.BitmapButton(self, -1, bmp.ConvertToBitmap())
@@ -395,7 +420,7 @@ class Browser(wx.Panel):
         # ---------------------------------------------------------------------------------
 
         # botão search
-        imgpath = os.path.join(settings.APPDIR, "imagens", "search-computer24x24.png")
+        imgpath = os.path.join(settings.IMAGES_DIR, "search-computer24x24.png")
         bmp = wx.Image(imgpath, wx.BITMAP_TYPE_PNG)
 
         btn = wx.BitmapButton(self, -1, bmp.ConvertToBitmap())
@@ -405,7 +430,7 @@ class Browser(wx.Panel):
         # ---------------------------------------------------------------------------------
 
         # botão reflesh
-        imgpath = os.path.join(settings.APPDIR, "imagens", "view-refresh24x24.png")
+        imgpath = os.path.join(settings.IMAGES_DIR, "view-refresh24x24.png")
         bmp = wx.Image(imgpath, wx.BITMAP_TYPE_PNG)
 
         btn = wx.BitmapButton(self, -1, bmp.ConvertToBitmap())
@@ -415,7 +440,7 @@ class Browser(wx.Panel):
         # ---------------------------------------------------------------------------------
 
         # botão Stop loading
-        imgpath = os.path.join(settings.APPDIR, "imagens", "process-stop24x24.png")
+        imgpath = os.path.join(settings.IMAGES_DIR, "process-stop24x24.png")
         bmp = wx.Image(imgpath, wx.BITMAP_TYPE_PNG)
 
         btn = wx.BitmapButton(self, -1, bmp.ConvertToBitmap())
@@ -425,7 +450,7 @@ class Browser(wx.Panel):
         # ---------------------------------------------------------------------------------
 
         # botão adicionar um novo site
-        imgpath = os.path.join(settings.APPDIR, "imagens", "list-add24x24.png")
+        imgpath = os.path.join(settings.IMAGES_DIR, "list-add24x24.png")
         bmp = wx.Image(imgpath, wx.BITMAP_TYPE_PNG)
 
         btn = wx.BitmapButton(self, -1, bmp.ConvertToBitmap())
@@ -434,7 +459,7 @@ class Browser(wx.Panel):
         flexGridSizerGroup.Add(btn)
         # ---------------------------------------------------------------------------------
         # botão remover site
-        imgpath = os.path.join(settings.APPDIR, "imagens", "list-remove24x24.png")
+        imgpath = os.path.join(settings.IMAGES_DIR, "list-remove24x24.png")
         bmp = wx.Image(imgpath, wx.BITMAP_TYPE_PNG)
 
         btn = wx.BitmapButton(self, -1, bmp.ConvertToBitmap())
@@ -534,7 +559,7 @@ class Browser(wx.Panel):
         dlg.Destroy()
 
     def OnSearchPageButton(self, event):
-        self.webview.LoadURL("http://www.google.com.br/webhp?hl=pt-BR")
+        self.webview.LoadURL( SEARCH_ENGINE )
         # limpa o controle de url embutidas
         # porque uma nova página está sendo carregada.
         self.controlEmbedUrls.Clear()
@@ -593,10 +618,11 @@ class Browser(wx.Panel):
                 self.location.SetToolTip(wx.ToolTip( webviewUrl ))
 
             self.current = webviewUrl
-        ## ==============================
-        webview.RunScript( JS_LINK_MONITOR )
-     
+        
+        webview.RunScript( JS_LINK_REGISTER )
+        
         if not webview.js_script_run and webviewUrl.startswith("http"):
+            webview.RunScript( JS_LINK_MONITOR )
             webview.RunScript( JS_LINK_EXTRACTOR )
             webview.js_script_run = True
             
@@ -684,7 +710,7 @@ class Browser(wx.Panel):
     def OnCheckCanGoBack(self, event):
         ##event.Enable(self.webview.CanGoBack())
         event.Enable(self.webview.historyUrl.CanGoBack())
-        self.updateNavProgress()
+        self.progressAnimate()
 
     def OnCheckCanGoForward(self, event):
         ##event.Enable(self.webview.CanGoForward())
