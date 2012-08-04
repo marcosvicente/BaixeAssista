@@ -10,6 +10,10 @@ ADMINS = (
 
 MANAGERS = ADMINS
 
+EMAIL_USE_TLS = 1
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_PORT = 25
+
 if not re.match(".+main$", os.getcwd()):
 	PROJECTPATH = os.path.join(os.getcwd(), "main")
 else:
