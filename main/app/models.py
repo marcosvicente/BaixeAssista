@@ -1,7 +1,17 @@
 from django.db import models
 
+########################################################################
+
 # Create your models here.
 class Url( models.Model ):
+	title = models.TextField("Title", unique=True)
+	url = models.TextField("Url")
+	
+	def __unicode__(self):
+		return self.title
+	
+########################################################################
+class LastUrl( models.Model ):
 	title = models.TextField("Title", unique=True)
 	url = models.TextField("Url")
 	
