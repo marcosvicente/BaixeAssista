@@ -234,7 +234,7 @@ class SqliteOperation:
 		self.database.close()
 		
 ################################## FLVPLAYER ##################################
-def runElevated(cmd, params, processWait=False):
+def runElevated(cmd, params):
 	""" executa um processo, porém requistando permissões. """
 	import win32com.shell.shell as shell
 	from win32com.shell import shellcon
@@ -267,7 +267,7 @@ class FlvPlayer( threading.Thread):
 		if not filepath:
 			self.url="http://localhost:%d/%s"%(port, filename)
 		else:
-			self.url = filepath
+			self.url = '"%s"'%filepath
 		
 	def playerStop(self):
 		""" pára a execução do player """
@@ -355,10 +355,9 @@ class StreamHandler( threading.Thread ):
 	def request_meta_data( self):
 		""" envia apenas uma sequencia de bytes como amostra """
 		if self.headers.get("Connection","").lower() != "keep-alive":
-			if self.nb_sended > 262144 and not self.server.sendMeta(): # 256 k
-				self.server.setMeta(True)
-				raise BufferError, "Err: meta-data"
-		
+			if self.nb_sended > 524288 and not self.server.sendMeta(): # 512 k
+				self.server.setMeta(True); raise BufferError, "MetaData"
+				
 	def get_request_data(self, timeout=60):
 		data = ""
 		ready = select.select([self.request],[],[],timeout)[0]
@@ -582,8 +581,8 @@ class UrlBase(object):
 		return base, id[:-1] #remove ]
 
 	def formatUrl(self, valor):
-		import gerador
 		""" megavideo[t53vqf0l] -> http://www.megavideo.com/v=t53vqf0l """
+		import gerador
 		base, id = self.splitBaseId( valor )
 		return gerador.Universal.get_url( base ) % id
 
@@ -599,8 +598,8 @@ class UrlBase(object):
 		return basename
 
 	def analizeUrl(self, url):
-		import gerador
 		""" http://www.megavideo.com/v=t53vqf0l -> (megavideo.com, t53vqf0l) """
+		import gerador
 		basename = self.getBaseName(url)
 		urlid = gerador.Universal.get_video_id(basename, url)
 		return (basename, urlid)
@@ -610,7 +609,8 @@ class UrlManager( UrlBase ):
 	def __init__(self):
 		super(UrlManager, self).__init__()
 		self.objects = models.Url.objects # acesso a queryset
-
+		self.lastUrl_objects = models.LastUrl.objects
+		
 	def getUrlId(self, title):
 		""" retorna o id da url, com base no título(desc) """
 		query = self.objects.get(title = title)
@@ -645,6 +645,11 @@ class UrlManager( UrlBase ):
 			
 		models.Url(url=urlmodel, title=title).save()
 		
+		try:
+			lu = self.lastUrl_objects.latest("url")
+			lu.url = url; lu.title = title; lu.save()
+		except: models.LastUrl(url=url, title=title).save()
+		
 	def getTitleList(self):
 		return [ query.title
 		    for query in self.objects.all().order_by("title")
@@ -663,9 +668,9 @@ class UrlManager( UrlBase ):
 		]
 
 	def getLastUrl(self):
-		try: query = self.objects.latest("url")
+		try: query = self.lastUrl_objects.latest("url")
 		except: return "http://", "..."
-		return (self.formatUrl(query.url), query.title)
+		return (query.url, query.title)
 	
 	def exist(self, url):
 		""" avalia se a url já existe na base de dados """
