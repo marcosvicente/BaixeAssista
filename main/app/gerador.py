@@ -1522,7 +1522,7 @@ class PutLocker( SiteBase ):
 		self.url = url
 
 	def suportaSeekBar(self):
-		return True
+		return False
 
 	def getMessage(self, webpage):
 		## <div class='message t_0'>This file doesn't exist, or has been removed.</div>
@@ -1583,7 +1583,6 @@ class PutLocker( SiteBase ):
 		except: pass # usa a extensão padrão.
 		
 		self.configs = {"url": url, "title":title, "ext": ext}
-		## self.headers = {"Referer": "http://static.putlocker.com/video_player.swf?%s"%time.time()}
 
 ###################################### PUTLOCKER ######################################
 class Sockshare( PutLocker ):
@@ -1595,7 +1594,7 @@ class Sockshare( PutLocker ):
 		    re.compile("(?P<inner_url>(?:http://)?www\.sockshare\.com/file/(?P<id>\w+))"),
 		    [re.compile("(?P<inner_url>(?:http://)?www\.sockshare\.com/embed/(?P<id>\w+))")]
 		    ),
-		"control": "SM_SEEK", 
+		"control": "SM_RANGE", 
 		"video_control": None
 	}
 
@@ -1647,7 +1646,7 @@ class MoeVideo( SiteBase ):
 	## http://moevideo.net/video.php?file=64141.60e02b3b80c5e95e2e4ac85f0838&width=600&height=450
 	## http://moevideo.net/?page=video&uid=79316.7cd2a2d4b5e02fd77f017bbc1f01
 	patterns = (
-	    re.compile("(?P<inner_url>http://moevideo\.net/video\.php\?file=(?P<id>\w+\.\w+))"),
+	    [re.compile("(?P<inner_url>http://moevideo\.net/video\.php\?file=(?P<id>\w+\.\w+))")],
 	    re.compile("(?P<inner_url>http://moevideo\.net/\?page=video&uid=(?P<id>\w+\.\w+))")
 	)
 
