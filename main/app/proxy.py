@@ -331,7 +331,7 @@ class TestControl:
 			# caminho completo para o arquivo de ips
 			path = os.path.join(settings.APPDIR, "configs", "ipSP.cfg")
 			
-			with open(path, "w", buffering=0) as fileip:
+			with open(path, "w", buffering=0) as ip_file:
 				# irá salvar dos servidores mais rápidos, para os mais lentos.
 				self.ips.sort(reverse=True)
 				
@@ -339,13 +339,11 @@ class TestControl:
 				numips = self.params.get("numips", 0)
 				
 				if len(self.ips) > int(numips / 2):
-					for time, ip in self.ips:
-						fileip.write("%s\n" % ip)
+					for t, ip in self.ips: ip_file.write("%s\n" % ip)
 					self.log = _("Nova lista de ips criada com sucesso!")
-					
 				else: self.log = _("Erro: número de ips, insuficientes.")
 		except Exception, err:
-			self.log = _("Erro salvando ips: %s") %err
+			self.log = _("Erro salvando ips: %s")%err
 			
 ########################################################################
 class TesteIP( threading.Thread ):
@@ -437,10 +435,10 @@ class TesteIP( threading.Thread ):
 				log = log % (self.testControl.getNumIps(), num_max_ips)
 				self.testControl.setLog( log )
 			
-			# remove a relação do ip com as configs da instância.
-			del self.videoManager[ proxies["http"] ]
-			print self.testControl.getLog()
-			
+		# remove a relação do ip com as configs da instância.
+		del self.videoManager[ proxies["http"] ]
+		print self.testControl.getLog()
+		
 	def run( self):
 		num_max_ips = self.params.get("metaProxies", 0)
 		while self.isRunning and self.testControl.getNumIps() < num_max_ips:
