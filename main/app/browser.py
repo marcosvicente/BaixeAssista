@@ -11,32 +11,34 @@ import wx.html2 as Webview
 import wx.lib.agw.genericmessagedialog as GMD
 import wx.lib.agw.flatnotebook as FNB
 
-curdir = os.path.dirname(os.path.abspath(__file__))
-
-with open(os.path.join(curdir,"js","ml.js"), "r") as js_file:
-    JS_LINK_MONITOR = js_file.read()
-
-with open(os.path.join(curdir,"js","el.js"), "r") as js_file:
-    JS_LINK_EXTRACTOR = js_file.read()
-    
-with open(os.path.join(curdir,"js","rl.js"), "r") as js_file:
-    JS_LINK_REGISTER = js_file.read()
-
 if __name__ == "__main__":
-    os.environ['DJANGO_SETTINGS_MODULE'] = "main.settings"	
-    pardir = os.path.split(curdir)[0]
-    maindir = os.path.split(pardir)[0]
+    os.environ['DJANGO_SETTINGS_MODULE'] = "main.settings"
+    scriptPath = os.path.dirname(os.path.abspath(__file__))
     
-    if not maindir in sys.path: sys.path.append(maindir)
-    if not pardir in sys.path: sys.path.append(pardir)
-    if not curdir in sys.path: sys.path.append(curdir)
-    os.chdir( maindir )
+    parentDir = os.path.dirname(scriptPath)
+    mainDir = os.path.dirname(parentDir)
+    
+    if not mainDir in sys.path: sys.path.append(mainDir)
+    if not parentDir in sys.path: sys.path.append(parentDir)
+    if not scriptPath in sys.path: sys.path.append(scriptPath)
+    
+    os.chdir( mainDir )
 
 import gerador, manager
 from main import settings
 from main.app import models
 
 PROGRAM_VERSION = gerador.PROGRAM_VERSION
+
+with open(os.path.join(settings.APPDIR,"js","ml.js"), "r") as js_file:
+    JS_LINK_MONITOR = js_file.read()
+
+with open(os.path.join(settings.APPDIR,"js","el.js"), "r") as js_file:
+    JS_LINK_EXTRACTOR = js_file.read()
+    
+with open(os.path.join(settings.APPDIR,"js","rl.js"), "r") as js_file:
+    JS_LINK_REGISTER = js_file.read()
+    
 ######################################################################################
 
 class FiltroUrl:
