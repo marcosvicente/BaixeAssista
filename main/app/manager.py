@@ -1,6 +1,6 @@
 # -*- coding: ISO-8859-1 -*-
 ## guarda a versão do programa.
-PROGRAM_VERSION = "0.1.9"
+PROGRAM_VERSION = "0.2.0"
 PROGRAM_SYSTEM = {"Windows": "oswin", "Linux": "oslinux"}
 
 import sys
