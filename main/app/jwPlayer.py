@@ -11,7 +11,9 @@ from django.template import Context, Template, loader, defaulttags, defaultfilte
 ########################################################################
 
 def getPlayerPage(swf_player, flashvar):
-    tmpl = loader.get_template("template-player.html")
+    tmpl_dir = os.path.join(settings.APPDIR, "templates")
+    try: tmpl = loader.find_template("template-player.html", dirs=(tmpl_dir,))[0]
+    except: tmpl = loader.get_template(os.path.join(tmpl_dir, "template-player.html"))
     return tmpl.render(Context({"swf_player": swf_player, "flashvar": flashvar}))
 
 class JWPlayer(wx.Panel):
