@@ -1066,8 +1066,8 @@ class Manage:
 			videoQuality - qualidade desejada para o vídeo. 
 			Pode ser: 1 = baixa; 2 = média; 3 = alta
 		"""
-		if not URL: raise AttributeError, _("Entre com uma url primeiro!")
-
+		assert URL, _("Entre com uma url primeiro!")
+		
 		# guarda a url do video
 		self.streamUrl = URL
 		self.params = params
@@ -1097,12 +1097,12 @@ class Manage:
 		self.videoExt = "" # extensão do arquivo de vídeo
 
 		# videoManager: controla a obtenção de links, tamanho do arquivo, title, etc.
-		vmanager = self.getVideoManager( self.streamUrl )
+		vmanager = gerador.Universal.getVideoManager( self.streamUrl )
 		self.videoManager = vmanager(self.streamUrl, qualidade=self.params.get("videoQuality",2))
-
+		
 		# streamManager: controla a transferência do arquivo de vídeo
-		self.streamManager = self.getStreamManager( self.streamUrl )
-
+		self.streamManager = gerador.Universal.getStreamManager( self.streamUrl )
+		
 		# gerencia os endereços dos servidores proxies
 		self.proxyManager = ProxyManager( self)
 
@@ -1353,47 +1353,13 @@ class Manage:
 
 	def getVideoSize(self):
 		return self.videoSize
-
-	@staticmethod
-	def getStreamManager( url):
-		""" Procura pelo controlador de tranferênicia de arquivo de video"""
-		smanager = None
-		try:
-			for sitename in gerador.Universal.get_sites():
-				matchobj = gerador.Universal.patternMatch(sitename, url)
-				if matchobj:
-					smanager = gerador.Universal.get_control( sitename)
-					break
-		except AssertionError, err:
-			raise AttributeError, _("Sem suporte para a url fornecida.")
-		assert smanager, _("url desconhecida!")
-		return smanager
-
-	@staticmethod
-	def getVideoManager( url):
-		""" Procura pelo controlador de video baseado na url dada """
-		vmanager = None
-		try:
-			for sitename in gerador.Universal.get_sites():
-				matchobj = gerador.Universal.patternMatch(sitename, url)
-				if matchobj:
-					vmanager = gerador.Universal.get_video_control( sitename )
-					break
-		except AssertionError, err:
-			raise AttributeError, _("Sem suporte para a url fornecida.")
-		assert vmanager, _("url desconhecida!")
-		return vmanager
-
+	
 	def intervSendoEnviado(self):
 		return self.interval.send_info['sending']
 
 	def numBytesRecebidos(self):
 		""" retorna o numero total de bytes transferidos """
 		return self.numTotalBytes
-
-	def getBaseName(self):
-		""" Nome do servidor fornecendo a stream de video corrente """
-		return self.servername
 
 	def salveInfoResumo(self):
 		""" salva todos os dados necessários para o resumo do arquivo atual """
@@ -1736,7 +1702,7 @@ class StreamManager( threading.Thread):
 				self.manage.interval.send_info["nbytes"][start] += nbytes
 
 	def inicieLeitura(self ):
-		blockSizeLen = 1024; tempoInicialLocal = time.time()
+		blockSizeLen = 1024; localTimeStart = time.time()
 		blockSize = self.manage.interval.get_block_size( self.ident )
 		intervstart = self.manage.interval.get_start( self.ident)
 
@@ -1764,7 +1730,7 @@ class StreamManager( threading.Thread):
 
 				if self.esperaSolicitada(): # caso onde a seekbar é usada
 					self.aguardeNotificacao(); break
-
+					
 				# o servidor fechou a conexão
 				if (blockSizeLen > 0 and streamLen == 0) or self.checkStreamError( streamData) != -1:
 					self.fixeFalhaTransfer(_("Parado pelo servidor"), 2); break
@@ -1775,31 +1741,31 @@ class StreamManager( threading.Thread):
 				# permite somente uma escrita por vez
 				self.streamWrite(streamData, streamLen)
 				self.numBytesLidos += streamLen
-
+				
 				start = self.manage.tempoInicialGlobal
 				current = self.manage.numBytesRecebidos() - self.manage.posInicialLeitura
 				total = self.manage.getVideoSize() - self.manage.posInicialLeitura
 
 				# calcula a velocidade de transferência da conexão
-				globalInfo.set_info(self.ident, 'velocidadeLocal', 
-								    self.calc_speed(tempoInicialLocal, time.time(), self.numBytesLidos) )
-
+				speed = self.calc_speed(localTimeStart, time.time(), self.numBytesLidos)
+				globalInfo.set_info(self.ident, 'velocidadeLocal', speed)
+				
 				# tempo do download
 				self.manage.tempoDownload = self.calc_eta(start, time.time(), total, current)
-
+				
 				# calcula a velocidade global
-				self.manage.velocidadeGlobal = self.calc_speed(start, time.time(),  current)
-
+				self.manage.velocidadeGlobal = self.calc_speed(start, time.time(), current)
+				
 				if self.numBytesLidos == blockSize:
 					if self.manage.interval.canContinue(self.ident) and not self.manage.isComplete():
 						self.manage.interval.remove(self.ident)# removendo o intervalo completo
-						self.configureConexao(); self.info_clear()# configurando um novo intervado
+						self.configure(); self.info_clear()# configurando um novo intervado
 						intervstart = self.manage.interval.get_start(self.ident)
-						tempoInicialLocal = time.time()# reiniciando as variáveis
-
+						localTimeStart = time.time()# reiniciando as variáveis
+						
 				# sem redução de velocidade para o intervalo pricipal
 				elif self.manage.intervSendoEnviado() != intervstart:
-					self.slow_down(tempoInicialLocal, self.numBytesLidos)
+					self.slow_down(localTimeStart, self.numBytesLidos)
 			except Exception, erro:
 				self.fixeFalhaTransfer(_("Erro de leitura"), 2)
 				break
@@ -1909,10 +1875,10 @@ class StreamManager( threading.Thread):
 			nfalhas += 1
 		return False # nao foi possível conectar
 
-	def configureConexao(self ):
+	def configure(self ):
 		""" associa a conexão a uma parte da stream """
 		globalInfo.set_info(self.ident, "estado", _("Ocioso"))
-
+		
 		if not self.esperaSolicitada():
 			with StreamManager.lockBlocoConfig:
 
@@ -1933,11 +1899,7 @@ class StreamManager( threading.Thread):
 		else:
 			# aguarda a configuração terminar
 			self.aguardeNotificacao()
-
-	@staticmethod
-	def configureLink(link, seek, server):
-		return gerador.get_with_seek(link, seek)
-	
+			
 	def run(self):
 		# configura um link inicial
 		self.inicialize()
@@ -1945,20 +1907,15 @@ class StreamManager( threading.Thread):
 		while not self.wasStopped() and not self.manage.isComplete():
 			try:
 				# configura um intervalo para cada conexao
-				self.configureConexao()
-
+				self.configure()
+				
 				if self.manage.interval.hasInterval( self.ident ):
-					self.linkSeek = self.configureLink(self.link, 
-										               self.manage.interval.get_start(self.ident), 
-										               self.manage.getBaseName())
-
-					# tenta estabelecer a conexão como o servidor
-					if self.conecte():
-						# inicia a transferência de dados
-						self.inicieLeitura()
-					else:
-						self.fixeFalhaTransfer(_("Incapaz de conectar"), 1)
-
+					self.linkSeek = gerador.get_with_seek(
+					    self.link, self.manage.interval.get_start(self.ident))
+					# Tenta conectar e iniciar a tranferência do arquivo de video.
+					if self.conecte(): self.inicieLeitura()
+					else: self.fixeFalhaTransfer(_("Incapaz de conectar"), 1)
+					
 				# estado ocioso
 				else: time.sleep(1)
 
@@ -2031,9 +1988,10 @@ class StreamManager_( StreamManager ):
 				for second in range(tempo_espera, 0, -1):
 					globalInfo.set_info(self.ident, "estado", _(u"Aguarde %02ds")%second)
 					time.sleep(1)
-
+					
 				globalInfo.set_info(self.ident, "estado", _("Conectando"))
-				self.streamSocket = videoManager.conecte(link, proxies=self.proxies, headers={"Range":"bytes=%s-"%seekpos})
+				self.streamSocket = videoManager.conecte(
+				    link, proxies=self.proxies, headers={"Range":"bytes=%s-"%seekpos})
 				
 				if self.streamSocket.code == 200 or self.streamSocket.code == 206:
 					if seekpos == 0: # anula o tamanho aproximado pelo real do arquivo
@@ -2062,7 +2020,7 @@ class StreamManager_( StreamManager ):
 		while self.isRunning and not self.manage.isComplete():
 			try:
 				# configura um intervalo para cada conexao
-				self.configureConexao()
+				self.configure()
 
 				if self.manage.interval.hasInterval( self.ident ):
 					# tentando estabelece a conexão como o servidor
