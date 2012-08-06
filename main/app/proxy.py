@@ -363,7 +363,7 @@ class TesteIP( threading.Thread ):
 		
 		# objeto que trabalha as informações dos vídeos
 		url = self.params.get("URL","")
-		vmanager = manager.Manage.getVideoManager(url)
+		vmanager = gerador.Universal.getVideoManager(url)
 		self.videoManager = vmanager(url)
 		
 	def stop(self):
@@ -391,9 +391,11 @@ class TesteIP( threading.Thread ):
 		while test_count < max_test:
 			try:
 				seekpos = random.randint(num_bytes, int(streamSize*0.75))
-				link_seek = manager.StreamManager.configureLink(streamLink, seekpos, self.videoManager.basename)
-				fd = self.videoManager.conecte(link_seek, proxies=proxies, timeout=15)
-				
+				fd = self.videoManager.conecte(
+				    gerador.get_with_seek(streamLink, seekpos),
+				    headers={"Range":"bytes=%s-"%seekpos},
+				    proxies=proxies, timeout=15
+				)
 				# valida o cabeçalho de resposta
 				is_valid = manager.StreamManager.responseCheck(
 				    num_bytes, seekpos, streamSize, fd.headers)
