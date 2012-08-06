@@ -147,12 +147,12 @@ class SiteBase(ConnectionProcessor):
 	#----------------------------------------------------------------------
 	def __init__(self, **params):
 		ConnectionProcessor.__init__(self)
-		self.basename = self.url = self.messagem = ""
+		self.url = self.basename = self.message = ''
 		self.streamHeaderSize = self.streamSize = 0
 		self.params = params
 		self.configs = {}
 		self.headers = {}
-
+		
 	def __del__(self):
 		del self.basename
 		del self.params
@@ -164,7 +164,7 @@ class SiteBase(ConnectionProcessor):
 			self.remove_section( arg )
 
 	def get_message(self):
-		return self.messagem
+		return self.message
 
 	def suportaSeekBar(self):
 		return False
@@ -241,7 +241,7 @@ class SiteBase(ConnectionProcessor):
 		file_size = 0
 		link = get_with_seek(self.getLink(), 0)
 		
-		h = {"Range": "bytes=0-"}; h.update(self.headers)
+		h = {"Range":"bytes=0-"}; h.update(self.headers)
 		req = self.get_request(link, h, data=None)
 		
 		resp = self.conecte(request = req, proxies=proxies, timeout=timeout)
@@ -258,13 +258,17 @@ class SiteBase(ConnectionProcessor):
 
 ##################################### MEGAUPLOAD ######################################
 class Uploaded( SiteBase ):
-	patterns = re.compile("(?P<inner_url>(?:http://)?uploaded.to/file/(?P<id>\w+))")
 	## http://uploaded.to/io/ticket/captcha/urxo7anj
 	## http://uploaded.to/file/urxo7anj
+	controller = {
+	    "url": "http://uploaded.to/file/%s", 
+	    "patterns": re.compile("(?P<inner_url>(?:http://)?uploaded.to/file/(?P<id>\w+))"), 
+	    "control": "SM_RANGE", 
+	    "video_control": None
+	}
 
 	def __init__(self, url, **params):
 		SiteBase.__init__(self, **params)
-		self.url = url
 		self.captchaUrl = "http://uploaded.to/io/ticket/captcha/%s"
 		# unidade usadas para pegar o tamanho aproximado do video(arquivo)
 		self.unidades = {'B': 1, 'KB':1024, 'MB': 1024**2, 'GB':1024**3, 'TB':1024**4}
@@ -272,7 +276,8 @@ class Uploaded( SiteBase ):
 		self.matchFileExt = re.compile("[\w\-_]+\.(\w+)")
 		self.basename = "uploaded.to"
 		self.streamSize = 0
-
+		self.url = url
+		
 	def __del__(self):
 		del self.url
 		del self.unidades
@@ -315,7 +320,12 @@ class Uploaded( SiteBase ):
 class Metacafe( SiteBase ):
 	"""Information Extractor for metacafe.com."""
 	## http://www.metacafe.com/watch/8492972/wheel_of_fortune_fail/
-	patterns = re.compile("(?P<inner_url>(?:http://)?www\.metacafe\.com/watch/(?P<id>\w+)/.*)")
+	controller = {
+	    "url": "http://www.metacafe.com/watch/%s/", 
+	    "patterns": re.compile("(?P<inner_url>(?:http://)?www\.metacafe\.com/watch/(?P<id>\w+)/.*)"), 
+	    "control": "SM_RANGE", 
+	    "video_control": None
+	}
 
 	def __init__(self, url, **params):
 		SiteBase.__init__(self, **params)
@@ -389,9 +399,14 @@ class Metacafe( SiteBase ):
 class BlipTV( SiteBase ):
 	"""Information extractor for blip.tv"""
 	## http://blip.tv/thechrisgethardshow/tcgs-45-we-got-nothing-6140017
-	patterns = re.compile("(?P<inner_url>(?:http://)?blip\.tv/(?P<id>.+-\d+))")
+	controller = {
+	    "url": "http://blip.tv/%s", 
+	    "patterns": re.compile("(?P<inner_url>(?:http://)?blip\.tv/(?P<id>.+-\d+))"), 
+	    "control": "SM_RANGE", 
+	    "video_control": None
+	}
 	URL_EXT = r'^.*\.([a-z0-9]+)$'
-
+	
 	def __init__(self, url, **params):
 		SiteBase.__init__(self, **params)
 		self.basename = "blip.tv"
@@ -453,8 +468,13 @@ class BlipTV( SiteBase ):
 class Dailymotion( SiteBase ):
 	"""Information Extractor for Dailymotion"""
 	## http://www.dailymotion.com/video/xowm01_justin-bieber-gomez-at-chuck-e-cheese_news#
-	patterns =  re.compile(r"(?P<inner_url>(?i)(?:https?://)?(?:www\.)?dailymotion(?:\.com)?(?:[a-z]{2,3})?/video/(?P<id>.+))")
-
+	controller = {
+	    "url": "http://www.dailymotion.com/video/%s", 
+	    "patterns": re.compile(r"(?P<inner_url>(?i)(?:https?://)?(?:www\.)?dailymotion(?:\.com)?(?:[a-z]{2,3})?/video/(?P<id>.+))"), 
+	    "control": "SM_RANGE", 
+	    "video_control": None
+	}
+	
 	def __init__(self, url, **params):
 		SiteBase.__init__(self, **params)
 		self.basename = "dailymotion.com"
@@ -506,8 +526,13 @@ class Dailymotion( SiteBase ):
 class GoogleVideo( SiteBase ):
 	"""Information extractor for video.google.com."""
 	## http://video.google.com.br/videoplay?docid=-1717800235769991478
-	patterns = re.compile(r'(?P<inner_url>(?:http://)?video\.google\.(?:com(?:\.au)?(?:\.br)?|co\.(?:uk|jp|kr|cr)|ca|de|es|fr||it|nl|pl)/videoplay\?docid=(?P<id>-?[^\&]+).*)')
-
+	controller = {
+	    "url": "http://video.google.com.br/videoplay?docid=%s", 
+	    "patterns": re.compile(r'(?P<inner_url>(?:http://)?video\.google\.(?:com(?:\.au)?(?:\.br)?|co\.(?:uk|jp|kr|cr)|ca|de|es|fr||it|nl|pl)/videoplay\?docid=(?P<id>-?[^\&]+).*)'), 
+	    "control": "SM_RANGE", 
+	    "video_control": None
+	}
+	
 	def __init__(self, url, **params):
 		SiteBase.__init__(self, **params)
 		self.basename = "video.google"
@@ -566,8 +591,13 @@ class GoogleVideo( SiteBase ):
 class Photobucket( SiteBase ):
 	"""Information extractor for photobucket.com."""
 	## http://photobucket.com/videos
-	patterns = re.compile("(?P<inner_url>(?:http://)?media\.photobucket\.com/video/(?P<id>.*))")
-
+	controller = {
+	    "url": "http://media.photobucket.com/video/%s", 
+	    "patterns": re.compile("(?P<inner_url>(?:http://)?media\.photobucket\.com/video/(?P<id>.*))"), 
+	    "control": "SM_RANGE", 
+	    "video_control": None
+	}
+	
 	def __init__(self, url, **params):
 		SiteBase.__init__(self, **params)
 		self.basename = "media.photobucket"
@@ -604,16 +634,21 @@ class Photobucket( SiteBase ):
 
 ####################################### YOUTUBE #######################################
 class Youtube( SiteBase ):
-	""""""
 	## normal: http://www.youtube.com/watch?v=bWDZ-od-otI
 	## embutida: http://www.youtube.com/watch?feature=player_embedded&v=_PMU_jvOS4U
 	## http://www.youtube.com/watch?v=VW51Q_YBsNk&feature=player_embedded
 	## http://www.youtube.com/v/VW51Q_YBsNk?fs=1&hl=pt_BR&rel=0&color1=0x5d1719&color2=0xcd311b
 	## http://www.youtube.com/embed/ulZZ4mG9Ums
-	patterns = (
-		re.compile("(?P<inner_url>(?:http://)?www\.youtube\.com/watch\?.*v=(?P<id>[0-9A-Za-z_-]+))"),
-		[re.compile("(?P<inner_url>(?:http://)?www.youtube(?:-nocookie)?\.com/(?:v/|embed/)(?P<id>[0-9A-Za-z_-]+))")]
-	)
+	controller = {
+	    "url": "http://www.youtube.com/watch?v=%s", 
+	    "patterns": (
+	         re.compile("(?P<inner_url>(?:http://)?www\.youtube\.com/watch\?.*v=(?P<id>[0-9A-Za-z_-]+))"),
+	        [re.compile("(?P<inner_url>(?:http://)?www.youtube(?:-nocookie)?\.com/(?:v/|embed/)(?P<id>[0-9A-Za-z_-]+))")]
+	    ), 
+	    "control": "SM_SEEK", 
+	    "video_control": None
+	}
+	
 	def __init__(self, url, **params):
 		"""Constructor"""
 		SiteBase.__init__(self, **params)
@@ -621,22 +656,8 @@ class Youtube( SiteBase ):
 		self.video_quality_opts = {1: "small", 2: "medium", 3: "large"}
 		self.basename = u"youtube.com"
 		self.url = url
-
-	def __str__(self):
-		bigString = ''
-		for key, value in self.configs.items():
-			if key != "urls":
-				bigString += ('{k}: {v}\n'.format(k = key, v= value))
-			else:
-				bigString += '\n'
-				for ud in value:
-					bigString += ("Url: %s\n"%ud.get('url', ['not found'])[0])
-					bigString += ("Tipo: %s\n"%ud.get('type', ['not found'])[0])
-					bigString += ("Qualidade: %s\n"%ud.get('quality', ['not found'])[0])
-					bigString += (("-"*35)+"\n")
-				bigString += '\n'
-		return bigString
-
+		
+	def __str__(self): pass
 	def suportaSeekBar(self):
 		return True
 
@@ -644,13 +665,16 @@ class Youtube( SiteBase ):
 		url_data_strs = url_encoded.split(',')
 		url_data = [cgi.parse_qs(uds) for uds in url_data_strs]
 		return url_data
-
-	def setErrorMessage(self, video_info):
-		if video_info.get("status",[""])[0] == "fail":
-			reason = video_info.get("reason",[""])[0]
-			self.messagem = "%s informa: %s"%(self.basename, 
-						                      reason.decode("utf-8","ignore"))
-
+	
+	def getMessage(self, data):
+		try:
+			if data.get("status",[""])[0] == "fail":
+				reason = data.get("reason",[""])[0]
+				msg = u"%s informa: %s"%(self.basename, unicode(reason,"UTF-8"))
+			else: msg = ""
+		except: msg = ""
+		return msg
+	
 	def set_configs(self, video_info):
 		""" atualiza a dicionário de configuração """
 		url_encoded = video_info["url_encoded_fmt_stream_map"][0]
@@ -695,30 +719,30 @@ class Youtube( SiteBase ):
 
 	def start_extraction(self, proxies={}, timeout=25):
 		video_id = Universal.get_video_id(self.basename, self.url)
-
+		
 		url = self.info_url % video_id
 		fd = self.conecte(url, proxies=proxies, timeout=timeout)
-		video_info = fd.read(); fd.close()
-
-		video_info = cgi.parse_qs(video_info)
-
-		try:
-			self.setErrorMessage(video_info)
-		except:pass
-
+		data = fd.read(); fd.close()
+		
+		data = cgi.parse_qs( data )
+		self.message = self.getMessage(data)
 		# atualiza o dicionário de parâmetros
-		self.set_configs(video_info)
-
+		self.set_configs( data )
+		
 ######################################## VIMEO ########################################
 class Vimeo( SiteBase ):
 	"""Information extractor for vimeo.com."""
 	## http://vimeo.com/40620829
 	## http://vimeo.com/channels/news/40620829
 	## http://vimeo.com/channels/hd/40716035
-	patterns = re.compile(r'(?P<inner_url>(?:https?://)?(?:(?:www|player).)?vimeo\.com/(?:groups/[^/]+/|channels?/(?:news/|hd/))?(?:videos?/)?(?P<id>[0-9]+))')
-
+	controller = {
+	    "url": "http://vimeo.com/%s", 
+	    "patterns": re.compile(r'(?P<inner_url>(?:https?://)?(?:(?:www|player).)?vimeo\.com/(?:groups/[^/]+/|channels?/(?:news/|hd/))?(?:videos?/)?(?P<id>[0-9]+))'), 
+	    "control": "SM_RANGE", 
+	    "video_control": None
+	}
+	
 	def __init__(self, url, **params):
-		"""Constructor"""
 		SiteBase.__init__(self, **params)
 		self.basename = u"vimeo.com"
 		self.url = url
@@ -790,10 +814,14 @@ class Vimeo( SiteBase ):
 class MyVideo( SiteBase ):
 	"""Information Extractor for myvideo.de."""
 	## http://www.myvideo.de/watch/8532190/D_Gray_man_Folge_2_Der_Schwarze_Orden
-	patterns = re.compile(r'(?P<inner_url>(?:http://)?(?:www\.)?myvideo\.de/watch/(?P<id>[0-9]+)/(?:[^?/]+)?.*)')
-
+	controller = {
+	    "url": "http://www.myvideo.de/watch/%s", 
+	    "patterns": re.compile(r'(?P<inner_url>(?:http://)?(?:www\.)?myvideo\.de/watch/(?P<id>[0-9]+)/(?:[^?/]+)?.*)'), 
+	    "control": "SM_RANGE", 
+	    "video_control": None
+	}
+	
 	def __init__(self, url, **params):
-		"""Constructor"""
 		SiteBase.__init__(self, **params)
 		self.basename = "myvideo.de"
 		self.url = url
@@ -829,17 +857,20 @@ class MyVideo( SiteBase ):
 class CollegeHumor( SiteBase ):
 	"""Information extractor for collegehumor.com"""
 	## http://www.collegehumor.com/video/6768211/hardly-working-the-human-gif
-	patterns = re.compile(r'(?P<inner_url>^(?:https?://)?(?:www\.)?collegehumor\.com/(?:video|embed)/(?P<id>[0-9]+)/.+)')
-
+	controller = {
+	    "url": "http://www.collegehumor.com/video/%s", 
+	    "patterns": re.compile(r'(?P<inner_url>^(?:https?://)?(?:www\.)?collegehumor\.com/(?:video|embed)/(?P<id>[0-9]+)/.+)'), 
+	    "control": "SM_RANGE", 
+	    "video_control": None
+	}
+	
 	def __init__(self, url, **params):
-		"""Constructor"""
 		SiteBase.__init__(self, **params)
 		self.basename = "collegehumor.com"
 		self.url = url
 
 	def start_extraction(self, proxies={}, timeout=25):
 		video_id = Universal.get_video_id(self.basename, self.url)
-
 		try:
 			fd = self.conecte(self.url, proxies=proxies, timeout=timeout)
 			webpage = fd.read(); fd.close()
@@ -872,8 +903,13 @@ class CollegeHumor( SiteBase ):
 
 ###################################### MEGAVIDEO ######################################
 class Megavideo( SiteBase ):
-	patterns = re.compile("(?P<inner_url>(?:http://)?www\.megavideo\.com/\?(?:v|d)=(?P<id>\w+))")
-
+	controller = {
+	    "url": "http://www.megavideo.com/?v=%s", 
+	    "patterns": re.compile("(?P<inner_url>(?:http://)?www\.megavideo\.com/\?(?:v|d)=(?P<id>\w+))"), 
+	    "control": "SM_SEEK", 
+	    "video_control": None
+	}
+	
 	def __init__(self, url, **params):
 		SiteBase.__init__(self, **params)
 		self.confgsMacth = re.compile('\s*(.+?)\s*=\s*"(.*?)"', re.DOTALL)
@@ -941,12 +977,16 @@ class Megavideo( SiteBase ):
 		if fd.code == 200:
 			self.configs = dict( self.confgsMacth.findall( data ) )
 			self.configs["ext"] = "flv"
-
-
+	
 ###################################### MEGAPORN #######################################
 class MegaPorn( Megavideo):
-	patterns = re.compile("(?P<inner_url>(?:http://)?www\.(?:megaporn|cum)?\.com/video/\?v=(?P<id>\w+))")
-
+	controller = {
+	    "url": "http://www.megaporn.com/video/?v=%s", 
+	    "patterns": re.compile("(?P<inner_url>(?:http://)?www\.(?:megaporn|cum)?\.com/video/\?v=(?P<id>\w+))"), 
+	    "control": "SM_SEEK", 
+	    "video_control": None
+	}
+	
 	def __init__(self, url, **params):
 		Megavideo.__init__(self, url, **params)
 		self.videoLink = "http://www.megaporn.com/video/xml/videolink.php?v="
@@ -955,19 +995,21 @@ class MegaPorn( Megavideo):
 class Videobb( SiteBase ):
 	## http://www.videobb.com/video/XuS6EAfMb7nf
 	## http://www.videobb.com/watch_video.php?v=XuS6EAfMb7nf
-	patterns = re.compile("(?P<inner_url>(?:http://)?(?:www\.)?videobb\.com/(?:video/|watch_video\.php\?v=)(?P<id>\w+))")
-
+	controller = {
+	    "url": "http://www.videobb.com/video/%s", 
+	    "patterns": re.compile("(?P<inner_url>(?:http://)?(?:www\.)?videobb\.com/(?:video/|watch_video\.php\?v=)(?P<id>\w+))"), 
+	    "control": "SM_SEEK", 
+	    "video_control": None
+	}
+	
 	def __init__(self, url, **params):
 		SiteBase.__init__(self, **params)	
 		self.settingsLink = "http://www.videobb.com/player_control/settings.php?v=%s"
-
-		self.cfg = {}
 		self.basename = manager.UrlManager.getBaseName( url)
-
 		self.env = ["settings","config"]
 		self.res = ["settings","res"]
 		self.key2 = 226593
-
+		self.cfg = {}
 		# bytes inicias removidos da stream segmentada
 		self.streamHeaderSize = 13
 		self.url = url
@@ -1081,11 +1123,15 @@ class Videobb( SiteBase ):
 ###################################### VIDEOZER #######################################
 class Videozer( Videobb):
 	## http://www.videozer.com/video/ceN9vZXa
-	patterns = re.compile("(?P<inner_url>(?:http://)?(?:www\.)?videozer\.com/video/(?P<id>\w+))")
-
+	controller = {
+	    "url": "http://www.videozer.com/video/%s", 
+	    "patterns": re.compile("(?P<inner_url>(?:http://)?(?:www\.)?videozer\.com/video/(?P<id>\w+))"), 
+	    "control": "SM_SEEK", 
+	    "video_control": None
+	}
+	
 	def __init__(self, url, **params):
 		Videobb.__init__(self, url, **params)
-
 		self.settingsLink = 'http://www.videozer.com/player_control/settings.php?v=%s&fv=v1.1.14'
 		self.env = ["cfg","environment"]
 		self.res = ["cfg","quality"]
@@ -1107,36 +1153,51 @@ class Videozer( Videobb):
 		return params["cfg"]["login"]["spn"]
 
 ###################################### USERPORN #######################################
-class Userporn( Videobb):
+class Userporn( Videobb ):
 	## http://www.userporn.com/video/WZ8Nuf2blzw8
 	## http://www.userporn.com/watch_video.php?v=WZ8Nuf2blzw8
-	patterns = re.compile("(?P<inner_url>(?:http://)?(?:www\.)?userporn\.com/(?:video/|watch_video\.php\?v=)(?P<id>\w+))")
+	controller = {
+	    "url": "http://www.userporn.com/video/%s", 
+	    "patterns": re.compile("(?P<inner_url>(?:http://)?(?:www\.)?userporn\.com/(?:video/|watch_video\.php\?v=)(?P<id>\w+))"), 
+	    "control": "SM_SEEK",
+	    "video_control": None
+	}
 
 	def __init__(self, url, **params):
 		Videobb.__init__(self, url, **params)
-
 		self.settingsLink = "http://www.userporn.com/player_control/settings.php?v=%s"
 		self.key2 = 526729
-
+		
 ################################# VIDEO_MIXTURECLOUD ##################################
 class Mixturecloud( SiteBase ):
 	## http://www.mixturecloud.com/video=iM1zoh
 	## http://www.mixturecloud.com/download=MB8JBD
+	## http://www.mixturecloud.com/media/anSK2C
 	## http://player.mixturecloud.com/embed=Sc0oym
 	## http://player.mixturecloud.com/video/zQfFrx.swf
 	## http://video.mixturecloud.com/video=jlkjljk
 	## http://www.mixturevideo.com/video=xFRjoQ
-	## http://www.mixturecloud.com/media/anSK2C
-	patterns = re.compile("(?P<inner_url>(?:http://)?(?:video|www|player)\.(?:mixturecloud|mixturevideo)\.com/(?:video=|download=|embed=|media/)(?P<id>\w+)(?:\.swf)?)")
-
+	controller = {
+	    "url": "http://www.mixturecloud.com/video=%s",
+	    "basenames": ["video.mixturecloud","mixturecloud.com","player.mixturecloud","mixturevideo.com"],
+	    "patterns": (
+	        re.compile("(?P<inner_url>(?:http://)?www\.mixturecloud\.com/(?:video=|download=|media/)(?P<id>\w+))"),
+	        re.compile("(?P<inner_url>(?:http://)?video\.mixturecloud\.com/video=(?P<id>\w+))"), [
+	            re.compile("(?P<inner_url>(?:http://)?player\.mixturecloud\.com/(?:embed=|video/)(?P<id>\w+)(?:\.swf)?)"),
+	            re.compile("(?P<inner_url>(?:http://)?www.mixturevideo.com/video=(?P<id>\w+))")
+	        ],
+	    ),
+	    "control": "SM_SEEK",
+	    "video_control": None
+	}
+	
 	def __init__(self, url, **params):
-		"""Constructor"""
 		SiteBase.__init__(self, **params)
 		# parte principal da url usada como elemento chave no programa
 		self.basename = manager.UrlManager.getBaseName( url )
 		self.streamHeaderSize = 13
 		self.url = url
-
+		
 	def getPostData(self, webpage=""):
 		""" extrai informações da página de login para o post """
 		longin_data = {
@@ -1188,13 +1249,12 @@ class Mixturecloud( SiteBase ):
 		videoLink = self.configs.get(vquality, optToNotFound)
 		return videoLink
 
-	def setErrorMessage(self, webpage):
-		regex_str = '<div class="alert i_alert red".*?>(?P<message>.+?)</div>'
-		matchobj = re.search(regex_str, webpage)
-		if matchobj:
-			self.messagem = "%s informa: %s"%(self.basename,
-						                      matchobj.group("message").decode("utf-8","ignore") )
-
+	def getMessage(self, webpage):
+		matchobj = re.search('<div class="alert i_alert red".*?>(?P<msg>.+?)</div>', webpage)
+		try: msg = u"%s informa: %s"%(self.basename, unicode(matchobj.group("msg"),"UTF-8"))
+		except: msg = ""
+		return msg
+	
 	def get_configs(self, webpage):
 		info = {}
 		try:
@@ -1236,18 +1296,13 @@ class Mixturecloud( SiteBase ):
 		return info
 
 	def start_extraction(self, proxies={}, timeout=25):
-		url_id = Universal.get_video_id(self.basename, self.url)
-		url = "http://video.mixturecloud.com/video=%s"% url_id
-
-		try:
-			fd = self.conecte(url, proxies=proxies, timeout=timeout, login=True)
-			webpage = fd.read(); fd.close()
-		except: return # falha obtendo a página
-
-		try:
-			self.setErrorMessage( webpage)
-		except:pass
-
+		video_id = Universal.get_video_id(self.basename, self.url)
+		url = "http://video.mixturecloud.com/video=%s"% video_id
+		
+		fd = self.conecte(url, proxies=proxies, timeout=timeout, login=True)
+		webpage = fd.read(); fd.close()
+		
+		self.message = self.getMessage( webpage)
 		self.configs.update(self.get_configs(webpage))
 
 ###################################### MODOVIDEO ######################################
@@ -1255,16 +1310,20 @@ class Modovideo( SiteBase ):
 	## http://www.modovideo.com/video.php?v=08k9h2hm0mq3zjvs69850dyjpdgzghfg
 	## http://www.modovideo.com/video?v=t15yzbsacm6z10vs0wh0v9hc1cprba76
 	## http://www.modovideo.com/frame.php?v=4mcyh0h5y2gc27g2dgsc7g80j6tpw4c0
-	patterns = (
-		re.compile("(?P<inner_url>(?:http://)?(?:www\.)?modovideo\.com/(?:video\?|video\.php\?)v=(?P<id>\w+))"),
-		[re.compile("(?P<inner_url>(?:http://)?(?:www\.)?modovideo\.com/frame\.php\?v=(?P<id>\w+))")]
-	)
-
+	controller = {
+	    "url": "http://www.modovideo.com/video.php?v=%s", 
+	    "patterns":(
+	         re.compile("(?P<inner_url>(?:http://)?(?:www\.)?modovideo\.com/(?:video\?|video\.php\?)v=(?P<id>\w+))"),
+	        [re.compile("(?P<inner_url>(?:http://)?(?:www\.)?modovideo\.com/frame\.php\?v=(?P<id>\w+))")]
+	    ),
+	    "control": "SM_SEEK", 
+	    "video_control": None
+	}
+	
 	def __init__(self, url, **params):
-		"""Constructor"""
 		SiteBase.__init__(self, **params)
-		self.streamHeaderSize = 13
 		self.basename = "modovideo.com"
+		self.streamHeaderSize = 13
 		self.url = url
 
 	def suportaSeekBar(self):
@@ -1297,7 +1356,6 @@ class Modovideo( SiteBase ):
 
 		# o link está dentro de <iframe>
 		## playerUrl = re.search('(?:<iframe)?.+?src="(.+?frame\.php\?v=.+?)"', webpage).group(1)
-
 		playerUrl = "http://www.modovideo.com/frame.php?v=%s"%video_id
 		fd = self.conecte(playerUrl, proxies=proxies, timeout=timeout)
 		script = fd.read(); fd.close()
@@ -1313,25 +1371,27 @@ class Modovideo( SiteBase ):
 class Videoweed( SiteBase ):
 	## http://www.videoweed.es/file/sackddsywnmyt
 	## http://embed.videoweed.es/embed.php?v=sackddsywnmyt
-	patterns = (
-		re.compile("(?P<inner_url>(?:http://)?www\.videoweed\.es/file/(?P<id>\w+))"),
-		[re.compile("(?P<inner_url>(?:http://)?embed\.videoweed\.es/embed\.php\?v=(?P<id>\w+))")]
-	)
-
+	controller = {
+	    "url": "http://www.videoweed.es/file/%s",
+	    "basenames": ["embed.videoweed", "videoweed.es"],
+	    "patterns": (
+	         re.compile("(?P<inner_url>(?:http://)?www\.videoweed\.es/file/(?P<id>\w+))"),
+	        [re.compile("(?P<inner_url>(?:http://)?embed\.videoweed\.es/embed\.php\?v=(?P<id>\w+))")]
+	    ),
+	    "control": "SM_SEEK", 
+	    "video_control": None
+	}
+	
 	def __init__(self, url, **params):
-		"""Constructor"""
 		SiteBase.__init__(self, **params)
-		self.streamHeaderSize = 13
-
-		self.player_api = "http://www.videoweed.es/api/player.api.php?"\
-			"key=%s&user=undefined&codes=undefined&pass=undefined&file=%s"
-
-		self.url = url
-		# parte principal da url usada como elemento chave no programa
-		self.basename = manager.UrlManager.getBaseName( url )
+		self.player_api = "http://www.videoweed.es/api/player.api.php?key=%s&user=undefined&codes=undefined&pass=undefined&file=%s"
 		# link direto para o site(não embutido)
 		self.siteVideoLink = "http://www.videoweed.es/file/%s"
-
+		# parte principal da url usada como elemento chave no programa
+		self.basename = manager.UrlManager.getBaseName( url )
+		self.streamHeaderSize = 13
+		self.url = url
+		
 	def suportaSeekBar(self):
 		return True
 
@@ -1369,11 +1429,10 @@ class Videoweed( SiteBase ):
 		url = urllib.unquote_plus( params["url"] )
 		seekparm = urllib.unquote_plus( params["seekparm"] )
 
-		if not seekparm:
-			seekparm = "?start="
+		if not seekparm: seekparm = "?start="
 		elif seekparm.rfind("=") < 0:
 			seekparm = seekparm + "="
-
+			
 		try: title = urllib.unquote_plus( params["title"] )
 		except: title = get_radom_title()
 
@@ -1384,54 +1443,67 @@ class Novamov( Videoweed ):
 	""" Novamov: segue a mesma sequência lógica de Videoweed """
 	## http://www.novamov.com/video/cfqxscgot96pe
 	## http://embed.novamov.com/embed.php?width=520&height=320&v=cfqxscgot96pe&px=1
-	patterns = (
-		re.compile("(?P<inner_url>(?:http://)?www\.novamov\.com/video/(?P<id>\w+))"),
-		[re.compile("(?P<inner_url>(?:http://)?embed\.novamov\.com/embed\.php\?.*v=(?P<id>\w+))")]
-	)
+	controller = {
+	    "url": "http://www.novamov.com/video/%s", 
+	    "basenames": ["novamov.com", "embed.novamov"],
+		"patterns": (
+	         re.compile("(?P<inner_url>(?:http://)?www\.novamov\.com/video/(?P<id>\w+))"),
+	        [re.compile("(?P<inner_url>(?:http://)?embed\.novamov\.com/embed\.php\?.*v=(?P<id>\w+))")]
+	    ),
+		"control": "SM_SEEK", 
+		"video_control": None
+	}
+	
 	def __init__(self, url, **params):
 		"""Constructor"""
 		# objetos de Videoweed não anulados nessa inicialização,
 		# serão considerados objetos válidos para novos objetos de Novamov.
 		Videoweed.__init__(self, url, **params)
-
-		self.player_api = "http://www.novamov.com/api/player.api.php?"\
-			"key=%s&user=undefined&codes=1&pass=undefined&file=%s"
-
-		self.url = url
+		self.player_api = "http://www.novamov.com/api/player.api.php?key=%s&user=undefined&codes=1&pass=undefined&file=%s"
+		# link direto para o site(não embutido)
+		self.siteVideoLink = "http://www.novamov.com/video/%s"		
 		# parte principal da url usada como elemento chave no programa
 		self.basename = manager.UrlManager.getBaseName( url )
-		# link direto para o site(não embutido)
-		self.siteVideoLink = "http://www.novamov.com/video/%s"
+		self.url = url
 
 ####################################### NOVAMOV #######################################
 class NowVideo( Videoweed ):
 	""" Novamov: segue a mesma sequência lógica de Videoweed """
 	## http://embed.nowvideo.eu/embed.php?v=xhfpn4q7f8k3u&width=600&height=480
 	## http://www.nowvideo.eu/video/frvtqye2xed4i
-	patterns = (
-		re.compile("(?P<inner_url>(?:http://)?www\.nowvideo\.eu/video/(?P<id>\w+))"),
-		[re.compile("(?P<inner_url>(?:http://)?embed\.nowvideo\.eu/embed\.php\?.*v=(?P<id>\w+))")]
-	)
+	controller = {
+	    "url": "http://www.nowvideo.eu/video/%s",
+	    "basenames": ["embed.nowvideo", "nowvideo.eu"],
+	    "patterns": (
+	         re.compile("(?P<inner_url>(?:http://)?www\.nowvideo\.eu/video/(?P<id>\w+))"),
+	        [re.compile("(?P<inner_url>(?:http://)?embed\.nowvideo\.eu/embed\.php\?.*v=(?P<id>\w+))")]
+	    ),
+	    "control": "SM_SEEK", 
+	    "video_control": None
+	}
+	
 	def __init__(self, url, **params):
 		"""Constructor"""
 		# objetos de Videoweed não anulados nessa inicialização,
 		# serão considerados objetos válidos para novos objetos de Novamov.
 		Videoweed.__init__(self, url, **params)
-
-		self.player_api = "http://www.nowvideo.eu/api/player.api.php?"\
-			"key=%s&user=undefined&codes=1&pass=undefined&file=%s"
-
-		self.url = url
+		self.player_api = "http://www.nowvideo.eu/api/player.api.php?key=%s&user=undefined&codes=1&pass=undefined&file=%s"
+		# link direto para o site(não embutido)
+		self.siteVideoLink = "http://embed.nowvideo.eu/embed.php?v=%s"		
 		# parte principal da url usada como elemento chave no programa
 		self.basename = manager.UrlManager.getBaseName( url )
-		# link direto para o site(não embutido)
-		self.siteVideoLink = "http://embed.nowvideo.eu/embed.php?v=%s"
+		self.url = url
 
 ######################################## VEEVR ########################################
 class Veevr( SiteBase ):
 	## http://veevr.com/videos/L5pP6wxDK
-	patterns = re.compile("(?P<inner_url>(?:http://)?veevr\.com/videos/(?P<id>\w+))")
-
+	controller = {
+	    "url": "http://veevr.com/videos/%s", 
+	    "patterns": re.compile("(?P<inner_url>(?:http://)?veevr\.com/videos/(?P<id>\w+))"), 
+	    "control": "SM_RANGE", 
+	    "video_control": None
+	}
+	
 	def __init__(self, url, **params):
 		"""Constructor"""
 		SiteBase.__init__(self, **params)
@@ -1547,7 +1619,7 @@ class PutLocker( SiteBase ):
 		webpage = fd.read(); fd.close()
 
 		# messagem de erro. se houver alguma
-		self.messagem = self.getMessage( webpage )
+		self.message = self.getMessage( webpage )
 
 		# padrão captua de dados
 		matchobj = self.patternForm.search( webpage )
@@ -1591,7 +1663,7 @@ class Sockshare( PutLocker ):
 	controller = {
 		"url": "http://www.sockshare.com/file/%s", 
 		"patterns": (
-		    re.compile("(?P<inner_url>(?:http://)?www\.sockshare\.com/file/(?P<id>\w+))"),
+		     re.compile("(?P<inner_url>(?:http://)?www\.sockshare\.com/file/(?P<id>\w+))"),
 		    [re.compile("(?P<inner_url>(?:http://)?www\.sockshare\.com/embed/(?P<id>\w+))")]
 		    ),
 		"control": "SM_RANGE", 
@@ -1608,15 +1680,19 @@ class Sockshare( PutLocker ):
 
 ###################################### MOVIEZER #######################################
 class Moviezer( SiteBase ):
-	## http://www.putlocker.com/file/3E3190548EE7A2BD
-	patterns = (
-		re.compile("(?P<inner_url>(?:http://)?moviezer\.com/video/(?P<id>\w+))"),
-		[re.compile("(?P<inner_url>(?:http://)?moviezer\.com/e/(?P<id>\w+))")] #embed url
-	)
+	controller = {
+	    "url": "http://moviezer.com/video/%s", 
+	    "patterns": (
+	         re.compile("(?P<inner_url>(?:http://)?moviezer\.com/video/(?P<id>\w+))"),
+	        [re.compile("(?P<inner_url>(?:http://)?moviezer\.com/e/(?P<id>\w+))")] #embed url
+	    ),
+	    "control": "SM_SEEK", 
+	    "video_control": None
+	}
+	
 	def __init__(self, url, **params):
 		"""Constructor"""
 		SiteBase.__init__(self, **params)
-
 		self.streamHeaderSize = 13
 		self.basename = "moviezer.com"
 		self.url = url
@@ -1645,20 +1721,24 @@ class Moviezer( SiteBase ):
 class MoeVideo( SiteBase ):
 	## http://moevideo.net/video.php?file=64141.60e02b3b80c5e95e2e4ac85f0838&width=600&height=450
 	## http://moevideo.net/?page=video&uid=79316.7cd2a2d4b5e02fd77f017bbc1f01
-	patterns = (
-	    [re.compile("(?P<inner_url>http://moevideo\.net/video\.php\?file=(?P<id>\w+\.\w+))")],
-	    re.compile("(?P<inner_url>http://moevideo\.net/\?page=video&uid=(?P<id>\w+\.\w+))")
-	)
+	controller = {
+	    "url": "http://moevideo.net/video.php?file=%s", 
+	    "patterns":(
+	         re.compile("(?P<inner_url>http://moevideo\.net/\?page=video&uid=(?P<id>\w+\.\w+))"),
+	        [re.compile("(?P<inner_url>http://moevideo\.net/video\.php\?file=(?P<id>\w+\.\w+))")]
+	    ),
+	    "control": "SM_RANGE", 
+	    "video_control": None
+	}
 
 	def __init__(self, url, **params):
 		"""Constructor"""
 		SiteBase.__init__(self, **params)
-
-		self.streamHeaderSize = 13
-		self.basename = "moevideo.net"
 		self.apiUrl = "http://api.letitbit.net/"
+		self.basename = "moevideo.net"
+		self.streamHeaderSize = 13
 		self.url = url
-
+		
 	def suportaSeekBar(self):
 		return True
 
@@ -1694,7 +1774,7 @@ class MoeVideo( SiteBase ):
 					msg = "file not found"
 				else:
 					msg = videoinfo["data"][0]
-			self.messagem = msg
+			self.message = msg
 
 	def start_extraction(self, proxies={}, timeout=25):
 		try:
@@ -1721,14 +1801,17 @@ class MoeVideo( SiteBase ):
 ###################################### ANIMETUBE #######################################
 class Anitube( SiteBase ):
 	## http://www.anitube.jp/video/43595/Saint-Seiya-Omega-07
-	patterns = re.compile("(?P<inner_url>http://www\.anitube\.jp/video/(?P<id>\w+))")
-
+	controller = {
+	    "url": "http://www.anitube.jp/video/%s", 
+	    "patterns": re.compile("(?P<inner_url>http://www\.anitube\.jp/video/(?P<id>\w+))"),
+	    "control": "SM_RANGE", 
+	    "video_control": None
+	}
+	
 	def __init__(self, url, **params):
-		"""Constructor"""
 		SiteBase.__init__(self, **params)
-
-		self.streamHeaderSize = 0
 		self.basename = "anitube.jp"
+		self.streamHeaderSize = 0
 		self.url = url
 
 	def suportaSeekBar(self):
@@ -1770,15 +1853,19 @@ class Anitube( SiteBase ):
 class Vk( SiteBase ):
 	## http://vk.com/video_ext.php?oid=164478778&id=163752296&hash=246b8447ed557240&hd=1
 	## http://vk.com/video103395638_162309869?hash=23aa2195ccec043b
-	patterns = (
-		re.compile("(?P<inner_url>http://vk\.com/(?P<id>video\d+_\d+\?hash=\w+))"),
-		[re.compile("(?P<inner_url>http://vk\.com/video_ext\.php\?(?P<id>oid=\w+&id=\w+&hash=\w+(?:&hd=\d+)?))")]
-	)
+	controller = {
+	    "url": "http://vk.com/video_ext.php?%s",
+	    "patterns": (
+	         re.compile("(?P<inner_url>http://vk\.com/(?P<id>video\d+_\d+\?hash=\w+))"),
+	        [re.compile("(?P<inner_url>http://vk\.com/video_ext\.php\?(?P<id>oid=\w+&id=\w+&hash=\w+(?:&hd=\d+)?))")]
+	    ),
+	    "control": "SM_SEEK",
+	    "video_control": None
+	}
 
 	def __init__(self, url, **params):
 		"""Constructor"""
 		SiteBase.__init__(self, **params)
-
 		self.streamHeaderSize = 13
 		self.basename = "vk.com"
 		self.url = url
@@ -1842,11 +1929,9 @@ class Xvideos( SiteBase ):
 	}
 
 	def __init__(self, url, **params):
-		"""Constructor"""
 		SiteBase.__init__(self, **params)
-
-		self.streamHeaderSize = 13
 		self.basename = "xvideos.com"
+		self.streamHeaderSize = 13
 		self.url = url
 
 	def suportaSeekBar(self):
@@ -1879,9 +1964,8 @@ class Redtube( SiteBase ):
 	def __init__(self, url, **params):
 		"""Constructor"""
 		SiteBase.__init__(self, **params)
-
-		self.streamHeaderSize = 13
 		self.basename = "redtube.com"
+		self.streamHeaderSize = 13
 		self.url = url
 
 	def suportaSeekBar(self):
@@ -1907,7 +1991,7 @@ class Pornhub( SiteBase ):
 	controller = {
 		"url": "http://www.pornhub.com/view_video.php?viewkey=%s", 
 		"patterns": (
-		    re.compile("(?P<inner_url>http://www\.pornhub\.com/view_video\.php\?viewkey=(?P<id>\w+))"),
+		     re.compile("(?P<inner_url>http://www\.pornhub\.com/view_video\.php\?viewkey=(?P<id>\w+))"),
 		    [re.compile("(?P<inner_url>http://www\.pornhub\.com/view_video\.php\?viewkey=(?P<id>\w+).*&utm_source=embed)")]
 		    ),
 		"control": "SM_SEEK",
@@ -1915,15 +1999,12 @@ class Pornhub( SiteBase ):
 	}
 
 	def __init__(self, url, **params):
-		"""Constructor"""
 		SiteBase.__init__(self, **params)
-
-		self.streamHeaderSize = 13
-		self.basename = "pornhub.com"
-		self.url = url
-
 		self.apiUrl = "http://www.pornhub.com/embed_player.php?id=%s"
-
+		self.basename = "pornhub.com"
+		self.streamHeaderSize = 13
+		self.url = url
+		
 	def suportaSeekBar(self):
 		return True
 
@@ -1961,23 +2042,22 @@ class Pornhub( SiteBase ):
 
 ########################################################################
 class DwShare( SiteBase ):
-	""""""
 	## http://dwn.so/player/embed.php?v=DSFAE06F1C&width=505&height=400
 	## http://dwn.so/xml/videolink.php?v=DSFAE06F1C&yk=c0352ffc881e858669b7c0f08d16f3edf47bfdea&width=1920&id=1342495730819&u=undefined
+	## http://st.dwn.so/xml/videolink.php?v=DS4DDC9CDF&yk=3a31f85d3547ecddaa35d6b3329c11cfc69ff156&width=485&id=1344188495210&u=undefined	
 	## un link = http://s1023.dwn.so/movie-stream,63e9266ab2e5baa4874fa8948ec7e3b8,5004e0ab,DSFAE06F1C.flv,0
 	## <?xml version="1.0" encoding="utf-8"?>
 	## <rows><row url="" runtime="0"  downloadurl="http://dwn.so/show-file/0c8fa9b8c2/114367/_Pie_8.O.Reencontro.Dub.cinefilmesonline.net.avi.html" runtimehms="89:17" size="1024" waitingtime="5000" k="" k1="76752" k2="75398" un="s1023.dwn.so/movie-stream,63e9266ab2e5baa4874fa8948ec7e3b8,5004e0ab,DSFAE06F1C.flv,0" s="" title="American Pie 8.O.Reencontro.Dub.cinefilmesonline.net.avi" description="Description" added="2011-05-30" views="-" comments="0" favorited="0" category="" tags="tags" rating="0" embed="%3Ciframe+src%3D%22http%3A%2F%2Fdwn.so%2Fplayer%2Fembed.php%3Fv%3DDSFAE06F1C%26width%3D500%26height%3D350%22+width%3D%22500%22+height%3D%22350%22+frameborder%3D%220%22+scrolling%3D%22no%22%3E%3C%2Fiframe%3E" private="1" mobilepay="0" icc="PL" mpaylang="en" limit1="You+have+watched+%5BN1%5D+minutes+of+video+today." limit2="Please+wait+%5BN2%5D+minutes+or+click+here+to+register+and+enjoy+unlimited+videos+FOR+FREE" limit3="purchase+premium+membership+with+Paypal+or+Moneybookers" limit4="or+purchase+it+using+your+mobile+phone" mobilepaylatin="1"></row>
 	## </rows>
 	controller = {
 		"url": "http://dwn.so/player/embed.php?v=%s", 
-		"patterns": [re.compile("(?P<inner_url>http://dwn\.so/player/embed\.php\?v=(?P<id>\w+)(?:&width=\d+)?(?:&height=400)?)")],
+		"patterns": [re.compile("(?P<inner_url>http://dwn\.so/player/embed\.php\?v=(?P<id>\w+)(?:&width=\d+)?(?:&height=\d+)?)")],
 		"control": "SM_SEEK",
 		"video_control": None
 	}
-	videoLink = "http://dwn.so/xml/videolink.php?v=%s"
+	videolink = ("http://st.dwn.so/xml/videolink.php?v=%s", "http://dwn.so/xml/videolink.php?v=%s")
 	#----------------------------------------------------------------------
 	def __init__(self, url, **params):
-		"""Constructor"""
 		SiteBase.__init__(self, **params)
 		self.streamHeaderSize = 13
 		self.basename = "dwn.so"
@@ -1988,8 +2068,12 @@ class DwShare( SiteBase ):
 	
 	def start_extraction(self, proxies={}, timeout=25):
 		video_id = Universal.get_video_id(self.basename, self.url)
-		fd = self.conecte(self.videoLink % video_id, proxies=proxies, timeout=timeout)
-		xmlData = fd.read(); fd.close()
+		for videlink in self.videolink:
+			try:
+				fd = self.conecte(videlink % video_id, proxies=proxies, timeout=timeout)
+				xmlData = fd.read(); fd.close(); break
+			except: continue
+		else: raise IOError
 		
 		url = re.search("""un=(?:'|")(.*?)(?:'|")""", xmlData, re.DOTALL).group(1)
 		if not url.startswith("http://"): url = "http://"+url
@@ -2008,9 +2092,9 @@ class Hostingbulk( SiteBase ):
 	controller = {
 		"url": "http://hostingbulk.com/%s.html", 
 		"patterns": (
-		    re.compile("(?P<inner_url>http://hostingbulk\.com/(?P<id>\w+)\.html)"),
+	         re.compile("(?P<inner_url>http://hostingbulk\.com/(?P<id>\w+)\.html)"),
 		    [re.compile("(?P<inner_url>http://hostingbulk\.com/embed\-?(?P<id>\w+)\-?(?:\d+x\d+)?\.html)")]
-		    ),
+	    ),
 		"control": "SM_SEEK",
 		"video_control": None
 	}
@@ -2040,9 +2124,8 @@ class Hostingbulk( SiteBase ):
 	def __init__(self, url, **params):
 		"""Constructor"""
 		SiteBase.__init__(self, **params)
-
+		self.basename = "hostingbulk.com"
 		self.streamHeaderSize = 13
-		self.basename = "hostingbulk.com"        
 		self.url = url
 
 	def start_extraction(self, proxies={}, timeout=25):
@@ -2072,50 +2155,10 @@ class Universal:
 	toda a extensão do programa. Ela é usada para diminuir o número de modificações
 	necessárias, quando adiciando suporte a um novo site vídeo.
 	"""
-	smanager  = lambda manage, noProxy=False, **params: manager.StreamManager(manage, noProxy, **params)
-	smanager_ = lambda manage, noProxy=False, **params: manager.StreamManager_(manage, noProxy, **params)
 	SM_SEEK  = staticmethod(lambda manage, noProxy=False, **params: manager.StreamManager(manage, noProxy, **params))
 	SM_RANGE = staticmethod(lambda manage, noProxy=False, **params: manager.StreamManager_(manage, noProxy, **params))
-
-	sites = {
-		"megavideo.com": {"url": "http://www.megavideo.com/?v=%s", "patterns": Megavideo.patterns, "control": smanager, "video_control": Megavideo},
-		"videobb.com": {"url": "http://www.videobb.com/video/%s", "patterns": Videobb.patterns, "control": smanager, "video_control": Videobb},
-		"videozer.com": {"url": "http://www.videozer.com/video/%s", "patterns": Videozer.patterns, "control": smanager, "video_control": Videozer},
-		"megaporn.com": {"url": "http://www.megaporn.com/video/?v=%s", "patterns": MegaPorn.patterns, "control": smanager, "video_control": MegaPorn},
-		"userporn.com": {"url": "http://www.userporn.com/video/%s", "patterns": Userporn.patterns, "control": smanager, "video_control": Userporn},
-		"uploaded.to": {"url": "http://uploaded.to/file/%s", "patterns": Uploaded.patterns, "control": smanager_, "video_control": Uploaded},
-		"youtube.com": {"url": "http://www.youtube.com/watch?v=%s", "patterns": Youtube.patterns, "control": smanager, "video_control": Youtube},
-		"metacafe.com": {"url": "http://www.metacafe.com/watch/%s/", "patterns": Metacafe.patterns, "control": smanager_, "video_control": Metacafe},
-		"dailymotion.com": {"url": "http://www.dailymotion.com/video/%s", "patterns": Dailymotion.patterns, "control": smanager_, "video_control": Dailymotion},
-		"video.google": {"url": "http://video.google.com.br/videoplay?docid=%s", "patterns": GoogleVideo.patterns, "control": smanager_, "video_control": GoogleVideo},
-		"media.photobucket": {"url": "http://media.photobucket.com/video/%s", "patterns": Photobucket.patterns, "control": smanager_, "video_control": Photobucket},
-		"collegehumor.com": {"url": "http://www.collegehumor.com/video/%s", "patterns": CollegeHumor.patterns, "control": smanager_, "video_control": CollegeHumor},
-		# variações de url para mixturecloud
-		"video.mixturecloud": {"url": "http://video.mixturecloud.com/video=%s", "patterns": Mixturecloud.patterns, "control": smanager, "video_control": Mixturecloud},
-		"mixturecloud.com": {"url": "http://www.mixturecloud.com/video=%s", "patterns": Mixturecloud.patterns, "control": smanager, "video_control": Mixturecloud},
-		"player.mixturecloud": {"url": "http://player.mixturecloud.com/embed=%s", "embed": True, "patterns": Mixturecloud.patterns, "control": smanager, "video_control": Mixturecloud},
-		"mixturevideo.com": {"url": "http://www.mixturevideo.com/video=%s", "embed": True, "patterns": Mixturecloud.patterns, "control": smanager, "video_control": Mixturecloud},
-		# variações de url para novamov
-		"embed.novamov": {"url": "http://embed.novamov.com/embed.php?v=%s", "embed": True, "patterns": Novamov.patterns, "control": smanager, "video_control": Novamov},
-		"novamov.com": {"url": "http://www.novamov.com/video/%s", "patterns": Novamov.patterns, "control": smanager, "video_control": Novamov},
-		# variações de url para videoweed
-		"embed.videoweed": {"url": "http://embed.videoweed.es/embed.php?v=%s", "embed": True, "patterns": Videoweed.patterns, "control": smanager, "video_control": Videoweed},
-		"videoweed.es": {"url": "http://www.videoweed.es/file/%s", "patterns": Videoweed.patterns, "control": smanager, "video_control": Videoweed},
-		# NowVideo
-		"nowvideo.eu": {"url": "http://www.nowvideo.eu/video/%s", "patterns": NowVideo.patterns, "control": smanager, "video_control": NowVideo},
-		"embed.nowvideo": {"url": "http://embed.nowvideo.eu/embed.php?v=%s", "embed": True, "patterns": NowVideo.patterns, "control": smanager, "video_control": NowVideo},
-		"moevideo.net": {"url": "http://moevideo.net/video.php?file=%s", "patterns": MoeVideo.patterns, "control": smanager_, "video_control": MoeVideo},
-		"myvideo.de": {"url": "http://www.myvideo.de/watch/%s", "patterns": MyVideo.patterns, "control": smanager_, "video_control": MyVideo},
-		"cum.com": {"url": "http://www.cum.com/video/?v=%s", "patterns": MegaPorn.patterns, "control": smanager, "video_control": MegaPorn},
-		"blip.tv": {"url": "http://blip.tv/%s", "patterns": BlipTV.patterns, "control": smanager_, "video_control": BlipTV},
-		"vimeo.com": {"url": "http://vimeo.com/%s", "patterns": Vimeo.patterns, "control": smanager_, "video_control": Vimeo},
-		"veevr.com": {"url": "http://veevr.com/videos/%s", "patterns": Veevr.patterns, "control": smanager_, "video_control": Veevr},
-		"modovideo.com": {"url": "http://www.modovideo.com/video.php?v=%s", "patterns": Modovideo.patterns,"control": smanager, "video_control": Modovideo},
-		# similares
-		"moviezer.com": {"url": "http://moviezer.com/video/%s", "patterns": Moviezer.patterns, "control": smanager, "video_control": Moviezer},
-		"anitube.jp": {"url": "http://www.anitube.jp/video/%s", "patterns": Anitube.patterns, "control": smanager_, "video_control": Anitube},
-		"vk.com": {"url": "http://vk.com/video_ext.php?%s", "patterns": Vk.patterns, "control": smanager, "video_control": Vk},
-	}
+	sites = {}
+	
 	@staticmethod
 	def get_sites():
 		return Universal.sites.keys()
@@ -2142,7 +2185,37 @@ class Universal:
 		""" retorna o id da url """
 		matchobj = Universal.patternMatch(sitename, url)
 		return matchobj.group("id")
+	
+	@staticmethod
+	def getStreamManager( url):
+		""" Procura pelo controlador de tranferênicia de arquivo de video"""
+		smanager = None
+		try:
+			for sitename in Universal.get_sites():
+				matchobj = Universal.patternMatch(sitename, url)
+				if matchobj:
+					smanager = Universal.get_control( sitename)
+					break
+		except AssertionError, err:
+			raise AttributeError, _("Sem suporte para a url fornecida.")
+		assert smanager, _("url desconhecida!")
+		return smanager
 
+	@staticmethod
+	def getVideoManager( url):
+		""" Procura pelo controlador de video baseado na url dada """
+		vmanager = None
+		try:
+			for sitename in Universal.get_sites():
+				matchobj = Universal.patternMatch(sitename, url)
+				if matchobj:
+					vmanager = Universal.get_video_control( sitename )
+					break
+		except AssertionError, err:
+			raise AttributeError, _("Sem suporte para a url fornecida.")
+		assert vmanager, _("url desconhecida!")
+		return vmanager
+	
 	@staticmethod
 	def get_patterns(sitename, validar=True):
 		if validar: Universal.valide(sitename, "patterns")
@@ -2223,20 +2296,26 @@ def is_site_class( item ):
 	""" retorna só os site devidamente configurados """
 	try:
 		sitename, classdef  = item
-		return callable(classdef) and issubclass(classdef, SiteBase) and \
-			   hasattr(classdef, "controller")
+		return (callable(classdef) and issubclass(classdef,SiteBase) and hasattr(classdef,"controller"))
 	except:
 		return False
-
+	
+def register_site(basename, site):
+	if site.controller["video_control"] is None:
+		site.controller["video_control"] = site
+	if isinstance(site.controller["control"], (str, unicode)):
+		control = getattr(Universal, site.controller["control"])
+		site.controller["control"] = control
+	Universal.add_site(basename, **site.controller)
+	
 for sitename, site in filter(is_site_class, locals().items()):
-	controller = site.controller
-
-	# extrai o nome base da url de formatação
-	siteBasename = manager.UrlBase.getBaseName(controller["url"])
-	controller["control"] = getattr(Universal, controller["control"])
-	controller["video_control"] = site
-
-	Universal.add_site(siteBasename, **controller)
+	default = manager.UrlBase.getBaseName(site.controller["url"])
+	basename = site.controller.get("basenames", default)	
+	if type(basename) is list:
+		for name in basename:
+			register_site(name, site)
+	else:
+		register_site(basename, site)
 #######################################################################################
 
 if __name__ == "__main__":
@@ -2264,9 +2343,9 @@ if __name__ == "__main__":
 	for n in range(proxyManager.getNumIps()):
 		proxies = proxyManager.proxyFormatado()
 		print proxies["http"]
-		#proxies = {}
+		proxies = {}
 
-		if not checkSite("http://www.userporn.com/watch_video.php?v=xmG7ZnJmBPnB", proxies=proxies, quality=3):
+		if not checkSite("http://dwn.so/player/embed.php?v=DS4DDC9CDF&width=505&height=400", proxies=proxies, quality=3):
 			proxyManager.setBadIp( proxies )
 
 	del proxyManager
