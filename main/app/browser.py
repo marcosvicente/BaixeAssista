@@ -372,19 +372,18 @@ class Browser(wx.Panel):
 
     def OnTabClose(self, evt):
         """ impede que todas as páginas sejam fechadas """
-        objectWin = evt.GetEventObject()
-        numOfpages = objectWin.GetPageCount()
-        if numOfpages > 1:
-            url = objectWin.GetCurrentPage().Url
+        win = evt.GetEventObject()
+        num_of_pages = win.GetPageCount()
+        if num_of_pages > 1:
+            url = win.GetCurrentPage().Url
             try:
                 index = self.historySites.index(url)
                 
                 # verifica a posição da página
-                if (numOfpages -index -1)== 0: index = index-1
-                else: index = index+1
+                if (num_of_pages-index-1)== 0: index=index-1
+                else: index=index+1
                 
-                self.current = objectWin.GetPage(index).Url
-                
+                self.current = win.GetPage(index).Url
                 self.historySites.remove( url )
             except: pass
         else: # veta o fechamento da primeira tabela(indice 1).
