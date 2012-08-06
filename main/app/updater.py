@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 import os, sys
 
 if __name__ == "__main__":
@@ -17,17 +18,17 @@ from manager import *
 
 ################################# RELEASE ##################################
 class Release:
-    """ Busca por novas versıes do programa """
+    """ Busca por novas vers√µes do programa """
     #----------------------------------------------------------------------
     def __init__(self):
         """Constructor"""
-        self.warning = _(u"Ainda n„o h· uma nova vers„o disponÌvel.")
+        self.warning = _(u"Ainda n√£o h√° uma nova vers√£o dispon√≠vel.")
         self.dl_url = "http://code.google.com/p/gerenciador-de-videos-online/downloads/list"
         self.dl_pattern = re.compile("<td class=\"vt\s*(?:id)?\s*col_\d+\".*?>(.*?)</td>", re.DOTALL)
         self.tag_pattern = re.compile("<a.*?>(.*?)</a>", re.DOTALL)
         
     def check(self, dl_opts):
-        """ verifica se existe uma vers„o maior do que a vers„o atual """
+        """ verifica se existe uma vers√£o maior do que a vers√£o atual """
         for filename, summary, uploaded, releasedata, size, downloadedcount in dl_opts:
             matchobj = re.search("BaixeAssista_v(?P<version>.+?)(?:_exe)?\.(?:rar|zip|exe)", filename)
             
@@ -35,11 +36,11 @@ class Release:
             except: continue
             
             if version > PROGRAM_VERSION:
-                info  = _(u"Vers„o atual do programa - BaixeAssista v%s\n\n") % PROGRAM_VERSION
-                info += _(u"Vers„o lanÁada: %s\n") % filename
-                info += _(u"DescriÁ„o: %s\n") % summary
+                info  = _(u"Vers√£o atual do programa - BaixeAssista v%s\n\n") % PROGRAM_VERSION
+                info += _(u"Vers√£o lan√ßada: %s\n") % filename
+                info += _(u"Descri√ß√£o: %s\n") % summary
                 info += _(u"Enviado: %s\n") % uploaded
-                info += _(u"LanÁado: %s\n") % releasedata
+                info += _(u"Lan√ßado: %s\n") % releasedata
                 info += _(u"Tamanho: %s\n") % size
                 info += _(u"Baixado: %s vezes\n") % downloadedcount
                 return (True, info)
@@ -63,19 +64,19 @@ class Release:
                 
             return self.check( [groups[i:i+6] for i in range(0,len(groups),6)] )
         except:
-            return (None, _(u"Houve um erro ao procura por uma nova vers„o."))
+            return (None, _(u"Houve um erro ao procura por uma nova vers√£o."))
 
 ################################# UPDATER ##################################
 class Updater(object):
-    """ Procura por pacotes de atualizaÁ„o """
+    """ Procura por pacotes de atualiza√ß√£o """
     #----------------------------------------------------------------------
     ## old: packet_v0.0.1_0.1.3.zip - new: packet_oswinv0.0.1_0.1.3.zip
     def __init__(self, **params):
         """ params: {}
-        - packetVersion: vers„o atual do pacote de atualizaÁ„o.
+        - packetVersion: vers√£o atual do pacote de atualiza√ß√£o.
         """
         self.packetVersion = params.get("packetVersion", None)
-        assert self.packetVersion, u"informe a vers„o do pacote atual!"
+        assert self.packetVersion, u"informe a vers√£o do pacote atual!"
         
         self.sourcesLink = "https://dl.dropbox.com/u/67269258/BaixeAssistaUpdateSources"
         self.pl_pattern = re.compile("packet_(?:oswin|oslinux)?v.+?_.+?\.zip")
@@ -87,17 +88,17 @@ class Updater(object):
         self.packetFound = self.oldRelease = False
         
         self.updateSucess = (True, _(u"O programa foi atualizado com sucesso!"))
-        self.sucessWarning = _(u"Um novo pacote de atualizaÁ„o est· disponÌvel: packet_v%s_%s.zip.")
-        self.errorUpdateSearching = (None, _(u"Erro procurando por pacotes de atualizaÁ„o."))
-        self.errorUpdating = (None, _(u"Erro aplicando a atualizaÁ„o. Tente novamente mais tarde."))
-        self.warning = _(u"Vers„o antiga do programa detectada(atualize para a mais nova).")
-        self.updatedWarning = (False, _(u"O programa j· est· atualizado."))
+        self.sucessWarning = _(u"Um novo pacote de atualiza√ß√£o est√° dispon√≠vel: packet_v%s_%s.zip.")
+        self.errorUpdateSearching = (None, _(u"Erro procurando por pacotes de atualiza√ß√£o."))
+        self.errorUpdating = (None, _(u"Erro aplicando a atualiza√ß√£o. Tente novamente mais tarde."))
+        self.warning = _(u"Vers√£o antiga do programa detectada(atualize para a mais nova).")
+        self.updatedWarning = (False, _(u"O programa j√° est√° atualizado."))
         
     def getNewVersion(self):
         return self.newVersion
 
     def getLastChanges(self, language="en"):
-        """ retorna o texto informativo das ˙ltimas alteraÁıes do programa """
+        """ retorna o texto informativo das √∫ltimas altera√ß√µes do programa """
         changes = []
         for packetPath in self.packetsPaths:
             try:
@@ -117,14 +118,14 @@ class Updater(object):
         return changes
 
     def cleanUpdateDir(self):
-        """ remove todos os arquivos da pasta de atualizaÁ„o """
+        """ remove todos os arquivos da pasta de atualiza√ß√£o """
         for name in os.listdir(self.updateDir):
             try: os.remove(os.path.join(self.updateDir, name))
             except Exception, err:
                 print "Err[clean: %s]: %s"%(path, err)
 
     def update(self):
-        """ Com o pacote de atualizaÁıes j· baixado, e pronto para ser lido, instala as atualizaÁıes """
+        """ Com o pacote de atualiza√ß√µes j√° baixado, e pronto para ser lido, instala as atualiza√ß√µes """
         assert len(self.packetsPaths), "No packets!"
         pattern = re.compile("main/changes\.txt")
         for index, path in enumerate(self.packetsPaths):
@@ -134,19 +135,19 @@ class Updater(object):
                     for zipinfo in updateZip.infolist():
                         if not pattern.match(zipinfo.filename):
                             updateZip.extract(zipinfo, os.getcwd())
-                    # guarda a vers„o do ˙ltimo pacote atualizado
+                    # guarda a vers√£o do √∫ltimo pacote atualizado
                     self.newVersion, pgv = self.get_versions(get_filename( path ))
             except:
                 if index == 0: return self.errorUpdating
                 else:
-                    # considera sÛ o grupo atualizado com sucesso
+                    # considera s√≥ o grupo atualizado com sucesso
                     self.packetsPaths = self.packetsPaths[:index]
                     break
         # informa: atualizado com sucesso
         return self.updateSucess
 
     def download(self):
-        """ baixa o pacote de atulizaÁıes """
+        """ baixa o pacote de atuliza√ß√µes """
         assert self.packetFound, "Packets not found!"
         for index, link in enumerate(self.packetsLinks):
             try:
@@ -175,7 +176,7 @@ class Updater(object):
                         self.packetsPaths.append( packetpath )
 
                     fd.close()
-                # erro no primeiro pacote p·ra todo o processo de atulizaÁ„o
+                # erro no primeiro pacote p√°ra todo o processo de atuliza√ß√£o
                 elif index == 0: return self.errorUpdating
                 else: break
             except:
@@ -199,8 +200,8 @@ class Updater(object):
         return os
 
     def packetFilter(self, links):
-        """ remove as repetiÁıes das versıes de pacotes e 
-        pacotes que n„o pertencem a vers„o atual """
+        """ remove as repeti√ß√µes das vers√µes de pacotes e 
+        pacotes que n√£o pertencem a vers√£o atual """
         v_links = []
 
         for link in links:
@@ -214,19 +215,19 @@ class Updater(object):
                         v_links.append( link )
 
             elif program > PROGRAM_VERSION:
-                # caso a vers„o atual seja mais antiga, avisa o usu·rio para atualizar
-                # isso ocorrer· caso n„o haja mais atualizaÁıes para a vers„o atual
+                # caso a vers√£o atual seja mais antiga, avisa o usu√°rio para atualizar
+                # isso ocorrer√° caso n√£o haja mais atualiza√ß√µes para a vers√£o atual
                 self.oldRelease = True
         # organiza do menor pacote para o maior
         v_links.sort()
         return v_links
 
     def isOldRelease(self):
-        """ avalia se o programa È antigo, apÛs n„o encontrar novas atualizaÁıes """
+        """ avalia se o programa √© antigo, ap√≥s n√£o encontrar novas atualiza√ß√µes """
         return (self.oldRelease and not self.packetFound)
 
     def search(self):
-        """ inicia a busca por novos pacotes de atualizaÁ„o """
+        """ inicia a busca por novos pacotes de atualiza√ß√£o """
         try:
             s = urllib2.urlopen(self.sourcesLink)
             contenty = s.read(); s.close()
@@ -236,14 +237,14 @@ class Updater(object):
         links = contenty.split("\r\n")
         if not any(links): links = contenty.split("\n")
 
-        # guarda o grupo de pacotes com vers„o maior que a atual
+        # guarda o grupo de pacotes com vers√£o maior que a atual
         self.packetsLinks = self.packetFilter( links )
         self.packetFound = bool(len(self.packetsLinks))
         return self.packetFound
 
-########################### EXECU«√O APARTIR DO SCRIPT  ###########################
+########################### EXECU√á√ÉO APARTIR DO SCRIPT  ###########################
 if __name__ == "__main__":
-    installTranslation() # instala as traduÁıes
+    installTranslation() # instala as tradu√ß√µes
     
     r= Release()
     r.search()
