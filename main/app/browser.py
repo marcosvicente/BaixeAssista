@@ -296,7 +296,7 @@ class Browser(wx.Panel):
         webview.progressFrameNum = 0
         webview.isNullBitmap = False
         webview.timeCount = time.time()
-        webview.js_script_run = False
+        webview.JS_SCRIPT_RUN = False
 
         # events
         self.Bind(Webview.EVT_WEB_VIEW_NEWWINDOW, self.OnWebViewNewWindow, webview)
@@ -605,7 +605,7 @@ class Browser(wx.Panel):
             if not webview.historyUrl.isBrowsing():
                 webview.historyUrl.append( webviewUrl )
 
-            webview.js_script_run = False
+            webview.JS_SCRIPT_RUN = False
             self.controlEmbedUrls.Clear()
 
             webview.historyUrl.setBrowsing(False)
@@ -622,10 +622,10 @@ class Browser(wx.Panel):
         
         webview.RunScript( JS_LINK_REGISTER )
         
-        if not webview.js_script_run and webviewUrl.startswith("http"):
+        if not webview.JS_SCRIPT_RUN and webviewUrl.startswith("http"):
             webview.RunScript( JS_LINK_MONITOR )
             webview.RunScript( JS_LINK_EXTRACTOR )
-            webview.js_script_run = True
+            webview.JS_SCRIPT_RUN = True
             
         url = event.GetURL()
         
@@ -725,7 +725,7 @@ class Browser(wx.Panel):
     def OnRefreshPageButton(self, event):
         self.webview.Reload()
         self.controlEmbedUrls.Clear()
-        self.webview.js_script_run = False
+        self.webview.JS_SCRIPT_RUN = False
 
 
 if __name__=='__main__':
