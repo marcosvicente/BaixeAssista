@@ -301,9 +301,9 @@ class Browser(wx.Panel):
         # events
         self.Bind(Webview.EVT_WEB_VIEW_NEWWINDOW, self.OnWebViewNewWindow, webview)
         self.Bind(Webview.EVT_WEB_VIEW_NAVIGATING, self.OnWebViewNavigating, webview)
-        webview.Bind(Webview.EVT_WEB_VIEW_LOADED, self.OnWebViewLoaded)
-        self.Bind(Webview.EVT_WEB_VIEW_TITLE_CHANGED, self.OnWebViewTitleChange)
-
+        self.Bind(Webview.EVT_WEB_VIEW_LOADED, self.OnWebViewLoaded, webview)
+        self.Bind(Webview.EVT_WEB_VIEW_TITLE_CHANGED, self.OnWebViewTitleChange, webview)
+        
         # add new page
         self.abasControl.AddPage(webview, "Loading...", select = defaut)
         webview.LoadURL(url)
