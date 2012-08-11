@@ -144,6 +144,7 @@ class ConnectionProcessor:
 
 #################################### BASEVIDEOSITE ####################################
 class SiteBase(ConnectionProcessor):
+	STREAM_HEADER = "FLV\x01\x01\x00\x00\x00\t\x00\x00\x00\t"
 	#----------------------------------------------------------------------
 	def __init__(self, **params):
 		ConnectionProcessor.__init__(self)
@@ -168,7 +169,10 @@ class SiteBase(ConnectionProcessor):
 
 	def suportaSeekBar(self):
 		return False
-
+	
+	def getStreamHeader(self):
+		return self.STREAM_HEADER[:self.streamHeaderSize]
+	
 	def get_video_id(self):
 		""" retorna só o id do video """
 		return Universal.get_video_id(self.basename, self.url)
@@ -1859,36 +1863,36 @@ class Vk( SiteBase ):
 	         re.compile("(?P<inner_url>http://vk\.com/(?P<id>video\d+_\d+\?hash=\w+))"),
 	        [re.compile("(?P<inner_url>http://vk\.com/video_ext\.php\?(?P<id>oid=\w+&id=\w+&hash=\w+(?:&hd=\d+)?))")]
 	    ),
-	    "control": "SM_SEEK",
+	    "control": "SM_RANGE",
 	    "video_control": None
 	}
 
 	def __init__(self, url, **params):
 		"""Constructor"""
 		SiteBase.__init__(self, **params)
-		self.streamHeaderSize = 13
+		self.streamHeaderSize = 0
 		self.basename = "vk.com"
 		self.url = url
-
+		
 	def suportaSeekBar(self):
-		return True
-
+		return False
+	
 	def getLink(self):
 		vquality = int(self.params.get("qualidade", 2))
-
+		
 		optToNotFound = self.configs.get(1, None)
 		optToNotFound = self.configs.get(2, optToNotFound)
 		optToNotFound = self.configs.get(3, optToNotFound)
-
+		
 		videoLink = self.configs.get(vquality, optToNotFound)
 		return videoLink
-
+	
 	def start_extraction(self, proxies={}, timeout=25):
 		try:
 			fd = self.conecte(self.url, proxies=proxies, timeout=timeout)
 			webdata = fd.read(); fd.close()
 		except: return
-
+		
 		mathobj = re.search("var\s*video_host\s*=\s*'(?P<url>.+?)'", webdata, re.DOTALL)
 		url = mathobj.group("url")
 
@@ -1909,14 +1913,14 @@ class Vk( SiteBase ):
 
 		## http://cs519609.userapi.com/u165193745/video/7cad4a848e.360.mp4
 		if int(no_flv):
-			ext = "mp4"
-			if int(max_hd): self.configs[1] = url + "u%s/video/%s.240.mp4"%(uid, vtag)			
+			if int(max_hd): self.configs[1] = url + "u%s/video/%s.240.mp4"%(uid, vtag)
 			self.configs[2] = url + "u%s/video/%s.360.mp4"%(uid, vtag)
+			ext = "mp4"
 		else:
-			url = url + "u%s/video/%s.flv"
+			url = url + "u%s/video/%s.flv"%(uid, vtag)
 			ext = "flv"
-
-		self.configs.update({"title": title, "ext":ext})
+			
+		self.configs.update({"title": title, "ext": ext})
 
 ###################################### XVIDEOS #######################################
 class Xvideos( SiteBase ):
@@ -2345,7 +2349,7 @@ if __name__ == "__main__":
 		print proxies["http"]
 		proxies = {}
 
-		if not checkSite("http://hostingbulk.com/embed-d6qvnwjkvq9m-600x450.html", proxies=proxies, quality=3):
+		if not checkSite("http://vk.com/video_ext.php?oid=164478778&id=163752296&hash=246b8447ed557240&hd=1", proxies=proxies, quality=3):
 			proxyManager.setBadIp( proxies )
 
 	del proxyManager
