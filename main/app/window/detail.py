@@ -40,12 +40,11 @@ class SubProgressBarRenderer(object):
 		mdc.Clear()
 
 		self.DrawProgressBar(mdc, 0, 0, rect.width, rect.height, self.progressValue)
-
 		mdc.SetFont(wx.Font(8, wx.SWISS, wx.NORMAL, wx.BOLD))
 
 		text = "%s / %s"%(manager.StreamManager.format_bytes( self.currentValue ), 
 		                  manager.StreamManager.format_bytes( self.metaValue ))
-
+		
 		textWidth, dummy = mdc.GetTextExtent(text)
 		mdc.DrawText(text, rect.width/2 - textWidth/2, rect.height/2 - dummy/2)
 		dc.SetClippingRegion(rect.x, rect.y, rect.width, rect.height)
@@ -71,7 +70,6 @@ class SubProgressBarRenderer(object):
 			
 	def DrawHorizontalPipe(self, dc, x, y, w, colour):
 		"""Draws a horizontal 3D-looking pipe."""
-
 		for r in range(PIPE_HEIGHT):
 			red = int(colour.Red() * math.sin((math.pi/PIPE_HEIGHT)*r))
 			green = int(colour.Green() * math.sin((math.pi/PIPE_HEIGHT)*r))
@@ -85,7 +83,7 @@ class SubProgressBarRenderer(object):
 		'percent'. The progress bar is only horizontal and it's height is constant 
 		(PIPE_HEIGHT). The 'h' parameter is used to vertically center the progress 
 		bar in the allotted space.
-
+		
 		The drawing is speed-optimized. Two bitmaps are created the first time this
 		function runs - one for the done (green) part of the progress bar and one for
 		the remaining (white) part. During normal operation the function just cuts
@@ -105,25 +103,14 @@ class SubProgressBarRenderer(object):
 			self.DrawHorizontalPipe(mdc, 0, 0, PIPE_WIDTH, wx.RED)
 			self.DrawHorizontalPipe(mdc, 1, 0, PIPE_WIDTH-1, wx.WHITE)
 			mdc.SelectObject(wx.NullBitmap)
-
+			
 		# Center the progress bar vertically in the box supplied
-		y = y + (h - PIPE_HEIGHT)/2 
-
-		if percent == 0: middle = 0
-		else: middle = (w * percent)/100
+		y = y + (h - PIPE_HEIGHT)/2
+		done_rate = (w/100) * percent
 		
-		if middle == 0: # not started
-			bitmap = self.REMAINING_BITMAP.GetSubBitmap((1, 0, w, PIPE_HEIGHT))
-			dc.DrawBitmap(bitmap, x, y, False)
-		elif middle == w: # completed
-			bitmap = self.DONE_BITMAP.GetSubBitmap((0, 0, w, PIPE_HEIGHT))
-			dc.DrawBitmap(bitmap, x, y, False)
-		else: # in progress
-			doneBitmap = self.DONE_BITMAP.GetSubBitmap((0, 0, middle, PIPE_HEIGHT))
-			dc.DrawBitmap(doneBitmap, x, y, False)
-			remainingBitmap = self.REMAINING_BITMAP.GetSubBitmap((0, 0, w - middle, PIPE_HEIGHT))
-			dc.DrawBitmap(remainingBitmap, x + (middle-5), y, False)
-
+		dc.DrawBitmap(self.REMAINING_BITMAP.GetSubBitmap((0,0, w, PIPE_HEIGHT)), x, y, False) # gray bitmap
+		if done_rate > 0: dc.DrawBitmap(self.DONE_BITMAP.GetSubBitmap((0,0, done_rate, PIPE_HEIGHT)), x, y, False)
+		
 ########################################################################
 class DetailControl( wx.Panel ): # DetailControl
 	def __init__(self, parent):
