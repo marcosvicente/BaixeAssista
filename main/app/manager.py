@@ -284,6 +284,7 @@ class FlvPlayer( threading.Thread):
 		except ImportError:
 			self.process = subprocess.Popen(self.url, executable=self.cmd)
 			self.running = True; self.process.wait()
+		except: pass
 		finally:
 			self.running = False
 		
@@ -325,8 +326,8 @@ class StreamHandler( threading.Thread ):
 		self.request = request
 		self.manage = server.manage
 		self.server = server
-		self.nb_sended = 0
-		self.streamPos = 0	
+		self.streammer = self.manage.get_streammer()
+		self.sended = self.streamPos = 0
 		self.headers = {}
 		self.GET = ""
 		
@@ -352,12 +353,6 @@ class StreamHandler( threading.Thread ):
 		headers = self.HEADER_OK_200 % self.manage.getVideoSize()
 		self.request.send( headers )
 		
-	def request_meta_data( self):
-		""" envia apenas uma sequencia de bytes como amostra """
-		if self.headers.get("Connection","").lower() != "keep-alive":
-			if self.nb_sended > 524288 and not self.server.sendMeta(): # 512 k
-				self.server.setMeta(True); raise BufferError, "MetaData"
-				
 	def get_request_data(self, timeout=60):
 		data = ""
 		ready = select.select([self.request],[],[],timeout)[0]
@@ -366,16 +361,15 @@ class StreamHandler( threading.Thread ):
 			ready = select.select([self.request],[],[],0)[0]
 		return data
 	
-	@run_locked()
-	def run( self):
-		self.server.client = self.request
+	def run(self):
 		try: self.handle()
 		except: pass
-		self.server.set_need_stop(False)
-		self.server.client = None
-		self.request.close()
+		finally:
+			self.request.close()
+			self.server.remove_client(self.request)
+			del self.streammer
 		
-	def handle( self):
+	def handle(self):
 		data = self.get_request_data()
 		
 		self.GET, self.headers = self.get_headers( data )
@@ -384,32 +378,21 @@ class StreamHandler( threading.Thread ):
 		
 		if self.streamPos > 0 and self.manage.videoManager.suportaSeekBar():
 			self.manage.setRandomRead( self.streamPos )
-			
 			self.send_206_PARTIAL(self.streamPos, self.manage.getVideoSize())
-			self.request.send( self.manage.streamHeader )
+			self.request.send( self.manage.videoManager.getStreamHeader() )
 		else:
 			self.manage.reloadSettings()
 			self.send_200_OK()
 			
 		# número de bytes já enviados ao cliente(player)
-		self.nb_sended = self.streamPos
-		# =========================
-		while not self.server.need_stop():
-			try:
-				cached_stream = self.manage.getStream()
-				if cached_stream:
-					self.nb_sended += self.request.send( cached_stream )
-					self.request_meta_data()
-				else:
-					if self.nb_sended >= self.manage.getVideoSize():
-						break # all data sended!
-					time.sleep(0.5)
-					continue
-			except Exception, err:
-				print "Erro[Player] %s"%err
-				break
+		self.sended = self.streamPos
+		
+		for stream in self.streammer.get_stream():
+			self.sended += self.request.send( stream )
+			conn = self.headers.get("Connection","close")
+			if conn.lower() == "close" and self.sended >524288: break
 			if self.manage.isComplete(): # diminui a sobrecarga
-				time.sleep(0.01)
+				time.sleep(0.001)
 			
 ################################### SERVER ####################################
 class Server( threading.Thread ):
@@ -422,34 +405,21 @@ class Server( threading.Thread ):
 		self.server.listen(5)
 		
 		self.manage = manage
-		self._need_stop = False
-		self.enviouMeta = False
-		self.client = None
+		self.clients = []
 		
 	def __del__(self):
 		del self.manage
 
-	def clienteStop(self):
-		""" Fecha o cliente único conectado ao servidor """
-		if hasattr(self.client,"close"): self.client.close()
-		self.set_need_stop(True) # informa o cliente para fechar a conexão.
-		self.setMeta(False)
-		
-	def need_stop(self):
-		return self._need_stop
-
-	def set_need_stop(self, flag=False):
-		self._need_stop = flag
+	def stop_clients(self):
+		""" fecha todas as conexões atualmente ativas """
+		for clt in self.clients: clt.close()
+	
+	def remove_client(self, clt):
+		self.clients.remove(clt)
 
 	def stop(self):
 		self.server.close()
-
-	def setMeta(self, flag):
-		self.enviouMeta = flag
-
-	def sendMeta(self):
-		return self.enviouMeta
-
+		
 	def run(self):
 		print "Starting server..."
 		while True:
@@ -459,6 +429,7 @@ class Server( threading.Thread ):
 				client, addr = self.server.accept()
 			except: break
 			StreamHandler(self, client).start()
+			self.clients.append( client )
 		print "Server stoped!"
 		
 ################################ PROXYMANAGER ################################
@@ -1056,10 +1027,35 @@ class Interval:
 ################################ main : manage ################################
 import gerador
 
+class Streammer:
+	""" lê e retorna a stream de dados """
+	#----------------------------------------------------------------------
+	def __init__(self, manage):
+		self.manage = manage
+		self.seekpos = self.sended = 0
+		
+	def get_stream(self, block_size=524288):
+		while self.sended < self.manage.getVideoSize():
+			if self.seekpos < self.manage.nBytesProntosEnvio:
+				block_len = block_size
+				
+				if (self.seekpos + block_len) > self.manage.nBytesProntosEnvio:
+					block_len = self.manage.nBytesProntosEnvio - self.seekpos
+					
+				stream, self.seekpos = self.manage.fileManager.read(self.seekpos, block_len)
+				self.sended += block_len
+				yield stream
+			else:
+				time.sleep(0.001)
+		yield "" # end stream
+		
+	def __del__(self):
+		del self.manage
+		
 # GRUPO GLOBAL DE VARIAVEIS COMPARTILHADAS
 class Manage:
 	syncLockWriteStream = threading.Lock()
-
+	
 	def __init__(self, URL = "", **params):
 		""" params {}:
 			tempfile - define se o vídeo será gravado em um arquivo temporário
@@ -1067,9 +1063,7 @@ class Manage:
 			Pode ser: 1 = baixa; 2 = média; 3 = alta
 		"""
 		assert URL, _("Entre com uma url primeiro!")
-		
-		# guarda a url do video
-		self.streamUrl = URL
+		self.streamUrl = URL # guarda a url do video
 		self.params = params
 		self.numTotalBytes = 0
 		self.posInicialLeitura = 0
@@ -1078,7 +1072,7 @@ class Manage:
 		self.streamServer = None
 		self.streamHeader = ""
 		self.usingTempfile = params.get("tempfile", False)
-
+		
 		# guarda as conexoes criadas
 		self.connections = []
 
@@ -1117,7 +1111,7 @@ class Manage:
 		self._canceledl = False    # cancelar o download?
 		self.velocidadeGlobal = 0  # velocidade global da conexão
 		self.tempoDownload = ""    # tempo total de download
-		self.nBytesProntosEnvio = self.posLeitura = 0
+		self.nBytesProntosEnvio = 0
 
 		self.fileManager = FileManager(
 			tempfile = self.params.get('tempfile', False), 
@@ -1143,7 +1137,11 @@ class Manage:
 						             maxsplit = self.params.get("maxsplit", 2))
 
 			self.posInicialLeitura = self.numTotalBytes
-
+			
+	def get_streammer(self):
+		""" streammer controla a leitura dos bytes enviados ao player """
+		return Streammer(self)
+	
 	def delete_vars(self):
 		""" Deleta todas as variáveis do objeto """
 		globalInfo.del_info("manage")
@@ -1413,8 +1411,6 @@ class Manage:
 		return True
 
 	def reloadSettings(self):
-		self.posLeitura = 0
-
 		if self.params.get("seeking", False):
 			with Manage.syncLockWriteStream:
 				self.notifiqueConexoes(True)
@@ -1436,22 +1432,7 @@ class Manage:
 				# só libera a conexão da espera, quando ela confirmar
 				# que entendeu a condição de reconfiguração.
 				smanager.fiqueEmEspera(False)
-
-	def getStream(self):
-		bytestream = ""
-		if self.posLeitura < self.nBytesProntosEnvio:
-			chunksize = 524288 # 512k
-			if (self.posLeitura + chunksize) > self.nBytesProntosEnvio:
-				chunksize = self.nBytesProntosEnvio - self.posLeitura
-
-			bytestream, self.posLeitura = self.fileManager.read(self.posLeitura, chunksize)
-
-			# cabeçalho da stream de vídeo(varia de 9 a 13 bytes).
-			streamHeaderSize = self.videoManager.getStreamHeaderSize()
-			if not self.streamHeader and streamHeaderSize != 0 and len(bytestream) > streamHeaderSize:
-				self.streamHeader = bytestream[:streamHeaderSize]
-		return bytestream
-
+				
 	def updateVideoInfo(self, args=None):
 		""" Atualiza as variáveis de transferência do vídeo. """
 		startTime = time.time() # temporizador
@@ -1972,14 +1953,12 @@ class StreamManager_( StreamManager ):
 	def conecte(self):
 		videoManager = self.manage.videoManager
 		seekpos = self.manage.interval.get_start( self.ident) # posição inicial de leitura
-		reconexao = self.params.get("reconexao", 1)
 		nfalhas = 0
 		
-		while nfalhas < reconexao:
+		while nfalhas < self.params.get("reconexao",1):
 			try:
-				waittime = self.params.get("waittime", 2)
-				reconexao = self.params.get("reconexao", 1)
-
+				sleep_for = self.params.get("waittime",2)
+				
 				globalInfo.set_info(self.ident, "estado", _("Conectando"))
 				data = videoManager.get_init_page( self.proxies) # pagina incial
 				link = videoManager.get_file_link( data) # link de download
@@ -2002,14 +1981,14 @@ class StreamManager_( StreamManager ):
 				else:
 					globalInfo.set_info(self.ident, "estado", _(u"Resposta inválida"))
 					self.streamSocket.close()
-					time.sleep( waittime )
+					time.sleep( sleep_for )
 			except Exception, err:
 				globalInfo.set_info(self.ident, "estado", _(u"Falha na conexão"))
 
 				if hasattr(err, "code") and err.code == 503:
 					return False
-
-				time.sleep( waittime )
+				
+				time.sleep( sleep_for )
 			nfalhas += 1
 		return False #nao foi possivel conectar
 
