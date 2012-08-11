@@ -635,10 +635,9 @@ class BaixeAssistaWin( wx.Frame ):
 
 	def stopConnection(self):
 		""" fecha a conexão atual do servidor com o player """
-		if isinstance(self.manage, manager.Manage) and \
-		   hasattr(self.manage.streamServer, "clienteStop"):
-			self.manage.streamServer.clienteStop()
-
+		if isinstance(self.manage, manager.Manage) and hasattr(self.manage.streamServer,"stop_clients"):
+			self.manage.streamServer.stop_clients()
+			
 	def carreguePlayerExterno(self):
 		""" carrega o player externo """
 		if self.streamLoading:
@@ -646,7 +645,6 @@ class BaixeAssistaWin( wx.Frame ):
 
 			if playerPath:
 				if self.manage.streamServer and self.cfg_menu.as_bool("servidorAtivo"):
-					self.manage.streamServer.setMeta(False)
 					self.playerExterno = manager.FlvPlayer( playerPath)
 					self.playerExterno.start()
 			else:
@@ -679,10 +677,7 @@ class BaixeAssistaWin( wx.Frame ):
 
 		if menuid == 100: # menu player embutido
 			self.cfg_menu['playerEmbutido'] = True
-
-			if servidorAtivo and self.manage.streamServer: 
-				self.manage.streamServer.setMeta(True)
-
+			##if servidorAtivo and self.manage.streamServer:
 			# parando o player externo
 			self.stopExternalPlayer()
 
@@ -918,9 +913,7 @@ class BaixeAssistaWin( wx.Frame ):
 
 		if not self.cfg_menu.as_bool('playerEmbutido'):
 			self.carreguePlayerExterno()
-		elif self.manage.streamServer:
-			self.manage.streamServer.setMeta(True)
-
+			
 		# uma vez iniciada a transferência, desativa o controle
 		# por motivo de segurança. Essa configuração torna-se in-
 		# válida para a tranferência do arquivo.
