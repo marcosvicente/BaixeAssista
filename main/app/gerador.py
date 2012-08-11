@@ -2324,17 +2324,17 @@ if __name__ == "__main__":
 		baseName = manager.UrlManager.getBaseName( url )
 		print "Checking: ", baseName
 
-		videoControl = Universal.get_video_control(baseName)
-		site = videoControl(url, **params)
-
-		if site.getVideoInfo(1, proxies=proxies, timeout=timeout):
-			print "Url: %s" % site.getLink()
-			print "Size: %s" % site.getStreamSize()
-			print "Title: %s" % site.getTitle()
+		site_control = Universal.get_video_control(baseName)
+		s_control = site_control(url, **params)
+		
+		if s_control.getVideoInfo(1, proxies=proxies, timeout=timeout):
+			print "Url: %s" % s_control.getLink()
+			print "Size: %s" % s_control.getStreamSize()
+			print "Title: %s" % s_control.getTitle()
 			print "-"*25
 			return True
 		else:
-			print "Msgerr: %s"%site.messagem
+			print "MSG: %s"%s_control.get_message()
 		print "-"*25
 		return False
 	# ----------------------------------------------
@@ -2345,7 +2345,7 @@ if __name__ == "__main__":
 		print proxies["http"]
 		proxies = {}
 
-		if not checkSite("http://dwn.so/player/embed.php?v=DS4DDC9CDF&width=505&height=400", proxies=proxies, quality=3):
+		if not checkSite("http://hostingbulk.com/embed-d6qvnwjkvq9m-600x450.html", proxies=proxies, quality=3):
 			proxyManager.setBadIp( proxies )
 
 	del proxyManager
