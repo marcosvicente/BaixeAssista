@@ -312,12 +312,14 @@ class StreamHandler( threading.Thread ):
 		"Content-Disposition: attachment", 
 		"Content-Transfer-Encoding: binary",
 		"Accept-Ranges: bytes", 
+	    "icy-metaint: 0",
 	"\n"])
 	
 	HEADER_PARTIAL_206 = "\r\n".join([
 		"HTTP/1.1 206 OK Partial Content", 
 		'Content-type: video/flv',
 		'Content-Length: %s' ,
+	    "icy-metaint: 0",
 		'Content-Range: bytes %d-%d/%d',
 	'\n'])
 	
@@ -361,6 +363,11 @@ class StreamHandler( threading.Thread ):
 			ready = select.select([self.request],[],[],0)[0]
 		return data
 	
+	def close_me(self, headers):
+		agent = headers.get("User-Agent", "").lower()
+		conn = headers.get("Connection", "close").lower()
+		return (conn=="close" and not re.search("VLC",agent,re.IGNORECASE))
+		
 	def run(self):
 		try: self.handle()
 		except: pass
@@ -375,6 +382,7 @@ class StreamHandler( threading.Thread ):
 		self.GET, self.headers = self.get_headers( data )
 		self.streamPos = self.get_range(self.GET, self.headers)
 		print "REQUEST: %s RANGE: %s"%(self.GET, self.streamPos)
+		if self.close_me(self.headers): return
 		
 		if self.streamPos > 0 and self.manage.videoManager.suportaSeekBar():
 			self.manage.setRandomRead( self.streamPos )
@@ -389,8 +397,6 @@ class StreamHandler( threading.Thread ):
 		
 		for stream in self.streammer.get_stream():
 			self.sended += self.request.send( stream )
-			conn = self.headers.get("Connection","close")
-			if conn.lower() == "close" and self.sended >524288: break
 			if self.manage.isComplete(): # diminui a sobrecarga
 				time.sleep(0.001)
 			
@@ -1756,7 +1762,19 @@ class StreamManager( threading.Thread):
 		try: self.streamSocket.close()
 		except:pass
 		self.info_clear()
-
+	
+	def getStreamHeader(self, seekpos, nbytes=13):
+		header = ""; stream = self.streamSocket.read( nbytes )
+		if stream.startswith("FLV") and stream.endswith("\t"):
+			if seekpos == 0: header = stream
+			else: header, stream = stream, ""
+			
+		if stream[:9].startswith("FLV") and stream[:9].endswith("\t"):
+			if seekpos == 0: header = stream[:9]
+			else: header = stream[:9]; stream = stream[9:]
+			
+		return stream, header
+	
 	def removaConfigs(self, errorstring, errornumber):
 		""" remove todas as configurações, importantes, dadas a conexão """
 		if self.manage.interval.hasInterval(self.ident):
@@ -1819,7 +1837,6 @@ class StreamManager( threading.Thread):
 	def conecte(self):
 		videoManager = self.manage.videoManager
 		seekpos = self.manage.interval.get_start(self.ident)
-		headerSize = videoManager.getStreamHeaderSize()
 		streamSize = self.manage.getVideoSize()
 		initTime = time.time()
 
@@ -1831,16 +1848,19 @@ class StreamManager( threading.Thread):
 				timeout = self.params.get("timeout", 25)
 
 				# começa a conexão
-				self.streamSocket = videoManager.conecte(
-					self.linkSeek, proxies=self.proxies, timeout=timeout, login=False)
-
+				self.streamSocket = videoManager.conecte(self.linkSeek, 
+				    proxies=self.proxies, timeout=timeout, login=False)
+				
+				stream, header = self.getStreamHeader(seekpos)
+				
 				# verifica a validade a resposta.
-				is_valid = self.responseCheck(headerSize, 
-				        seekpos, streamSize, self.streamSocket.headers)
-
-				if self.streamSocket.code == 200 and is_valid:
-					if seekpos > headerSize and headerSize != 0:
-						self.streamSocket.read( headerSize )
+				isValid = self.responseCheck(len(header), seekpos, 
+				    streamSize, self.streamSocket.headers)
+				
+				if isValid and self.streamSocket.code == 200:
+					if stream:
+						self.streamWrite(stream, len(stream))
+						self.numBytesLidos += len(stream)					
 					return True
 				else:
 					globalInfo.set_info(self.ident, "estado", _(u"Resposta inválida"))
@@ -1848,7 +1868,7 @@ class StreamManager( threading.Thread):
 			except Exception, err:
 				globalInfo.set_info(self.ident, "estado", _(u"Falha na conexão"))
 				time.sleep( waittime )
-
+				
 			# se passar do tempo de timeout o ip será descartado
 			if (time.time() - initTime) > timeout: break
 			else: initTime = time.time()
@@ -1953,6 +1973,7 @@ class StreamManager_( StreamManager ):
 	def conecte(self):
 		videoManager = self.manage.videoManager
 		seekpos = self.manage.interval.get_start( self.ident) # posição inicial de leitura
+		streamSize = self.manage.getVideoSize()
 		nfalhas = 0
 		
 		while nfalhas < self.params.get("reconexao",1):
@@ -1962,9 +1983,9 @@ class StreamManager_( StreamManager ):
 				globalInfo.set_info(self.ident, "estado", _("Conectando"))
 				data = videoManager.get_init_page( self.proxies) # pagina incial
 				link = videoManager.get_file_link( data) # link de download
-				tempo_espera = videoManager.get_count( data) # contador
-
-				for second in range(tempo_espera, 0, -1):
+				wait_for = videoManager.get_count( data) # contador
+				
+				for second in range(wait_for, 0, -1):
 					globalInfo.set_info(self.ident, "estado", _(u"Aguarde %02ds")%second)
 					time.sleep(1)
 					
@@ -1972,11 +1993,15 @@ class StreamManager_( StreamManager ):
 				self.streamSocket = videoManager.conecte(
 				    link, proxies=self.proxies, headers={"Range":"bytes=%s-"%seekpos})
 				
-				if self.streamSocket.code == 200 or self.streamSocket.code == 206:
-					if seekpos == 0: # anula o tamanho aproximado pelo real do arquivo
-						tamanho_aproximado = self.manage.getVideoSize()
-						tamanho_real = self.streamSocket.headers.get("Content-Length", tamanho_aproximado)
-						self.manage.videoSize = long( tamanho_real )
+				stream, header = self.getStreamHeader(seekpos) # get and write
+				
+				isValid = self.responseCheck(len(header), seekpos, 
+				    streamSize, self.streamSocket.headers)
+				
+				if isValid and (self.streamSocket.code == 200 or self.streamSocket.code == 206):
+					if stream:
+						self.streamWrite(stream, len(stream))
+						self.numBytesLidos += len(stream)
 					return True
 				else:
 					globalInfo.set_info(self.ident, "estado", _(u"Resposta inválida"))
@@ -1984,10 +2009,7 @@ class StreamManager_( StreamManager ):
 					time.sleep( sleep_for )
 			except Exception, err:
 				globalInfo.set_info(self.ident, "estado", _(u"Falha na conexão"))
-
-				if hasattr(err, "code") and err.code == 503:
-					return False
-				
+				if hasattr(err, "code") and err.code == 503: return False
 				time.sleep( sleep_for )
 			nfalhas += 1
 		return False #nao foi possivel conectar
