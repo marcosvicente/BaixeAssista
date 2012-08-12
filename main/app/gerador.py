@@ -1588,18 +1588,17 @@ class PutLocker( SiteBase ):
 		'.*?(?:value="(?P<_hash>\w+)|name="(?P<_name>\w+)").*?<input.*value="(?P<confirm>[\w\s]+)"', 
 		re.DOTALL|re.IGNORECASE
 	)
-
+	
 	def __init__(self, url, **params):
-		"""Constructor"""
 		SiteBase.__init__(self, **params)
-		self.streamHeaderSize = 0
-		self.basename = "putlocker.com"
 		self.getFileBaseUrl = "http://www.putlocker.com"
+		self.basename = "putlocker.com"
+		self.streamHeaderSize = 13
 		self.url = url
 
 	def suportaSeekBar(self):
-		return False
-
+		return True
+	
 	def getMessage(self, webpage):
 		## <div class='message t_0'>This file doesn't exist, or has been removed.</div>
 		try:
@@ -1677,7 +1676,6 @@ class Sockshare( PutLocker ):
 	def __init__(self, url, **params):
 		"""Constructor"""
 		PutLocker.__init__(self, url, **params)
-		self.streamHeaderSize = 0
 		self.getFileBaseUrl = "http://www.sockshare.com"
 		self.basename = "sockshare.com"
 		self.url = url
@@ -1870,12 +1868,12 @@ class Vk( SiteBase ):
 	def __init__(self, url, **params):
 		"""Constructor"""
 		SiteBase.__init__(self, **params)
-		self.streamHeaderSize = 0
+		self.streamHeaderSize = 13
 		self.basename = "vk.com"
 		self.url = url
 		
 	def suportaSeekBar(self):
-		return False
+		return True
 	
 	def getLink(self):
 		vquality = int(self.params.get("qualidade", 2))
@@ -2349,7 +2347,7 @@ if __name__ == "__main__":
 		print proxies["http"]
 		proxies = {}
 
-		if not checkSite("http://vk.com/video_ext.php?oid=164478778&id=163752296&hash=246b8447ed557240&hd=1", proxies=proxies, quality=3):
+		if not checkSite("http://moevideo.net/video.php?file=97860.9fa3b59d339a29ad1bd44a717f1c", proxies=proxies, quality=3):
 			proxyManager.setBadIp( proxies )
 
 	del proxyManager
