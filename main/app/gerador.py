@@ -2151,6 +2151,59 @@ class Hostingbulk( SiteBase ):
 
 		self.configs = {"url": url+"?start=", "title": title}
 
+########################################################################
+class Videoslasher( SiteBase ):
+	##<rss version="2.0" xmlns:media="http://search.yahoo.com/mrss/">
+	##<channel><item><title>Preview</title>
+	##<media:content url="http://www.videoslasher.com/static/img/previews/3/37/370f254c0be38819213191232e528d78.jpg" type="image/jpeg">
+	##</media:content></item><item><title>Video</title><link>http://www.videoslasher.com/video/6O9TSHUUR4UY</link>
+	##<media:content url="http://proxy1.videoslasher.com/free/6/6O/6O9TSHUUR4UY.flv?h=ih4mBk-jPyXCEJ-aaDaY3g&e=1344819603" type="video/x-flv"  duration="5269" />
+	##</item></channel></rss>
+	
+	## http://www.videoslasher.com/video/6O9TSHUUR4UY == http://www.videoslasher.com/embed/6O9TSHUUR4UY
+	controller = {
+		"url": "http://www.videoslasher.com/video/%s", 
+		"patterns": (
+	        re.compile("(?P<inner_url>http://www\.videoslasher\.com/video/(?P<id>\w+))"),
+	        [re.compile("(?P<inner_url>http://www\.videoslasher\.com/embed/(?P<id>\w+))")]
+	    ),
+		"control": "SM_SEEK",
+		"video_control": None
+	}
+	domain =  "http://www.videoslasher.com"
+	#----------------------------------------------------------------------
+	def __init__(self, url, **params):
+		SiteBase.__init__(self, **params)
+		self.basename = "videoslasher.com"
+		self.streamHeaderSize = 13
+		self.url = url
+	
+	def suportaSeekBar(self):
+		return True
+	
+	def start_extraction(self, proxies={}, timeout=25):
+		fd = self.conecte(self.url, proxies=proxies, timeout=timeout)
+		webPage = fd.read(); fd.close()
+		
+		matchobj = re.search("""playlist:\s*(?:'|")(/playlist/\w+)(?:'|")""", webPage, re.DOTALL)
+		pl_url = matchobj.group(1)
+		if pl_url[-1] != "/": pl_url += "/"
+		
+		fd = self.conecte(self.domain + pl_url, proxies=proxies, timeout=timeout)
+		rssData = fd.read(); fd.close()
+		
+		for item in re.findall("<item>(.+?)</item>", rssData, re.DOTALL):
+			matchobj = re.search('''\<media:content\s*url\s*=\s*"(.+?)"\s*type="video.+?"''', item, re.DOTALL)
+			if matchobj:
+				url = matchobj.group(1)
+				break
+		else: raise Exception
+		
+		try: title = re.search("<title>(.+?)</title>", webPage, re.DOTALL).group(1)
+		except: title = get_radom_title()
+		
+		self.configs = {"url": url+"&start=", "title": title}
+		
 #######################################################################################
 class Universal:
 	"""A classe Universal, quarda varias informações e dados usados em
@@ -2347,7 +2400,7 @@ if __name__ == "__main__":
 		print proxies["http"]
 		proxies = {}
 
-		if not checkSite("http://moevideo.net/video.php?file=97860.9fa3b59d339a29ad1bd44a717f1c", proxies=proxies, quality=3):
+		if not checkSite("http://www.videoslasher.com/video/6O9TSHUUR4UY", proxies=proxies, quality=3):
 			proxyManager.setBadIp( proxies )
 
 	del proxyManager
