@@ -344,39 +344,49 @@ class BarraControles( noteBook.NoteBookImage ):
 	def questineUsuario(self):
 		if self.tempFileOptControl.Enabled and self.tempFileOptControl.GetSelection() == 1:
 			msg = _(u"Gostou do vídeo ? Deseja guardá-lo para revê-lo mais tarde ?")
-			confirmDialog = GMD.GenericMessageDialog(self, msg, _("O que fazer ?"), wx.ICON_QUESTION|wx.YES_NO)
-			if confirmDialog.ShowModal() == wx.ID_YES: self.setTempFileOpt()
-			confirmDialog.Destroy()
-			
-		# reativando o controle(note que ele foi 
-		# desativado no começo da transferência)
-		self.tempFileControl.Enable(True)
-		self.videoQualityControl.Enable(True)
-		self.numDivStreamControl.Enable(True)
-
-	def setTempFileOpt(self):
-		manage = self.mainWin.manage
-		assert manage is not None, u"'manage' ainda não iniciado!"
+			gm_dlg = GMD.GenericMessageDialog(self, msg, _("O que fazer ?"), wx.ICON_QUESTION|wx.YES_NO)
+			if gm_dlg.ShowModal() == wx.ID_YES: self.setTempFileOpt()
+			gm_dlg.Destroy()
+		# reativando os controles para a tranferência de um novo arquivo.
+		self.enableCtrs()
+		
+	def enableCtrs(self, enable=True):
+		# reativando os controles desativadas ao iniciar a transferência.
+		for method in [
+		    self.tempFileControl, self.videoQualityControl, 
+		    self.numDivStreamControl ]:
+			method.Enable( enable )
+	
+	@manager.FM_runLocked()
+	def setTempFileOpt(self): ## _("Arquivo corrompido!")
+		assert self.mainWin.manage is not None, u"'manage' ainda não iniciado!"
 		
 		if self.tempFileOptControl.GetSelection() == 1: # index=1: "pergunte o que fazer"
-			sucess, message = manage.recoverTempFile()
-			
-			if sucess is True:
-				msg = _("O arquivo foi recuperado com sucesso!")
-				dlg = GMD.GenericMessageDialog(self, message, _("Tudo como esperado."), wx.ICON_INFORMATION|wx.OK)
-				dlg.ShowModal(); dlg.Destroy()
-				
-			elif sucess is False:
-				dlg = GMD.GenericMessageDialog(self, message, _(u"Não foi possível..."), wx.ICON_ERROR|wx.OK)
-				dlg.ShowModal(); dlg.Destroy()
-				
-			elif sucess is None:
-				msg = u"".join([
-				    _(u"O arquivo de vídeo está corrompido!"),
-				    _(u"\nIsso por causa da \"seekbar\".")])
-				dlg = GMD.GenericMessageDialog(self, msg, _("Arquivo corrompido!"), wx.ICON_ERROR|wx.OK)
-				dlg.ShowModal(); dlg.Destroy()
-			
+			progressDlg = wx.ProgressDialog(_(u"Copiando arquivo..."), "",
+			                                maximum = 100, 
+			                                parent = self,
+			                                style = 0 
+			                                | wx.PD_CAN_ABORT
+			                                | wx.PD_ESTIMATED_TIME 
+			                                | wx.PD_REMAINING_TIME 
+			                                | wx.PD_APP_MODAL)
+			for copy in self.mainWin.manage.recoverTempFile():
+				if copy.inProgress and not copy.error:
+					prog_info = _("Copiado %.2f%% de 100.00%%")% float(copy.progress)
+					
+					if not copy.sucess:
+						keepGoing, skip = progressDlg.Update(copy.progress, prog_info)
+						copy.cancel = not keepGoing # permite cancelar a cópia.
+					else:
+						progressDlg.SetTitle(_(u"Tudo como esperado."))
+						progressDlg.Update(copy.progress, prog_info+"\n"+copy.get_msg())
+						
+				elif copy.error == True:
+					progressDlg.SetTitle( _(u"Não foi possível..."))
+					progressDlg.Update(100, copy.get_msg())
+					
+			progressDlg.Destroy()
+
 	def updateSettings(self, evt=None):
 		# setting: controles
 		cfg_controles = self.mainWin.configs["Controles"]

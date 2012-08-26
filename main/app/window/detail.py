@@ -109,8 +109,14 @@ class SubProgressBarRenderer(object):
 		done_rate = (w/100) * percent
 		
 		dc.DrawBitmap(self.REMAINING_BITMAP.GetSubBitmap((0,0, w, PIPE_HEIGHT)), x, y, False) # gray bitmap
-		if done_rate > 0: dc.DrawBitmap(self.DONE_BITMAP.GetSubBitmap((0,0, done_rate, PIPE_HEIGHT)), x, y, False)
-		
+		if done_rate > 0:
+			try:
+				doneBitmap = self.DONE_BITMAP.GetSubBitmap((0,0, done_rate, PIPE_HEIGHT))
+				dc.DrawBitmap(doneBitmap, x, y, False)
+			except Exception, err:
+				print "Debug[%s] px: %d py: %d rate_width: %d heigth: %d"%(
+				    err, x, y, done_rate, PIPE_HEIGHT)
+				
 ########################################################################
 class DetailControl( wx.Panel ): # DetailControl
 	def __init__(self, parent):
