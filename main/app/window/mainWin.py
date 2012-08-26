@@ -51,7 +51,7 @@ class StartDown(threading.Thread):
 		self.manage = mainWin.manage
 		self.mainWin = mainWin
 		self._status = self.status = None
-		self.max = 3
+		self.max = 8
 
 		# diálogo informativo
 		self.diag = dialog.ProgressDialog(mainWin, _("Por favor, aguarde..."))
@@ -635,7 +635,8 @@ class BaixeAssistaWin( wx.Frame ):
 
 	def stopConnection(self):
 		""" fecha a conexão atual do servidor com o player """
-		if isinstance(self.manage, manager.Manage) and hasattr(self.manage.streamServer,"stop_clients"):
+		if isinstance(self.manage, manager.Manage) and \
+		   hasattr(self.manage.streamServer,"stop_clients"):
 			self.manage.streamServer.stop_clients()
 			
 	def carreguePlayerExterno(self):
@@ -742,7 +743,7 @@ class BaixeAssistaWin( wx.Frame ):
 		else:
 			self.btnStartStop.SetValue(False)
 			self.btnStartStop.SetLabel( _("Baixar") )
-			self.stopStreamLoading()
+			wx.CallAfter( self.stopStreamLoading )
 
 	def updateStatusBar(self, *args):
 		for index, value in enumerate( args): 
@@ -766,56 +767,41 @@ class BaixeAssistaWin( wx.Frame ):
 	def controleConexoes(self, evt=None, default=False):
 		""" Adiciona ou remove conexões """
 		if self.streamLoading and not self.manage.isComplete():
-			numConnections = self.barraControles.nConnectionControl.GetValue()
-			ratelimit = self.barraControles.rateLimitControl.GetValue()
-			timeout = self.barraControles.timeoutControl.GetValue()
-			typechange = self.barraControles.changeTypeControl.GetValue()
-			reconexao = self.barraControles.reconexoesControl.GetValue()
-			waittime = self.barraControles.waitTimeControl.GetValue()
+			ctrConnection = self.manage.ctrConnection
+			
+			nActiveConn = ctrConnection.getnActiveConnection()
+			nConnCtr = self.barraControles.nConnectionControl.GetValue()
+			
 			proxyDisable = self.barraControles.proxyDisable.GetValue()
-			difer = numConnections - self.manage.getnConnection()
-
-			# --------------------------------------------------------------
-			if difer > 0: # *** adiciona novas conexões
-				for index in range(difer):
-					if default and index > 0: default = False
-					if proxyDisable: default=True
-
-					smanager = self.manage.startNewConnection(default,
-										                      ratelimit = ratelimit, timeout = timeout,
-										                      typechange = typechange, waittime = waittime,
-										                      reconexao = reconexao )
-					###
-					self.detailControl.setInfoItem( smanager.ident )
-
-			# --------------------------------------------------------------
-			elif difer < 0: # *** remove conexões existentes
-				# referência para as conexões criadas
-				connections = self.manage.getConnections()
-				numConnections = self.manage.getnConnectionReal()
-
-				for index in range(0, abs(difer)):
-					for index in range(numConnections-1, -1, -1):
-						smanager = connections[ index ]
-						if not smanager.wasStopped(): # desconsidera conexões inativas
-							smanager.stop()
-							# remove o item ligado a conexão
-							self.detailControl.removaItemConexao( smanager.ident )
-							break
-
-				# remove todas as conexões paradas
-				self.manage.removaConexoesInativas()
-
-			# --------------------------------------------------------------
-			else: # *** mudança dinânica dos parâmetros das conexões
-				for smanager in self.manage.getConnections():
-					if not smanager.wasStopped():
-						smanager["timeout"] = timeout       # tempo de espera
-						smanager["ratelimit"] = ratelimit   # taxa limite de velocidade
-						smanager["typechange"] = typechange # mudança do estado dos ips
-						smanager["waittime"] = waittime    # espera entre reconões
-						smanager["reconexao"] = reconexao   # número de reconexões
-
+			numOfConn = nConnCtr - nActiveConn
+			
+			params = {
+			    "ratelimit": self.barraControles.rateLimitControl.GetValue(), 
+			    "timeout": self.barraControles.timeoutControl.GetValue(),
+			    "typechange": self.barraControles.changeTypeControl.GetValue(), 
+			    "waittime": self.barraControles.waitTimeControl.GetValue(),
+			    "reconexao": self.barraControles.reconexoesControl.GetValue()
+			}
+			if numOfConn > 0: # adiciona novas conexões.
+				if proxyDisable:
+					sm_id_list = ctrConnection.startConnectionWithoutProxy(numOfConn, **params)
+				else:
+					if default:
+						sm_id_list =  ctrConnection.startConnectionWithoutProxy(1, **params)
+						sm_id_list += ctrConnection.startConnectionWithProxy(numOfConn-1, **params)
+					else:
+						sm_id_list = ctrConnection.startConnectionWithProxy(numOfConn, **params)
+						
+				for sm_id in sm_id_list:
+					self.detailControl.setInfoItem( sm_id )
+				
+			elif numOfConn < 0: # remove conexões existentes.
+				for sm_id in ctrConnection.stopConnections( numOfConn ):
+					self.detailControl.removaItemConexao( sm_id )
+					
+			else: # mudança dinânica dos parametros das conexões.
+				ctrConnection.update( **params)
+				
 	def updateInterface(self, evt):
 		if self.streamLoading:
 			# ATUALIZA A BARRA DE PROGRESSO GLOBAL
@@ -825,7 +811,7 @@ class BaixeAssistaWin( wx.Frame ):
 			# ATUALIZA O ESTADO DAS CONEXOES
 			listControl = self.detailControl.GetListCtrl()
 
-			for smanager in self.manage.getConnections():
+			for smanager in self.manage.ctrConnection.getConnections():
 				if not smanager.wasStopped(): # conexões paradas serão ignoradas
 					rowIndex = self.detailControl.getRowIndex( smanager.ident )
 
@@ -914,12 +900,8 @@ class BaixeAssistaWin( wx.Frame ):
 		if not self.cfg_menu.as_bool('playerEmbutido'):
 			self.carreguePlayerExterno()
 			
-		# uma vez iniciada a transferência, desativa o controle
-		# por motivo de segurança. Essa configuração torna-se in-
-		# válida para a tranferência do arquivo.
-		self.barraControles.tempFileControl.Enable(False)
-		self.barraControles.videoQualityControl.Enable(False)
-		self.barraControles.numDivStreamControl.Enable(False)
+		# desativando controles, para impedir modifição da configuração ao iniciar a tranferência.
+		self.barraControles.enableCtrs( False )
 
 	def stopStreamLoading(self, evt=None):
 		self.updateTimer.Stop()
@@ -934,9 +916,9 @@ class BaixeAssistaWin( wx.Frame ):
 			self.recarreguePlayer()
 
 			# parando todas as conexões criadas
-			self.manage.stopConnections()
+			self.manage.ctrConnection.stopAllConnections()
 			self.detailControl.removaTodosItens()
-
+			
 			#zera a barra de progresso
 			self.progressBar.SetValue(0.0)
 
