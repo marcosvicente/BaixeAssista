@@ -454,7 +454,7 @@ class ProxyManager:
         self.generator = self.create_generator()
 
     def __del__(self):
-        self.salveIps()
+        self.save()
         del self.configPath
         del self.filePath
         del self.generator
@@ -465,11 +465,11 @@ class ProxyManager:
         """ retorna o número de ips armazenados no arquivo """
         return len(self.listaIp)
 
-    def salveIps(self):
+    def save(self):
         """ Salva todas as modificações """
         if not security_save(self.filePath, _list=self.listaIp):
             print "Erro salvando lista de ips!!!"
-
+            
     def create_generator( self):
         """ Cria um gerador para iterar sobre a lista de ips """
         return (ip for ip in self.listaIp)
@@ -712,13 +712,13 @@ class ResumeInfo( ResumeBase ):
 
     def add(self, title, **kwargs):
         """filename: videoExt; streamSize; seekPos; 
-        intervPendentes; numTotalBytes; nBytesProntosEnvio; videoQuality
+        pending; numTotalBytes; nBytesProntosEnvio; videoQuality
         """
         try: query = self.objects.get(title=title)
         except: query = models.Resume()
 
         query.title = title
-        query.resumeBLocks = cPickle.dumps(kwargs["intervPendentes"])
+        query.resumeBLocks = cPickle.dumps(kwargs["pending"])
         query.streamDownBytes = kwargs["numTotalBytes"]
         query.sendBytes = kwargs["nBytesProntosEnvio"]
         query.streamQuality = kwargs["videoQuality"]
@@ -913,15 +913,16 @@ class Interval:
         """params = {}; 
         seekpos: posição inicial de leitura da stream; 
         index: indice do bloco de bytes; 
-        intervPendentes: lista de intervals pendetes(não baixados); 
+        pending: lista de intervals pendetes(não baixados); 
         offset: deslocamento do ponteiro de escrita à esquerda.
         maxsize: tamanho do block que será segmentado.
         """
         assert params.get("maxsize",None), "maxsize is null"
-
+        self.lock = []
+        
         self.send_info = {"nbytes":{}, "sending":0}
         self.seekpos = params.get("seekpos", 0)
-        self.intervPendentes = params.get("intervPendentes", [])
+        self.pending = params.get("pending", [])
 
         self.maxsize = params["maxsize"]
         self.maxsplit = params.get("maxsplit",2)
@@ -938,7 +939,7 @@ class Interval:
         del self.seekpos
         del self.send_info
         del self.intervals
-        del self.intervPendentes
+        del self.pending
 
     def canContinue(self, obj_id):
         """ Avalia se o objeto conexão pode continuar a leitura, 
@@ -978,22 +979,22 @@ class Interval:
 
     def get_first_start( self):
         """ retorna o começo(start) do primeiro intervalo da lista de intervals """
-        intervs  = [interval[1] for interval in self.intervals.values()]
-        intervs += [interval[2] for interval in self.intervPendentes]
+        intervs = [interval[1] for interval in self.intervals.values()] + \
+                  [interval[2] for interval in self.pending]
         intervs.sort()
         try: start = intervs[0]
         except IndexError: start = -1
         return start
-
+    
     def remove(self, obj_id):
         return self.intervals.pop(obj_id, None)
 
-    def fixeIntervPendente(self, *args):
-        """ indice; nbytes; start; end; block_size"""
-        self.intervPendentes.append( args)
-
-    def numIntervPendentes(self):
-        return len( self.intervPendentes )
+    def pending_store(self, *args):
+        """ index; nbytes; start; end; block_size """
+        self.pending.append( args)
+        
+    def pending_count(self):
+        return len(self.pending)
 
     def calcule_block_size(self):
         """ calcula quantos bytes serão lidos por conexão criada """
@@ -1013,54 +1014,62 @@ class Interval:
             # aplicando a reorganização dos indices
             self.intervals[ obj_id ][0] = index
 
-    def associeIntervPendente(self, obj_id):
+    def pending_set(self, obj_id):
         """ Configura uma conexão existente com um intervalo pendente(não baixado) """
-        self.intervPendentes.sort()
-        index, nbytes, start, end, block_size = self.intervPendentes.pop(0)
+        self.pending.sort()
+        index, nbytes, start, end, block_size = self.pending.pop(0)
         old_start = start
-
+        
         # calcula quantos bytes foram lidos, até ocorrer o erro.
         novo_grupo_bytes = nbytes - (block_size - (end - start))
-
+        
         # avança somando o que já leu.
         start = start + novo_grupo_bytes
         block_size = end - start
-
+        
         self.intervals[obj_id] = [index, start, end, block_size]
-
+        
         if self.send_info["nbytes"].get(old_start,None) is not None:
             del self.send_info["nbytes"][old_start]
-
+            
         self.send_info["nbytes"][start] = 0	
-
-    def associeIntervDerivado(self, obj_id_):
+        
+    def locked(self, obj_id):
+        while obj_id in self.lock:
+            time.sleep(0.5)
+            
+    def derivative_set(self, obj_id_):
         """ cria um novo intervalo, apartir de um já existente """
         intervals = self.intervals.items()
         # organiza pelos indices dos intervals: (1, (0, 1, 2, 3))
         intervals.sort(key=lambda x: x[1][0])
-
+        
         for obj_id, interv in intervals:
             index, start, end, block_size = interv
             nbytes = self.send_info["nbytes"][start]
             average_bytes = int(float((block_size - nbytes)) *0.5)
 
             if average_bytes > (512*1024):
+                self.lock.append( obj_id )
+                
                 # reduzindo o tamanho do intervalo antigo
                 new_end = end - average_bytes
                 # recalculando o tamanho do bloco de bytes
                 new_block_size = new_end - start
                 self.intervals[ obj_id ][-2] = new_end
                 self.intervals[ obj_id ][-1] = new_block_size
-
+                
                 # criando um novo intervalo, derivado do atual
                 start = new_end
                 block_size = end - start
-                self.intervals[ obj_id_] = [0, start, end, block_size]
+                self.intervals[ obj_id_ ] = [0, start, end, block_size]
                 self.send_info["nbytes"][start] = 0
                 self.updateIndex()
+                
+                self.lock.remove( obj_id )
                 break
-
-    def associeNovoInterv(self, obj_id):
+            
+    def new_set(self, obj_id):
         """ cria um novo intervalo de divisão da stream """
         start = self.seekpos
 
@@ -1069,14 +1078,12 @@ class Interval:
 
             # verificando se final da stream já foi alcançado.
             if end > self.maxsize: end = self.maxsize
-
             difer = self.maxsize - end
-
+            
             # Quando o resto da stream for muito pequeno, adiciona ao final do interv.
             if difer > 0 and difer < 512*1024: end += difer
-
             block_size = end - start
-
+            
             self.intervals[obj_id] = [0, start, end, block_size]
             # associando o início do intervalo ao contador
             self.send_info["nbytes"][start] = 0
@@ -1283,7 +1290,7 @@ class Manage:
             self.videoExt = self.fileManager.resumeInfo.get_file_ext()
 
             self.interval = Interval(maxsize = self.videoSize,
-                                     seekpos = seekpos, offset = 0, intervPendentes = intervs,
+                                     seekpos = seekpos, offset = 0, pending = intervs,
                                      maxsplit = self.params.get("maxsplit", 2))
             
             self.posInicialLeitura = self.numTotalBytes
@@ -1424,7 +1431,7 @@ class Manage:
 
     def isComplete(self):
         """ informa se o arquivo já foi completamente baixado """
-        return (self.numBytesRecebidos() >= (self.getVideoSize()-25))
+        return (self.received_bytes() >= (self.getVideoSize()-25))
 
     def canceledl(self):
         self._canceledl = True
@@ -1441,7 +1448,7 @@ class Manage:
     def nowSending(self):
         return self.interval.send_info['sending']
 
-    def numBytesRecebidos(self):
+    def received_bytes(self):
         """ retorna o numero total de bytes transferidos """
         return self.numTotalBytes
 
@@ -1449,28 +1456,27 @@ class Manage:
     def salveInfoResumo(self):
         """ salva todos os dados necessários para o resumo do arquivo atual """
         self.ctrConnection.removeStopedConnection()
-
-        listInterv = [] # coleta geral de informações.
+        pendingIntervs = [] # coleta geral de informações.
+        
         for smanager in self.ctrConnection.getConnections():
             ident = smanager.ident
-
             # a conexão deve estar ligada a um interv
             if self.interval.hasInterval( ident ):
-                listInterv.append((
+                pendingIntervs.append((
                     self.interval.get_index( ident), 
                     smanager.numBytesLidos, 
                     self.interval.get_start( ident), 
                     self.interval.get_end( ident),
                     self.interval.get_block_size( ident)
                 ))
-        listInterv.extend(self.interval.intervPendentes)
-        listInterv.sort()
-
-        self.fileManager.resumeInfo.add(self.videoTitle,
-                        videoExt = self.videoExt, streamSize = self.getVideoSize(), 
-                        seekPos = self.interval.seekpos, intervPendentes = listInterv, 
-                        numTotalBytes = self.numTotalBytes, nBytesProntosEnvio = self.nBytesProntosEnvio,
-                        videoQuality = self.params.get("videoQuality",2))
+        pendingIntervs.extend( self.interval.pending )
+        pendingIntervs.sort()
+        
+        self.fileManager.resumeInfo.add(
+            self.videoTitle, videoExt = self.videoExt, streamSize = self.getVideoSize(), 
+            seekPos = self.interval.seekpos, pending = pendingIntervs, numTotalBytes = self.numTotalBytes, 
+            nBytesProntosEnvio = self.nBytesProntosEnvio, videoQuality = self.params.get("videoQuality",2)
+        )
 
     def porcentagem(self):
         """ Progresso do download em porcentagem """
@@ -1562,8 +1568,8 @@ class StreamManager( threading.Thread):
     listStrErro = ["onCuePoint"]
 
     # ordem correta das infos
-    listInfo = ["http", "estado", "indiceBloco", "numBytesFaltando", "velocidadeLocal"]
-
+    listInfo = ["http", "state", "block_index", "remainder_bytes", "local_speed"]
+    
     def __init__(self, manage, noProxy=False, **params):
         """ params: {}
         ratelimit: limita a velocidade de sub-conexões (limite em bytes)
@@ -1577,38 +1583,29 @@ class StreamManager( threading.Thread):
 
         self.params = params
         self.manage = manage
-
+        
         # conexão com ou sem um servidor
         self.usingProxy = noProxy
         self.proxies = {}
-
+        
         self.link = self.linkSeek = ""
         self.aguarde = [False, False]
-        self.megaFile, self.isRunning = False, True
+        
         self.numBytesLidos = 0
+        self.isRunning = True
 
-    def __setitem__(self, k, v):
-        if not self.params.has_key(k):
-            print "Aviso: \"%s\" ainda não existe."%k
-        self.params[k] = v
-
+    def __setitem__(self, key, value):
+        assert self.params.has_key( key ), "invalid option name: '%s'"%key
+        self.params[ key ] = value
+        
     def __del__(self):
-        globalInfo.del_info(self.ident)
-        del self.aguarde
-        del self.numBytesLidos
-        del self.isRunning
+        globalInfo.del_info( self.ident )
         del self.manage
-        del self.megaFile
-        del self.linkSeek
-        del self.usingProxy
-        del self.proxies
         del self.params
-        del self.link
 
     @staticmethod
     def calc_eta(start, now, total, current):
-        if total is None:
-            return '--:--'
+        if total is None: return '--:--'
         dif = now - start
         if current == 0 or dif < 0.001: # One millisecond
             return '--:--'
@@ -1675,7 +1672,7 @@ class StreamManager( threading.Thread):
         """ iniciado com thread. Evita travar no init """
         # globalinfo: add_info
         globalInfo.add_info(self.ident)
-        globalInfo.set_info(self.ident, "estado", _("Iniciando"))
+        globalInfo.set_info(self.ident, "state", _("Iniciando"))
 
         with StreamManager.lockInicialize:
             timeout = self.params.get("timeout", 25)
@@ -1747,114 +1744,120 @@ class StreamManager( threading.Thread):
     def estaProntoContinuar(self):
         return self.aguarde[1]
 
-    def info_clear(self):
-        globalInfo.set_info(self.ident, "indiceBloco", "")
-        globalInfo.set_info(self.ident, "velocidadeLocal", "")
+    def reset_info(self):
+        globalInfo.set_info(self.ident, "block_index", "")
+        globalInfo.set_info(self.ident, "local_speed", "")
 
     def streamWrite(self, stream, nbytes):
         """ Escreve a stream de bytes dados de forma controlada """
         with Manage.syncLockWriteStream:
-            if not self.esperaSolicitada() and not self.wasStopped() and \
-               self.manage.interval.hasInterval( self.ident ):
+            hasInterval = self.manage.interval.hasInterval( self.ident )
+            if not self.wasStopped() and hasInterval and not self.esperaSolicitada():
                 start = self.manage.interval.get_start( self.ident )
-
+                offset = self.manage.interval.get_offset()
+                
                 # Escreve os dados na posição resultante
-                pos = start - self.manage.interval.get_offset() + self.numBytesLidos
+                pos = start - offset + self.numBytesLidos
                 self.manage.fileManager.write(pos, stream)
-
+                
                 # quanto ja foi baixado da stream
                 self.manage.numTotalBytes += nbytes
                 self.manage.interval.send_info["nbytes"][start] += nbytes
-
+                
                 # bytes lidos da conexão.
-                self.numBytesLidos += nbytes 
+                self.numBytesLidos += nbytes
 
     def inicieLeitura(self ):
-        block_read = 1024; localTimeStart = time.time()
+        block_read = 1024; local_time = time.time()
         block_size = self.manage.interval.get_block_size( self.ident )
-        intervstart = self.manage.interval.get_start( self.ident)
+        interval_start = self.manage.interval.get_start( self.ident)
 
-        while self.numBytesLidos < block_size and not self.wasStopped():
+        while not self.wasStopped() and self.numBytesLidos < block_size:
             try:
+                self.manage.interval.locked( self.ident )
+                
                 # bloco de bytes do intervalo. Poderá ser dinamicamente modificado
                 block_size = self.manage.interval.get_block_size(self.ident)
-                intervIndex = self.manage.interval.get_index(self.ident)
-                if intervIndex < 0: raise AttributeError
-
+                interval_index = self.manage.interval.get_index(self.ident)
+                assert interval_index, "invalid interval!"
+                
                 # condição atual da conexão: Baixando
-                globalInfo.set_info(self.ident, "estado", _("Baixando") )
-                globalInfo.set_info(self.ident, "indiceBloco", intervIndex)
-
+                globalInfo.set_info(self.ident, "state", _("Baixando") )
+                globalInfo.set_info(self.ident, "block_index", interval_index)
+                
                 # limita a leitura ao bloco de dados
                 if (self.numBytesLidos + block_read) > block_size:
                     block_read = block_size - self.numBytesLidos
-
+                    
                 # inicia a leitura da stream
                 before = time.time()
                 streamData = self.streamSocket.read( block_read )
                 after = time.time()
-
+                
                 streamLen = len(streamData) # número de bytes baixados
-
+                
                 if self.esperaSolicitada(): # caso onde a seekbar é usada
                     self.aguardeNotificacao(); break
-
+                    
                 # o servidor fechou a conexão
                 if (block_read > 0 and streamLen == 0) or self.checkStreamError( streamData) != -1:
                     self.fixeFalhaTransfer(_("Parado pelo servidor"), 2); break
-
+                    
                 # ajusta a quantidade de bytes baixados a capacidade atual da rede, ou ate seu limite
                 block_read = self.best_block_size((after - before), streamLen)
-
+                
                 # começa a escrita da stream de video no arquivo local.
                 self.streamWrite(streamData, streamLen)
-
+                
                 start = self.manage.tempoInicialGlobal
-                current = self.manage.numBytesRecebidos() - self.manage.posInicialLeitura
+                current = self.manage.received_bytes() - self.manage.posInicialLeitura
                 total = self.manage.getVideoSize() - self.manage.posInicialLeitura
-
+                
                 # calcula a velocidade de transferência da conexão
-                speed = self.calc_speed(localTimeStart, time.time(), self.numBytesLidos)
-                globalInfo.set_info(self.ident, 'velocidadeLocal', speed)
-
+                speed = self.calc_speed(local_time, time.time(), self.numBytesLidos)
+                globalInfo.set_info(self.ident, 'local_speed', speed)
+                
                 # tempo do download
                 self.manage.tempoDownload = self.calc_eta(start, time.time(), total, current)
-
+                
                 # calcula a velocidade global
                 self.manage.velocidadeGlobal = self.calc_speed(start, time.time(), current)
-
-                if self.numBytesLidos == block_size:
+                
+                if self.numBytesLidos >= block_size:
                     if self.manage.interval.canContinue(self.ident) and not self.manage.isComplete():
-                        self.manage.interval.remove(self.ident)# removendo o intervalo completo
-                        self.configure(); self.info_clear()# configurando um novo intervado
-                        intervstart = self.manage.interval.get_start(self.ident)
-                        localTimeStart = time.time()# reiniciando as variáveis
-
+                        self.manage.interval.remove( self.ident )# removendo o intervalo completo
+                        self.configure() # configurando um novo intervado
+                        interval_start = self.manage.interval.get_start(self.ident)
+                        local_time = time.time()# reiniciando as variáveis
+                        self.reset_info()
+                        
                 # sem redução de velocidade para o intervalo pricipal
-                elif self.manage.nowSending() != intervstart:
-                    self.slow_down(localTimeStart, self.numBytesLidos)
+                elif self.manage.nowSending() != interval_start:
+                    self.slow_down(local_time, self.numBytesLidos)
             except:
                 self.fixeFalhaTransfer(_("Erro de leitura"), 2)
                 break
         # -----------------------------------------------------
-        try: self.manage.interval.remove(self.ident)
-        except:pass
-        try: self.streamSocket.close()
-        except:pass
-        self.info_clear()
-
-    def getStreamHeader(self, seekpos, nbytes=13):
-        header = ""; stream = self.streamSocket.read( nbytes )
+        if self.manage.interval.hasInterval( self.ident ):
+            self.manage.interval.remove( self.ident )
+            
+        if hasattr(self.streamSocket, "close"):
+            self.streamSocket.close()
+            
+        self.reset_info()
+    
+    @staticmethod
+    def getStreamHeader(stream, seekpos, header=""):
         if stream.startswith("FLV") and (stream.endswith("\t") or stream.endswith("\t"+("\x00"*4))):
             if seekpos == 0: header = stream
             else: header, stream = stream, ""
-
+            
         elif stream[:9].startswith("FLV") and stream[:9].endswith("\t"):
             if seekpos == 0: header = stream[:9]
             else: header = stream[:9]; stream = stream[9:]
-
+            
         return stream, header
-
+    
     def removaConfigs(self, errorstring, errornumber):
         """ remove todas as configurações, importantes, dadas a conexão """
         if self.manage.interval.hasInterval(self.ident):
@@ -1865,8 +1868,8 @@ class StreamManager( threading.Thread):
                 block_size = self.manage.interval.get_block_size( self.ident)
 
                 # indice, nbytes, start, end
-                self.manage.interval.fixeIntervPendente(
-                    index, self.numBytesLidos, start, end, block_size
+                self.manage.interval.pending_store(index, 
+                    self.numBytesLidos, start, end, block_size
                 )
                 # número de bytes lidos, antes da conexão apresentar o erro
                 bytesnumber = self.numBytesLidos - (block_size - (end - start))
@@ -1884,14 +1887,14 @@ class StreamManager( threading.Thread):
     
     @just_try()
     def fixeFalhaTransfer(self, errorstring, errornumber):
-        globalInfo.set_info(self.ident, 'estado', errorstring)
-        self.info_clear()
+        globalInfo.set_info(self.ident, 'state', errorstring)
+        self.reset_info()
 
         bytesnumber = self.removaConfigs(errorstring, errornumber) # removendo configurações
         if errornumber == 3 or self.wasStopped(): return # retorna porque a conexao foi encerrada
         time.sleep(0.5)
 
-        globalInfo.set_info(self.ident, "estado", _("Reconfigurando"))
+        globalInfo.set_info(self.ident, "state", _("Reconfigurando"))
         time.sleep(0.5)
 
         ip = self.proxies.get("http", "default")
@@ -1923,30 +1926,31 @@ class StreamManager( threading.Thread):
         initTime = time.time()
 
         nfalhas = 0
-        while nfalhas < self.params.get("reconexao",3) and not self.wasStopped():
+        while not self.wasStopped() and nfalhas < self.params.get("reconexao",3):
             try:
-                globalInfo.set_info(self.ident, "estado", _("Conectando"))
+                globalInfo.set_info(self.ident, "state", _("Conectando"))
                 waittime = self.params.get("waittime", 2)
                 timeout = self.params.get("timeout", 25)
-
+                
                 # começa a conexão
                 self.streamSocket = videoManager.conecte(self.linkSeek, 
                         proxies=self.proxies, timeout=timeout, login=False)
-
-                stream, header = self.getStreamHeader(seekpos)
-
+                
+                data = self.streamSocket.read( videoManager.STREAM_HEADER_SIZE )
+                stream, header = self.getStreamHeader(data, seekpos)
+                
                 # verifica a validade a resposta.
                 isValid = self.responseCheck(len(header), seekpos, 
                                              streamSize, self.streamSocket.headers)
-
+                
                 if isValid and self.streamSocket.code == 200:
                     if stream: self.streamWrite(stream, len(stream))
                     return True
                 else:
-                    globalInfo.set_info(self.ident, "estado", _(u"Resposta inválida"))
+                    globalInfo.set_info(self.ident, "state", _(u"Resposta inválida"))
                     self.streamSocket.close(); time.sleep( waittime )
             except Exception, err:
-                globalInfo.set_info(self.ident, "estado", _(u"Falha na conexão"))
+                globalInfo.set_info(self.ident, "state", _(u"Falha na conexão"))
                 time.sleep( waittime )
 
             # se passar do tempo de timeout o ip será descartado
@@ -1958,23 +1962,22 @@ class StreamManager( threading.Thread):
 
     def configure(self ):
         """ associa a conexão a uma parte da stream """
-        globalInfo.set_info(self.ident, "estado", _("Ocioso"))
+        globalInfo.set_info(self.ident, "state", _("Ocioso"))
 
         if not self.esperaSolicitada():
             with StreamManager.lockBlocoConfig:
 
-                if self.manage.interval.numIntervPendentes() > 0:
+                if self.manage.interval.pending_count() > 0:
                     # associa um intervalo pendente(intervalos pendentes, são gerados em falhas de conexão)
-                    self.manage.interval.associeIntervPendente( self.ident )
-
+                    self.manage.interval.pending_set( self.ident )
                 else:
                     # cria um novo intervalo e associa a conexão.
-                    self.manage.interval.associeNovoInterv( self.ident )
+                    self.manage.interval.new_set( self.ident )
 
                     # como novos intervalos não são infinitos, atribui um novo, apartir de um já existente.
                     if not self.manage.interval.hasInterval( self.ident ):
-                        self.manage.interval.associeIntervDerivado( self.ident )
-
+                        self.manage.interval.derivative_set( self.ident )
+                        
                 # bytes lido do intervalo atual(como os blocos reduzem seu tamanho, o número inicial será sempre zero).
                 self.numBytesLidos = 0
         else:
@@ -2004,20 +2007,19 @@ class StreamManager( threading.Thread):
                 self.fixeFalhaTransfer(_("Incapaz de conectar"), 1)
                 print "SM - Err: %s" %(e)
         # estado final da conexão
-        globalInfo.set_info(self.ident, "estado", _(u"Conexão parada"))
+        globalInfo.set_info(self.ident, "state", _(u"Conexão parada"))
         
 #########################  STREAMANAGER: (megaupload, youtube) ######################
 class StreamManager_( StreamManager ):
 
     def __init__(self, manage, noProxy= False, **params):
         StreamManager.__init__(self, manage, noProxy, **params)
-        self.megaFile = True
-
+        
     def inicialize(self):
         """ iniciado com thread. Evita travar no init """
         # globalinfo: add_info
         globalInfo.add_info( self.ident)
-        globalInfo.set_info(self.ident, "estado", "Iniciando")
+        globalInfo.set_info(self.ident, "state", "Iniciando")
 
         if self.usingProxy == True: # conexão padrão - sem proxy
             globalInfo.set_info(self.ident, "http", _(u"Conexão Padrão"))
@@ -2027,8 +2029,8 @@ class StreamManager_( StreamManager ):
             
     @just_try()
     def fixeFalhaTransfer(self, errorstring, errornumber):
-        globalInfo.set_info(self.ident, 'estado', errorstring)
-        self.info_clear()
+        globalInfo.set_info(self.ident, 'state', errorstring)
+        self.reset_info()
 
         typechange = self.params.get("typechange", False)
         proxyManager = self.manage.proxyManager
@@ -2037,7 +2039,7 @@ class StreamManager_( StreamManager ):
         if errornumber == 3: return # retorna porque a conexao foi encerrada
         time.sleep(0.5)
 
-        globalInfo.set_info(self.ident, "estado", _("Reconfigurando"))
+        globalInfo.set_info(self.ident, "state", _("Reconfigurando"))
         time.sleep(0.5)
 
         if self.usingProxy:
@@ -2061,21 +2063,22 @@ class StreamManager_( StreamManager ):
             try:
                 sleep_for = self.params.get("waittime",2)
 
-                globalInfo.set_info(self.ident, "estado", _("Conectando"))
+                globalInfo.set_info(self.ident, "state", _("Conectando"))
                 data = videoManager.get_init_page( self.proxies) # pagina incial
                 link = videoManager.get_file_link( data) # link de download
                 wait_for = videoManager.get_count( data) # contador
 
                 for second in range(wait_for, 0, -1):
-                    globalInfo.set_info(self.ident, "estado", _(u"Aguarde %02ds")%second)
+                    globalInfo.set_info(self.ident, "state", _(u"Aguarde %02ds")%second)
                     time.sleep(1)
 
-                globalInfo.set_info(self.ident, "estado", _("Conectando"))
+                globalInfo.set_info(self.ident, "state", _("Conectando"))
                 self.streamSocket = videoManager.conecte(
                     link, proxies=self.proxies, headers={"Range":"bytes=%s-"%seekpos})
 
-                stream, header = self.getStreamHeader(seekpos) # get and write
-
+                data = self.streamSocket.read( videoManager.STREAM_HEADER_SIZE )
+                stream, header = self.getStreamHeader(data, seekpos)
+                
                 isValid = self.responseCheck(len(header), seekpos, 
                                              streamSize, self.streamSocket.headers)
 
@@ -2083,11 +2086,11 @@ class StreamManager_( StreamManager ):
                     if stream: self.streamWrite(stream, len(stream))
                     return True
                 else:
-                    globalInfo.set_info(self.ident, "estado", _(u"Resposta inválida"))
+                    globalInfo.set_info(self.ident, "state", _(u"Resposta inválida"))
                     self.streamSocket.close()
                     time.sleep( sleep_for )
             except Exception, err:
-                globalInfo.set_info(self.ident, "estado", _(u"Falha na conexão"))
+                globalInfo.set_info(self.ident, "state", _(u"Falha na conexão"))
                 if hasattr(err, "code") and err.code == 503: return False
                 time.sleep( sleep_for )
             nfalhas += 1
@@ -2111,7 +2114,7 @@ class StreamManager_( StreamManager ):
             except Exception as e:
                 self.fixeFalhaTransfer(_("Incapaz de conectar"), 1)
                 print "SM - Err: %s" %e
-        globalInfo.set_info(self.ident, "estado", _(u"Conexão parada"))
+        globalInfo.set_info(self.ident, "state", _(u"Conexão parada"))
 
 ########################### EXECUÇÃO APARTIR DO SCRIPT  ###########################
 
