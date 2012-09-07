@@ -805,38 +805,40 @@ class BaixeAssistaWin( wx.Frame ):
 	def updateInterface(self, evt):
 		if self.streamLoading:
 			# ATUALIZA A BARRA DE PROGRESSO GLOBAL
-			progress = self.caluculePorcentagem(self.manage.numBytesRecebidos(), self.manage.getVideoSize())
-			if self.progressBar.GetValue() != progress: self.progressBar.SetValue(progress)
-
+			last_progress = self.progressBar.GetValue()
+			curr_progress = self.caluculePorcentagem(
+			    self.manage.received_bytes(), self.manage.getVideoSize()
+			)
+			if last_progress != curr_progress: 
+				self.progressBar.SetValue( curr_progress )
+			
 			# ATUALIZA O ESTADO DAS CONEXOES
-			listControl = self.detailControl.GetListCtrl()
-
+			list_ctr = self.detailControl.GetListCtrl()
+			
 			for smanager in self.manage.ctrConnection.getConnections():
 				if not smanager.wasStopped(): # conexões paradas serão ignoradas
 					rowIndex = self.detailControl.getRowIndex( smanager.ident )
-
-					for colIndex, key_info in enumerate( manager.StreamManager.listInfo ):
-						info_value = self.globalInfo.get_info( smanager.ident, key_info )
-
-						listControl.SetStringItem( rowIndex, colIndex, u"%s"%info_value)
-
+					
+					for colIndex, infokey in enumerate( manager.StreamManager.listInfo ):
+						infoValue = self.globalInfo.get_info( smanager.ident, infokey )
+						list_ctr.SetStringItem( rowIndex, colIndex, u"%s"%infoValue )
+						
 					# subprogressbar update
-					blockSize = self.manage.interval.get_block_size( smanager.ident)
-					self.detailControl.listSubProgressBar[ rowIndex ].UpdateValue(smanager.numBytesLidos, blockSize)
-					self.detailControl.GetListCtrl().RefreshItem( rowIndex)
-
+					block_size = self.manage.interval.get_block_size( smanager.ident )
+					self.detailControl.listSubProgressBar[ rowIndex ].UpdateValue(smanager.numBytesLidos, block_size)
+					self.detailControl.GetListCtrl().RefreshItem( rowIndex )
+					
 			# ATUALIZA A STATUSBAR
 			velocidade = _(" V-Global: %s") % self.manage.velocidadeGlobal
 			tempo = _(u"Duração: %10s") % self.manage.tempoDownload
 			progresso = _("Progresso: %10s") %str( self.manage.progresso() )
 			porcentagem = "%5s"%self.manage.porcentagem()
 			self.updateStatusBar(velocidade, tempo, progresso, porcentagem)
-
 		else:
 			status = self.startDown.get_status()
 			if status is True: # iniciou com sucesso
 				self.startStreamLoading()
-
+				
 			elif status is False: # houve um erro.	
 				self.btnStartStopHandle()
 
