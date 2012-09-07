@@ -145,12 +145,13 @@ class ConnectionProcessor:
 #################################### BASEVIDEOSITE ####################################
 class SiteBase(ConnectionProcessor):
 	STREAM_HEADER = "FLV\x01\x01\x00\x00\x00\t\x00\x00\x00\t"
+	STREAM_HEADER_SIZE = len(STREAM_HEADER)
 	#----------------------------------------------------------------------
 	def __init__(self, **params):
 		ConnectionProcessor.__init__(self)
-		self.url = self.basename = self.message = ''
-		self.streamHeaderSize = self.streamSize = 0
+		self.url = self.basename = self.message = ""
 		self.params = params
+		self.streamSize = 0
 		self.configs = {}
 		self.headers = {}
 		
@@ -171,20 +172,16 @@ class SiteBase(ConnectionProcessor):
 		return False
 	
 	def getStreamHeader(self):
-		return self.STREAM_HEADER[:self.streamHeaderSize]
+		return self.STREAM_HEADER
 	
 	def get_video_id(self):
 		""" retorna só o id do video """
 		return Universal.get_video_id(self.basename, self.url)
-
-	def getStreamHeaderSize(self):
-		""" número inicial de bytes removidos da stream segmentada """
-		return self.streamHeaderSize
-
-	def get_init_page(self, proxies={}, timeout=25):	
+	
+	def get_init_page(self, proxies={}, timeout=30):	
 		assert self.getVideoInfo(proxies=proxies, timeout=timeout)
 
-	def getVideoInfo(self, ntry=3, proxies={}, timeout=25):
+	def getVideoInfo(self, ntry=3, proxies={}, timeout=30):
 		ip = proxies.get("http","default")
 		section = self.get_section( ip )
 		settings = section.get("settings",None)
@@ -918,8 +915,6 @@ class Megavideo( SiteBase ):
 		SiteBase.__init__(self, **params)
 		self.confgsMacth = re.compile('\s*(.+?)\s*=\s*"(.*?)"', re.DOTALL)
 		self.videoLink = 'http://www.megavideo.com/xml/videolink.php?v='
-		# bytes inicias removidos da stream segmentada
-		self.streamHeaderSize = 9
 		self.url = url
 		self.val = {}
 
@@ -1014,8 +1009,6 @@ class Videobb( SiteBase ):
 		self.res = ["settings","res"]
 		self.key2 = 226593
 		self.cfg = {}
-		# bytes inicias removidos da stream segmentada
-		self.streamHeaderSize = 13
 		self.url = url
 
 	def suportaSeekBar(self):
@@ -1199,7 +1192,6 @@ class Mixturecloud( SiteBase ):
 		SiteBase.__init__(self, **params)
 		# parte principal da url usada como elemento chave no programa
 		self.basename = manager.UrlManager.getBaseName( url )
-		self.streamHeaderSize = 13
 		self.url = url
 		
 	def getPostData(self, webpage=""):
@@ -1327,7 +1319,6 @@ class Modovideo( SiteBase ):
 	def __init__(self, url, **params):
 		SiteBase.__init__(self, **params)
 		self.basename = "modovideo.com"
-		self.streamHeaderSize = 13
 		self.url = url
 
 	def suportaSeekBar(self):
@@ -1393,7 +1384,6 @@ class Videoweed( SiteBase ):
 		self.siteVideoLink = "http://www.videoweed.es/file/%s"
 		# parte principal da url usada como elemento chave no programa
 		self.basename = manager.UrlManager.getBaseName( url )
-		self.streamHeaderSize = 13
 		self.url = url
 		
 	def suportaSeekBar(self):
@@ -1511,7 +1501,6 @@ class Veevr( SiteBase ):
 	def __init__(self, url, **params):
 		"""Constructor"""
 		SiteBase.__init__(self, **params)
-		self.streamHeaderSize = 0
 		self.basename = "veevr.com"
 		self.url = url
 
@@ -1593,7 +1582,6 @@ class PutLocker( SiteBase ):
 		SiteBase.__init__(self, **params)
 		self.getFileBaseUrl = "http://www.putlocker.com"
 		self.basename = "putlocker.com"
-		self.streamHeaderSize = 13
 		self.url = url
 
 	def suportaSeekBar(self):
@@ -1695,7 +1683,6 @@ class Moviezer( SiteBase ):
 	def __init__(self, url, **params):
 		"""Constructor"""
 		SiteBase.__init__(self, **params)
-		self.streamHeaderSize = 13
 		self.basename = "moviezer.com"
 		self.url = url
 
@@ -1738,7 +1725,6 @@ class MoeVideo( SiteBase ):
 		SiteBase.__init__(self, **params)
 		self.apiUrl = "http://api.letitbit.net/"
 		self.basename = "moevideo.net"
-		self.streamHeaderSize = 13
 		self.url = url
 		
 	def suportaSeekBar(self):
@@ -1813,7 +1799,6 @@ class Anitube( SiteBase ):
 	def __init__(self, url, **params):
 		SiteBase.__init__(self, **params)
 		self.basename = "anitube.jp"
-		self.streamHeaderSize = 0
 		self.url = url
 
 	def suportaSeekBar(self):
@@ -1868,7 +1853,6 @@ class Vk( SiteBase ):
 	def __init__(self, url, **params):
 		"""Constructor"""
 		SiteBase.__init__(self, **params)
-		self.streamHeaderSize = 13
 		self.basename = "vk.com"
 		self.url = url
 		
@@ -1933,7 +1917,6 @@ class Xvideos( SiteBase ):
 	def __init__(self, url, **params):
 		SiteBase.__init__(self, **params)
 		self.basename = "xvideos.com"
-		self.streamHeaderSize = 13
 		self.url = url
 
 	def suportaSeekBar(self):
@@ -1967,7 +1950,6 @@ class Redtube( SiteBase ):
 		"""Constructor"""
 		SiteBase.__init__(self, **params)
 		self.basename = "redtube.com"
-		self.streamHeaderSize = 13
 		self.url = url
 
 	def suportaSeekBar(self):
@@ -2004,7 +1986,6 @@ class Pornhub( SiteBase ):
 		SiteBase.__init__(self, **params)
 		self.apiUrl = "http://www.pornhub.com/embed_player.php?id=%s"
 		self.basename = "pornhub.com"
-		self.streamHeaderSize = 13
 		self.url = url
 		
 	def suportaSeekBar(self):
@@ -2061,7 +2042,6 @@ class DwShare( SiteBase ):
 	#----------------------------------------------------------------------
 	def __init__(self, url, **params):
 		SiteBase.__init__(self, **params)
-		self.streamHeaderSize = 13
 		self.basename = "dwn.so"
 		self.url = url
 	
@@ -2127,7 +2107,6 @@ class Hostingbulk( SiteBase ):
 		"""Constructor"""
 		SiteBase.__init__(self, **params)
 		self.basename = "hostingbulk.com"
-		self.streamHeaderSize = 13
 		self.url = url
 
 	def start_extraction(self, proxies={}, timeout=25):
@@ -2175,7 +2154,6 @@ class Videoslasher( SiteBase ):
 	def __init__(self, url, **params):
 		SiteBase.__init__(self, **params)
 		self.basename = "videoslasher.com"
-		self.streamHeaderSize = 13
 		self.url = url
 	
 	def suportaSeekBar(self):
@@ -2400,7 +2378,7 @@ if __name__ == "__main__":
 		print proxies["http"]
 		proxies = {}
 
-		if not checkSite("http://www.videoslasher.com/video/6O9TSHUUR4UY", proxies=proxies, quality=3):
+		if not checkSite("http://player.mixturecloud.com/embed=8zjJl8", proxies=proxies, quality=3):
 			proxyManager.setBadIp( proxies )
 
 	del proxyManager
