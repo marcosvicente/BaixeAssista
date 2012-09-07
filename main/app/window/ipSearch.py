@@ -27,8 +27,8 @@ class IpSearchControl(wx.MiniFrame):
 		
 		# objeto pesquisador dos ips dos servidores proxies
 		self.proxyControl = proxy.ProxyControl(True)
-		self.pesquisaCancelada = self.pesquisaIniciada = False
-		self.testControl = None
+		self.stopSearch = self.startedSearch = False
+		self.ctrSearch = None
 		
 		self.updateTimer = wx.Timer(self, wx.ID_ANY)
 		self.Bind( wx.EVT_TIMER, self.updateInterface, self.updateTimer)
@@ -45,7 +45,7 @@ class IpSearchControl(wx.MiniFrame):
 		]
 		self.controlUrls.SetToolTip( wx.ToolTip( "".join(helpText) ))
 		hSizer.Add( self.controlUrls, 1, wx.EXPAND)
-
+		
 		# *** Botão de iniciar a pesquisa.
 		self.btnStartCancel = wx.ToggleButton(self, -1, _("Pesquisar"))
 		helpText = [
@@ -55,7 +55,7 @@ class IpSearchControl(wx.MiniFrame):
 		self.btnStartCancel.SetToolTip( wx.ToolTip( "".join(helpText) ))
 		hSizer.Add( self.btnStartCancel, 0, wx.LEFT, 2)
 
-		self.Bind(wx.EVT_TOGGLEBUTTON, self.iniciePesquisa, self.btnStartCancel)
+		self.Bind(wx.EVT_TOGGLEBUTTON, self.startSearchIp, self.btnStartCancel)
 		mainSizer.Add( hSizer, 0, wx.EXPAND|wx.TOP, 2)
 		# ---------------------------------------------
 		
@@ -155,7 +155,7 @@ class IpSearchControl(wx.MiniFrame):
 		
 	def __del__(self):
 		del self.proxyControl
-		del self.testControl
+		del self.ctrSearch
 		
 	@staticmethod
 	def createListChoices():
@@ -166,83 +166,75 @@ class IpSearchControl(wx.MiniFrame):
 			listaKbyte.append("%dk"% kbyte)
 		return listaKbyte
 	
-	def iniciePesquisa(self, evt):
-		isPressed = self.btnStartCancel.GetValue()
-		
-		if not self.pesquisaIniciada and isPressed:
-			self.btnStartCancel.SetLabel( _("Cancelar") )
-			self.log.SetLabel( _("Iniciando...") )
-			self.pesquisaCancelada = False
-			self.pesquisaIniciada = True
+	def startSearchIp(self, evt):
+		if not self.startedSearch and self.btnStartCancel.GetValue():
+			self.btnStartCancel.SetLabel(_("Cancelar"))
+			self.log.SetLabel(_("Iniciando..."))
+			self.startedSearch = True
+			self.stopSearch = False
 			
 			url = self.controlUrls.GetValue()
 			unit = self.controlBytesTeste.GetStringSelection()
 			bytesTeste = int(unit[:-1])*1024
-
-			# parametros de controle dos threads
-			params = { "URL": url,
-			           "numBytesTeste": 13 + bytesTeste,
-			           "numMaxTestes": self.controlNumTestes.GetValue(),
-			           "metaProxies": self.controlNumIps.GetValue()}
 			
+			# parametros de controle dos threads
+			params = {
+			    "URL": url,
+			    "numBytesTeste": 13 + bytesTeste,
+			    "numMaxTestes": self.controlNumTestes.GetValue(),
+			    "metaProxies": self.controlNumIps.GetValue()
+			}
 			# recurços compartilhados pelas conexões
-			self.testControl = proxy.TestControl(numips = params['metaProxies'])
+			self.ctrSearch = proxy.CtrSearch(numips = params['metaProxies'])
 			
 			# cria e inicia as conexões
-			for n in range( self.controlThreads.GetValue()):
-				connection = proxy.TesteIP(
-				    self.proxyControl, self.testControl, params)
+			for index in range(self.controlThreads.GetValue()):
+				conn = proxy.TesteIP(self.proxyControl, self.ctrSearch, params)
+				self.ctrSearch.addConnection( conn )
+				conn.start()
 				
-				self.testControl.addConnection( connection)
-				connection.start()
-
 			# inicia a atualização da interface
 			self.updateTimer.Start(1000)
-			print "iniciado"
+			print "started..."
 			
 		# quando cancelar for pressionado
-		elif self.pesquisaCancelada is False: 
+		elif not self.stopSearch: 
 			self.btnStartCancel.SetLabel( _("Pesquisar") )
-			self.testControl.stopConnections()
-			self.pesquisaCancelada = True
-			
+			self.ctrSearch.stopConnections()
+			self.stopSearch = True
 		else:
-			self.log.SetLabel( _(u"Aguarde! Parando as conexões...") )
+			self.log.SetLabel(_(u"Aguarde! Parando as conexões..."))
 			
 	def updateInterface(self, evt):
-		if not self.pesquisaCancelada:
-			self.log.SetLabel( _("Pesquisando %s") % self.testControl.getLog())
+		if not self.stopSearch:
+			self.log.SetLabel(_("Pesquisando %s") %self.ctrSearch.getLog())
 			self.progress.Pulse()
 			
-			if not self.testControl.isSearching():
+			if not self.ctrSearch.isSearching():
 				# salva a nova lista de ips criada
-				self.testControl.salveips()
-				self.log.SetLabel( self.testControl.getLog() )
-				self.pesquisaIniciada  = False
-				self.pesquisaCancelada = False
+				self.ctrSearch.save()
+				self.log.SetLabel( self.ctrSearch.getLog() )
+				self.startedSearch = self.stopSearch = False
 				self.btnStartCancel.SetLabel( _("Pesquisar") )
 				self.btnStartCancel.SetValue(False)
 				self.progress.SetValue(0) # stop gauge
 				# para a atividade de todas as conexões
-				self.testControl.stopConnections()
+				self.ctrSearch.stopConnections()
 				self.updateTimer.Stop()
 				
-		elif not self.testControl.isSearching():
-			self.log.SetLabel( _("Pesquisa cancelada.") )
-			self.pesquisaIniciada  = False
-			self.pesquisaCancelada = False
+		elif not self.ctrSearch.isSearching():
+			self.log.SetLabel(_("Pesquisa cancelada."))
+			self.startedSearch = self.stopSearch = False
 			self.progress.SetValue(0) # stop gauge
 			self.updateTimer.Stop()
 		else:
-			self.log.SetLabel( _("Por favor aguarde. Cancelando...") )
+			self.log.SetLabel(_("Por favor aguarde. Cancelando..."))
 			
 	def OnCloseWindow(self, event):
-		# destruir a janela, com a pesquisa sendo
-		# realizada, pode gerar threads zumbis
-		if self.pesquisaIniciada:
-			self.testControl.stopConnections()
+		# destruir a janela, com a pesquisa sendo realizada, pode gerar threads zumbis
+		if self.startedSearch: self.ctrSearch.stopConnections()
 		self.Destroy()
-
+		
 ########################################################################
 if __name__ == "__main__":
 	# dir com os diretórios do projeto
