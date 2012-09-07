@@ -13,14 +13,8 @@ import manager
 
 from main import settings
 
-try: 
-	_("test translation")
-except:
-	# *** instala as traduções
-	manager.installTranslation()
-
-# A versão será mantida pelo módulo principal
-PROGRAM_VERSION = manager.PROGRAM_VERSION
+try: _("test translation")
+except: manager.installTranslation()
 #######################################################################################
 
 class Proxylist( gerador.ConnectionProcessor ):
@@ -28,12 +22,10 @@ class Proxylist( gerador.ConnectionProcessor ):
 	#----------------------------------------------------------------------
 	def __init__(self):
 		gerador.ConnectionProcessor.__init__(self)
-		
-		self.countIp = 0
-		self.name = "proxylist"
+		self.countIp = 0; self.name = "proxylist"
 		manager.globalInfo.add_info( self.name)
+		
 		self.cookie = {"Cookie": "cf_clearance=84d7c368a55ef2b26e6beb5ce041c935-1321375733-1800"}
-
 		self.proxylist_url = "http://www.proxylist.net/list/0/0/1/0/%d"
 		self.numPagina = 0
 
@@ -54,7 +46,6 @@ class Proxylist( gerador.ConnectionProcessor ):
 	
 	def search( self):
 		url = self.proxylist_url % self.numPagina
-		
 		if self.numPagina > 1 and (self.countIp / self.numPagina) < 10:
 			return [] # lista de ips esgotada
 		
@@ -62,10 +53,8 @@ class Proxylist( gerador.ConnectionProcessor ):
 		proxies = self.getProxies( webpage )
 		
 		self.countIp += len(proxies)
-		
 		manager.globalInfo.set_info(self.name, self.name,
 		    "%s pagina: %s numIP: %d"%(self.name, self.numPagina, len(proxies)))
-
 		self.numPagina += 1
 		return proxies
 	
@@ -77,10 +66,7 @@ class Freeproxylists( gerador.ConnectionProcessor ):
 		gerador.ConnectionProcessor.__init__(self)
 		self.regexHostPort = re.compile('IPDecode\("(.*?)"\).*?(\d{1,5})', re.DOTALL)
 		self.regexHost = re.compile("(\d{1,4}\.\d{1,4}\.\d{1,4}.\d{1,4})")
-		
-		self.countIp = 0
-		
-		self.name = "freeproxylists"
+		self.countIp = 0; self.name = "freeproxylists"
 		manager.globalInfo.add_info( self.name)
 		
 		self.cookie = {"Cookie": "hl=en; pv=12; userno=20120614-007721"}
@@ -125,22 +111,16 @@ class Freeproxylists( gerador.ConnectionProcessor ):
 			proxies = self.getProxies( webpage )
 			
 		self.countIp += len(proxies)
-		
 		manager.globalInfo.set_info(self.name, self.name,
 		    "%s pagina: %s numIP: %d"%(self.name, self.numPagina, len(proxies)))
-
 		self.numPagina += 1
 		return proxies
 	
 ########################################################################
 class Xroxy( gerador.ConnectionProcessor ):
-	
 	def __init__(self):
 		gerador.ConnectionProcessor.__init__(self)
-		
-		self.countIp = 0
-		
-		self.name = "xroxy"
+		self.countIp = 0; self.name = "xroxy"
 		manager.globalInfo.add_info( self.name )
 		
 		self.xroxy_url ="http://www.xroxy.com/proxylist.php?port=&type="\
@@ -165,121 +145,80 @@ class Xroxy( gerador.ConnectionProcessor ):
 	
 	def search( self):
 		url = self.xroxy_url %self.numPagina
-		
 		if self.numPagina > 1 and (self.countIp / self.numPagina) < 10:
 			return [] # lista de ips esgotada
 		
 		webpage = self.getWebPage( url )
 		proxies = self.getProxies( webpage )
-		
 		self.countIp += len(proxies)
 		
 		manager.globalInfo.set_info(self.name, self.name, 
 		    "%s pagina: %s numIP: %d"%(self.name, self.numPagina, len(proxies)))
-		
 		self.numPagina += 1
 		return proxies
 
 ########################################################################
 class ProxyControl:
-	def __init__(self, useStaticList=False):
-		""" controla a pesquisa de obtenção de ips """
-		self.useStaticList = useStaticList
-		self.info = ""; self.listaIps = []
+	""" Controla a pesquisa de obtenção de ips """
+	def __init__(self, searsh=False, **params):
+		""" params: {}
+		- filepath: local do arquivo de ips estáticos """
+		self.info = ''
+		self.listaIps = []
+		self.params = params
+		self.searsh = searsh
 		
-		if not useStaticList:
+		if not self.searsh:
 			self.listaSites = [Freeproxylists(), Proxylist(), Xroxy()]
 		else:
-			with open(os.path.join(settings.APPDIR,"configs","statics_ips.txt")) as staticFile:
-				self.listaIps = (line[:-1] for line in staticFile.readlines())
-				
+			filepath = os.path.join(settings.APPDIR, "configs", "statics_ips.txt")
+			filepath = self.params.get("filepath", filepath)
+			self.listaIps = self.get_ips( filepath )
+			
 	def __str__(self):
 		return self.info
-
+	
+	def get_ips(self, filepath):
+		with open( filepath ) as file:
+			ips = (line[:-1] for line in file.readlines())
+		return ips
+	
 	def getNextIP(self):
-		if not self.useStaticList:
+		if not self.searsh:
 			# preenche a lista de ips quando vazia
 			if not self.listaIps: self.updateIPs()
 			ip =  self.listaIps.pop(0)
 		else:
-			try:
-				ip =  self.listaIps.next()
-			except StopIteration:
-				ip = ""
+			try: ip =  self.listaIps.next()
+			except StopIteration: ip = ''
 		return ip
 	
 	def updateIPs(self, staticList=False):
-		self.info = ""; total = 0
+		self.info = ''; total = 0
 		for site in self.listaSites:
 			proxies = site.search()
 			
 			if proxies: self.listaIps.extend(proxies)
 			self.info += manager.globalInfo.get_info(site.name, site.name)
 			self.info += "\n"
-			
 			total += len(proxies)
 			
 		self.info += "Total de ips: %d \n"%total
 		return self.listaIps
 	
 ########################################################################
-class Anonimidade:
-	""" Classe com o propósito de testar a anonimidade de um endereço IP de um servidor proxy.
-	Ips anônimos ocultam informações que permitiriam detectar o ip do computador cliente. """
-	
-	def __init__(self):
-		self.urlsMyIP = ["http://www.nossoip.com/", 
-		                 "http://www.formyip.com/",
-		                 "http://www.meuenderecoip.com/",
-		                 "http://meuip.gratuita.com.br/",
-		                 "http://meuip.net/"]
-		
-		self.userIP = self.getUserIP()
-		if not self.userIP: raise AttributeError, "INPACAPAZ DE OBTER O IP DA REDE!"
-
-	def getIPInfo(self, proxy=None, timeout= 10):
-		""" verifica a anonimidade do ip do servidor proxy """
-		if proxy: proxy = {"http" : "http://%s"%proxy}
-		ipSite = "" # ip encontrado no site
-
-		for siteUrl in self.urlsMyIP:
-			try:
-				opener = urllib2.build_opener( urllib2.ProxyHandler( proxy ))
-				pageIP = opener.open( siteUrl, timeout = timeout)
-				data = pageIP.read(); pageIP.close(); opener.close()
-				ipSite = re.search("(\d+\.\d+\.\d+\.\d+)", data).group(1)
-				break
-			except: pass
-
-		return ipSite
-
-	# obtem o IP da conexao padrao
-	def getUserIP(self):
-		try: myIP = socket.gethostbyname(socket.gethostname())
-		except: myIP = self.getIPInfo()
-		return myIP
-
-	# testa se o ip é do tipo anonimo
-	def isAnonimo(self, proxy):
-		""" Testa se o ip é do tipo anônimo """
-		proxyIP = self.getIPInfo(proxy = proxy)
-		if proxyIP and proxyIP != self.userIP: return True
-		return False
-	
-	
-########################################################################
-class TestControl:
-	""""""
+class CtrSearch:
 	#----------------------------------------------------------------------
 	def __init__(self, **params):
-		"""params={}
-		numips: número de ips que devem ser encontrados(tipo int).
+		""" params: {}
+		- numips: número de ips que devem ser encontrados(tipo int).
+		- filepath: local para o arquivo da nova lista de ips.
 		"""
 		self.params = params
 		self.connections = []
 		self.ips = []
 		self.log = ""
-	
+		
 	def __del__(self):
 		del self.params
 		del self.connections
@@ -325,54 +264,52 @@ class TestControl:
 		else: alive = False
 		return alive
 	
-	def salveips(self):
+	def save(self):
 		""" salva a lista de ips obtidos """
-		try:
+		if self.getNumIps() > int(self.params.get("numips",0)/2):
 			# caminho completo para o arquivo de ips
-			path = os.path.join(settings.APPDIR, "configs", "ipSP.cfg")
+			filepath = os.path.join(settings.APPDIR, "configs", "ipSP.cfg")
+			filepath = self.params.get("filepath", filepath)
 			
-			with open(path, "w", buffering=0) as ip_file:
-				# irá salvar dos servidores mais rápidos, para os mais lentos.
-				self.ips.sort(reverse=True)
-				
-				# número de ips que deveriam ser encontrados
-				numips = self.params.get("numips", 0)
-				
-				if len(self.ips) > int(numips / 2):
-					for t, ip in self.ips: ip_file.write("%s\n" % ip)
-					self.log = _("Nova lista de ips criada com sucesso!")
-				else: self.log = _("Erro: número de ips, insuficientes.")
-		except Exception, err:
-			self.log = _("Erro salvando ips: %s")%err
-			
+			with open(filepath, "w", buffering=0) as file:
+				try:
+					# irá salvar dos servidores mais rápidos, para os mais lentos.
+					self.ips.sort(reverse=True)
+					for timer, ip in self.ips: 
+						file.write("%s\n"%ip)
+						
+					self.log = _(u"Nova lista de ips criada com sucesso!")
+				except Exception as e:
+					self.log = _(u"Erro salvando ips: %s")%e
+		else:
+			self.log = _(u"Erro: número de ips, insuficientes.")
+		
 ########################################################################
 class TesteIP( threading.Thread ):
 	lockSucess = threading.Lock()
 	lockNextIP = threading.Lock()
 	
-	def __init__(self, proxyControl, testControl, params):
+	def __init__(self, proxyControl, ctrSearch, params):
 		threading.Thread.__init__(self)
 		self.setDaemon(True) #termina com o processo principal
-		
-		self.params = params
 		self.isRunning = True
+		self.params = params
 		
+		self.ctrSearch = ctrSearch
 		self.proxyControl = proxyControl
-		self.testControl = testControl
-		self.anonimidade = Anonimidade()
 		
 		# objeto que trabalha as informações dos vídeos
 		url = self.params.get("URL","")
-		vmanager = gerador.Universal.getVideoManager(url)
-		self.videoManager = vmanager(url)
+		videoManager = gerador.Universal.getVideoManager(url)
+		self.videoManager = videoManager(url)
 		
 	def stop(self):
 		self.isRunning = False
-		
-	def start_len_test(self, address):
+	
+	def start_read(self, address):
 		proxies = {"http": "http://%s"%address}
-
-		if self.videoManager.getVideoInfo(1, proxies= proxies, timeout=15):
+		
+		if self.videoManager.getVideoInfo(1, proxies=proxies, timeout=15):
 			streamSize = self.videoManager.getStreamSize()
 			streamLink = self.videoManager.getLink()
 		else:
@@ -380,47 +317,46 @@ class TesteIP( threading.Thread ):
 			return
 		
 		# params
-		speed_list = []
-		sucess_len = test_count = 0
+		speed_list = []; sucessLen = 0
+		block_size = self.params.get("numBytesTeste",32768)
+		num_max_ips = self.params.get("metaProxies",0)
+		numOfTests = self.params.get("numMaxTestes",5)
+		SM = manager.StreamManager
 		
-		num_bytes = self.videoManager.getStreamHeaderSize()
-		block_size = self.params.get("numBytesTeste", 32768)
-		num_max_ips = self.params.get("metaProxies", 0)
-		max_test = self.params.get("numMaxTestes", 5)
-		
-		while test_count < max_test:
+		for index in range(numOfTests):
 			try:
-				seekpos = random.randint(num_bytes, int(streamSize*0.75))
-				fd = self.videoManager.conecte(
+				seekpos = 1024+random.randint(0, int(streamSize*0.75))
+				streamSocket = self.videoManager.conecte(
 				    gerador.get_with_seek(streamLink, seekpos),
-				    headers={"Range":"bytes=%s-"%seekpos},
-				    proxies=proxies, timeout=15
+				    headers = {"Range": "bytes=%s-" %seekpos},
+				    proxies = proxies, timeout = 30
 				)
-				# valida o cabeçalho de resposta
-				is_valid = manager.StreamManager.responseCheck(
-				    num_bytes, seekpos, streamSize, fd.headers)
+				data = streamSocket.read( self.videoManager.STREAM_HEADER_SIZE )
+				stream, header = SM.getStreamHeader(data, seekpos)
 				
-				if fd.code == 200 and is_valid:
-					before = time.time(); stream = fd.read(block_size)
-					after  = time.time(); stream_len = len(stream)
+				# valida o cabeçalho de resposta
+				isValid = SM.responseCheck(len(header), seekpos, 
+				                           streamSize, streamSocket.headers)
+				
+				if streamSocket.code == 200 and isValid:
+					before = time.time(); stream = streamSocket.read(block_size)
+					after  = time.time(); streamLen = len(stream)
 					
-					if stream_len == block_size:
-						speed = float(stream_len)/(after - before)
+					if streamLen == block_size:
+						speed = float(streamLen)/(after - before)
 						speed_list.append( speed )
 						# conta o número de testes, que obtiveram sucesso
-						sucess_len += 1
-				fd.close()
-			except: pass
-			
-			# conta o número de testes
-			test_count += 1 
-			
+						sucessLen += 1
+				streamSocket.close()
+			except Exception as e:
+				sucessLen -= 1
+				
 			# pára o teste de leitura
-			if not self.isRunning or self.testControl.getNumIps() >= num_max_ips:
-				return
+			if self.ctrSearch.getNumIps() >= num_max_ips: return
+			if not self.isRunning: return
 			
 		# um erro de tolerância
-		if max_test - sucess_len  < 2:
+		if numOfTests - sucessLen  < 2:
 			with self.lockSucess:
 				# média de todas as velocidades alcançadas
 				average = reduce(lambda x, y: x + y, speed_list)
@@ -430,41 +366,37 @@ class TesteIP( threading.Thread ):
 				
 				# i ip é guardado com sua média global de velociade, 
 				# pois ela servirá como base de comparação.
-				self.testControl.addNewIp((average, address))
+				self.ctrSearch.addNewIp((average, address))
 				
 				# log informativo
 				log = _("%02d de %02d")
-				log = log % (self.testControl.getNumIps(), num_max_ips)
-				self.testControl.setLog( log )
-			
+				log = log % (self.ctrSearch.getNumIps(), num_max_ips)
+				self.ctrSearch.setLog( log )
+				print self.ctrSearch.getLog()
+				
 		# remove a relação do ip com as configs da instância.
 		del self.videoManager[ proxies["http"] ]
-		print self.testControl.getLog()
 		
 	def run( self):
 		num_max_ips = self.params.get("metaProxies", 0)
-		while self.isRunning and self.testControl.getNumIps() < num_max_ips:
+		while self.isRunning and self.ctrSearch.getNumIps() < num_max_ips:
 			try:
 				# o bloqueio do lock, evita teste duplo.
 				with TesteIP.lockNextIP:
-					address = self.proxyControl.getNextIP()
-				
-				# lista de ips esgotada
-				if not address: break
-				
-				## if self.anonimidade.isAnonimo( address):
-				self.start_len_test( address)
+					ip = self.proxyControl.getNextIP()
+					
+				if not ip: break # lista de ips esgotada
+				self.start_read( ip )
 			except: pass
-			
+		
 ############################ EXECUCAO DO SCRIPT ############################
-
 if __name__ == "__main__":
 	response = raw_input("start new ip search(yes or no): ")
 	if response == "yes":
 		proxyControl = ProxyControl()
 		
 		filepath = os.path.join(settings.APPDIR, "configs", "statics_ips.txt")
-		with open(filepath, "w", 0) as fileObj:
+		with open(filepath, "w", 0) as file:
 			while True:
 				proxyControl.updateIPs()
 				
@@ -472,8 +404,7 @@ if __name__ == "__main__":
 				if len(proxyControl.listaIps) == 0: break
 				
 				for ip in proxyControl.listaIps:
-					fileObj.write(ip+"\n")
-					
+					file.write(ip+"\n")
 				proxyControl.listaIps = []
 	else:
 		print "Canceled..."
