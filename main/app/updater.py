@@ -1,5 +1,10 @@
 # -*- coding: UTF-8 -*-
 import os, sys
+import zipfile
+import platform
+import urllib2
+import re
+import time
 
 if __name__ == "__main__":
     os.environ['DJANGO_SETTINGS_MODULE'] = "main.settings"
@@ -14,7 +19,8 @@ if __name__ == "__main__":
     
     os.chdir( mainDir )
     
-from manager import *
+from manager import installTranslation, StreamManager, get_filename, \
+                    settings, PROGRAM_VERSION, PROGRAM_SYSTEM
 
 ################################# RELEASE ##################################
 class Release:
@@ -119,11 +125,13 @@ class Updater(object):
 
     def cleanUpdateDir(self):
         """ remove todos os arquivos da pasta de atualização """
-        for name in os.listdir(self.updateDir):
-            try: os.remove(os.path.join(self.updateDir, name))
-            except Exception, err:
-                print "Err[clean: %s]: %s"%(path, err)
-
+        for name in os.listdir( self.updateDir ):
+            try:
+                path = os.path.join(self.updateDir, name)
+                os.remove( path )
+            except Exception as e:
+                print "Err[clean: %s] %s" % (path,e)
+                
     def update(self):
         """ Com o pacote de atualizações já baixado, e pronto para ser lido, instala as atualizações """
         assert len(self.packetsPaths), "No packets!"
@@ -136,7 +144,7 @@ class Updater(object):
                         if not pattern.match(zipinfo.filename):
                             updateZip.extract(zipinfo, os.getcwd())
                     # guarda a versão do último pacote atualizado
-                    self.newVersion, pgv = self.get_versions(get_filename( path ))
+                    self.newVersion, programVersion = self.get_versions(get_filename( path ))
             except:
                 if index == 0: return self.errorUpdating
                 else:
@@ -147,7 +155,7 @@ class Updater(object):
         return self.updateSucess
 
     def download(self):
-        """ baixa o pacote de atulizações """
+        """ baixa o pacote de atualização """
         assert self.packetFound, "Packets not found!"
         for index, link in enumerate(self.packetsLinks):
             try:
@@ -248,7 +256,6 @@ if __name__ == "__main__":
     
     r= Release()
     r.search()
-    exit(0)
     
     ps = Updater(packetVersion="1.6.2")
     sucess = ps.search()
