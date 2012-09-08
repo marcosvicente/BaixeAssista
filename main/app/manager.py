@@ -8,11 +8,8 @@ import sha
 import os
 import re
 import time
-import zipfile
 import math
-import platform
 import socket
-import urllib2
 import thread
 import cPickle
 import urlparse
@@ -20,7 +17,6 @@ import tempfile
 import threading
 import configobj
 import subprocess
-import SocketServer
 import unicodedata
 import sqlite3
 import base64
@@ -54,7 +50,7 @@ def installTranslation(configs = None):
 #######################################################################################
 class just_try:
     """ executa o méthodo dentro de um try:except """
-    def __call__(_self, method):
+    def __call__(this, method):
         def wrap(self, *args, **kwargs): # magic!
             try: method(self, *args, **kwargs)
             except Exception as e:
@@ -63,9 +59,12 @@ class just_try:
         return wrap
     
 def get_filename(filepath, fullname=True):
-    """ fullname = (True | False) - C:\\dirfile\\arquivo.txt -> (arquivo.txt | arquivo) """
-    filename = filepath.rsplit(os.sep,1)[-1]
-    if not fullname: filename = filename.rsplit(".",1)[0]
+    """
+    fullname: True  -> C:\\filedir\\file.txt -> file.txt
+    fullname: False -> C:\\filedir\\file.txt -> file
+    """
+    filename = os.path.split( filepath )[-1]
+    if not fullname: filename = os.path.splitext( filename )[0]
     return filename
 
 def security_save(filepath, _configobj=None, _list=None, newline="\n"):
@@ -122,7 +121,7 @@ def security_save(filepath, _configobj=None, _list=None, newline="\n"):
             except: pass
         return False
     return True
-
+###############################################################################
 class GlobalInfo:
     """ Guarda informações de estado de outros objetos.
     O objetivo é criar um meio fácil de obter informações de objetos, no escopo
@@ -146,101 +145,6 @@ class GlobalInfo:
         self.info[ keyRoot ][ keyInfo ] = valueInfo
 
 globalInfo = GlobalInfo()
-
-########################################################################
-class SqliteOperation:
-    """ Executa operações de inserção, recuperação, atualização e remoção de dados, baco de dados sqlite3"""
-    #----------------------------------------------------------------------
-    def __init__(self, **params):
-        """params={}
-        tablename: nome da tabela no banco de dados
-        fieldsnames: nomes dos campos da tabela
-        databasepath: caminho do bando de dados """
-        self.params = params
-
-        assert params.get("tablename",None), u"nome da tabela está vazio!"
-        assert params.get("fieldsnames",None), u"nenhum nome de campo fornecido!"
-
-        # se um caminho não for dado, usa o de desenvolvimento.
-        dbpath = params.get("databasepath", os.path.join(settings.APPDIR, "configs", "database", "baixeassista.db"))
-        self.params["databasepath"] = dbpath
-
-        self._create_table()
-
-    def __getitem__(self, key):
-        return self.params[key]
-
-    def connect(self):
-        self.database = sqlite3.connect(self.params["databasepath"], detect_types=sqlite3.PARSE_DECLTYPES)
-        self.database.row_factory = sqlite3.Row # key words suport
-        return self.database
-
-    def execute(self, operation, fieldsvalues=[]):
-        cursor = self.connect()
-        if fieldsvalues: exc = cursor.execute(operation, fieldsvalues)
-        else: exc = cursor.execute(operation)
-        return exc
-
-    def _create_table(self, tablename="", fieldsnames=[]):
-        """ cria uma nova tabela, com o nome dado na inicialização, se ele ainda não existir. """
-        fieldsnames = ", ".join( self.params["fieldsnames"] )
-        operation = "CREATE TABLE IF NOT EXISTS %s(id INTEGER PRIMARY KEY AUTOINCREMENT, %s)"%(self.params["tablename"], fieldsnames)
-        self.execute(operation)
-        self.close()
-
-    def filter(self, sqlstr="", **kwargs):
-        """ filtra e retorna os valores. kwargs: filter name, fields """
-        fields = kwargs.pop("fields", tuple())
-        fields = ", ".join( fields ) or "*" # all fields
-        filter_by = " and ".join(["%s=\"%s\""%(k, v) for k, v in kwargs.iteritems()])
-        operation = "SELECT %s FROM %s WHERE %s %s"%(fields, self.params["tablename"], filter_by, sqlstr)
-        return self.execute( operation )
-
-    def get_all(self, sqlstr=""):
-        """ retorna todos os valores dos campos da tabela """
-        operation = "SELECT * FROM %s %s"%(self.params["tablename"], sqlstr)
-        return self.execute(operation)
-
-    def add(self, *fieldsvalues):
-        """ adiciona a tupla de valores nos campos correspondes a sua tabela """
-        placeholders = ", ".join(("?"*len(fieldsvalues)))
-        operation = "INSERT INTO %s VALUES(null, %s)"%(self.params["tablename"], placeholders)
-        return self.execute(operation, fieldsvalues)
-
-    def update(self, fields={}, filter_by={}):
-        """ atualiza os 'fields' filtrando por 'filter_by' """
-        fields = ", ".join(["%s='%s'"%(k,v) for k, v in fields.iteritems()])
-        filter_by = " and ".join(["%s='%s'"%(k,v) for k, v in filter_by.iteritems()])
-        if filter_by:
-            operation = "UPDATE %s SET %s WHERE %s"%(self.params["tablename"], fields, filter_by)
-        else:
-            operation = "UPDATE %s SET %s"%(self.params["tablename"], fields)
-        return self.execute( operation )
-
-    def delete(self, fieldname, fieldvalue):
-        """ deleta o valor do campo dado """
-        operation = "DELETE FROM %s WHERE %s=\"%s\""%(self.params["tablename"], fieldname, fieldvalue)
-        return self.execute( operation )
-
-    def exists(self, fieldname, fieldvalue):
-        """ verifica a existencia do valor no campo. retorna True(exist) ou False(not exist) """
-        operation = "SELECT * FROM %s WHERE %s=?"%(self.params["tablename"], fieldname)
-        exc = self.execute(operation, (fieldvalue,))
-        exist = bool(exc.fetchall())
-        self.close()
-        return exist
-
-    def saveAndClose(self):
-        """ simplifica a chamada para 'save' seguido de 'close' """
-        self.save(); self.close()
-
-    def save(self):
-        """ salva as alterações no banco de dados """
-        self.database.commit()
-
-    def close(self):
-        """ fecha o banco de dados. Encerra todas as operações sobre ele. """
-        self.database.close()
 
 ################################## FLVPLAYER ##################################
 def runElevated(cmd, params):
@@ -1042,7 +946,7 @@ class Interval:
         """ cria um novo intervalo, apartir de um já existente """
         intervals = self.intervals.items()
         # organiza pelos indices dos intervals: (1, (0, 1, 2, 3))
-        intervals.sort(key=lambda x: x[1][0])
+        intervals.sort(key=lambda x: x[1][1])
         
         for obj_id, interv in intervals:
             index, start, end, block_size = interv
@@ -1778,12 +1682,12 @@ class StreamManager( threading.Thread):
                 
                 # bloco de bytes do intervalo. Poderá ser dinamicamente modificado
                 block_size = self.manage.interval.get_block_size(self.ident)
-                interval_index = self.manage.interval.get_index(self.ident)
-                assert interval_index, "invalid interval!"
+                block_index = self.manage.interval.get_index(self.ident)
+                assert block_index, "invalid interval!"
                 
                 # condição atual da conexão: Baixando
                 globalInfo.set_info(self.ident, "state", _("Baixando") )
-                globalInfo.set_info(self.ident, "block_index", interval_index)
+                globalInfo.set_info(self.ident, "block_index", block_index)
                 
                 # limita a leitura ao bloco de dados
                 if (self.numBytesLidos + block_read) > block_size:
@@ -1975,9 +1879,9 @@ class StreamManager( threading.Thread):
                     self.manage.interval.new_set( self.ident )
 
                     # como novos intervalos não são infinitos, atribui um novo, apartir de um já existente.
-                    if not self.manage.interval.hasInterval( self.ident ):
-                        self.manage.interval.derivative_set( self.ident )
-                        
+                    #if not self.manage.interval.hasInterval( self.ident ):
+                    #self.manage.interval.derivative_set( self.ident )
+                    
                 # bytes lido do intervalo atual(como os blocos reduzem seu tamanho, o número inicial será sempre zero).
                 self.numBytesLidos = 0
         else:
@@ -2067,7 +1971,7 @@ class StreamManager_( StreamManager ):
                 data = videoManager.get_init_page( self.proxies) # pagina incial
                 link = videoManager.get_file_link( data) # link de download
                 wait_for = videoManager.get_count( data) # contador
-
+                
                 for second in range(wait_for, 0, -1):
                     globalInfo.set_info(self.ident, "state", _(u"Aguarde %02ds")%second)
                     time.sleep(1)
@@ -2089,7 +1993,7 @@ class StreamManager_( StreamManager ):
                     globalInfo.set_info(self.ident, "state", _(u"Resposta inválida"))
                     self.streamSocket.close()
                     time.sleep( sleep_for )
-            except Exception, err:
+            except Exception as err:
                 globalInfo.set_info(self.ident, "state", _(u"Falha na conexão"))
                 if hasattr(err, "code") and err.code == 503: return False
                 time.sleep( sleep_for )
@@ -2111,11 +2015,11 @@ class StreamManager_( StreamManager ):
                     self.inicieLeitura() # inicia a transferencia de dados
                 # estado ocioso
                 else: time.sleep(1)
-            except Exception as e:
+            except Exception as err:
                 self.fixeFalhaTransfer(_("Incapaz de conectar"), 1)
-                print "SM - Err: %s" %e
+                print "SM - Err: %s" %err
         globalInfo.set_info(self.ident, "state", _(u"Conexão parada"))
-
+        
 ########################### EXECUÇÃO APARTIR DO SCRIPT  ###########################
 
 if __name__ == '__main__':
