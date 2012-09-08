@@ -139,7 +139,7 @@ class Packer(object):
         self.path = params.get("path", self.timer.path)
         self.pycompile = params.get("pycompile",True)
         filename = "packet_%sv%s_%s.zip"%(
-            params.get("system", "0.0.0"), params.get("pkv", "0.0.0"), 
+            params.get("system", "0.0.0"), params.get("pkv", "0.0.0"),
             params.get("pgv", "0.0.0")
         )
         if not re.match(".+zip$", filename): filename += ".zip" # adiciona a extensão
@@ -205,14 +205,14 @@ List of options:
     except getopt.GetoptError, err:
         print "GetoptError: %s"%err
         sys.exit(1)
-        
+
     if not optlist or params.has_key("-h"):
         help(); sys.exit(0)
-        
+
     pkv = params.get("--pkv","0.0.0")
     pgv = manager.PROGRAM_VERSION
     system = manager.PROGRAM_SYSTEM[platform.system()]
-    
+
     # remove todos .pyc .pyo por segurança
     clean_all_nopy( TARGET_DIR )
 
@@ -221,7 +221,7 @@ List of options:
 
     packer = Packer(pkv=pkv, pgv=pgv, system=system, timer=timer)
     packer.save(); packer.close()
-    
+
     # atualiza a tabela para os arquivos já trabalhados.
     create_mtime_table(TARGET_DIR, update=True)
     print "Finish!"

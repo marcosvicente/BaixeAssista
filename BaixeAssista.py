@@ -18,7 +18,7 @@ def run():
 		exit(0)
 	# -----------------------------------------------
 	
-	app = wx.App(False) # arg: False não redirecionar
+	app = wx.App(False) # arg: False n?o redirecionar
 	mainWin.BaixeAssistaWin()
 	app.MainLoop()
 
