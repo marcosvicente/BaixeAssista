@@ -1,5 +1,6 @@
 # -*- coding: ISO-8859-1 -*-
 ## guarda a versão do programa.
+from symbol import except_clause
 PROGRAM_VERSION = "0.2.0"
 PROGRAM_SYSTEM = {"Windows": "oswin", "Linux": "oslinux"}
 
@@ -821,7 +822,7 @@ class Interval:
         maxsize: tamanho do block que será segmentado.
         """
         assert params.get("maxsize",None), "maxsize is null"
-        self.lock = []
+        self.locks = {}
         
         self.send_info = {"nbytes":{}, "sending":0}
         self.seekpos = params.get("seekpos", 0)
@@ -891,7 +892,7 @@ class Interval:
     
     def remove(self, obj_id):
         return self.intervals.pop(obj_id, None)
-
+    
     def pending_store(self, *args):
         """ index; nbytes; start; end; block_size """
         self.pending.append( args)
@@ -911,52 +912,68 @@ class Interval:
         intervals = self.intervals.items()
         # organiza por start: (obj_id = 1, (0, start = 1, 2, 3))
         intervals.sort(key=lambda x: x[1][1])
-
-        for index, data in enumerate( intervals, 1):
+        for index, data in enumerate(intervals, 1):
             obj_id, interval = data
             # aplicando a reorganização dos indices
             self.intervals[ obj_id ][0] = index
-
+    
+    def set_new_lock(self, obj_id):
+        """ lock usando na sincronização da divisão do intervalo desse objeto """
+        self.locks[ obj_id ] = threading.Lock()
+        
+    def get_lock(self, obj_id):
+        return self.locks[ obj_id ]
+        
+    def remove_lock(self, obj_id):
+        return self.locks.pop(obj_id,None)
+    
     def pending_set(self, obj_id):
         """ Configura uma conexão existente com um intervalo pendente(não baixado) """
         self.pending.sort()
         index, nbytes, start, end, block_size = self.pending.pop(0)
-        old_start = start
-        
         # calcula quantos bytes foram lidos, até ocorrer o erro.
         novo_grupo_bytes = nbytes - (block_size - (end - start))
-        
+        old_start = start
         # avança somando o que já leu.
         start = start + novo_grupo_bytes
         block_size = end - start
         
         self.intervals[obj_id] = [index, start, end, block_size]
+        self.set_new_lock( obj_id )
         
         if self.send_info["nbytes"].get(old_start,None) is not None:
             del self.send_info["nbytes"][old_start]
             
-        self.send_info["nbytes"][start] = 0	
-        
-    def locked(self, obj_id):
-        while obj_id in self.lock:
-            time.sleep(0.5)
-            
-    def derivative_set(self, obj_id_):
+        self.send_info["nbytes"][start] = 0
+    
+    def derivative_set(self, other_obj_id):
         """ cria um novo intervalo, apartir de um já existente """
+        def get_average( data ):
+            """ retorna a média de bytes atual do intervalo """
+            index, start, end, block = data
+            nbytes = self.send_info["nbytes"][ start ]
+            return int(float((block - nbytes))*0.5)
+            
+        def is_suitable( data ):
+            """ verifica se o intervalo é condidato a alteração """
+            return (get_average(data) > (16*1024))
+        
         intervals = self.intervals.items()
-        # organiza pelos indices dos intervals: (1, (0, 1, 2, 3))
         intervals.sort(key=lambda x: x[1][1])
         
-        for obj_id, interv in intervals:
-            index, start, end, block_size = interv
-            nbytes = self.send_info["nbytes"][start]
-            average_bytes = int(float((block_size - nbytes)) *0.5)
-
-            if average_bytes > (512*1024):
-                self.lock.append( obj_id )
+        for obj_id, data in intervals:
+            if not is_suitable( data ): continue
+            
+            with self.get_lock( obj_id ):
+                # se o objeto alterou seus dados quando chamou o lock
+                data = self.intervals[ obj_id ] # dados atualizados
+                index, start, end, block_size = data
                 
+                # segunda verificação, quarante que o intervalo ainda é candidato.
+                if not is_suitable( data ): continue
                 # reduzindo o tamanho do intervalo antigo
-                new_end = end - average_bytes
+                new_end = end - get_average( data )
+                
                 # recalculando o tamanho do bloco de bytes
                 new_block_size = new_end - start
                 self.intervals[ obj_id ][-2] = new_end
@@ -965,11 +982,12 @@ class Interval:
                 # criando um novo intervalo, derivado do atual
                 start = new_end
                 block_size = end - start
-                self.intervals[ obj_id_ ] = [0, start, end, block_size]
+                
+                self.intervals[ other_obj_id ] = [0, start, end, block_size]
+                self.set_new_lock( other_obj_id )
+                
                 self.send_info["nbytes"][start] = 0
                 self.updateIndex()
-                
-                self.lock.remove( obj_id )
                 break
             
     def new_set(self, obj_id):
@@ -988,6 +1006,8 @@ class Interval:
             block_size = end - start
             
             self.intervals[obj_id] = [0, start, end, block_size]
+            self.set_new_lock( obj_id )
+            
             # associando o início do intervalo ao contador
             self.send_info["nbytes"][start] = 0
 
@@ -1676,13 +1696,15 @@ class StreamManager( threading.Thread):
         interval_start = self.manage.interval.get_start( self.ident)
 
         while not self.wasStopped() and self.numBytesLidos < block_size:
+            if not self.manage.interval.hasInterval(self.ident): break
+            
+            # bloqueia alterações sobre os dados do intervalo da conexão
+            lockIterval = self.manage.interval.get_lock( self.ident )
+            lockIterval.acquire()
             try:
-                self.manage.interval.locked( self.ident )
-                
                 # bloco de bytes do intervalo. Poderá ser dinamicamente modificado
                 block_size = self.manage.interval.get_block_size(self.ident)
                 block_index = self.manage.interval.get_index(self.ident)
-                assert block_index, "invalid interval!"
                 
                 # condição atual da conexão: Baixando
                 globalInfo.set_info(self.ident, "state", _("Baixando") )
@@ -1722,7 +1744,6 @@ class StreamManager( threading.Thread):
                 
                 # tempo do download
                 self.manage.tempoDownload = self.calc_eta(start, time.time(), total, current)
-                
                 # calcula a velocidade global
                 self.manage.velocidadeGlobal = self.calc_speed(start, time.time(), current)
                 
@@ -1733,16 +1754,19 @@ class StreamManager( threading.Thread):
                         interval_start = self.manage.interval.get_start(self.ident)
                         local_time = time.time()# reiniciando as variáveis
                         self.reset_info()
-                        
                 # sem redução de velocidade para o intervalo pricipal
                 elif self.manage.nowSending() != interval_start:
                     self.slow_down(local_time, self.numBytesLidos)
             except:
                 self.fixeFalhaTransfer(_("Erro de leitura"), 2)
                 break
+            finally:
+                # libera alterações sobre os dados da conexão
+                lockIterval.release()
         # -----------------------------------------------------
         if self.manage.interval.hasInterval( self.ident ):
             self.manage.interval.remove( self.ident )
+            self.manage.interval.remove_lock( self.ident )
             
         if hasattr(self.streamSocket, "close"):
             self.streamSocket.close()
@@ -1878,9 +1902,9 @@ class StreamManager( threading.Thread):
                     self.manage.interval.new_set( self.ident )
 
                     # como novos intervalos não são infinitos, atribui um novo, apartir de um já existente.
-                    #if not self.manage.interval.hasInterval( self.ident ):
-                    #self.manage.interval.derivative_set( self.ident )
-                    
+                    if not self.manage.interval.hasInterval( self.ident ):
+                        self.manage.interval.derivative_set( self.ident )
+                        
                 # bytes lido do intervalo atual(como os blocos reduzem seu tamanho, o número inicial será sempre zero).
                 self.numBytesLidos = 0
         else:
