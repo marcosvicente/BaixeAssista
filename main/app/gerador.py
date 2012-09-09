@@ -2071,6 +2071,7 @@ class Hostingbulk( SiteBase ):
 	""""""
 	## http://hostingbulk.com/jp33tfqh8835.html
 	## http://hostingbulk.com/embed-jp33tfqh8835-600x480.html
+	## http://hostingbulk.com/d74oyrowf9p6.html
 	controller = {
 		"url": "http://hostingbulk.com/%s.html", 
 		"patterns": (
@@ -2116,18 +2117,23 @@ class Hostingbulk( SiteBase ):
 		fd = self.conecte(url, proxies=proxies, timeout=timeout)
 		webpage = fd.read(); fd.close()
 
-		params = re.search("eval\(\s*function\s*\(.*\)\s*{.*?}\s*(.+)\)", webpage).group(1)
-		matchobj = re.search("'(?P<ps>(.+?))'\s*,\s*(?P<n1>\d+?),\s*(?P<n2>\d+?),\s*'(?P<lps>.+?)\.split.+", params)
-
-		uparams = self.unpack_params( matchobj.group("ps"), int(matchobj.group("n1")), int(matchobj.group("n2")), matchobj.group("lps").split("|"))
-
-		url = re.search("'file'\s*,\s*'(.+?)'", uparams).group(1)
-		pattern = "(http://.+?)//"; search = re.search(pattern, url)
-		if search: url = re.sub(pattern, search.group(1)+"/d/", url)
-
+		matchobj = re.search("eval\(\s*function\s*\(.*\)\s*{.*?}\s*(.+)\)", webpage)
+		if matchobj:
+			params = matchobj.group(1)
+			
+			matchobj = re.search("'(?P<ps>(.+?))'\s*,\s*(?P<n1>\d+?),\s*(?P<n2>\d+?),\s*'(?P<lps>.+?)\.split.+", params)
+			uparams = self.unpack_params( matchobj.group("ps"), int(matchobj.group("n1")), int(matchobj.group("n2")), matchobj.group("lps").split("|"))
+			
+			url = re.search("'file'\s*,\s*'(.+?)'", uparams).group(1)
+			pattern = "(http://.+?)//"; search = re.search(pattern, url)
+			if search: url = re.sub(pattern, search.group(1)+"/d/", url)
+		else:
+			matchobj = re.search("""setup\(\{.*?(?:'|")file(?:'|")\s*:\s*(?:'|")(.+?)(?:'|")""", webpage, re.DOTALL)
+			url = matchobj.group(1)
+			
 		try: title = re.search("<title>(.+)</title>", webpage).group(1)
 		except: title = get_radom_title()
-
+		
 		self.configs = {"url": url+"?start=", "title": title}
 
 ########################################################################
@@ -2378,7 +2384,7 @@ if __name__ == "__main__":
 		print proxies["http"]
 		proxies = {}
 
-		if not checkSite("http://player.mixturecloud.com/embed=8zjJl8", proxies=proxies, quality=3):
+		if not checkSite("http://hostingbulk.com/d74oyrowf9p6.html", proxies=proxies, quality=3):
 			proxyManager.setBadIp( proxies )
 
 	del proxyManager
