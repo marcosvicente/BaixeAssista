@@ -956,7 +956,7 @@ class Interval:
             
         def is_suitable( data ):
             """ verifica se o intervalo é condidato a alteração """
-            return (get_average(data) > (16*1024))
+            return (get_average(data) > (256*1024))
         
         intervals = self.intervals.items()
         intervals.sort(key=lambda x: x[1][1])
