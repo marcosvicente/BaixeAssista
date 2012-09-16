@@ -903,82 +903,39 @@ class CollegeHumor( SiteBase ):
 		self.configs = info
 
 ###################################### MEGAVIDEO ######################################
-class Megavideo( SiteBase ):
+class Videomega( SiteBase ):
+	## http://videomega.tv/iframe.php?ref=OEKgdSTMGQ&width=505&height=4
 	controller = {
-	    "url": "http://www.megavideo.com/?v=%s", 
-	    "patterns": re.compile("(?P<inner_url>(?:http://)?www\.megavideo\.com/\?(?:v|d)=(?P<id>\w+))"), 
-	    "control": "SM_SEEK", 
+	    "url": "http://videomega.tv/iframe.php?ref=%s", 
+	    "patterns": [re.compile("(?P<inner_url>http://videomega\.tv/iframe\.php\?ref=(?P<id>\w+)(?:&width=\d+)?(&height=\d+)?)")], 
+	    "control": "SM_RANGE", 
 	    "video_control": None
 	}
 	
 	def __init__(self, url, **params):
 		SiteBase.__init__(self, **params)
-		self.confgsMacth = re.compile('\s*(.+?)\s*=\s*"(.*?)"', re.DOTALL)
-		self.videoLink = 'http://www.megavideo.com/xml/videolink.php?v='
 		self.url = url
-		self.val = {}
-
+		
 	def suportaSeekBar(self):
 		return True
-
-	def getLink(self):
-		link = "http://www%s.megavideo.com/files/%s/" %(
-			self.configs["s"], 
-			decrypter.decrypt32byte(self.configs["un"], 
-				                    self.configs["k1"], 
-				                    self.configs["k2"])
-		)
-		return link
-
-	def get_size(self, proxies=None):
-		""" retorna um inteiro longo. O valor representa o tamanho da stream """
-		size = self.configs.get("size", False)
-		assert size, "Pegando o tamanho do arquivo."
-		return long(size)
-
-	def getQueryString(self, url):
-		""" retorna v ou d mais o id: CYXMVK0G da url, como uma tupla """
-		parse = urlparse.urlparse( url)
-		s, id = parse.query.split("=")
-		return (s, id)
-
-	def getMegavideoId(self, url, proxies, timeout):
-		fd = self.conecte(url, proxies, timeout)
-		data = fd.read(); fd.close()
-		# inicia a procura do id
-		match = re.search('flashvars\.v\s*=\s*"(.*)";', data)
-		return match.group(1) ## valor de flashvars.v
-
-	def converteURL(self, url ):
-		""" Troca o nome do servidor megaupload:megavideo """
-		return url.replace("megaupload", "megavideo")
-
+	
 	def start_extraction(self, proxies={}, timeout=25):
-		#converte a url de megaupload para megavideo
-		url = self.converteURL( self.url)
-		queryattr, url_id = self.getQueryString( url)
-
-		if queryattr == "d": # url com parametro d
-			if self.val.get(url_id, None) is None:
-				megavId = self.getMegavideoId( url, proxies, timeout)
-				# id encontrado dentro da pagina do megaupload
-				url = self.videoLink + megavId
-				self.val[ url_id ] = megavId
-			else:
-				url = self.videoLink + self.val[ url_id ]
-
-		elif queryattr == "v": # url com parametro v
-			url = self.videoLink + url_id
-
-		fd = self.conecte(url, proxies, timeout)
-		data = fd.read(); fd.close()
-
-		if fd.code == 200:
-			self.configs = dict( self.confgsMacth.findall( data ) )
-			self.configs["ext"] = "flv"
+		fd = self.conecte(self.url, proxies=proxies, timeout=timeout)	
+		webpage = fd.read(); fd.close()
+		
+		matchobj = re.search("unescape\s*\((?:\"|')(.+)(?:\"|')\)", webpage)
+		settings = urllib.unquote_plus( matchobj.group(1) )
+		
+		matchobj = re.search("file\s*:\s*(?:\"|')(.+?)(?:\"|')", settings)
+		url = matchobj.group(1)
+		
+		try: title = re.search("<title>(.+)</title>", webpage).group(1)
+		except: title = get_radom_title()
+		
+		self.configs = {"url": url+"&start=", "title": title}
 	
 ###################################### MEGAPORN #######################################
-class MegaPorn( Megavideo):
+class MegaPorn( Videomega ):
 	controller = {
 	    "url": "http://www.megaporn.com/video/?v=%s", 
 	    "patterns": re.compile("(?P<inner_url>(?:http://)?www\.(?:megaporn|cum)?\.com/video/\?v=(?P<id>\w+))"), 
@@ -987,9 +944,9 @@ class MegaPorn( Megavideo):
 	}
 	
 	def __init__(self, url, **params):
-		Megavideo.__init__(self, url, **params)
+		super(MegaPorn, self).__init__(url, **params)
 		self.videoLink = "http://www.megaporn.com/video/xml/videolink.php?v="
-
+		
 ###################################### VIDEOBB ########################################
 class Videobb( SiteBase ):
 	## http://www.videobb.com/video/XuS6EAfMb7nf
@@ -2384,7 +2341,7 @@ if __name__ == "__main__":
 		print proxies["http"]
 		proxies = {}
 
-		if not checkSite("http://hostingbulk.com/d74oyrowf9p6.html", proxies=proxies, quality=3):
+		if not checkSite("http://videomega.tv/iframe.php?ref=OEKgdSTMGQ&width=505&height=4", proxies=proxies, quality=3):
 			proxyManager.setBadIp( proxies )
 
 	del proxyManager
