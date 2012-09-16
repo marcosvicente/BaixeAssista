@@ -36,7 +36,7 @@ class Release:
     def check(self, dl_opts):
         """ verifica se existe uma versão maior do que a versão atual """
         for filename, summary, uploaded, releasedata, size, downloadedcount in dl_opts:
-            matchobj = re.search("BaixeAssista_v(?P<version>.+?)(?:_exe)?\.(?:rar|zip|exe)", filename)
+            matchobj = re.search("BaixeAssista(?:_|\s+)?v(?P<version>.+?)(?:_exe)?\.(?:rar|zip|exe)", filename)
             
             try: version = matchobj.group("version")
             except: continue
