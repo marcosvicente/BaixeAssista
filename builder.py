@@ -1,16 +1,18 @@
 # -*- coding: UTF-8 -*-
-import os, sys
+import os, sys, re
 import subprocess
-import packer
 import compileall
 import shutil
-import re
 
-EXE_NAME = 'BaixeAssista v%s'%packer.manager.PROGRAM_VERSION
-BUILD_DIR = os.path.join(os.getcwd(), os.environ["HOMEPATH"], "BaixeAssistaRelease") # build exe
+import packer
+from main import settings 
+from main.app import manager
+
+EXE_NAME = 'BaixeAssista v%s' % manager.PROGRAM_VERSION
+BUILD_DIR = os.path.join(os.environ["USERPROFILE"], "BaixeAssistaRelease") # build exe
 DIST_DIR = os.path.join(BUILD_DIR, "dist")
 EXE_DIR = os.path.join(BUILD_DIR, EXE_NAME)
-FINAL_DIR = EXE_DIR = os.path.join(EXE_DIR, EXE_NAME)
+FINAL_DIR = os.path.join(EXE_DIR, EXE_NAME)
 TARGET_DIR = packer.TARGET_DIR
 
 # ---------------------------------------------------------------
@@ -48,7 +50,7 @@ def start_build():
 # ---------------------------------------------------------------
 def copy_to_dest(source, destination):
 	""" copia os arquivo do executavel para a pasta de distribuição """
-	sourcedir = os.path.split( source )[0]
+	sourcedir = os.path.dirname( source )
 	
 	for root, dirs, files in os.walk(source):
 		try:
@@ -80,7 +82,16 @@ def copy_to_dest(source, destination):
 		except Exception, err:
 			print "Err[Exporting files] %s"%err
 			exit(1)
-
+			
+def make_tree_dirs(location, *args):
+	for path in args:
+		def makedir(a, b):
+			path = os.path.join(a, b)
+			if not os.path.exists(path):
+				os.mkdir( path )
+			return path
+		reduce(makedir, [location]+path.split(os.sep))
+		
 # ---------------------------------------------------------------
 if __name__ == "__main__":
 	if not os.path.exists(BUILD_DIR):
@@ -88,13 +99,18 @@ if __name__ == "__main__":
 
 	if start_build() == 0:
 		print "Compile sucessfully!"
+		os.rename(DIST_DIR, EXE_DIR)
 		
+		print "rename: %s to: %s sucess: %s"%(DIST_DIR, EXE_DIR, os.path.exists(EXE_DIR))
 		print "Exporting files to exe"
+		
 		packer.clean_all_nopy( TARGET_DIR )
 		copy_to_dest( TARGET_DIR, FINAL_DIR )
 		
+		TO_MAKE = os.path.join(settings.VIDEOS_DIR_NAME, settings.VIDEOS_DIR_TEMP_NAME)
+		make_tree_dirs(FINAL_DIR, TO_MAKE)
+		
 		try:
-			os.rename(DIST_DIR, EXE_DIR)
 			os.chdir( FINAL_DIR ) # vai para o diretorio do executável.
 			subprocess.call(os.path.join(FINAL_DIR, EXE_NAME+".exe"))
 		except Exception, err:
