@@ -28,7 +28,9 @@ CONFIGS_DIR = os.path.join(APPDIR, "configs")
 IMAGES_DIR = os.path.join(APPDIR, "images")
 
 # pasta(diretório) padrão de vídeos
-DEFAULT_VIDEOS_DIR = os.path.join(ROOT_DIR, "STREAM_VIDEOS")
+VIDEOS_DIR_TEMP_NAME = "temp"
+VIDEOS_DIR_NAME = "MY_VIDEOS"
+DEFAULT_VIDEOS_DIR = os.path.join(ROOT_DIR, VIDEOS_DIR_NAME)
 
 if not PROJECTPATH in sys.path: # import do projeto
 	sys.path.append( PROJECTPATH )

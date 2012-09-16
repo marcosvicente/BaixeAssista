@@ -27,13 +27,13 @@ class BarraControles( noteBook.NoteBookImage ):
 		self.mainWin = parent
 
 		attrs = [
-			(os.path.join(settings.APPDIR,"imagens", "apps-display-icon.png"), 
+			(os.path.join(settings.IMAGES_DIR, "apps-display-icon.png"), 
 			 _("Assistir"), self.createPlayerWin),
 
-			(os.path.join(settings.APPDIR,"imagens", "settings-tool.png"), 
+			(os.path.join(settings.IMAGES_DIR, "settings-tool.png"), 
 			 _(u"Configuração"), self.createConnetionWin),
 
-			(os.path.join(settings.APPDIR,"imagens", "search-computer.png"), 
+			(os.path.join(settings.IMAGES_DIR, "search-computer.png"), 
 			 _("Pesquisar"), self.createBrowserWin),
 		]
 		# carrega as páginas

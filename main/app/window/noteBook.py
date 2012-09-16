@@ -134,11 +134,11 @@ class PageBar( wx.Panel ):
         self.btnBoxSizer = wx.BoxSizer()
         self.btnBoxSizer.AddStretchSpacer()
 
-        path = os.path.join(settings.APPDIR,"imagens","navigate-up24x24.png")
+        path = os.path.join(settings.IMAGES_DIR, "navigate-up24x24.png")
         image = wx.Image(path, wx.BITMAP_TYPE_PNG)
         self.setaCima = image.ConvertToBitmap()
 
-        ##path = os.path.join(settings.APPDIR,"imagens","seta_baixo.jpg")
+        ##path = os.path.join(settings.IMAGES_DIR,"seta_baixo.jpg")
         ##image = wx.Image(path, wx.BITMAP_TYPE_JPEG)
         ##self.setaBaixo = image.ConvertToBitmap()
 
@@ -256,8 +256,8 @@ class PageBar( wx.Panel ):
             )
         
     def createFullScreenWidget(self, mainWin, pageTootip="", scalex=32, scaley=32):
-        imgCollapse = os.path.join(settings.APPDIR, "imagens", "fullscreenIn.jpg")
-        imgExpad = os.path.join(settings.APPDIR, "imagens", "fullscreenOut.jpg")
+        imgCollapse = os.path.join(settings.IMAGES_DIR, "fullscreenIn.jpg")
+        imgExpad = os.path.join(settings.IMAGES_DIR, "fullscreenOut.jpg")
         
         btnFullScreen = PageButton(self, imgCollapse, _("Tela cheia"), pageTootip, scalex, scaley, widget=True)
         self.widgets["FullScreen"]["btnWidget"] = btnFullScreen
@@ -329,7 +329,7 @@ if __name__ == "__main__":
         frame = wx.Frame(None, -1, "Fram", size = (800, 500))
         control = NoteBookImage( frame )
 
-        imgpath = os.path.join(settings.APPDIR, "imagens", "fullscreenIn.jpg")
+        imgpath = os.path.join(settings.IMAGES_DIR, "fullscreenIn.jpg")
 
         for i in range(7):
             master = control.addPage(imgpath, "Page-%d"%i, "ButtonPage-%d"%i)

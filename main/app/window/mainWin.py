@@ -163,7 +163,7 @@ class BaixeAssistaWin( wx.Frame ):
 		self.Show()
 
 	def getMovieIcon(self):
-		path = os.path.join(settings.APPDIR, "imagens", "movies.png")
+		path = os.path.join(settings.IMAGES_DIR, "movies.png")
 		bitmap = wx.BitmapFromImage(wx.Image(path))
 		icon = wx.EmptyIcon()
 		icon.CopyFromBitmap(bitmap)
