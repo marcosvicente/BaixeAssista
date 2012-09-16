@@ -198,11 +198,12 @@ if __name__ == "__main__":
     def help():
         print """
 List of options:
- --pkv= -> packet version
+ --pkv: packet version
+ --update: mtime table update
 """
     try:
         import getopt
-        optlist, args = getopt.getopt(sys.argv[1:], "h", ["pkv="])
+        optlist, args = getopt.getopt(sys.argv[1:], "h", ["pkv=", "update"])
         params = dict(optlist)
     except getopt.GetoptError, err:
         print "GetoptError: %s"%err
@@ -210,7 +211,12 @@ List of options:
 
     if not optlist or params.has_key("-h"):
         help(); sys.exit(0)
-
+        
+    if params.has_key("--update"):
+        timer = create_mtime_table(TARGET_DIR, update=True)
+        print "complited..."
+        exit(0)
+        
     pkv = params.get("--pkv","0.0.0")
     pgv = manager.PROGRAM_VERSION
     system = manager.PROGRAM_SYSTEM[platform.system()]
