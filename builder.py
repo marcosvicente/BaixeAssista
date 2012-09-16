@@ -6,10 +6,11 @@ import compileall
 import shutil
 import re
 
-EXE_NAME = 'BaixeAssista_v%s'%packer.manager.PROGRAM_VERSION
-BUILD_DIR = os.path.join(os.getcwd(), os.environ["HOMEPATH"], "BaixeAssistaBuild") # build exe
+EXE_NAME = 'BaixeAssista v%s'%packer.manager.PROGRAM_VERSION
+BUILD_DIR = os.path.join(os.getcwd(), os.environ["HOMEPATH"], "BaixeAssistaRelease") # build exe
 DIST_DIR = os.path.join(BUILD_DIR, "dist")
 EXE_DIR = os.path.join(BUILD_DIR, EXE_NAME)
+FINAL_DIR = EXE_DIR = os.path.join(EXE_DIR, EXE_NAME)
 TARGET_DIR = packer.TARGET_DIR
 
 # ---------------------------------------------------------------
@@ -27,7 +28,7 @@ def find_compiler(compilername = "pyinstaller.py"):
 def start_build():
 	""" inica a contrução do executável """
 	COMPILER = 'python "%s"' % find_compiler()
-	COMMANDS = '-w --out="{outdir}" --icon={ico} --onefile BaixeAssista.py --name={exename}'.format(
+	COMMANDS = '-w --out="{outdir}" --icon={ico} BaixeAssista.py --name="{exename}"'.format(
 	    outdir = BUILD_DIR, ico="movies.ico", exename=EXE_NAME
 	)
 	CMD = COMPILER + " " + COMMANDS
@@ -90,12 +91,12 @@ if __name__ == "__main__":
 		
 		print "Exporting files to exe"
 		packer.clean_all_nopy( TARGET_DIR )
-		copy_to_dest( TARGET_DIR, DIST_DIR )
+		copy_to_dest( TARGET_DIR, FINAL_DIR )
 		
 		try:
 			os.rename(DIST_DIR, EXE_DIR)
-			os.chdir( EXE_DIR ) # vai para o diretorio do executável.
-			subprocess.call(os.path.join(EXE_DIR, EXE_NAME+".exe"))
+			os.chdir( FINAL_DIR ) # vai para o diretorio do executável.
+			subprocess.call(os.path.join(FINAL_DIR, EXE_NAME+".exe"))
 		except Exception, err:
 			print "Err[exe start] %s"%err
 	else:
