@@ -672,10 +672,7 @@ class FileManager:
 
     def setFileExt(self, ext):
         self.params["videoExt"] = ext
-
-    def setFileId(self, ext):
-        self.params["videoId"] = ext
-
+        
     def getFilePath(self, filename):
         """ retorna o caminho completo para o local do arquivo """
         query = self.resumeInfo.get( filename )
@@ -1169,21 +1166,22 @@ class Manage:
         self.videoTitle = self.urlManager.getUrlTitle( self.streamUrl )
         self.videoSize = 0 # tamanho total do video
         self.videoExt = "" # extensão do arquivo de vídeo
-
-        # controla a obtenção de links, tamanho do arquivo, title, etc.
-        vmanager = gerador.Universal.getVideoManager( self.streamUrl )
-        self.videoManager = vmanager(self.streamUrl, qualidade=self.params.get("videoQuality",2))
-        # OBS: *** videoQuality - ACIMA DE 'inicialize' ***
         
-        # controle das conexões
-        self.ctrConnection = CTRConnection( self)
-
-        # gerencia os endereços dos servidores proxies
-        self.proxyManager = ProxyManager( self)
-
         # embora o método inicialize tenha outro propósito, ele também 
         # complementa a primeira inicialização do objeto Manage.
         self.inicialize()
+        
+        # controla a obtenção de links, tamanho do arquivo, title, etc.
+        vmanager = gerador.Universal.getVideoManager( self.streamUrl )
+        # pode ser alterado em "inicialize", se resumindo.
+        qualidade = self.params.get("videoQuality", 2)
+        self.videoManager = vmanager(self.streamUrl, qualidade=qualidade)
+        
+        # controle das conexões
+        self.ctrConnection = CTRConnection( self)
+        
+        # gerencia os endereços dos servidores proxies
+        self.proxyManager = ProxyManager( self)
 
     def inicialize(self, **params):
         """ método chamado para realizar a configuração de leitura aleatória da stream """
@@ -1193,10 +1191,9 @@ class Manage:
         self.velocidadeGlobal = 0  # velocidade global da conexão
         self.tempoDownload = ""    # tempo total de download
         self.nBytesProntosEnvio = 0
-
-        self.fileManager = FileManager( tempfile = self.params.get('tempfile', False), 
-                                        videoId = self.videoManager.get_video_id())
-
+        self.fileManager = FileManager(
+            tempfile = self.params.get('tempfile', False))
+        
         # avalia se o arquivo pode ser resumido
         self.resumindo = self.fileManager.resume( self.videoTitle )
 
