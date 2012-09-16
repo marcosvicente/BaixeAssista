@@ -15,6 +15,9 @@ EXE_DIR = os.path.join(BUILD_DIR, EXE_NAME)
 FINAL_DIR = os.path.join(EXE_DIR, EXE_NAME)
 TARGET_DIR = packer.TARGET_DIR
 
+IGNORE_FILES = ("_pass", "changes.txt", ".gitignore", "ba_trans.po")
+SKIP_DIR = "_ignore"
+
 # ---------------------------------------------------------------
 def find_compiler(compilername = "pyinstaller.py"):
 	""" busca o caminho completo para o compilador(pyinstaller) """
@@ -58,7 +61,7 @@ def copy_to_dest(source, destination):
 			destdir = os.path.join(destination, relativedir)
 			
 			# não inclui pastas que contenham o arquivo "__ignore__"
-			if "__ignore__" in files: continue
+			if SKIP_DIR in files: continue
 			
 			if not os.path.exists( destdir ):
 				print "Making dir: ", destdir
@@ -67,7 +70,7 @@ def copy_to_dest(source, destination):
 				print "Dir already exist: ", destdir
 				
 			for filename in files:
-				if (filename == "__pass__") or (filename == "changes.txt"): continue
+				if filename in IGNORE_FILES: continue
 				filepath = os.path.join(root, filename)
 				filedestdir = os.path.join(destdir, filename)
 				

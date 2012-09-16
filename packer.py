@@ -15,6 +15,8 @@ EXTS_PATTERN = [".+pyc$", ".+pyo$"] # ext final
 TARGET_DIR = os.path.join(os.getcwd(), "main")
 PACKER_DIR = os.path.join(os.getcwd(), "packer_files")
 LOG_PATH = os.path.join(PACKER_DIR, "packer.log")
+
+import builder
 # ---------------------------------------------------------------
 if not os.path.exists( PACKER_DIR ):
     os.mkdir( PACKER_DIR )
@@ -113,8 +115,8 @@ class Timer(object):
 def create_mtime_table(path, update=False):
     timer = Timer(path = path)
     for root, dirs, files in os.walk(path):
-        # diretório contendo o arquivo '__ignore__' não é consirado válido.
-        if "__ignore__" in files: continue
+        # diretório contendo o arquivo '_ignore' não é consirado válido.
+        if builder.SKIP_DIR in files: continue
         for filename in files:
             if timer.exclude(name=filename): continue
             abspath = os.path.join(root, filename)
@@ -164,11 +166,11 @@ class Packer(object):
 
     def save(self):
         for root, dirs, files in os.walk(self.path):
-            if ("__ignore__" in files) or ("__pass__" in files): continue
+            if (builder.SKIP_DIR in files) or ("_pass" in files): continue
             for filename in files:
                 path = os.path.join(root, filename)
                 self.add_file( path )
-
+    
     def close(self ):
         self.p_file.close()
 
