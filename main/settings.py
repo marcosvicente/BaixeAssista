@@ -25,7 +25,7 @@ ROOT_DIR = matchobj.group(1)
 
 APPDIR = os.path.join(PROJECTPATH, "app")
 CONFIGS_DIR = os.path.join(APPDIR, "configs")
-IMAGES_DIR = os.path.join(APPDIR, "imagens")
+IMAGES_DIR = os.path.join(APPDIR, "images")
 
 # pasta(diretório) padrão de vídeos
 DEFAULT_VIDEOS_DIR = os.path.join(ROOT_DIR, "STREAM_VIDEOS")
