@@ -18,11 +18,17 @@ if not re.match(".+main$", os.getcwd()):
 	PROJECTPATH = os.path.join(os.getcwd(), "main")
 else:
 	PROJECTPATH = os.getcwd()
-	
+
+# diretório do exectável final
+matchobj = re.search("(.+)main", PROJECTPATH)
+ROOT_DIR = matchobj.group(1)
+
 APPDIR = os.path.join(PROJECTPATH, "app")
 CONFIGS_DIR = os.path.join(APPDIR, "configs")
 IMAGES_DIR = os.path.join(APPDIR, "imagens")
-DEFAULT_VIDEOS_DIR = os.path.join(PROJECTPATH,"STREAM_VIDEOS")
+
+# pasta(diretório) padrão de vídeos
+DEFAULT_VIDEOS_DIR = os.path.join(ROOT_DIR, "STREAM_VIDEOS")
 
 if not PROJECTPATH in sys.path: # import do projeto
 	sys.path.append( PROJECTPATH )
