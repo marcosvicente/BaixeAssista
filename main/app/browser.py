@@ -29,6 +29,7 @@ from main import settings
 from main.app import models
 
 PROGRAM_VERSION = gerador.PROGRAM_VERSION
+SEARCH_ENGINE = "http://www.google.com.br/webhp?hl=pt-BR"
 
 with open(os.path.join(settings.APPDIR,"js","ml.js"), "r") as js_file:
     JS_LINK_MONITOR = js_file.read()
@@ -76,7 +77,7 @@ class FiltroUrl:
         """ Cada site carregado pelo IE, terá sua url 
         analizada com as regex dos sites suportados """
         urls = [url, self.reverseUrl(url)]
-
+        
         for site in self.listaSite:
             # as vezes a url válida está dentro de outra url, então search irá extraí-la
             for url in urls:
@@ -90,20 +91,8 @@ class FiltroUrl:
             self.url, self.is_embed = "", False
 
             # quando a url analizada não for válida
-            return False 
-##############################################################################
-POPUP_BLOCK = [
-    "ad.harrenmedianetwork.com",
-    "ads.affbuzzads.com",
-    "ads.lomadee.com",
-    "ad.vuiads.org",
-    "ad.velmedia.net",
-    "ad.yieldmanager.com",
-    "ad.vuiads.org",
-    "www.protetor.info",
-    #"",
-]
-SEARCH_ENGINE = "http://www.google.com.br/webhp?hl=pt-BR"
+            return False
+
 ##############################################################################
 class HistoryUrl:
     """ Classe criada com o objetivo de corrigir o problema de histórico 
@@ -642,16 +631,6 @@ class Browser(wx.Panel):
                 self.controlEmbedUrls.SetLabel( url )
                 self.controlEmbedUrls.Append( url )
                 self.controleFluxoUrlsEmbutidas()
-
-        # bloqueia janela popup
-        if self.is_popup(url): event.Veto()
-
-    def is_popup(self, url):
-        popup = False; protocol = "http://"
-        for u in POPUP_BLOCK:
-            if url.startswith( (protocol+u) ):
-                popup = True; break
-        return popup
 
     def OnWebViewNewWindow(self, event):
         """ Controla a abertura de novas janelas """
