@@ -14,6 +14,9 @@ EMAIL_USE_TLS = 1
 EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 25
 
+SCRIPT_PATH = os.path.dirname(os.path.abspath(__file__))
+STATIC_PATH = os.path.join(SCRIPT_PATH, "static")
+
 if not re.match(".+main$", os.getcwd()):
 	PROJECTPATH = os.path.join(os.getcwd(), "main")
 else:
@@ -99,6 +102,7 @@ ADMIN_MEDIA_PREFIX = '/static/admin/'
 
 # Additional locations of static files
 STATICFILES_DIRS = (
+    STATIC_PATH.replace(os.sep,"/"),
     # Put strings here, like "/home/html/static" or "C:/www/django/static".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
