@@ -200,7 +200,8 @@ class SiteBase(ConnectionProcessor):
 					else:
 						section["settings"] = self.configs # relaciona as configs ao ip
 						break # sucesso!
-				except: pass
+				except Exception as e:
+					pass
 				nfalhas += 1
 		else:
 			self.configs = section["settings"] # transfere para variável de trabalho
@@ -225,7 +226,20 @@ class SiteBase(ConnectionProcessor):
 
 	def getLink(self):
 		return self.configs["url"]
-
+	
+	def has_duration(self):
+		return bool(self.configs.get("duration",None))
+	
+	def get_duration(self):
+		return self.configs["duration"]
+	
+	def get_relative(self, pos):
+		if self.has_duration(): # if 'video/mp4' file
+			try: result = float(self.get_duration()) / float(pos)
+			except: result = 0
+		else: result = pos
+		return result
+		
 	def getVideoExt(self):
 		return self.configs.get("ext","")
 
@@ -239,19 +253,22 @@ class SiteBase(ConnectionProcessor):
 
 	def get_size(self, proxies={}, timeout=60):
 		""" retorna o tamanho do arquivo de vídeo, através do cabeçalho de resposta """
-		file_size = 0
 		link = get_with_seek(self.getLink(), 0)
 		
-		h = {"Range":"bytes=0-"}; h.update(self.headers)
-		req = self.get_request(link, h, data=None)
+		headers = {"Range":" bytes=0-"}
+		headers.update( self.headers )
+		req = self.get_request(link, headers, data=None)
+		try:
+			fd = self.conecte(request = req, proxies=proxies, timeout=timeout)
+			fd.close()
+		except:
+			fd = urllib.urlopen( link )
+			fd.close()
+			
+		length = fd.headers.get("Content-Length", None)
 		
-		resp = self.conecte(request = req, proxies=proxies, timeout=timeout)
-		file_size = resp.headers.get("Content-Length", None)
-		resp.close()
-		
-		if (resp.code == 200 or resp.code == 206) and not file_size is None:
-			return long(file_size)
-		assert file_size, "err: get_stream_size"
+		assert (length and (fd.code == 200 or fd.code == 206))
+		return long(length)
 
 	def getStreamSize(self):
 		""" retorna o tamanho compleot do arquivo de video """
@@ -332,69 +349,37 @@ class Metacafe( SiteBase ):
 		SiteBase.__init__(self, **params)
 		self.basename = "metacafe.com"
 		self.url = url
-
+		
+	def getLink(self):
+		vquality = int(self.params.get("qualidade", 2))
+		optToNotFound = self.configs.get(1, None)
+		optToNotFound = self.configs.get(2, optToNotFound)
+		optToNotFound = self.configs.get(3, optToNotFound)
+		videoLink = self.configs.get(vquality, optToNotFound)
+		return videoLink
+	
 	def start_extraction(self, proxies={}, timeout=25):
 		video_id = Universal.get_video_id(self.basename, self.url)
-
-		# Check if video comes from YouTube
-		mobj2 = re.match(r'^yt-(.*)$', video_id)
-		if mobj2 is not None: return
-
-		# Retrieve video webpage to extract further information
-		try:
-			url = "http://www.metacafe.com/watch/%s/" % video_id
-			fd = self.conecte( url, proxies=proxies, timeout=timeout)
-			webpage = fd.read(); fd.close()
-		except: return # falha obtendo a página
-
-		mobj = re.search(r'(?m)&mediaURL=([^&]+)', webpage)
-		if mobj is not None:
-			mediaURL = urllib.unquote(mobj.group(1))
-			video_extension = mediaURL[-3:]
-
-			# Extract gdaKey if available
-			mobj = re.search(r'(?m)&gdaKey=(.*?)&', webpage)
-			if mobj is None:
-				video_url = mediaURL
-			else:
-				gdaKey = mobj.group(1)
-				video_url = '%s?__gda__=%s' % (mediaURL, gdaKey)
-		else:
-			mobj = re.search(r' name="flashvars" value="(.*?)"', webpage)
-			if mobj is None: return
-
-			vardict = cgi.parse_qs(mobj.group(1))
-			if 'mediaData' not in vardict: return
-
-			mobj = re.search(r'"mediaURL":"(http.*?)","key":"(.*?)"', vardict['mediaData'][0])
-			if mobj is None: return
-
-			mediaURL = mobj.group(1).replace('\\/', '/')
-			video_extension = mediaURL[-3:]
-			video_url = '%s?__gda__=%s' % (mediaURL, mobj.group(2))
-
-		try:
-			mobj = re.search(r'(?im)<title>(.*) - Video</title>', webpage)
-			video_title = mobj.group(1).decode('utf-8')	
-		except:
-			video_title = get_radom_title()
-
-		try:
-			mobj = re.search(r'(?ms)By:\s*<a .*?>(.+?)<', webpage)
-			video_uploader = mobj.group(1)
-		except:
-			video_uploader = ""
-
-		self.configs = {
-			'id': video_id.decode('utf-8'),
-			'url': video_url.decode('utf-8'),
-			'uploader':	video_uploader.decode('utf-8'),
-			'upload_date': u'NA',
-			'title': video_title,
-			'ext': video_extension.decode('utf-8'),
-			'format': u'NA',
-			'player_url': None,
-		}
+		
+		url = "http://www.metacafe.com/watch/%s/" % video_id
+		fd = self.conecte( url, proxies=proxies, timeout=timeout)
+		webpage = fd.read(); fd.close()
+		
+		matchobj = re.search("flashVarsCache\s*=\s*\{(.*?)\}", webpage)
+		flashvars = urllib.unquote_plus(matchobj.group(1))
+		
+		matchobj = re.search("\"mediaData\".+?\"mediaURL\"\s*:\s*\"(.*?)\".*\"key\"\s*:\s*\"(.*?)\".*\"value\"\s*:\s*\"(.*?)\"", flashvars)
+		lowMediaURL = urllib.unquote_plus(matchobj.group(1)) +"?%s=%s" % (matchobj.group(2), matchobj.group(3))
+		lowMediaURL = lowMediaURL.replace("\/", "/")
+		
+		matchobj = re.search("\"highDefinitionMP4\".+?\"mediaURL\"\s*:\s*\"(.*?)\".*\"key\"\s*:\s*\"(.*?)\".*\"value\"\s*:\s*\"(.*?)\"", flashvars)
+		highMediaURL = urllib.unquote_plus(matchobj.group(1)) +"?%s=%s" % (matchobj.group(2), matchobj.group(3))
+		highMediaURL = highMediaURL.replace("\/", "/")
+		
+		try: title = re.search("<title>(.+)</title>", webpage).group(1)
+		except: title = get_radom_title()
+		
+		self.configs = {1: lowMediaURL, 2: highMediaURL, 'title': title}
 
 ####################################### BLIPTV ########################################
 class BlipTV( SiteBase ):
@@ -1759,14 +1744,12 @@ class Anitube( SiteBase ):
 		self.url = url
 
 	def suportaSeekBar(self):
-		return False
+		return True
 
 	def start_extraction(self, proxies={}, timeout=25):
-		try:
-			fd = self.conecte(self.url, proxies=proxies, timeout=timeout)
-			webdata = fd.read(); fd.close()
-		except: return
-
+		fd = self.conecte(self.url, proxies=proxies, timeout=timeout)
+		webdata = fd.read(); fd.close()
+		
 		## addParam("flashvars",'config=http://www.anitube.jp/nuevo/config.php?key=c3ce49fd327977f837ab')
 		##<script type="text/javascript">var cnf=
 		try:
@@ -1791,7 +1774,7 @@ class Anitube( SiteBase ):
 		try: title = re.search("<title>(.*?)</title>", xmldata).group(1)
 		except: title = get_radom_title()
 
-		self.configs = {"url": video_url, "title": title}
+		self.configs = {"url": video_url+"?start=", "title": title}
 
 ###################################### VK #######################################
 class Vk( SiteBase ):
@@ -2038,7 +2021,9 @@ class Hostingbulk( SiteBase ):
 		"control": "SM_SEEK",
 		"video_control": None
 	}
-
+	def suportaSeekBar(self):
+		return True
+	
 	@staticmethod
 	def base36encode( number ):
 		if not isinstance(number, (int, long)):
@@ -2085,13 +2070,18 @@ class Hostingbulk( SiteBase ):
 			pattern = "(http://.+?)//"; search = re.search(pattern, url)
 			if search: url = re.sub(pattern, search.group(1)+"/d/", url)
 		else:
-			matchobj = re.search("""setup\(\{.*?(?:'|")file(?:'|")\s*:\s*(?:'|")(.+?)(?:'|")""", webpage, re.DOTALL)
+			matchobj = re.search("setup\(\{.*?(?:'|\")file(?:'|\")\s*:\s*(?:'|\")(.+?)(?:'|\")", webpage, re.DOTALL)
 			url = matchobj.group(1)
-			
+			try:
+				matchobj = re.search("setup\(\{.*?(?:'|\")duration(?:'|\")\s*:\s*(?:'|\")(.+?)(?:'|\")", webpage, re.DOTALL)
+				duration = int(matchobj.group(1))
+			except:
+				duration = None
+		
 		try: title = re.search("<title>(.+)</title>", webpage).group(1)
 		except: title = get_radom_title()
 		
-		self.configs = {"url": url+"?start=", "title": title}
+		self.configs = {"url": url+"?start=", "title": title, "duration": duration}
 
 ########################################################################
 class Videoslasher( SiteBase ):
@@ -2341,7 +2331,7 @@ if __name__ == "__main__":
 		print proxies["http"]
 		proxies = {}
 
-		if not checkSite("http://videomega.tv/iframe.php?ref=OEKgdSTMGQ&width=505&height=4", proxies=proxies, quality=3):
+		if not checkSite("http://www.metacafe.com/watch/9103387/wii_u_darksiders_ii_death_lives_wiiu_trailer/", proxies=proxies, quality=3):
 			proxyManager.setBadIp( proxies )
 
 	del proxyManager
