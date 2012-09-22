@@ -266,22 +266,46 @@ class RequestHandle( threading.Thread ):
         agent = headers.get("User-Agent", "").lower()
         conn = headers.get("Connection", "close").lower()
         return (conn=="close" and not re.search("VLC",agent,re.IGNORECASE))
-
+    
+    def lookup_filepath(self, filepath):
+        for root, dirs, files in os.walk(settings.STATIC_PATH):
+            for name in files:
+                path = os.path.join(root, name)
+                netpath = path.replace(os.sep, "/") # path network
+                if not netpath.endswith( filepath ):
+                    continue
+                return path
+            
     def run(self):
         try:
             data = self.get_request_data()
             self.GET, self.headers = self.get_headers( data )
-            c_type = self.headers.get("Contety-Type")
-            print c_type, self.GET
-            #self.handle_stream()
+            
+            networkpath = self.getRequestFile()
+            filepath = self.lookup_filepath( networkpath )
+            
+            if not filepath : self.handle_stream()
+            else: self.handle_files( filepath )
         except:
             pass
         self.request.close()
         self.server.remove_client( self.request )
         
-    def handle_files(self, data):
-        pass
+    def getRequestFile(self):
+        matchobj = re.search("GET\s+(?P<file>.+?)\s+(?:HTTP.*)?", self.GET, re.I|re.U)
+        if matchobj: getfile = matchobj.group("file")
+        else: getfile = None
+        return getfile
     
+    def handle_files(self, filepath):
+        length = os.path.getsize(filepath)
+        self.request.send("HTTP/1.0 200 OK\r\n")
+        self.request.send("Server: Python/2.7\r\n")
+        self.request.send("Connection: keep-alive\r\n")
+        self.request.send("Content-Length: %s\r\n\n"%length)
+        with open(filepath,"rb") as mediafile:
+            self.request.send( mediafile.read() )
+            
     def handle_stream(self):
         self.manage = self.server.manage
         self.streammer = self.manage.get_streammer()
@@ -1176,8 +1200,10 @@ class Manage( object ):
     syncLockWriteStream = threading.Lock()
     
     if not Server.running:
-        localServer = Server()
+        settings.LOCAL_SERVER = localServer = Server()
         localServer.start()
+    else:
+        localServer = settings.LOCAL_SERVER
         
     def __init__(self, URL = "", **params):
         """ params: {}
