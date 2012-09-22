@@ -244,11 +244,11 @@ class StreamHandler( threading.Thread ):
         if headers.has_key("Range"):
             matchobj = re.search("bytes=(?P<range>\d+)-?\d*", headers["Range"])
         else:
-            matchobj = re.search("GET.+?(?:start=)?(?P<range>\d+)\s+HTTP.+", get)
+            matchobj = re.search("GET.+?(?:start=)?(?P<range>[\d\.]+?)\s+HTTP.+", get)
         if matchobj: seekpos = matchobj.group("range")
         else: seekpos = 0
-        return long(seekpos)
-
+        return seekpos
+    
     def send_206_PARTIAL(self, streamPos, streamSize):
         headers = self.HEADER_PARTIAL_206 %(str(streamSize-streamPos), streamPos, (streamSize-1), streamSize)
         self.request.send( headers )
@@ -282,7 +282,13 @@ class StreamHandler( threading.Thread ):
         data = self.get_request_data()
 
         self.GET, self.headers = self.get_headers( data )
-        self.streamPos = self.get_range(self.GET, self.headers)
+        position = self.get_range(self.GET, self.headers)
+        
+        try:
+            self.streamPos = long(position)
+        except:
+            self.streamPos = long(self.manage.getVideoSize()/float(position))
+            
         print "REQUEST: %s RANGE: %s"%(self.GET, self.streamPos)
         if self.close_me(self.headers): return
 
@@ -1873,10 +1879,10 @@ class StreamManager( threading.Thread):
                 else:
                     globalInfo.set_info(self.ident, "state", _(u"Resposta inválida"))
                     self.streamSocket.close(); time.sleep( waittime )
-            except Exception, err:
+            except Exception as e:
                 globalInfo.set_info(self.ident, "state", _(u"Falha na conexão"))
                 time.sleep( waittime )
-
+                
             # se passar do tempo de timeout o ip será descartado
             if (time.time() - initTime) > timeout: break
             else: initTime = time.time()
@@ -1918,8 +1924,11 @@ class StreamManager( threading.Thread):
                 self.configure()
 
                 if self.manage.interval.hasInterval( self.ident ):
-                    self.linkSeek = gerador.get_with_seek(self.link, 
-                        self.manage.interval.get_start(self.ident))
+                    start = self.manage.interval.get_start( self.ident )
+                    start = self.manage.videoManager.get_relative( start )
+                    print 'start: ', start
+                    
+                    self.linkSeek = gerador.get_with_seek(self.link, start)
                     
                     # Tenta conectar e iniciar a tranferência do arquivo de video.
                     assert self.conecte(), "IO erro!"
