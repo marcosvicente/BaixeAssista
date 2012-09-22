@@ -202,10 +202,9 @@ class FlvPlayer( threading.Thread):
             self.running = False
 
 ################################ STREAMHANDLE ################################
-class StreamHandler( threading.Thread ):
-    """ Essa classe controla as requisições feitas pelo player.
-    Uma vez estabelecida a conexão, a medida que novos dados vão chegando, estes vão sendo enviados ao player. """
-
+class RequestHandle( threading.Thread ):
+    """ Controla requisições de mídia """
+    
     HEADER_OK_200 = "\r\n".join([
         "HTTP/1.1 200 OK", 
         "Server: Python/2.7", 
@@ -230,11 +229,9 @@ class StreamHandler( threading.Thread ):
         threading.Thread.__init__(self)
         self.request = request
         self.server = server
-        self.manage = server.manage
-        self.streammer = self.manage.get_streammer()
         self.sended = self.streamPos = 0
         self.GET, self.headers = "", {}
-
+        
     def get_headers(self, request_data):
         headers = dict( re.findall(r"(.+?):\s*(.*?)(?:\r)?\n+", request_data) )
         get = re.search(r"(GET.+?(?:start=)?\d*)(?:\r)?\n+", request_data).group(1)
@@ -271,21 +268,26 @@ class StreamHandler( threading.Thread ):
         return (conn=="close" and not re.search("VLC",agent,re.IGNORECASE))
 
     def run(self):
-        try: self.handle()
-        except: pass
-        finally:
-            self.request.close()
-            self.server.remove_client(self.request)
-            del self.streammer
-
-    def handle(self):
-        data = self.get_request_data()
-
-        self.GET, self.headers = self.get_headers( data )
-        position = self.get_range(self.GET, self.headers)
-        
         try:
-            self.streamPos = long(position)
+            data = self.get_request_data()
+            self.GET, self.headers = self.get_headers( data )
+            c_type = self.headers.get("Contety-Type")
+            print c_type, self.GET
+            #self.handle_stream()
+        except:
+            pass
+        self.request.close()
+        self.server.remove_client( self.request )
+        
+    def handle_files(self, data):
+        pass
+    
+    def handle_stream(self):
+        self.manage = self.server.manage
+        self.streammer = self.manage.get_streammer()
+        
+        position = self.get_range(self.GET, self.headers)
+        try: self.streamPos = long(position)
         except:
             self.streamPos = long(self.manage.getVideoSize()/float(position))
             
@@ -310,30 +312,58 @@ class StreamHandler( threading.Thread ):
 
 ################################### SERVER ####################################
 class Server( threading.Thread ):
-    def __init__(self, manage, host="localhost", port=80):
+    BOOL_TO_INT = {True: 1, False: 0}
+    INT_TO_BOOL = {1: True, 0: False}
+    
+    class __metaclass__(type):
+        """ informa o estado do servidor, com base na variável ambiente """
+        @property
+        def running(cls):
+            flag = int(os.environ.get("LOCAL_SERVER_RUNNING",0))
+            return cls.INT_TO_BOOL[flag]
+        
+        @running.setter
+        def running(cls, flag):
+            os.environ["LOCAL_SERVER_RUNNING"] = str(cls.BOOL_TO_INT[flag])
+        
+    def __init__(self, manage=None, host="localhost", port=80):
         threading.Thread.__init__(self)
-        self.setDaemon(True)
-
-        self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.server.bind((host, port))
-        self.server.listen(5)
-
+        # pára com o processo principal
+        self.setDaemon( True )
+        self.execute(host, port)
+        
         self.manage = manage
         self.clients = []
-
+        
     def __del__(self):
         del self.manage
-
+        self.stop()
+        
+    def set_manage(self, manage):
+        self.manage = manage
+    
+    def del_manage(self):
+        self.manage = None
+        
+    def execute(self, host, port):
+        try:
+            self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.server.bind((host, port)); self.server.listen(5)
+            Server.running = True
+        except Exception as e:
+            Server.running = False
+            
     def stop_clients(self):
         """ fecha todas as conexões atualmente ativas """
         for clt in self.clients: clt.close()
 
     def remove_client(self, clt):
         self.clients.remove(clt)
-
+        
     def stop(self):
         self.server.close()
-
+        Server.running = False
+        
     def run(self):
         print "Starting server..."
         while True:
@@ -342,7 +372,7 @@ class Server( threading.Thread ):
                 if len(rlist) == 0: continue
                 client, addr = self.server.accept()
             except: break
-            StreamHandler(self, client).start()
+            RequestHandle(self, client).start()
             self.clients.append( client )
         print "Server stoped!"
 
@@ -1142,9 +1172,13 @@ class CTRConnection(object):
         return self.connList
 
 # GRUPO GLOBAL DE VARIAVEIS COMPARTILHADAS
-class Manage:
+class Manage( object ):
     syncLockWriteStream = threading.Lock()
-
+    
+    if not Server.running:
+        localServer = Server()
+        localServer.start()
+        
     def __init__(self, URL = "", **params):
         """ params: {}
         - tempfile: define se o vídeo será gravado em um arquivo temporário
@@ -1161,7 +1195,10 @@ class Manage:
 
         # manage log
         globalInfo.add_info("manage")
-
+        
+        # atualiza manager no servidor, pois seus dados serão usados na transferêcia da stream.
+        self.localServer.set_manage( self )
+        
         # guarda no banco de dados as urls adicionadas
         self.urlManager = UrlManager()
 
@@ -1228,6 +1265,10 @@ class Manage:
     def delete_vars(self):
         """ deleta todas as variáveis do objeto """
         globalInfo.del_info("manage")
+        
+        # desvincula o manage sendo deletado, do servidor.
+        self.localServer.del_manage()
+        
         # -------------------------------------------------------------------
         if not self.usingTempfile and not self.params.get("tempfile",False):
             self.salveInfoResumo()
@@ -1338,7 +1379,7 @@ class Manage:
                     self.urlManager.add(self.streamUrl, streamTitle)
             yield copy
             
-    def startServer(self):
+    def __startServer(self):
         """ Inicia o processo de escuta do servidor """
         if not self.streamServer:
             try:
@@ -1348,7 +1389,10 @@ class Manage:
                 return False
         # informa que o server iniciou com sucesso
         return True
-
+    
+    def startServer(self):
+        return True
+    
     def stopServer(self):
         """ pára o servidor completamente """
         if isinstance(self.streamServer, Server):
