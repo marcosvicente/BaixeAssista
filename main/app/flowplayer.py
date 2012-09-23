@@ -11,6 +11,10 @@ from django.template import Context, Template, loader, defaulttags, defaultfilte
 ########################################################################
 
 class Player(wx.Panel):
+    defaultSkin = "BlackWhite"
+    swf_players = ["flowplayer-3.2.15-1.swf", "flowplayer-3.2.15-2.swf"]
+    playerMedia = os.path.join(settings.STATIC_PATH, "flowplayer") # pasta de arquivos do player
+    
     def __init__(self, parent, **params):
         """params = {}
         previewImage: local da imagem mostrada no backgroud do player.
@@ -21,24 +25,16 @@ class Player(wx.Panel):
         """
         wx.Panel.__init__(self, parent, style=0)
         self.params = params
-
+        self.skins = {}
+        
         # defaut params
         if not params.has_key("autostart"): self.params["autostart"] = False
         if not params.has_key("hostName"): self.params["hostName"] = "localhost"
         if not params.has_key("portNumber"): self.params["portNumber"] = 80
-        
-        # arquivo do swf player
-        self.swf_players = ["flowplayer-3.2.15-1.swf", "flowplayer-3.2.15-2.swf"]
-        
-        # pasta de arquivos do player
-        self.playerMedia = os.path.join(settings.STATIC_PATH, "flowplayer")
-        
-        self.skins = {}
-        self.defaultSkin = "BlackWhite"
+        if not params.has_key("skinName"): self.params["skinName"] = self.defaultSkin
         
         if not self.params.get("skinName", False):
             self.params["skinName"] = self.defaultSkin
-            
         try:
             skinsPath = os.path.join(self.playerMedia, "skins")
             skins = os.listdir( skinsPath )
