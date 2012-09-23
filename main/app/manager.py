@@ -171,7 +171,7 @@ class FlvPlayer( threading.Thread):
     """ Classe de controle para player externo. 
     O objetivo é abrir o player exeterno e indicar a ele o que fazer.
     """
-    def __init__(self, cmd="", filename="stream", filepath="", host="locahost", port=80):
+    def __init__(self, cmd="", filename="stream", filepath="", host="localhost", port=80):
         threading.Thread.__init__(self)
         self.cmd, self.process, self.running = cmd, None, False
         
@@ -285,8 +285,7 @@ class RequestHandle( threading.Thread ):
             
             if not filepath : self.handle_stream()
             else: self.handle_files( filepath )
-        except:
-            pass
+        except: pass
         self.request.close()
         self.server.remove_client( self.request )
         
@@ -336,7 +335,7 @@ class RequestHandle( threading.Thread ):
 class Server( threading.Thread ):
     BOOL_TO_INT = {True: 1, False: 0}
     INT_TO_BOOL = {1: True, 0: False}
-    HOST, PORT = "locahost", 80
+    HOST, PORT = "localhost", 80
     
     class __metaclass__(type):
         """ informa o estado do servidor, com base na variável ambiente """
@@ -372,6 +371,7 @@ class Server( threading.Thread ):
     def execute(self, host, port):
         try:
             self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             self.server.bind((host, port)); self.server.listen(5)
             Server.HOST, Server.PORT = host, port
             Server.running = True
@@ -379,12 +379,12 @@ class Server( threading.Thread ):
             Server.running = False
             print "Server starting error: %s"%e
             
-    def stop_clients(self):
+    def stop_all(self):
         """ fecha todas as conexões atualmente ativas """
         for clt in self.clients: clt.close()
 
     def remove_client(self, clt):
-        self.clients.remove(clt)
+        if clt in self.clients: self.clients.remove(clt)
         
     def stop(self):
         self.server.close()
