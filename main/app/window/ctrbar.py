@@ -57,18 +57,25 @@ class BarraControles( noteBook.NoteBookImage ):
 		
 	def createPlayerWin(self, parent):
 		""" carrega o flash player """
-		if hasattr(self.mainWin, "configs"):
-			config = self.mainWin.configs.get("PlayerWin",{})
-			
-			if not config.has_key("moduleName"):
-				config["moduleName"] = "jwplayer"
+		configs = getattr(self.mainWin,"configs",None)
+		
+		if configs:
+			# seção de dados muito importante
+			if not type(configs.get("PlayerWin",None)) is dict:
+				configs["PlayerWin"] = {}
 				
-			if not config.has_key("skinName"):
-				config["skinName"] = ""
+			# as configurações sempre devem existir
+			pwconfig = configs["PlayerWin"]
+			
+			if not pwconfig.has_key("moduleName"):
+				pwconfig["moduleName"] = "jwplayer"
+				
+			if not pwconfig.has_key("skinName"):
+				pwconfig["skinName"] = ""
 				
 			# importa o player escolhido pelo usuário
-			player = __import__(config["moduleName"], globals(), locals())
-			self.mainWin.playerWin = player.Player(parent, skinName=config["skinName"])
+			player = __import__(pwconfig["moduleName"], globals(), locals())
+			self.mainWin.playerWin = player.Player(parent, skinName=pwconfig["skinName"])
 		else:
 			# evita que o programa trave caso algo dê errado
 			self.mainWin.playerWin = wx.Panel()
