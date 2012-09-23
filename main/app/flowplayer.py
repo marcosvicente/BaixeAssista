@@ -126,7 +126,7 @@ class FlowPlayer(wx.Panel):
 ########################################################################################
 if __name__=='__main__':
     app = wx.App( 0 )
-    frame = wx.Frame(None, -1, "JWPlayer", size = (700, 480))
-    iewindow = JWPlayer( frame)
+    frame = wx.Frame(None, -1, "Player", size = (700, 480))
+    iewindow = Player( frame)
     frame.Show()
     app.MainLoop()

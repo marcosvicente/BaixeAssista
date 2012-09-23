@@ -27,7 +27,7 @@ import updater
 # Instalando a tradução
 manager.installTranslation()
 
-import jwPlayer, browser, proxy
+import browser, proxy
 
 # módulos do pacote window
 import updatedialog

@@ -16,7 +16,7 @@ def getPlayerPage(swf_player, flashvar):
     except: tmpl = loader.get_template(os.path.join(tmpl_dir, "template-player.html"))
     return tmpl.render(Context({"swf_player": swf_player, "flashvar": flashvar}))
 
-class JWPlayer(wx.Panel):
+class Player(wx.Panel):
     def __init__(self, parent, **params):
         """params = {}
         previewImage: local da imagem mostrada no backgroud do player.
@@ -121,7 +121,7 @@ class JWPlayer(wx.Panel):
 ########################################################################################
 if __name__=='__main__':
     app = wx.App( 0 )
-    frame = wx.Frame(None, -1, "JWPlayer", size = (700, 480))
-    iewindow = JWPlayer( frame)
+    frame = wx.Frame(None, -1, "Player", size = (700, 480))
+    iewindow = Player( frame)
     frame.Show()
     app.MainLoop()

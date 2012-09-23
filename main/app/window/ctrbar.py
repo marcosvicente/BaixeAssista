@@ -14,7 +14,7 @@ pardir = os.path.split( curdir )[0]
 if not pardir in sys.path: sys.path.append( pardir )
 if not curdir in sys.path: sys.path.append( curdir )
 
-import browser, jwPlayer, detail, noteBook, manager
+import browser, detail, noteBook, manager
 ########################################################################
 
 class BarraControles( noteBook.NoteBookImage ):
@@ -57,14 +57,22 @@ class BarraControles( noteBook.NoteBookImage ):
 		
 	def createPlayerWin(self, parent):
 		""" carrega o flash player """
-		skin = ""
 		if hasattr(self.mainWin, "configs"):
 			config = self.mainWin.configs.get("PlayerWin",{})
-			skin = config.get("skinName", "")
-
-		playerWin = jwPlayer.JWPlayer(parent, skinName=skin)
-		self.mainWin.playerWin = playerWin
-		return playerWin
+			
+			if not config.has_key("moduleName"):
+				config["moduleName"] = "jwplayer"
+				
+			if not config.has_key("skinName"):
+				config["skinName"] = ""
+				
+			# importa o player escolhido pelo usuário
+			player = __import__(config["moduleName"], globals(), locals())
+			self.mainWin.playerWin = player.Player(parent, skinName=config["skinName"])
+		else:
+			# evita que o programa trave caso algo dê errado
+			self.mainWin.playerWin = wx.Panel()
+		return self.mainWin.playerWin
 	
 	def createBrowserWin(self, parent):
 		iewindow = browser.Browser(parent, self.mainWin)
