@@ -12,7 +12,7 @@ from django.template import Context, Template, loader, defaulttags, defaultfilte
 
 def getPlayerPage(swf_player, flashvar):
     tmpl_dir = os.path.join(settings.APPDIR, "templates")
-    try: tmpl = loader.find_template("template-player.html", dirs=(tmpl_dir,))[0]
+    try: tmpl = loader.find_template("jwplayer.html", dirs=(tmpl_dir,))[0]
     except: tmpl = loader.get_template(os.path.join(tmpl_dir, "template-player.html"))
     return tmpl.render(Context({"swf_player": swf_player, "flashvar": flashvar}))
 
@@ -39,9 +39,11 @@ class JWPlayer(wx.Panel):
         self.playerPath = os.path.join(settings.APPDIR, "jwPlayer")
 
         self.skins = {}
+        self.defaultSkin = "etv"
+        
         if not self.params.get("skinName", False):
-            self.params["skinName"] = "etv" # defaut skin
-
+            self.params["skinName"] = self.defaultSkin
+            
         try:
             skinsPath = os.path.join(self.playerPath, "skins")
             skins = os.listdir( skinsPath )
@@ -87,10 +89,11 @@ class JWPlayer(wx.Panel):
         hostName = self.params.get("hostName", "localhost")
         portNumber = self.params.get("portNumber", 80)
         autostart = str(self.params["autostart"]).lower()
+        
         # caminho completo para a skin
-        skinFullPath = "file://" + os.path.join(
-            self.playerPath, "skins", self.skins[ self.params["skinName"] ])
-
+        skinName = self.skins.get(self.params["skinName"], self.defaultSkin)
+        skinFullPath = "file://" + os.path.join(self.playerPath, "skins", skinName)
+        
         settings = {
             "file": "http://%s:%s/%s"%(hostName, portNumber, streamName),
             "allowscriptaccess": "always", 
