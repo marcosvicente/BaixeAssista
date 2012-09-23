@@ -144,10 +144,7 @@ class BaixeAssistaWin( wx.Frame ):
 
 		# criando a barra de ferramentas: player, conexões, navegador
 		self.barraControles = ctrbar.BarraControles(self, -1)
-
-		# referências para as skins do player embutido
-		self.addSkinsMenu()
-
+		
 		self.progressBar = wx.Gauge(self.statusBar )
 		self.Bind(wx.EVT_MAXIMIZE, self.updateProgressBar)
 		self.Bind(wx.EVT_UPDATE_UI, self.updateProgressBar)
@@ -313,10 +310,7 @@ class BaixeAssistaWin( wx.Frame ):
 		self.menuEditar = wx.Menu()
 		self.menuEditar.Append(200, _("Videos"))
 		self.menuEditar.Append(201, _("Atualizar lista de ips"))
-		self.menuEditar.AppendSeparator()
-		self.menuSkins = wx.Menu()
-		self.menuEditar.AppendMenu(202, _("Mudar skin"), self.menuSkins)
-
+		
 		# menus de ação
 		self.menuAcoes = wx.Menu()
 		self.menuAcoes.Append(300, _("Ligar servidor"), kind = wx.ITEM_CHECK)
@@ -363,8 +357,7 @@ class BaixeAssistaWin( wx.Frame ):
 
 		self.Bind(wx.EVT_MENU, self.openMovieManager, id=200)
 		self.Bind(wx.EVT_MENU, self.openControlUpdadteIps, id=201)
-		self.Bind(wx.EVT_MENU_HIGHLIGHT_ALL, self.skinsHandle, id=202)
-
+		
 		self.Bind(wx.EVT_MENU, self.ativeServidor, id=300)
 		self.Bind(wx.EVT_MENU, self.setFullScreenMode, id=301)
 		self.Bind(wx.EVT_CHAR_HOOK, self.setFullScreenMode)
@@ -394,29 +387,7 @@ class BaixeAssistaWin( wx.Frame ):
 		""" cria um formulário de informação de bugs. 
 		o formulário é preenchido pelo usuário. """
 		win = wbugs.BugInfo(self, _(u"Relatório de erros"))
-
-	def addSkinsMenu(self ):
-		""" Termina de montar o menu de skins """
-		idIntValue = 600
-		checked = idIntValue # usado como item padrão
-		skinName = self.configs["PlayerWin"]["skinName"]
-		for index, skin in enumerate(self.playerWin.getSkinsNames()):
-			menuItemId = idIntValue + index
-			self.menuSkins.AppendRadioItem(menuItemId, skin)
-			self.Bind(wx.EVT_MENU, self.skinsHandle, id= menuItemId)
-			if skinName == skin: checked = menuItemId
-		# marca a última skin usada
-		self.menuSkins.Check(checked, True)
-
-	def skinsHandle(self, evt):
-		""" adiciona a skin selecionada para player embutido """
-		skinname = self.menuSkins.GetLabelText(evt.GetId())
-		self.configs["PlayerWin"]["skinName"] = skinname
-		self.playerWin["skinName"] = skinname
-		# atualiza o player(automaticamente),quando ativado no menu.
-		if self.cfg_menu.as_bool('playerEmbutido'):
-			self.recarreguePlayer()
-
+		
 	def aboutProgram(self, evt):
 		# First we create and fill the info object
 		info = wx.AboutDialogInfo()
@@ -446,15 +417,14 @@ class BaixeAssistaWin( wx.Frame ):
 	def helpProgram(self, evt):
 		menus = self.configs.get("Menus",{})
 		lang = menus.get("language","en")
-
-		filepath = os.path.join(settings.APPDIR, "locale",lang,"LC_MESSAGES","help.txt")
+		filepath = os.path.join(settings.APPDIR, "locale", lang, "LC_MESSAGES", "help.txt")
 		try:
 			import wx.lib.dialogs
 			with open(filepath, "r") as file:
 				msg = file.read()
 				dlg = wx.lib.dialogs.ScrolledMessageDialog(self, msg, _("Tutorial"), size=(800, 350))
 				dlg.ShowModal()
-		except Exception, err:
+		except Exception as err:
 			msg = _("Ocorreu um erro ao tentar abrir o arquivo de ajuda.")
 			dlg = GMD.GenericMessageDialog(msg, _("Erro!"), wx.ICON_ERROR|wx.OK)
 			dlg.ShowModal(); dlg.Destroy()
@@ -650,7 +620,7 @@ class BaixeAssistaWin( wx.Frame ):
 	def recarreguePlayer(self):
 		""" recarrega o player para seu estado inicial """
 		self.stopConnection()
-
+		
 		if self.cfg_menu.as_bool('playerEmbutido'):
 			# o player iniciará automaticamente se baixando a stream
 			self.playerWin["autostart"] = self.streamLoading

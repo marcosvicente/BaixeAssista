@@ -28,20 +28,18 @@ class BarraControles( noteBook.NoteBookImage ):
 
 		attrs = [
 			(os.path.join(settings.IMAGES_DIR, "apps-display-icon.png"), 
-			 _("Assistir"), self.createPlayerWin),
+			 _("Assistir"), self.createPlayerWin, self.OnContextMenu),
 
 			(os.path.join(settings.IMAGES_DIR, "settings-tool.png"), 
-			 _(u"Configuração"), self.createConnetionWin),
+			 _(u"Configuração"), self.createConnetionWin, None),
 
 			(os.path.join(settings.IMAGES_DIR, "search-computer.png"), 
-			 _("Pesquisar"), self.createBrowserWin),
+			 _("Pesquisar"), self.createBrowserWin, None),
 		]
 		# carrega as páginas
-		for imgpath, txt, metodo in attrs:
-			panel = self.addPage(imgpath, txt, txt)
-			# "metodo" chama a contrução de um tipo de controle.
-			panel.GetSizer().Add(metodo(panel), 1, wx.EXPAND)
-			panel.GetSizer().Layout()
+		for imgPath, txt, winBuilder, callback in attrs:
+			newpage = self.createPage(imgPath, txt, txt, callback=callback)
+			self.addPage(newpage, winBuilder(newpage))
 			
 		self.setWidget(self.mainWin, "FullScreen", _("Tela cheia"))
 		
@@ -52,8 +50,81 @@ class BarraControles( noteBook.NoteBookImage ):
 		mainSizer = self.mainWin.GetSizer()
 		if isHidden: mainSizer.Hide(0)
 		elif not isHidden: mainSizer.Show(0)
-		
 		self.mainWin.Layout()
+	
+	def OnContextMenu(self, event):
+		evtMenuOn = event.GetEventObject()
+		
+		if not hasattr(self, "popupID1"):
+			self.popupID1 = 1000
+			self.popupID2 = self.popupID1+1
+			self.popupID3 = self.popupID2+1
+		
+		# make a menu
+		self.playerMenu = wx.Menu()
+		# item.SetBitmap(bmp)
+		self.playerMenu.AppendRadioItem(self.popupID1, "jwplayer")
+		self.playerMenu.AppendRadioItem(self.popupID2, "flowplayer")
+		
+		self.Bind(wx.EVT_MENU, self.loadEmbedPlayer, id=self.popupID1)
+		self.Bind(wx.EVT_MENU, self.loadEmbedPlayer, id=self.popupID2)
+		
+		checkopts = {"jwplayer": self.popupID1, "flowplayer": self.popupID2}
+		moduleName = self.mainWin.configs["PlayerWin"]["moduleName"]
+		self.playerMenu.Check(checkopts[ moduleName ], True)
+		
+		self.playerMenu.AppendSeparator()
+		
+		# sub-menu skins
+		self.menuSkins = wx.Menu()
+		self.playerMenu.AppendMenu(self.popupID3, _("Mudar skin"), self.menuSkins)
+		
+		idIntValue = self.popupID3+1
+		checked = idIntValue # usado como item padrão
+		skinName = self.mainWin.configs["PlayerWin"]["skinName"]
+		
+		for index, skin in enumerate(self.mainWin.playerWin.getSkinsNames()):
+			menuItemId = idIntValue + index
+			self.menuSkins.AppendRadioItem(menuItemId, skin)
+			self.Bind(wx.EVT_MENU, self.skinChangeHandle, id=menuItemId)
+			if skinName == skin: checked = menuItemId
+			
+		# marca a última skin usada
+		self.menuSkins.Check(checked, True)
+		
+		# Popup the menu.  If an item is selected then its handler
+		# will be called before PopupMenu returns.
+		evtMenuOn.PopupMenu( self.playerMenu )
+		self.playerMenu.Destroy()
+		
+	def skinChangeHandle(self, evt):
+		""" adiciona a skin selecionada para player embutido """
+		skinName = self.menuSkins.GetLabelText(evt.GetId())
+		
+		self.mainWin.configs["PlayerWin"]["skinName"] = skinName
+		self.mainWin.playerWin["skinName"] = skinName
+		
+		# atualiza o player(automaticamente),quando ativado no menu.
+		if self.mainWin.cfg_menu.as_bool('playerEmbutido'):
+			self.mainWin.recarreguePlayer()
+	
+	def loadEmbedPlayer(self, evt):
+		""" carrega o player embutido escolhido no menu """
+		skinName = self.playerMenu.GetLabelText(evt.GetId())
+		self.mainWin.configs["PlayerWin"]["moduleName"] = skinName
+		playerPanel = self.mainWin.playerWin.GetParent()
+		playerPanel.Freeze()
+		
+		panelSizer = playerPanel.GetSizer()
+		panelSizer.Remove( self.mainWin.playerWin )
+		# removendo o player atual
+		self.mainWin.playerWin.Destroy()
+		
+		# criando um novo player e atribuindo ao panel da pagina
+		newPlayer = self.createPlayerWin( playerPanel )
+		panelSizer.Add(newPlayer, 1, wx.EXPAND)
+		playerPanel.Layout()
+		playerPanel.Thaw()
 		
 	def createPlayerWin(self, parent):
 		""" carrega o flash player """
@@ -62,17 +133,12 @@ class BarraControles( noteBook.NoteBookImage ):
 		if configs:
 			# seção de dados muito importante
 			if not configs.has_key("PlayerWin"):
-				configs["PlayerWin"] = {}
-				
+				configs["PlayerWin"]={}
 			# as configurações sempre devem existir
 			pwconfig = configs["PlayerWin"]
+			pwconfig["moduleName"] = pwconfig.get("moduleName","flowplayer")
+			pwconfig["skinName"] = pwconfig.get("skinName","")
 			
-			if not pwconfig.has_key("moduleName"):
-				pwconfig["moduleName"] = "flowplayer"
-				
-			if not pwconfig.has_key("skinName"):
-				pwconfig["skinName"] = ""
-				
 			# importa o player escolhido pelo usuário
 			player = __import__(pwconfig["moduleName"], globals(), locals())
 			

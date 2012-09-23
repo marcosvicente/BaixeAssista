@@ -76,7 +76,11 @@ class PageButton( wx.Panel ):
         """ oculta todas as páginas, exceto a que deve ser mostrada """
         for panel in self.panels.values():
             if _except != panel: panel.Hide()
-
+            
+    def BIND_CALLBACK(self, callback):
+        """ liga o  'callback' ao click do botão real """
+        self.pageButton.Bind(wx.EVT_RIGHT_DOWN, callback)
+    
     def showPage(self, evt):
         """ mostra o painel da página clicada """
         # objeto botão da página clicado
@@ -299,20 +303,21 @@ class NoteBookImage( wx.Panel ):
         fazer algo quando a barra de páginas for oculta """
         pass
 
-    def addPage(self, imgPath, pageStr="", pageTootip="", scalex=32, scaley=32):
+    def createPage(self, imgPath, pageStr="", pageTootip="", scalex=32, scaley=32, callback=None):
         """ A página é formada por um conjunto de controles.
         A base prinicipal é um painel. Em seu layout estão o BitmapButton e um
         StaticText. Assim a idéia é criar um botão só, formado de  painel+botão+rótulo de texto.
         Cada botão de página mostra seu painel quando clicado pelo usuário.
         """
         btnPage = PageButton(self.pageBar, imgPath, pageStr, pageTootip, scalex, scaley)
-
-        # controlador de layout.
-        self.pageBar.addPageButton(btnPage)
-
-        # painel mostrado ao pressionar o botão
+        if callable( callback ): btnPage.BIND_CALLBACK( callback )
+        self.pageBar.addPageButton( btnPage )
         return btnPage.getPanel()
-
+        
+    def addPage(self, page, win):
+        page.GetSizer().Add(win, 1, wx.EXPAND)
+        page.GetSizer().Layout()
+        
 ## ------------------------------------------------------------------------
 if __name__ == "__main__":
     # dir com os diretórios do projeto
