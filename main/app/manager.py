@@ -309,15 +309,14 @@ class RequestHandle( threading.Thread ):
     def handle_stream(self):
         self.manage = self.server.manage
         self.streammer = self.manage.get_streammer()
+        range_pos = self.get_range(self.GET, self.headers)
         
-        position = self.get_range(self.GET, self.headers)
-        try: self.streamPos = long(position)
-        except:
-            self.streamPos = long(self.manage.getVideoSize()/float(position))
-            
+        try: self.streamPos = long( range_pos )
+        except: self.streamPos = self.manage.videoManager.get_relative_mp4( range_pos )
+        
         print "REQUEST: %s RANGE: %s"%(self.GET, self.streamPos)
         if self.close_me(self.headers): return
-
+        
         if self.streamPos > 0 and self.manage.videoManager.suportaSeekBar():
             self.manage.setRandomRead( self.streamPos )
             self.send_206_PARTIAL(self.streamPos, self.manage.getVideoSize())
@@ -325,7 +324,7 @@ class RequestHandle( threading.Thread ):
         else:
             self.manage.reloadSettings()
             self.send_200_OK()
-
+            
         # número de bytes já enviados ao cliente(player)
         self.sended = self.streamPos
 
@@ -1943,7 +1942,7 @@ class StreamManager( threading.Thread):
                 isValid = self.responseCheck(len(header), seekpos, 
                                              streamSize, self.streamSocket.headers)
                 
-                if isValid and self.streamSocket.code == 200:
+                if (isValid or videoManager.is_mp4()) and self.streamSocket.code == 200:
                     if stream: self.streamWrite(stream, len(stream))
                     return True
                 else:
