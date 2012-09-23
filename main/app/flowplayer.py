@@ -10,7 +10,7 @@ from main import settings
 from django.template import Context, Template, loader, defaulttags, defaultfilters, loader_tags
 ########################################################################
 
-class FlowPlayer(wx.Panel):
+class Player(wx.Panel):
     def __init__(self, parent, **params):
         """params = {}
         previewImage: local da imagem mostrada no backgroud do player.
@@ -91,14 +91,15 @@ class FlowPlayer(wx.Panel):
         hostName = self.params.get("hostName", "localhost")
         portNumber = self.params.get("portNumber", 80)
         hostDomain = "http://%s:%s"%(hostName, portNumber)
+        staticUrl = hostDomain + "/static"
         
         autostart = str(self.params["autostart"]).lower()
         skinName = self.skins.get(self.params["skinName"], self.defaultSkin)
         
-        swfStreamPlugin = hostDomain+"/static/flowplayer/plugins/flowplayer.pseudostreaming-3.2.11.swf"
-        controlSkin = hostDomain+"/static/flowplayer/skins/" + skinName
+        swfStreamPlugin = staticUrl + "/flowplayer/plugins/flowplayer.pseudostreaming-3.2.11.swf"
+        controlSkin = staticUrl+ "/flowplayer/skins/" + skinName
         
-        swfPlayer = hostDomain + "/static/flowplayer/" + self.swf_players[0]
+        swfPlayer = staticUrl+ "/flowplayer/" + self.swf_players[0]
         streamFile = hostDomain + "/" + streamName
         self.swf_players.reverse()
         

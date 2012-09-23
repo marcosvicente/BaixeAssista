@@ -10,13 +10,11 @@ from main import settings
 from django.template import Context, Template, loader, defaulttags, defaultfilters, loader_tags
 ########################################################################
 
-def getPlayerPage(swf_player, flashvar):
-    tmpl_dir = os.path.join(settings.APPDIR, "templates")
-    try: tmpl = loader.find_template("jwplayer.html", dirs=(tmpl_dir,))[0]
-    except: tmpl = loader.get_template(os.path.join(tmpl_dir, "template-player.html"))
-    return tmpl.render(Context({"swf_player": swf_player, "flashvar": flashvar}))
-
 class Player(wx.Panel):
+    playerMedia = os.path.join(settings.STATIC_PATH, "jwplayer")
+    swf_players = ["player-5.10-1.swf", "player-5.10-2.swf"]
+    defaultSkin = "etv"
+    
     def __init__(self, parent, **params):
         """params = {}
         previewImage: local da imagem mostrada no backgroud do player.
@@ -27,32 +25,24 @@ class Player(wx.Panel):
         """
         wx.Panel.__init__(self, parent, style=0)
         self.params = params
-
+        self.skins = {}
+        
         # defaut params
         if not params.has_key("autostart"):
             self.params["autostart"] = False
-
-        # player reflesh
-        self.swf_players = ["player_1.swf", "player_2.swf"]
-
-        # player x skin base path
-        self.playerPath = os.path.join(settings.APPDIR, "jwPlayer")
-
-        self.skins = {}
-        self.defaultSkin = "etv"
         
         if not self.params.get("skinName", False):
             self.params["skinName"] = self.defaultSkin
             
         try:
-            skinsPath = os.path.join(self.playerPath, "skins")
+            skinsPath = os.path.join(self.playerMedia, "skins")
             skins = os.listdir( skinsPath )
             for name in skins:
                 n = name.split(".")[0]
                 self.skins[n] = name
         except: # assim, em caso de erro, teremos sempre a skin padrão
             self.skins["etv"] = "etv.zip"
-
+            
         sizer = wx.BoxSizer(wx.VERTICAL)
         
         self.webview = Webview.WebView.New( self )
@@ -62,7 +52,14 @@ class Player(wx.Panel):
 
         self.SetSizer(sizer)
         self.SetAutoLayout(True)
-    
+        
+    @staticmethod
+    def getPlayerPage( params ):
+        tmpl_dir = os.path.join(settings.APPDIR, "templates")
+        try: tmpl = loader.find_template("jwplayer.html", dirs=(tmpl_dir,))[0]
+        except: tmpl = loader.get_template(os.path.join(tmpl_dir, "jwplayer.html"))
+        return tmpl.render(Context({"params": params}))
+        
     def OnWebViewNavigating(self, evt):
         url = evt.GetURL(); evt.Veto()
         import wx.lib.agw.hyperlink as hyperlink
@@ -83,40 +80,41 @@ class Player(wx.Panel):
         if self.params.has_key( name ):
             self.params[ name ] = value
             
-    def getFlashVar(self):
+    def get_params(self):
         previewImage = self.params.get("previewImage", "")
         streamName = self.params.get("streamName", self.getStreamName())
         hostName = self.params.get("hostName", "localhost")
         portNumber = self.params.get("portNumber", 80)
         autostart = str(self.params["autostart"]).lower()
         
+        hostDomain = "http://%s:%s"%(hostName, portNumber)
+        staticUrl = hostDomain +"/static"
+        streamFile = hostDomain+"/" +streamName
+        
         # caminho completo para a skin
         skinName = self.skins.get(self.params["skinName"], self.defaultSkin)
-        skinFullPath = "file://" + os.path.join(self.playerPath, "skins", skinName)
+        skinPath = staticUrl + "/jwplayer/skins/" + skinName
+        swfPlayer = staticUrl +"/jwplayer/" + self.swf_players[0]
+        self.swf_players.reverse()
         
-        settings = {
-            "file": "http://%s:%s/%s"%(hostName, portNumber, streamName),
+        params = {
+            "file": streamFile,
+            "swfPlayer": swfPlayer,
             "allowscriptaccess": "always", 
-            "http.startparam": "start",	
+            "startparam": "start",	
             "allowfullscreen": "true", 
             "image": previewImage,
             "autostart": autostart,
             "provider": "http",
-            "skin":skinFullPath,
+            "skin": skinPath,
         }
-        return urllib.urlencode( settings )
+        return params
     
     def reload(self):
         """ recarrega a página, atualando seu conteúdo """
-        swf_player = "file://"+os.path.join(self.playerPath, self.swf_players[0])
-        flashvar = self.getFlashVar()
-        
-        page = getPlayerPage(swf_player, flashvar)
-        self.webview.SetPage(page, "")
+        page = self.getPlayerPage( self.get_params() )
+        self.webview.SetPage(page, "Loader")
         self.webview.Reload()
-        
-        self.swf_players.reverse()
-        
         
 ########################################################################################
 if __name__=='__main__':
