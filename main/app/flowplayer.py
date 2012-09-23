@@ -45,7 +45,7 @@ class FlowPlayer(wx.Panel):
                 n = name.split(".",1)[0]
                 self.skins[n] = name
         except: # assim, em caso de erro, teremos sempre a skin padrão
-            self.skins["black and white"] = "BlackWhite.swf"
+            self.skins["BlackWhite"] = "BlackWhite.swf"
             
         sizer = wx.BoxSizer(wx.VERTICAL)
         
