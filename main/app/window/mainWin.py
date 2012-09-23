@@ -624,7 +624,7 @@ class BaixeAssistaWin( wx.Frame ):
 	def stopExternalPlayer(self):
 		""" pára a execução do player externo """
 		if self.playerExterno and self.playerExterno.isRunning():
-			self.playerExterno.playerStop()
+			self.playerExterno.stop()
 			self.playerExterno = None
 
 	def stopEmbedPlayer(self):

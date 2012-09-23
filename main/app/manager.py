@@ -182,7 +182,7 @@ class FlvPlayer( threading.Thread):
         else:
             self.url = '"%s"'%filepath
 
-    def playerStop(self):
+    def stop(self):
         """ pára a execução do player """
         try: self.process.terminate()
         except: pass
