@@ -580,7 +580,7 @@ class BaixeAssistaWin( wx.Frame ):
 
 	def startServer(self): # tenta iniciar o servidor
 		if not manager.Server.running:
-			if not manager.manage.forceLocalServer(port = 80100):
+			if not manager.Manage.forceLocalServer(port = 80):
 				msg = u"".join([
 					_(u"O servidor falhou ao tentar iniciar no endereço: http://localhost:8080"),
 					_(u"\nDesmarque a opção no menu \"Ações / Ligar servidor\" para iniciar o download."),
@@ -592,13 +592,16 @@ class BaixeAssistaWin( wx.Frame ):
 		
 	def stopServer(self):
 		""" pára o servidor se ele já estiver ativado """
-		if manager.Server.running: manager.manage.localServer.stop()
+		if manager.Server.running: manager.Manage.localServer.stop()
 		
 	def ativeServidor(self, evt):
 		""" inicia ou pára o servidor, com base no menu de controle """
-		self.cfg_menu["servidorAtivo"] = checked = evt.IsChecked()
-		if checked: self.startServer()
+		if evt.IsChecked():
+			if not self.startServer():
+				self.menuAcoes.Check(evt.GetId(),False)
 		else: self.stopServer()
+		checked = self.menuAcoes.IsChecked( evt.GetId() )
+		self.cfg_menu["servidorAtivo"] = checked
 		
 	def setPlayerPath(self):
 		""" chamada para modificar o caminho para o player externo """
@@ -621,9 +624,8 @@ class BaixeAssistaWin( wx.Frame ):
 	def stopExternalPlayer(self):
 		""" pára a execução do player externo """
 		if self.playerExterno and self.playerExterno.isRunning():
-			self.playerExterno.stop()
-			self.playerExterno = None
-
+			self.playerExterno.stop(); self.playerExterno = None
+	
 	def stopEmbedPlayer(self):
 		""" recarrega o player embutido """
 		self.stopConnection()
@@ -632,18 +634,15 @@ class BaixeAssistaWin( wx.Frame ):
 
 	def stopConnection(self):
 		""" fecha a conexão atual do servidor com o player """
-		if isinstance(self.manage, manager.Manage) and \
-		   hasattr(self.manage.streamServer,"stop_clients"):
-			self.manage.streamServer.stop_clients()
-			
+		if manager.Server.running: manager.Manage.localServer.stop_all()
+	
 	def carreguePlayerExterno(self):
 		""" carrega o player externo """
 		if self.streamLoading:
 			if self.cfg_locais["playerPath"]:
-				if self.manage.streamServer and self.cfg_menu.as_bool("servidorAtivo"):
-					self.playerExterno = manager.FlvPlayer(self.cfg_locais["playerPath"], 
-						host = manager.Server.HOST, port = manager.Server.PORT)
-					self.playerExterno.start()
+				self.playerExterno = manager.FlvPlayer(self.cfg_locais["playerPath"], 
+					host = manager.Server.HOST, port = manager.Server.PORT)
+				self.playerExterno.start()
 			else:
 				# caso não haja um caminho válido para o player
 				self.setPlayerPath()
@@ -921,10 +920,7 @@ class BaixeAssistaWin( wx.Frame ):
 			
 			#zera a barra de progresso
 			self.progressBar.SetValue(0.0)
-
-			# parando o servidor
-			self.manage.stopServer()
-
+			
 			self.manage.delete_vars()
 			self.manage = None
 
