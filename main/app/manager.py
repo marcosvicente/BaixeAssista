@@ -1202,7 +1202,7 @@ class Manage( object ):
         settings.LOCAL_SERVER = localServer = Server()
         localServer.start()
     else:
-        localServer = settings.LOCAL_SERVER
+        localServer = getattr(settings,"LOCAL_SERVER",None)
         
     def __init__(self, URL = "", **params):
         """ params: {}
