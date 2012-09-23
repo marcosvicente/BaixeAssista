@@ -235,11 +235,21 @@ class SiteBase(ConnectionProcessor):
 	
 	def get_relative(self, pos):
 		if self.has_duration(): # if 'video/mp4' file
-			try: result = float(self.get_duration()) / float(pos)
+			try: result = float(self.get_duration())*(float(pos)/self.getStreamSize())
 			except: result = 0
 		else: result = pos
 		return result
-		
+	
+	def get_relative_mp4(self, pos):
+		if self.has_duration(): # if 'video/mp4' file
+			try: result = (float(pos)/self.get_duration())*self.getStreamSize()
+			except: result = 0
+		else: result = pos
+		return result
+	
+	def is_mp4(self):
+		return self.has_duration()
+	
 	def getVideoExt(self):
 		return self.configs.get("ext","")
 
@@ -2331,7 +2341,7 @@ if __name__ == "__main__":
 		print proxies["http"]
 		proxies = {}
 
-		if not checkSite("http://www.metacafe.com/watch/9103387/wii_u_darksiders_ii_death_lives_wiiu_trailer/", proxies=proxies, quality=3):
+		if not checkSite("http://hostingbulk.com/embed-o2nzxyoufvfi-600x480.html", proxies=proxies, quality=3):
 			proxyManager.setBadIp( proxies )
 
 	del proxyManager
