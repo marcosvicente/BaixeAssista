@@ -351,6 +351,7 @@ class Server( threading.Thread ):
         
     def __init__(self, manage=None, host="localhost", port=80):
         threading.Thread.__init__(self)
+        
         # pára com o processo principal
         self.setDaemon( True )
         self.execute(host, port)
@@ -372,9 +373,11 @@ class Server( threading.Thread ):
         try:
             self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.server.bind((host, port)); self.server.listen(5)
+            self.host, self.port = host, port
             Server.running = True
         except Exception as e:
             Server.running = False
+            print "Server starting error: %s"%e
             
     def stop_clients(self):
         """ fecha todas as conexões atualmente ativas """
@@ -1404,16 +1407,13 @@ class Manage( object ):
                     self.urlManager.add(self.streamUrl, streamTitle)
             yield copy
             
-    def __startServer(self):
-        """ Inicia o processo de escuta do servidor """
-        if not self.streamServer:
-            try:
-                self.streamServer = Server( self) # self - o servidor usa dados de Manager
-                self.streamServer.start()
-            except Exception, err:
-                return False
+    @classmethod
+    def forceLocalServer(cls, port=80):
+        """ força a execução do servidor na porta informada """
+        cls.localServer = Server(port = port)
+        cls.localServer.start()
         # informa que o server iniciou com sucesso
-        return True
+        return cls.localServer
     
     def startServer(self):
         return True
