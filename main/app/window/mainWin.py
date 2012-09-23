@@ -579,8 +579,8 @@ class BaixeAssistaWin( wx.Frame ):
 		return url
 
 	def startServer(self): # tenta iniciar o servidor
-		if isinstance(self.manage, manager.Manage):
-			if not self.manage.startServer():
+		if not manager.Server.running:
+			if not manager.manage.forceLocalServer(port = 80100):
 				msg = u"".join([
 					_(u"O servidor falhou ao tentar iniciar no endereço: http://localhost:8080"),
 					_(u"\nDesmarque a opção no menu \"Ações / Ligar servidor\" para iniciar o download."),
@@ -588,21 +588,18 @@ class BaixeAssistaWin( wx.Frame ):
 				])
 				dlg = GMD.GenericMessageDialog(self, msg, _("Erro iniciando o servidor."), wx.ICON_ERROR|wx.OK)
 				dlg.ShowModal(); dlg.Destroy()
-				return False  # erro iniciando o servidor
-			else: return True # servidor iniciado com sucesso
-		else: return None     # manage ainda não iniciado
-
+		return manager.Server.running
+		
 	def stopServer(self):
 		""" pára o servidor se ele já estiver ativado """
-		if isinstance(self.manage, manager.Manage):
-			self.manage.stopServer()
-
+		if manager.Server.running: manager.manage.localServer.stop()
+		
 	def ativeServidor(self, evt):
 		""" inicia ou pára o servidor, com base no menu de controle """
 		self.cfg_menu["servidorAtivo"] = checked = evt.IsChecked()
 		if checked: self.startServer()
 		else: self.stopServer()
-
+		
 	def setPlayerPath(self):
 		""" chamada para modificar o caminho para o player externo """
 		dlg = wx.FileDialog(

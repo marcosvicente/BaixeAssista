@@ -1412,18 +1412,9 @@ class Manage( object ):
         """ força a execução do servidor na porta informada """
         cls.localServer = Server(port = port)
         cls.localServer.start()
-        # informa que o server iniciou com sucesso
-        return cls.localServer
+        # se iniciou com sucesso
+        return Server.running
     
-    def startServer(self):
-        return True
-    
-    def stopServer(self):
-        """ pára o servidor completamente """
-        if isinstance(self.streamServer, Server):
-            self.streamServer.stop()
-            self.streamServer = None # não iniciado
-
     def isComplete(self):
         """ informa se o arquivo já foi completamente baixado """
         return (self.received_bytes() >= (self.getVideoSize()-25))
