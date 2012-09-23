@@ -1995,14 +1995,10 @@ class StreamManager( threading.Thread):
                 if self.manage.interval.hasInterval( self.ident ):
                     start = self.manage.interval.get_start( self.ident )
                     start = self.manage.videoManager.get_relative( start )
-                    print 'start: ', start
-                    
                     self.linkSeek = gerador.get_with_seek(self.link, start)
-                    
                     # Tenta conectar e iniciar a tranferência do arquivo de video.
                     assert self.conecte(), "IO erro!"
                     self.inicieLeitura()
-                    
                 # estado ocioso
                 else: time.sleep(1)
             except Exception as e:
