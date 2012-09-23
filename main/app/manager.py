@@ -171,17 +171,16 @@ class FlvPlayer( threading.Thread):
     """ Classe de controle para player externo. 
     O objetivo é abrir o player exeterno e indicar a ele o que fazer.
     """
-    def __init__(self, cmd="", filename="streamFlv", filepath="", port=80):
+    def __init__(self, cmd="", filename="stream", filepath="", host="locahost", port=80):
         threading.Thread.__init__(self)
+        self.cmd, self.process, self.running = cmd, None, False
+        
+        if not filepath: self.url = "http://%s:%d/%s" % (host, port, filename)
+        else: self.url = "\"%s\"" % filepath
+        
+        # pára com o processo principal
         self.setDaemon(True)
-        self.cmd = cmd
-        self.process, self.running = None, False
-
-        if not filepath:
-            self.url="http://localhost:%d/%s"%(port, filename)
-        else:
-            self.url = '"%s"'%filepath
-
+        
     def stop(self):
         """ pára a execução do player """
         try: self.process.terminate()
@@ -337,6 +336,7 @@ class RequestHandle( threading.Thread ):
 class Server( threading.Thread ):
     BOOL_TO_INT = {True: 1, False: 0}
     INT_TO_BOOL = {1: True, 0: False}
+    HOST, PORT = "locahost", 80
     
     class __metaclass__(type):
         """ informa o estado do servidor, com base na variável ambiente """
@@ -373,7 +373,7 @@ class Server( threading.Thread ):
         try:
             self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.server.bind((host, port)); self.server.listen(5)
-            self.host, self.port = host, port
+            Server.HOST, Server.PORT = host, port
             Server.running = True
         except Exception as e:
             Server.running = False
