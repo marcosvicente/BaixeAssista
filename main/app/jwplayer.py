@@ -28,12 +28,11 @@ class Player(wx.Panel):
         self.skins = {}
         
         # defaut params
-        if not params.has_key("autostart"):
-            self.params["autostart"] = False
+        if not params.has_key("autostart"): self.params["autostart"] = False
+        if not params.has_key("skinName"): self.params["skinName"] = self.defaultSkin
+        if not params.has_key("hostName"): self.params["hostName"] = "localhost"
+        if not params.has_key("portNumber"): self.params["portNumber"] = 80
         
-        if not self.params.get("skinName", False):
-            self.params["skinName"] = self.defaultSkin
-            
         try:
             skinsPath = os.path.join(self.playerMedia, "skins")
             skins = os.listdir( skinsPath )

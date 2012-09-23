@@ -23,8 +23,9 @@ class Player(wx.Panel):
         self.params = params
 
         # defaut params
-        if not params.has_key("autostart"):
-            self.params["autostart"] = False
+        if not params.has_key("autostart"): self.params["autostart"] = False
+        if not params.has_key("hostName"): self.params["hostName"] = "localhost"
+        if not params.has_key("portNumber"): self.params["portNumber"] = 80
         
         # arquivo do swf player
         self.swf_players = ["flowplayer-3.2.15-1.swf", "flowplayer-3.2.15-2.swf"]
