@@ -75,7 +75,11 @@ class BarraControles( noteBook.NoteBookImage ):
 				
 			# importa o player escolhido pelo usuário
 			player = __import__(pwconfig["moduleName"], globals(), locals())
-			self.mainWin.playerWin = player.Player(parent, skinName=pwconfig["skinName"])
+			
+			self.mainWin.playerWin = player = player.Player( parent )
+			player["skinName"] = pwconfig["skinName"]
+			player["portNumber"] = manager.Server.PORT
+			player["hostName"] = manager.Server.HOST
 		else:
 			# evita que o programa trave caso algo dê errado
 			self.mainWin.playerWin = wx.Panel()

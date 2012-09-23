@@ -642,11 +642,10 @@ class BaixeAssistaWin( wx.Frame ):
 	def carreguePlayerExterno(self):
 		""" carrega o player externo """
 		if self.streamLoading:
-			playerPath = self.cfg_locais["playerPath"]
-
-			if playerPath:
+			if self.cfg_locais["playerPath"]:
 				if self.manage.streamServer and self.cfg_menu.as_bool("servidorAtivo"):
-					self.playerExterno = manager.FlvPlayer( playerPath)
+					self.playerExterno = manager.FlvPlayer(self.cfg_locais["playerPath"], 
+						host = manager.Server.HOST, port = manager.Server.PORT)
 					self.playerExterno.start()
 			else:
 				# caso não haja um caminho válido para o player
@@ -659,11 +658,13 @@ class BaixeAssistaWin( wx.Frame ):
 		if self.cfg_menu.as_bool('playerEmbutido'):
 			# o player iniciará automaticamente se baixando a stream
 			self.playerWin["autostart"] = self.streamLoading
+			self.playerWin["hostName"] = manager.Server.HOST
+			self.playerWin["portNumber"] = manager.Server.PORT
 			self.playerWin.reload()
 		else:
 			self.stopExternalPlayer()
 			self.carreguePlayerExterno()
-
+	
 	def setFullScreenMode(self, evt=None):
 		""" sincroniza o modo fullscreen do menu com o widget fullscreen button """
 		if evt.GetId() == 301 or (self.IsFullScreen() and evt.GetKeyCode() == wx.WXK_ESCAPE):
