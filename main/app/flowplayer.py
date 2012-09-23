@@ -117,8 +117,9 @@ class Player(wx.Panel):
     
     def reload(self):
         """ recarrega a página, atualizando seu conteúdo """
-        fullpage = self.getPlayerPage( self.get_params() )
-        self.webview.SetPage(fullpage, "Loader")
+        params = self.get_params()
+        fullpage = self.getPlayerPage( params )
+        self.webview.SetPage(fullpage, params["file"])
         self.webview.Reload()
         
 ########################################################################################
