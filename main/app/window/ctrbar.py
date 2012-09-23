@@ -61,14 +61,14 @@ class BarraControles( noteBook.NoteBookImage ):
 		
 		if configs:
 			# seção de dados muito importante
-			if not type(configs.get("PlayerWin",None)) is dict:
+			if not configs.has_key("PlayerWin"):
 				configs["PlayerWin"] = {}
 				
 			# as configurações sempre devem existir
 			pwconfig = configs["PlayerWin"]
 			
 			if not pwconfig.has_key("moduleName"):
-				pwconfig["moduleName"] = "jwplayer"
+				pwconfig["moduleName"] = "flowplayer"
 				
 			if not pwconfig.has_key("skinName"):
 				pwconfig["skinName"] = ""
