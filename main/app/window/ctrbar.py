@@ -63,13 +63,13 @@ class BarraControles( noteBook.NoteBookImage ):
 		# make a menu
 		self.playerMenu = wx.Menu()
 		# item.SetBitmap(bmp)
-		self.playerMenu.AppendRadioItem(self.popupID1, "jwplayer")
-		self.playerMenu.AppendRadioItem(self.popupID2, "flowplayer")
+		self.playerMenu.AppendRadioItem(self.popupID1, "jwPlayer")
+		self.playerMenu.AppendRadioItem(self.popupID2, "flowPlayer")
 		
 		self.Bind(wx.EVT_MENU, self.loadEmbedPlayer, id=self.popupID1)
 		self.Bind(wx.EVT_MENU, self.loadEmbedPlayer, id=self.popupID2)
 		
-		checkopts = {"jwplayer": self.popupID1, "flowplayer": self.popupID2}
+		checkopts = {"jwPlayer": self.popupID1, "flowPlayer": self.popupID2}
 		moduleName = self.mainWin.configs["PlayerWin"]["moduleName"]
 		self.playerMenu.Check(checkopts[ moduleName ], True)
 		
@@ -136,7 +136,7 @@ class BarraControles( noteBook.NoteBookImage ):
 				configs["PlayerWin"]={}
 			# as configurações sempre devem existir
 			pwconfig = configs["PlayerWin"]
-			pwconfig["moduleName"] = pwconfig.get("moduleName","flowplayer")
+			pwconfig["moduleName"] = pwconfig.get("moduleName","flowPlayer")
 			pwconfig["skinName"] = pwconfig.get("skinName","")
 			
 			# importa o player escolhido pelo usuário
