@@ -2,8 +2,8 @@ import models
 import views
 import admin
 import browser
-import jwplayer
-import flowplayer
+import jwPlayer
+import flowPlayer
 import manager
 import gerador
 import window
