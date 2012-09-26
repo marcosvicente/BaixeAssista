@@ -14,9 +14,10 @@ EMAIL_USE_TLS = 1
 EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 25
 
+# cuidado com isso!!!
 SCRIPT_PATH = os.path.dirname(os.path.abspath(__file__))
-STATIC_PATH = os.path.join(SCRIPT_PATH, "static")
 
+# Diretórios contendo os scripts do programa
 if not re.match(".+main$", os.getcwd()):
 	PROJECTPATH = os.path.join(os.getcwd(), "main")
 else:
@@ -25,6 +26,8 @@ else:
 # diretório do exectável final
 matchobj = re.search("(.+)main", PROJECTPATH)
 ROOT_DIR = matchobj.group(1)
+
+STATIC_PATH = os.path.join(PROJECTPATH, "static")
 
 APPDIR = os.path.join(PROJECTPATH, "app")
 CONFIGS_DIR = os.path.join(APPDIR, "configs")
@@ -165,17 +168,33 @@ INSTALLED_APPS = (
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
+    'formatters': {
+        'simple': {
+            'format': '[%(levelname)s][%(asctime)s] %(message)s'
+        }
+    },
     'handlers': {
         'mail_admins': {
             'level': 'ERROR',
             'class': 'django.utils.log.AdminEmailHandler'
+        },
+         'BA_MANAGER': {
+            'filename': os.path.join(APPDIR, "logs", "manager.log"),
+            'class': 'logging.FileHandler',
+             'formatter': 'simple',
+            'level': 'DEBUG'
         }
     },
     'loggers': {
         'django.request': {
             'handlers': ['mail_admins'],
             'level': 'ERROR',
-            'propagate': True,
+            'propagate': False,
         },
+        'main.app.manager': {
+            'handlers': ['BA_MANAGER'],
+            'level': 'DEBUG',
+            'propagate': False,
+        }
     }
 }

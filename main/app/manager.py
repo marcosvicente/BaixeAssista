@@ -24,6 +24,10 @@ import select
 
 from main import settings
 from main.app import models # modelo de banco de dados
+import logging
+
+logger = logging.getLogger("main.app.manager")
+logger.info('STATIC DIR: "%s"'%settings.STATIC_PATH)
 
 # INTERNACIONALIZATION
 def installTranslation(configs = None):
@@ -270,8 +274,7 @@ class RequestHandle( threading.Thread ):
         for root, dirs, files in os.walk(settings.STATIC_PATH):
             for name in files:
                 path = os.path.join(root, name)
-                netpath = path.replace(os.sep, "/") # path network
-                if not netpath.endswith( filepath ):
+                if not re.match(".*"+filepath+"$", path.replace(os.sep,"/")):
                     continue
                 return path
             
@@ -279,13 +282,17 @@ class RequestHandle( threading.Thread ):
         try:
             data = self.get_request_data()
             self.GET, self.headers = self.get_headers( data )
+            logger.info('HTTP: "%s"'%self.GET)
             
             networkpath = self.getRequestFile()
             filepath = self.lookup_filepath( networkpath )
+            logger.info('FILE: "%s"'%filepath)
             
-            if not filepath : self.handle_stream()
-            else: self.handle_files( filepath )
-        except: pass
+            if filepath: self.handle_files( filepath )
+            else: self.handle_stream()
+        except Exception as e:
+            logger.error("GET file: %s"%e)
+            
         self.request.close()
         self.server.remove_client( self.request )
         
@@ -312,7 +319,7 @@ class RequestHandle( threading.Thread ):
         try: self.streamPos = long( range_pos )
         except: self.streamPos = self.manage.videoManager.get_relative_mp4( range_pos )
         
-        print "REQUEST: %s RANGE: %s"%(self.GET, self.streamPos)
+        logger.info("REQUEST: %s RANGE: %s"%(self.GET, self.streamPos))
         if self.close_me(self.headers): return
         
         if self.streamPos > 0 and self.manage.videoManager.suportaSeekBar():
@@ -350,13 +357,17 @@ class Server( threading.Thread ):
         
     def __init__(self, manage=None, host="localhost", port=80):
         threading.Thread.__init__(self)
-        
         # pára com o processo principal
         self.setDaemon( True )
-        self.execute(host, port)
-        
         self.manage = manage
         self.clients = []
+        try:
+            logger.info("Server starting...")
+            self.execute(host, port)
+            Server.running = True
+        except Exception as e:
+            Server.running = False
+            logger.error("Starting server: %s"%e)
         
     def __del__(self):
         del self.manage
@@ -369,16 +380,11 @@ class Server( threading.Thread ):
         self.manage = None
         
     def execute(self, host, port):
-        try:
-            self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            self.server.bind((host, port)); self.server.listen(5)
-            Server.HOST, Server.PORT = host, port
-            Server.running = True
-        except Exception as e:
-            Server.running = False
-            print "Server starting error: %s"%e
-            
+        self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.server.bind((host, port)); self.server.listen(5)
+        Server.HOST, Server.PORT = host, port
+        
     def stop_all(self):
         """ fecha todas as conexões atualmente ativas """
         for clt in self.clients: clt.close()
@@ -391,17 +397,17 @@ class Server( threading.Thread ):
         Server.running = False
         
     def run(self):
-        print "Starting server..."
-        while True:
-            try:
-                rlist, wlist, xlist = select.select([self.server],[],[])
-                if len(rlist) == 0: continue
-                client, addr = self.server.accept()
-            except: break
-            RequestHandle(self, client).start()
-            self.clients.append( client )
-        print "Server stoped!"
-
+        if Server.running: logger.info("Server listen...")
+        try:
+            while select.select([self.server],[],[])[0]:
+                client, address = self.server.accept()
+                RequestHandle(self, client).start()
+                self.clients.append( client )
+        except Exception as e:
+            logger.info("Server run: %s"%e)
+            self.stop()
+        logger.info("Server stoped!")
+        
 ################################ PROXYMANAGER ################################
 # PROXY MANAGER: TRABALHA OS IPS DE SERVIDORES PROXY
 class ProxyManager:
