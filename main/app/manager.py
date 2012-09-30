@@ -23,12 +23,13 @@ import base64
 import select
 
 from main import settings
+from django.contrib.staticfiles.management.commands import runserver
 from main.app import models # modelo de banco de dados
 import logging
 
 logger = logging.getLogger("main.app.manager")
 logger.info('STATIC DIR: "%s"'%settings.STATIC_PATH)
-
+    
 # INTERNACIONALIZATION
 def installTranslation(configs = None):
     """ instala as traduções apartir do arquivo de configurações. """
@@ -342,7 +343,9 @@ class RequestHandle( threading.Thread ):
 class Server( threading.Thread ):
     BOOL_TO_INT = {True: 1, False: 0}
     INT_TO_BOOL = {1: True, 0: False}
-    HOST, PORT = "localhost", 80
+    
+    HOST, PORT = "localhost", 8000
+    argv = "%s:%s"%(HOST, PORT)
     
     class __metaclass__(type):
         """ informa o estado do servidor, com base na variável ambiente """
@@ -355,57 +358,21 @@ class Server( threading.Thread ):
         def running(cls, flag):
             os.environ["LOCAL_SERVER_RUNNING"] = str(cls.BOOL_TO_INT[flag])
         
-    def __init__(self, manage=None, host="localhost", port=80):
+    def __init__(self, host="localhost", port=80):
         threading.Thread.__init__(self)
-        # pára com o processo principal
         self.setDaemon( True )
-        self.manage = manage
-        self.clients = []
-        try:
-            logger.info("Server starting...")
-            self.execute(host, port)
-            Server.running = True
-        except Exception as e:
-            Server.running = False
-            logger.error("Starting server: %s"%e)
         
-    def __del__(self):
-        del self.manage
-        self.stop()
-        
-    def set_manage(self, manage):
-        self.manage = manage
+    def stop(self): pass
     
-    def del_manage(self):
-        self.manage = None
-        
-    def execute(self, host, port):
-        self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.server.bind((host, port)); self.server.listen(5)
-        Server.HOST, Server.PORT = host, port
-        
-    def stop_all(self):
-        """ fecha todas as conexões atualmente ativas """
-        for clt in self.clients: clt.close()
-
-    def remove_client(self, clt):
-        if clt in self.clients: self.clients.remove(clt)
-        
-    def stop(self):
-        self.server.close()
-        Server.running = False
-        
     def run(self):
-        if Server.running: logger.info("Server listen...")
         try:
-            while select.select([self.server],[],[])[0]:
-                client, address = self.server.accept()
-                RequestHandle(self, client).start()
-                self.clients.append( client )
+            cmd = runserver.Command()
+            Server.running = True
+            cmd.execute(self.argv, use_reloader=False)
+            logger.info("Server running...")
         except Exception as e:
-            logger.info("Server run: %s"%e)
-            self.stop()
+            logger.info("Server listen: %s"%e)
+            Server.running = False
         logger.info("Server stoped!")
         
 ################################ PROXYMANAGER ################################
@@ -892,7 +859,8 @@ class Interval:
         self.send_info = {"nbytes":{}, "sending":0}
         self.seekpos = params.get("seekpos", 0)
         self.pending = params.get("pending", [])
-
+        self.__initpos = self.seekpos
+        
         self.maxsize = params["maxsize"]
         self.maxsplit = params.get("maxsplit",2)
 
@@ -909,7 +877,10 @@ class Interval:
         del self.send_info
         del self.intervals
         del self.pending
-
+    
+    def getInitPos(self):
+        return self.__initpos
+    
     def canContinue(self, obj_id):
         """ Avalia se o objeto conexão pode continuar a leitura, 
         sem comprometer a montagem da stream de vídeo(ou seja, sem corromper o arquivo) """
@@ -1082,29 +1053,43 @@ class Interval:
 ################################ main : manage ################################
 import gerador
 
-class Streammer:
+class Streamer( object ):
     """ lê e retorna a stream de dados """
     #----------------------------------------------------------------------
     def __init__(self, manage):
-        self.manage = manage
         self.seekpos = self.sended = 0
-
-    def get_stream(self, block_size=524288):
+        self.manage = manage
+        self.stop_now = False
+        
+    def stop(self): self.stop_now = True
+    
+    def get_chunks(self, block_size=524288):
+        self.manage.appendStreamer( self)
+        print "STREAMER STARTED %s"%self
+        
+        if self.manage.getInitPos() > 0:
+            yield self.manage.videoManager.getStreamHeader()
+        
         while self.sended < self.manage.getVideoSize():
+            if self.stop_now: break # stop streamer loop
             if self.seekpos < self.manage.nBytesProntosEnvio:
                 block_len = block_size
-
+                
                 if (self.seekpos + block_len) > self.manage.nBytesProntosEnvio:
                     block_len = self.manage.nBytesProntosEnvio - self.seekpos
-
+                    
                 stream, self.seekpos = self.manage.fileManager.read(self.seekpos, block_len)
                 self.sended += block_len
                 yield stream
             else:
                 time.sleep(0.001)
-        yield "" # end stream
-
+                
+        print "STREAMER STOPED %s"%self
+        self.manage.removeStreamer(self)
+        yield "\r\n" # end stream
+        
     def __del__(self):
+        print "STREAMER STOPED %s"%self
         del self.manage
 
 ########################################################################
@@ -1202,17 +1187,17 @@ class CTRConnection(object):
     def getConnections(self):
         """ retorna a lista com todas as conexões criadas """
         return self.connList
-
+    
+# ------------------------------------------------------------------------
+class ManageMiddleware(object):
+    """ insere o object manage em todas as conexões """
+    def process_view(self, request, view_func, view_args, view_kwargs):
+        request.manage = settings.MANAGE_OBJECT
+        
 # GRUPO GLOBAL DE VARIAVEIS COMPARTILHADAS
 class Manage( object ):
     syncLockWriteStream = threading.Lock()
     
-    if not Server.running:
-        settings.LOCAL_SERVER = localServer = Server()
-        localServer.start()
-    else:
-        localServer = getattr(settings,"LOCAL_SERVER",None)
-        
     def __init__(self, URL = "", **params):
         """ params: {}
         - tempfile: define se o vídeo será gravado em um arquivo temporário
@@ -1226,12 +1211,12 @@ class Manage( object ):
         self.updateRunning = False
         self.streamServer = None
         self.usingTempfile = params.get("tempfile", False)
-
+        self.streamerList = []
+        
         # manage log
         globalInfo.add_info("manage")
-        
-        # atualiza manager no servidor, pois seus dados serão usados na transferêcia da stream.
-        self.localServer.set_manage( self )
+        # -----------------------------------------
+        settings.MANAGE_OBJECT = self
         
         # guarda no banco de dados as urls adicionadas
         self.urlManager = UrlManager()
@@ -1292,23 +1277,33 @@ class Manage( object ):
             
             self.posInicialLeitura = self.numTotalBytes
 
-    def get_streammer(self):
-        """ streammer controla a leitura dos bytes enviados ao player """
-        return Streammer( self)
-
+    def getStreamer(self):
+        """ streamer controla a leitura dos bytes enviados ao player """
+        return Streamer( self )
+    
+    def appendStreamer(self, streamer):
+        self.streamerList.append(streamer)
+        
+    def removeStreamer(self, streamer):
+        self.streamerList.remove(streamer)
+    
+    def stopStreamers(self):
+        for streamer in self.streamerList:
+            streamer.stop()
+            
     def delete_vars(self):
         """ deleta todas as variáveis do objeto """
+        self.stopStreamers()
+        
         globalInfo.del_info("manage")
-        
-        # desvincula o manage sendo deletado, do servidor.
-        self.localServer.del_manage()
-        
+        settings.MANAGE_OBJECT = None
         # -------------------------------------------------------------------
         if not self.usingTempfile and not self.params.get("tempfile",False):
             self.salveInfoResumo()
-
+            
         self.updateRunning = False
         # -------------------------------------------------------------------
+        del self.streamerList
         del self.ctrConnection
         del self.videoManager
         del self.proxyManager
@@ -1420,6 +1415,9 @@ class Manage( object ):
         cls.localServer.start()
         # se iniciou com sucesso
         return Server.running
+    
+    def getInitPos(self):
+        return self.params.get("seekpos",0)
     
     def isComplete(self):
         """ informa se o arquivo já foi completamente baixado """

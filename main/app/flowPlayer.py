@@ -7,7 +7,7 @@ import string
 import random
 import wx.html2 as Webview
 from main import settings
-from django.template import Context, Template, loader, defaulttags, defaultfilters, loader_tags
+from django.template import Context, Template, loader
 ########################################################################
 
 class Player(wx.Panel):
@@ -28,15 +28,14 @@ class Player(wx.Panel):
         self.skins = {}
         
         # defaut params
-        if not params.has_key("autostart"): self.params["autostart"] = False
-        if not params.has_key("hostName"): self.params["hostName"] = "localhost"
-        if not params.has_key("portNumber"): self.params["portNumber"] = 80
-        if not params.has_key("skinName"): self.params["skinName"] = self.defaultSkin
+        self.params["skinName"] = params.get("skinName", self.defaultSkin)
+        self.params["autostart"] = params.get("autostart", False)
+        self.params["hostName"] = params.get("hostName", "localhost")
+        self.params["portNumber"] = params.get("portNumber", 8000)
         
-        if not self.params.get("skinName", False):
-            self.params["skinName"] = self.defaultSkin
+        skinsPath = os.path.join(self.playerMedia, "skins")
+        
         try:
-            skinsPath = os.path.join(self.playerMedia, "skins")
             skins = os.listdir( skinsPath )
             for name in skins:
                 n = name.split(".",1)[0]

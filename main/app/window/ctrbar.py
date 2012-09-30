@@ -38,10 +38,10 @@ class BarraControles( noteBook.NoteBookImage ):
 		]
 		# carrega as páginas
 		for imgPath, txt, winBuilder, callback in attrs:
-			newpage = self.createPage(imgPath, txt, txt, callback=callback)
+			newpage = self.createPage(imgPath, "", txt, 32, 32, callback=callback)
 			self.addPage(newpage, winBuilder(newpage))
 			
-		self.setWidget(self.mainWin, "FullScreen", _("Tela cheia"))
+		self.setWidget(self.mainWin, "FullScreen", _("Tela cheia"), 32, 32)
 		
 	def __del__(self):
 		del self.mainWin
@@ -110,8 +110,8 @@ class BarraControles( noteBook.NoteBookImage ):
 	
 	def loadEmbedPlayer(self, evt):
 		""" carrega o player embutido escolhido no menu """
-		skinName = self.playerMenu.GetLabelText(evt.GetId())
-		self.mainWin.configs["PlayerWin"]["moduleName"] = skinName
+		playerMod = self.playerMenu.GetLabelText(evt.GetId())
+		self.mainWin.configs["PlayerWin"]["moduleName"] = playerMod
 		playerPanel = self.mainWin.playerWin.GetParent()
 		playerPanel.Freeze()
 		
@@ -129,23 +129,26 @@ class BarraControles( noteBook.NoteBookImage ):
 	def createPlayerWin(self, parent):
 		""" carrega o flash player """
 		configs = getattr(self.mainWin,"configs",None)
-		
 		if configs:
 			# seção de dados muito importante
 			if not configs.has_key("PlayerWin"):
 				configs["PlayerWin"]={}
+				
 			# as configurações sempre devem existir
 			pwconfig = configs["PlayerWin"]
+			
 			pwconfig["moduleName"] = pwconfig.get("moduleName","flowPlayer")
 			pwconfig["skinName"] = pwconfig.get("skinName","")
 			
 			# importa o player escolhido pelo usuário
-			player = __import__(pwconfig["moduleName"], globals(), locals())
+			player = __import__(pwconfig["moduleName"], {}, {})
 			
-			self.mainWin.playerWin = player = player.Player( parent )
-			player["skinName"] = pwconfig["skinName"]
-			player["portNumber"] = manager.Server.PORT
-			player["hostName"] = manager.Server.HOST
+			params = dict(
+				portNumber = manager.Server.PORT,
+				hostName = manager.Server.HOST,
+				skinName = pwconfig["skinName"]
+			)
+			self.mainWin.playerWin = player.Player(parent, **params)
 		else:
 			# evita que o programa trave caso algo dê errado
 			self.mainWin.playerWin = wx.Panel()

@@ -7,7 +7,7 @@ import string
 import random
 import wx.html2 as Webview
 from main import settings
-from django.template import Context, Template, loader, defaulttags, defaultfilters, loader_tags
+from django.template import Context, Template, loader
 ########################################################################
 
 class Player(wx.Panel):

@@ -598,34 +598,27 @@ class BaixeAssistaWin( wx.Frame ):
 	
 	def stopEmbedPlayer(self):
 		""" recarrega o player embutido """
-		self.stopConnection()
 		self.playerWin["autostart"] = False
 		self.playerWin.reload()
-
-	def stopConnection(self):
-		""" fecha a conexão atual do servidor com o player """
-		if manager.Server.running: manager.Manage.localServer.stop_all()
-	
+		
 	def carreguePlayerExterno(self):
 		""" carrega o player externo """
-		if self.streamLoading:
-			if self.cfg_locais["playerPath"]:
-				self.playerExterno = manager.FlvPlayer(self.cfg_locais["playerPath"], 
-					host = manager.Server.HOST, port = manager.Server.PORT)
-				self.playerExterno.start()
-			else:
-				# caso não haja um caminho válido para o player
-				self.setPlayerPath()
-
+		if not self.streamLoading: return
+		if self.cfg_locais["playerPath"]:
+			self.playerExterno = manager.FlvPlayer(self.cfg_locais["playerPath"], 
+				host = manager.Server.HOST, port = manager.Server.PORT)
+			self.playerExterno.start()
+		else:
+			# caso não haja um caminho válido para o player
+			self.setPlayerPath()
+			
 	def recarreguePlayer(self):
 		""" recarrega o player para seu estado inicial """
-		self.stopConnection()
-		
 		if self.cfg_menu.as_bool('playerEmbutido'):
 			# o player iniciará automaticamente se baixando a stream
-			self.playerWin["autostart"] = self.streamLoading
 			self.playerWin["hostName"] = manager.Server.HOST
 			self.playerWin["portNumber"] = manager.Server.PORT
+			self.playerWin["autostart"] = self.streamLoading
 			self.playerWin.reload()
 		else:
 			self.stopExternalPlayer()
@@ -638,8 +631,9 @@ class BaixeAssistaWin( wx.Frame ):
 		evt.Skip()
 
 	def changePlayer(self, evt):
+		if self.manage: self.manage.stopStreamers()
 		menuid = evt.GetId() # id do menu que gerou o evento
-
+		
 		playerPath = self.cfg_locais['playerPath']
 		servidorAtivo = self.cfg_menu.as_bool('servidorAtivo')
 
@@ -780,8 +774,7 @@ class BaixeAssistaWin( wx.Frame ):
 				self.progressBar.SetValue( curr_progress )
 			
 			# ATUALIZA O ESTADO DAS CONEXOES
-			list_ctr = self.detailControl.GetListCtrl()
-			
+			list_ctr = self.detailControl.GetListCtrl()			
 			for smanager in self.manage.ctrConnection.getConnections():
 				if not smanager.wasStopped(): # conexões paradas serão ignoradas
 					rowIndex = self.detailControl.getRowIndex( smanager.ident )
@@ -909,10 +902,9 @@ class BaixeAssistaWin( wx.Frame ):
 		self.controladorUrl.SetToolTip(wx.ToolTip( h ))
 		
 ########################################################################
-if __name__ == "__main__":
-	# dir com os diretórios do projeto
-	os.chdir( pardir )
-	
-	app = wx.App(0)
-	BaixeAssistaWin()
-	app.MainLoop()
+#if __name__ == "__main__":
+#	# dir com os diretórios do projeto
+#	os.chdir( pardir )
+#	app = wx.App(0)
+#	BaixeAssistaWin()
+#	app.MainLoop()

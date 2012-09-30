@@ -40,7 +40,7 @@ class PageButton( wx.Panel ):
         # -----------------------------------------------
 
         # cria o botão ativador da página
-        bitmap = createBitmap(imgPath, scalex=32, scaley=32)
+        bitmap = createBitmap(imgPath, scalex=scalex, scaley=scaley)
         self.pageButton = wx.BitmapButton(self, -1, bitmap)
         
         self.pageButton.SetToolTipString( pageTootip )
@@ -263,7 +263,7 @@ class PageBar( wx.Panel ):
         imgCollapse = os.path.join(settings.IMAGES_DIR, "fullscreenIn.jpg")
         imgExpad = os.path.join(settings.IMAGES_DIR, "fullscreenOut.jpg")
         
-        btnFullScreen = PageButton(self, imgCollapse, _("Tela cheia"), pageTootip, scalex, scaley, widget=True)
+        btnFullScreen = PageButton(self, imgCollapse, "", pageTootip, scalex, scaley, widget=True)
         self.widgets["FullScreen"]["btnWidget"] = btnFullScreen
         
         btnFullScreen.scalex = scalex

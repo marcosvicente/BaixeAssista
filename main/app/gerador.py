@@ -251,7 +251,7 @@ class SiteBase(ConnectionProcessor):
 		return self.has_duration()
 	
 	def getVideoExt(self):
-		return self.configs.get("ext","")
+		return self.configs.get("ext","flv")
 
 	def getTitle(self):
 		""" pega o titulo do video """
@@ -264,8 +264,7 @@ class SiteBase(ConnectionProcessor):
 	def get_size(self, proxies={}, timeout=60):
 		""" retorna o tamanho do arquivo de vídeo, através do cabeçalho de resposta """
 		link = get_with_seek(self.getLink(), 0)
-		
-		headers = {"Range":" bytes=0-"}
+		headers = {"Range": "bytes=0-"}
 		headers.update( self.headers )
 		req = self.get_request(link, headers, data=None)
 		try:
@@ -274,9 +273,7 @@ class SiteBase(ConnectionProcessor):
 		except:
 			fd = urllib.urlopen( link )
 			fd.close()
-			
 		length = fd.headers.get("Content-Length", None)
-		
 		assert (length and (fd.code == 200 or fd.code == 206))
 		return long(length)
 
@@ -651,16 +648,26 @@ class Youtube( SiteBase ):
 		self.info_url = "http://www.youtube.com/get_video_info?video_id=%s&el=embedded&ps=default&eurl=&hl=en_US"
 		self.video_quality_opts = {1: "small", 2: "medium", 3: "large"}
 		self.basename = u"youtube.com"
+		self.raw_data = None
 		self.url = url
 		
-	def __str__(self): pass
 	def suportaSeekBar(self):
 		return True
 
-	def get_urls(self, url_encoded):
-		url_data_strs = url_encoded.split(',')
-		url_data = [cgi.parse_qs(uds) for uds in url_data_strs]
-		return url_data
+	def get_urls(self, params):
+		url_all = []
+		signature = params["sig"]
+		algorithm = params.get("algorithm",[""])[0]
+		ptchn = params.get("ptchn",[""])[0]
+		ptk = params.get("ptk",[""])[0]
+		burst = params.get("burst",[""])[0]
+		
+		for index, url in enumerate(params["url"]):
+			url_all.append(url+"&signature=%s&algorithm=%s&ptchn=%s&ptk=%s&burst=%s" %(
+				signature[index], algorithm, ptchn, ptk, burst
+			)
+		)
+		return url_all
 	
 	def getMessage(self, data):
 		try:
@@ -673,9 +680,8 @@ class Youtube( SiteBase ):
 	
 	def set_configs(self, video_info):
 		""" atualiza a dicionário de configuração """
-		url_encoded = video_info["url_encoded_fmt_stream_map"][0]
-		self.configs["urls"] = self.get_urls( url_encoded )
-
+		self.configs["urls"] = self.get_urls( video_info )
+		
 		try: # video title
 			self.configs["title"] = video_info[ "title" ][0]
 		except (KeyError, IndexError):
@@ -687,41 +693,52 @@ class Youtube( SiteBase ):
 			self.configs["thumbnail_url"] = ""
 
 	def getLink(self):
+		url_default = ""
 		vquality = self.params.get("qualidade", 2)
 		quality_opt = self.video_quality_opts[ vquality ]
-		defaultUrl = type_short = ""
-
-		for url in self.configs["urls"]:
-			type = url["type"][0]
-			matchobj = re.search("([^\s;]+)", type)
-			if matchobj: type_short = matchobj.group(1)
-
+		
+		for index, _type in enumerate( self.raw_data["type"] ):
+			url = self.configs["urls"][index]
+			quality = self.raw_data['quality'][index]
+			
+			matchobj = re.search("video/([^\s;]+)", _type)
+			if matchobj: self.configs["ext"] = matchobj.group(1)
+			
 			# o formato video/webm, mostra-se impatível como o swf player
-			if type_short != "video/webm":
-				if url['quality'][0] == quality_opt:
-					matchObj = re.search("video/([^\s;]+)", type)
-					if matchObj: self.configs["ext"] = matchObj.group(1)
-					return urllib.unquote_plus(url["url"][0]) + "&range=%s-"
-
-				elif not defaultUrl:
-					# se não exisitir a qualidade procurada
-					# usa a primeira url encontrada.
-					matchObj = re.search("video/([^\s;]+)", type)
-					if matchObj: self.configs["ext"] = matchObj.group(1)
-					defaultUrl = urllib.unquote_plus(url["url"][0]) + "&range=%s-"
-
-		else: # na falta da url com a qualidade procurada, usa a padrão
-			return defaultUrl 
-
-	def start_extraction(self, proxies={}, timeout=25):
+			if re.match(quality_opt, quality):
+				return urllib.unquote_plus(url)+"&range=%s-"
+			elif not url_default:
+				url_default = urllib.unquote_plus(url) +"&range=%s-"
+		return url_default
+		
+	def try_one(self, proxies, timeout):
 		video_id = Universal.get_video_id(self.basename, self.url)
 		
 		url = self.info_url % video_id
 		fd = self.conecte(url, proxies=proxies, timeout=timeout)
 		data = fd.read(); fd.close()
+		return cgi.parse_qs( data )
+	
+	def try_two(self, proxies, timeout):
+		fd = self.conecte(self.url, proxies=proxies, timeout=timeout)
+		webpage = fd.read(); fd.close()
 		
-		data = cgi.parse_qs( data )
+		matchobj = re.search(r'<script>\s*\(\s*function.*?(.*?)</script>', webpage, re.DOTALL)
+		sc_data = urllib.unquote_plus( matchobj.group(1) )
+		
+		sc_data = sc_data.replace(r"\"", "'")
+		matchobj = re.search("flashvars\s*=\s*'(.*?)'", sc_data)
+		querystr = matchobj.group(1)
+		
+		return cgi.parse_qs( querystr )
+		
+	def start_extraction(self, proxies={}, timeout=25):
+		try: data = self.try_two(proxies, timeout)
+		except: data = self.try_one(proxies, timeout)
+		
+		self.raw_data = data
 		self.message = self.getMessage(data)
+		
 		# atualiza o dicionário de parâmetros
 		self.set_configs( data )
 		
@@ -2341,7 +2358,7 @@ if __name__ == "__main__":
 		print proxies["http"]
 		proxies = {}
 
-		if not checkSite("http://hostingbulk.com/embed-o2nzxyoufvfi-600x480.html", proxies=proxies, quality=3):
+		if not checkSite("http://www.youtube.com/watch?v=YtkYaRVV6v8&feature=g-all-xit", proxies=proxies, quality=3):
 			proxyManager.setBadIp( proxies )
 
 	del proxyManager
