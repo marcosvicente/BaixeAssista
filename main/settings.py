@@ -183,8 +183,9 @@ LOGGING = {
         },
          'BA_MANAGER': {
             'filename': os.path.join(APPDIR, "logs", "manager.log"),
-            'class': 'logging.FileHandler',
-             'formatter': 'simple',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'maxBytes': 1024*1024*5, # 5 MB
+            'backupCount': 5,
             'level': 'DEBUG'
         }
     },

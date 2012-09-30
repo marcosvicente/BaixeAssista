@@ -344,7 +344,7 @@ class Server( threading.Thread ):
     BOOL_TO_INT = {True: 1, False: 0}
     INT_TO_BOOL = {1: True, 0: False}
     
-    HOST, PORT = "localhost", 8000
+    HOST, PORT = "localhost", 8002
     argv = "%s:%s"%(HOST, PORT)
     
     class __metaclass__(type):
@@ -368,10 +368,10 @@ class Server( threading.Thread ):
         try:
             cmd = runserver.Command()
             Server.running = True
-            cmd.execute(self.argv, use_reloader=False)
             logger.info("Server running...")
+            cmd.execute(self.argv, use_reloader=False)
         except Exception as e:
-            logger.info("Server listen: %s"%e)
+            logger.error("Server listen: %s"%e)
             Server.running = False
         logger.info("Server stoped!")
         
