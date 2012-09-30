@@ -292,16 +292,17 @@ class TesteIP( threading.Thread ):
 	def __init__(self, proxyControl, ctrSearch, params):
 		threading.Thread.__init__(self)
 		self.setDaemon(True) #termina com o processo principal
-		self.isRunning = True
-		self.params = params
 		
+		self.isRunning = True
+		
+		self.params = params
 		self.ctrSearch = ctrSearch
 		self.proxyControl = proxyControl
 		
 		# objeto que trabalha as informações dos vídeos
-		url = self.params.get("URL","")
-		videoManager = gerador.Universal.getVideoManager(url)
-		self.videoManager = videoManager(url)
+		url = self.params.get("url","")
+		vManager = gerador.Universal.getVideoManager( url )
+		self.videoManager = vManager( url )
 		
 	def stop(self):
 		self.isRunning = False
@@ -315,21 +316,21 @@ class TesteIP( threading.Thread ):
 		else:
 			del self.videoManager[ address ]
 			return
-		
-		# params
-		speed_list = []; sucessLen = 0
-		block_size = self.params.get("numBytesTeste",32768)
-		num_max_ips = self.params.get("metaProxies",0)
-		numOfTests = self.params.get("numMaxTestes",5)
+		# ----------------------------------------------------------------
+		block_size = self.params.get("bytes_block_test", 32768)
+		num_of_tests = self.params.get("num_of_tests", 5)
+		num_of_ips = self.params.get("num_of_ips", 10)
+		sucess_len = 0; speed_list = []
 		SM = manager.StreamManager
 		
-		for index in range(numOfTests):
+		for index in range(num_of_tests):
 			try:
-				seekpos = 1024+random.randint(0, int(streamSize*0.75))
+				seekpos = 1024 + random.randint(0, int(streamSize*0.75))
 				streamSocket = self.videoManager.conecte(
 				    gerador.get_with_seek(streamLink, seekpos),
 				    headers = {"Range": "bytes=%s-" %seekpos},
-				    proxies = proxies, timeout = 30
+				    proxies = proxies, 
+				    timeout = 30
 				)
 				data = streamSocket.read( self.videoManager.STREAM_HEADER_SIZE )
 				stream, header = SM.getStreamHeader(data, seekpos)
@@ -338,7 +339,7 @@ class TesteIP( threading.Thread ):
 				isValid = SM.responseCheck(len(header), seekpos, 
 				                           streamSize, streamSocket.headers)
 				
-				if streamSocket.code == 200 and isValid:
+				if isValid and (streamSocket.code == 200 or streamSocket.code == 206):
 					before = time.time(); stream = streamSocket.read(block_size)
 					after  = time.time(); streamLen = len(stream)
 					
@@ -346,17 +347,17 @@ class TesteIP( threading.Thread ):
 						speed = float(streamLen)/(after - before)
 						speed_list.append( speed )
 						# conta o número de testes, que obtiveram sucesso
-						sucessLen += 1
+						sucess_len += 1
 				streamSocket.close()
 			except Exception as e:
-				sucessLen -= 1
+				sucess_len -= 1
 				
 			# pára o teste de leitura
-			if self.ctrSearch.getNumIps() >= num_max_ips: return
+			if self.ctrSearch.getNumIps() >= num_of_ips: return
 			if not self.isRunning: return
 			
 		# um erro de tolerância
-		if numOfTests - sucessLen  < 2:
+		if num_of_tests - sucess_len  < 2:
 			with self.lockSucess:
 				# média de todas as velocidades alcançadas
 				average = reduce(lambda x, y: x + y, speed_list)
@@ -370,25 +371,25 @@ class TesteIP( threading.Thread ):
 				
 				# log informativo
 				log = _("%02d de %02d")
-				log = log % (self.ctrSearch.getNumIps(), num_max_ips)
+				log = log % (self.ctrSearch.getNumIps(), num_of_ips)
 				self.ctrSearch.setLog( log )
 				print self.ctrSearch.getLog()
 				
 		# remove a relação do ip com as configs da instância.
 		del self.videoManager[ proxies["http"] ]
 		
-	def run( self):
-		num_max_ips = self.params.get("metaProxies", 0)
-		while self.isRunning and self.ctrSearch.getNumIps() < num_max_ips:
+	def run(self):
+		num_of_ips = self.params.get("num_of_ips", 0)
+		while self.isRunning and self.ctrSearch.getNumIps() < num_of_ips:
 			try:
 				# o bloqueio do lock, evita teste duplo.
 				with TesteIP.lockNextIP:
 					ip = self.proxyControl.getNextIP()
-					
 				if not ip: break # lista de ips esgotada
 				self.start_read( ip )
-			except: pass
-		
+			except:
+				pass
+			
 ############################ EXECUCAO DO SCRIPT ############################
 if __name__ == "__main__":
 	response = raw_input("start new ip search(yes or no): ")

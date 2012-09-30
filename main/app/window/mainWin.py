@@ -723,8 +723,10 @@ class BaixeAssistaWin( wx.Frame ):
 		mv.CenterOnParent(wx.BOTH)
 
 	def openControlUpdadteIps(self, evt):
-		control = ipSearch.IpSearchControl(self, _("Crie uma nova lista de ips..."))
-
+		control = ipSearch.wIPSearch(self, _("Crie uma nova lista de ips..."))
+		# restaurando o último estado de cofiguração
+		control.setLastConfigs()
+		
 	def controleConexoes(self, evt=None, default=False):
 		""" Adiciona ou remove conexões """
 		if self.streamLoading and not self.manage.isComplete():

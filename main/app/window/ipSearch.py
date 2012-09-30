@@ -13,38 +13,33 @@ if not curdir in sys.path: sys.path.append( curdir )
 import proxy, manager
 ########################################################################
 
-class IpSearchControl(wx.MiniFrame):
+class wIPSearch( wx.MiniFrame ):
 	def __init__(self, mainWin, title, pos=wx.DefaultPosition, 
 	              size=wx.DefaultSize, style=wx.DEFAULT_FRAME_STYLE ):
 		wx.MiniFrame.__init__(self, mainWin, -1, title, pos, size, style)
 
 		self.Bind(wx.EVT_CLOSE, self.OnCloseWindow)
-		
-		self.SetMinSize((640, 300))
-		self.SetMaxSize((720, 335))
+		self.SetMinSize((640, 300)); self.SetMaxSize((720, 335))
 		
 		self.mainWin = mainWin
 		
 		# objeto pesquisador dos ips dos servidores proxies
 		self.proxyControl = proxy.ProxyControl(True)
-		self.stopSearch = self.startedSearch = False
+		self.stopSearch = self.startSearch = False
 		self.ctrSearch = None
 		
 		self.updateTimer = wx.Timer(self, wx.ID_ANY)
 		self.Bind( wx.EVT_TIMER, self.updateInterface, self.updateTimer)
-
+		
 		mainSizer = wx.BoxSizer( wx.VERTICAL)
 		
 		# *** Controle de entrada de urls.
 		hSizer = wx.BoxSizer( wx.HORIZONTAL )
 		
-		self.controlUrls = wx.TextCtrl(self, -1, "http://www.videobb.com/video/XuS6EAfMb7nf")
-		helpText = [
-		    _(u"Url para a qual serão direcionadas as conexões.\n"),
-		    _(u"Use: Videobb, Videozer ou UserPorn")
-		]
-		self.controlUrls.SetToolTip( wx.ToolTip( "".join(helpText) ))
-		hSizer.Add( self.controlUrls, 1, wx.EXPAND)
+		self.ctrStreamUrl = wx.TextCtrl(self, -1, "")
+		helpText = _(u"Url para a qual serão direcionadas as conexões.\n")
+		self.ctrStreamUrl.SetToolTip( wx.ToolTip( helpText ))
+		hSizer.Add( self.ctrStreamUrl, 1, wx.EXPAND)
 		
 		# *** Botão de iniciar a pesquisa.
 		self.btnStartCancel = wx.ToggleButton(self, -1, _("Pesquisar"))
@@ -55,7 +50,7 @@ class IpSearchControl(wx.MiniFrame):
 		self.btnStartCancel.SetToolTip( wx.ToolTip( "".join(helpText) ))
 		hSizer.Add( self.btnStartCancel, 0, wx.LEFT, 2)
 
-		self.Bind(wx.EVT_TOGGLEBUTTON, self.startSearchIp, self.btnStartCancel)
+		self.Bind(wx.EVT_TOGGLEBUTTON, self.startIPSearch, self.btnStartCancel)
 		mainSizer.Add( hSizer, 0, wx.EXPAND|wx.TOP, 2)
 		# ---------------------------------------------
 		
@@ -78,46 +73,46 @@ class IpSearchControl(wx.MiniFrame):
 		
 		staticText = wx.StaticText(conteiner, -1, _(u"Número de bytes: "))
 		staticText.SetForegroundColour(wx.Colour(0,0,255))
-		self.controlBytesTeste = wx.Choice(conteiner, -1, choices = self.createListChoices())
+		self.ctrBlockSize = wx.Choice(conteiner, -1, choices = self.getKbyteList())
 		helpText = _(u"Quantos bytes serão lidos para cada teste de leitura.")
-		self.controlBytesTeste.SetToolTip( wx.ToolTip( helpText ))
-		self.controlBytesTeste.SetSelection(1)
-
+		self.ctrBlockSize.SetToolTip( wx.ToolTip( helpText ))
+		self.ctrBlockSize.SetSelection(1)
+		
 		flexGridGroup.AddMany([(staticText, 0, wx.EXPAND),
-		                         (self.controlBytesTeste, 0, wx.EXPAND)])
+		                         (self.ctrBlockSize, 0, wx.EXPAND)])
 		# ---------------------------------------------
-
+		
 		staticText = wx.StaticText(conteiner, -1, _(u"Conexões simultâneas: "))
 		staticText.SetForegroundColour(wx.Colour(0,0,255))
-		self.controlThreads = wx.SpinCtrl(conteiner, -1, "10")
+		self.ctrNumConnection = wx.SpinCtrl(conteiner, -1, "10")
 		helpText = _(u"Quantas conexões serão criadas ao mesmo tempo.")
-		self.controlThreads.SetToolTip( wx.ToolTip( helpText ))
-		self.controlThreads.SetRange(1, 25)
+		self.ctrNumConnection.SetToolTip( wx.ToolTip( helpText ))
+		self.ctrNumConnection.SetRange(1, 25)
 
 		flexGridGroup.AddMany([(staticText, 0, wx.EXPAND),
-		                         (self.controlThreads, 0, wx.EXPAND)])
+		                         (self.ctrNumConnection, 0, wx.EXPAND)])
 		# ---------------------------------------------
 
 		staticText = wx.StaticText(conteiner, -1, _(u"Número de ips: "))
 		staticText.SetForegroundColour(wx.Colour(0,0,255))
-		self.controlNumIps = wx.SpinCtrl(conteiner, -1, "25")
+		self.ctrNumOfIps = wx.SpinCtrl(conteiner, -1, "25")
 		helpText = _(u"Quantidade de ips válidos a serem encontrados.")
-		self.controlNumIps.SetToolTip( wx.ToolTip( helpText ))
-		self.controlNumIps.SetRange(1, 100)
+		self.ctrNumOfIps.SetToolTip( wx.ToolTip( helpText ))
+		self.ctrNumOfIps.SetRange(1, 100)
 
 		flexGridGroup.AddMany([(staticText, 0, wx.EXPAND), 
-		                         (self.controlNumIps, 0, wx.EXPAND)])
+		                         (self.ctrNumOfIps, 0, wx.EXPAND)])
 		# ---------------------------------------------
 
 		staticText = wx.StaticText(conteiner, -1, _(u"Número de testes: "))
 		staticText.SetForegroundColour(wx.Colour(0,0,255))
-		self.controlNumTestes = wx.SpinCtrl(conteiner, -1, "3")
+		self.ctrNumOfTests = wx.SpinCtrl(conteiner, -1, "3")
 		helpText = _(u"Quantos testes de leitura serão efetuados sobre o mesmo ip.")
-		self.controlNumTestes.SetToolTip( wx.ToolTip( helpText ))
-		self.controlNumTestes.SetRange(1, 15)
+		self.ctrNumOfTests.SetToolTip( wx.ToolTip( helpText ))
+		self.ctrNumOfTests.SetRange(1, 15)
 
 		flexGridGroup.AddMany([(staticText, 0, wx.EXPAND), 
-		                         (self.controlNumTestes, 0, wx.EXPAND)])
+		                         (self.ctrNumOfTests, 0, wx.EXPAND)])
 		# ---------------------------------------------
 
 		panel = wx.Panel(self, -1)
@@ -153,42 +148,77 @@ class IpSearchControl(wx.MiniFrame):
 		self.CenterOnParent(wx.BOTH)
 		self.Show(True)
 		
+	def check_configs(self, configs):
+		""" caso as configs não existam, força uma configuração padrão """
+		default_conf = (
+			("ctrStreamUrl", ""), ("ctrBlockSize", 1),
+			("ctrNumOfIps", "25"), ("ctrNumOfTests", "4"),
+			("ctrNumConnection", "10")
+		)
+		if not configs.has_key("wIPSearch"):
+			configs["wIPSearch"] = {}
+			
+		for confname, default in default_conf:
+			if not configs["wIPSearch"].has_key( confname ):
+				configs["wIPSearch"][confname] = default
+		
+	def setLastConfigs(self, configs={}):
+		configs = getattr(self.mainWin, "configs", configs)
+		self.check_configs( configs )
+		conf = configs["wIPSearch"]
+		self.ctrStreamUrl.SetValue(conf["ctrStreamUrl"])
+		self.ctrBlockSize.SetSelection(conf["ctrBlockSize"])
+		self.ctrNumConnection.SetValue(conf["ctrNumConnection"])
+		self.ctrNumOfIps.SetValue(conf["ctrNumOfIps"])
+		self.ctrNumOfTests.SetValue(conf["ctrNumOfTests"])
+		
+	def saveConfigs(self, configs={}):
+		configs = getattr(self.mainWin, "configs", configs)
+		self.check_configs( configs )
+		conf = configs["wIPSearch"]
+		conf["ctrStreamUrl"] = self.ctrStreamUrl.GetValue()
+		conf["ctrBlockSize"] = self.ctrBlockSize.GetSelection()
+		conf["ctrNumConnection"] = self.ctrNumConnection.GetValue()
+		conf["ctrNumOfIps"] = self.ctrNumOfIps.GetValue()
+		conf["ctrNumOfTests"] = self.ctrNumOfTests.GetValue()
+		
 	def __del__(self):
+		self.saveConfigs()
 		del self.proxyControl
 		del self.ctrSearch
 		
 	@staticmethod
-	def createListChoices():
-		kbyte = 32
-		listaKbyte = ["%dk"%kbyte]
-		while kbyte < 1024:
-			kbyte *= 2
-			listaKbyte.append("%dk"% kbyte)
-		return listaKbyte
-	
-	def startSearchIp(self, evt):
-		if not self.startedSearch and self.btnStartCancel.GetValue():
+	def getKbyteList(start = 32):
+		kbyteCount = start
+		listKbyte = ["%dk"%kbyteCount]
+		while kbyteCount < 1024:
+			kbyteCount *= 2
+			listKbyte.append("%dk"%kbyteCount)
+		return listKbyte
+		
+	def startIPSearch(self, evt):
+		if not self.startSearch and self.btnStartCancel.GetValue():
 			self.btnStartCancel.SetLabel(_("Cancelar"))
 			self.log.SetLabel(_("Iniciando..."))
-			self.startedSearch = True
-			self.stopSearch = False
 			
-			url = self.controlUrls.GetValue()
-			unit = self.controlBytesTeste.GetStringSelection()
-			bytesTeste = int(unit[:-1])*1024
+			self.startSearch, self.stopSearch = True, False
+			
+			url = self.ctrStreamUrl.GetValue()
+			unit = self.ctrBlockSize.GetStringSelection()
+			block_size = int(unit[:-1])*1024
 			
 			# parametros de controle dos threads
 			params = {
-			    "URL": url,
-			    "numBytesTeste": 13 + bytesTeste,
-			    "numMaxTestes": self.controlNumTestes.GetValue(),
-			    "metaProxies": self.controlNumIps.GetValue()
+			    "url": url,
+			    "bytes_block_test": 13 + block_size,
+			    "num_of_ips": self.ctrNumOfIps.GetValue(),
+			    "num_of_tests": self.ctrNumOfTests.GetValue()
 			}
 			# recurços compartilhados pelas conexões
-			self.ctrSearch = proxy.CtrSearch(numips = params['metaProxies'])
+			self.ctrSearch = proxy.CtrSearch(numips = params['num_of_ips'])
 			
 			# cria e inicia as conexões
-			for index in range(self.controlThreads.GetValue()):
+			for index in range(self.ctrNumConnection.GetValue()):
 				conn = proxy.TesteIP(self.proxyControl, self.ctrSearch, params)
 				self.ctrSearch.addConnection( conn )
 				conn.start()
@@ -214,7 +244,7 @@ class IpSearchControl(wx.MiniFrame):
 				# salva a nova lista de ips criada
 				self.ctrSearch.save()
 				self.log.SetLabel( self.ctrSearch.getLog() )
-				self.startedSearch = self.stopSearch = False
+				self.startSearch = self.stopSearch = False
 				self.btnStartCancel.SetLabel( _("Pesquisar") )
 				self.btnStartCancel.SetValue(False)
 				self.progress.SetValue(0) # stop gauge
@@ -224,7 +254,7 @@ class IpSearchControl(wx.MiniFrame):
 				
 		elif not self.ctrSearch.isSearching():
 			self.log.SetLabel(_("Pesquisa cancelada."))
-			self.startedSearch = self.stopSearch = False
+			self.startSearch = self.stopSearch = False
 			self.progress.SetValue(0) # stop gauge
 			self.updateTimer.Stop()
 		else:
@@ -232,7 +262,7 @@ class IpSearchControl(wx.MiniFrame):
 			
 	def OnCloseWindow(self, event):
 		# destruir a janela, com a pesquisa sendo realizada, pode gerar threads zumbis
-		if self.startedSearch: self.ctrSearch.stopConnections()
+		if self.startSearch: self.ctrSearch.stopConnections()
 		self.Destroy()
 		
 ########################################################################
@@ -255,7 +285,7 @@ if __name__ == "__main__":
 		frame.CenterOnScreen()
 		frame.Show()
 		
-		control = IpSearchControl(frame, "IpSearchControl")
+		control = wIPSearch(frame, "wIPSearch")
 		control.Bind(wx.EVT_CLOSE, onClose)
 		control.CenterOnParent()
 		
