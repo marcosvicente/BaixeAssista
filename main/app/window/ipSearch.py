@@ -152,8 +152,8 @@ class wIPSearch( wx.MiniFrame ):
 		""" caso as configs não existam, força uma configuração padrão """
 		default_conf = (
 			("ctrStreamUrl", ""), ("ctrBlockSize", 1),
-			("ctrNumOfIps", "25"), ("ctrNumOfTests", "4"),
-			("ctrNumConnection", "10")
+			("ctrNumOfIps", 25), ("ctrNumOfTests", 4),
+			("ctrNumConnection", 10)
 		)
 		if not configs.has_key("wIPSearch"):
 			configs["wIPSearch"] = {}
@@ -167,10 +167,10 @@ class wIPSearch( wx.MiniFrame ):
 		self.check_configs( configs )
 		conf = configs["wIPSearch"]
 		self.ctrStreamUrl.SetValue(conf["ctrStreamUrl"])
-		self.ctrBlockSize.SetSelection(conf["ctrBlockSize"])
-		self.ctrNumConnection.SetValue(conf["ctrNumConnection"])
-		self.ctrNumOfIps.SetValue(conf["ctrNumOfIps"])
-		self.ctrNumOfTests.SetValue(conf["ctrNumOfTests"])
+		self.ctrBlockSize.SetSelection(conf.as_int("ctrBlockSize"))
+		self.ctrNumConnection.SetValue(conf.as_int("ctrNumConnection"))
+		self.ctrNumOfIps.SetValue(conf.as_int("ctrNumOfIps"))
+		self.ctrNumOfTests.SetValue(conf.as_int("ctrNumOfTests"))
 		
 	def saveConfigs(self, configs={}):
 		configs = getattr(self.mainWin, "configs", configs)
@@ -183,7 +183,6 @@ class wIPSearch( wx.MiniFrame ):
 		conf["ctrNumOfTests"] = self.ctrNumOfTests.GetValue()
 		
 	def __del__(self):
-		self.saveConfigs()
 		del self.proxyControl
 		del self.ctrSearch
 		
@@ -261,6 +260,7 @@ class wIPSearch( wx.MiniFrame ):
 			self.log.SetLabel(_("Por favor aguarde. Cancelando..."))
 			
 	def OnCloseWindow(self, event):
+		self.saveConfigs() # guardando as últimas configurações
 		# destruir a janela, com a pesquisa sendo realizada, pode gerar threads zumbis
 		if self.startSearch: self.ctrSearch.stopConnections()
 		self.Destroy()
