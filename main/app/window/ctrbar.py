@@ -100,8 +100,8 @@ class BarraControles( noteBook.NoteBookImage ):
 	def skinChangeHandle(self, evt):
 		""" adiciona a skin selecionada para player embutido """
 		skinName = self.menuSkins.GetLabelText(evt.GetId())
-		
 		self.mainWin.configs["PlayerWin"]["skinName"] = skinName
+		# Player params
 		self.mainWin.playerWin["skinName"] = skinName
 		
 		# atualiza o player(automaticamente),quando ativado no menu.
@@ -110,8 +110,8 @@ class BarraControles( noteBook.NoteBookImage ):
 	
 	def loadEmbedPlayer(self, evt):
 		""" carrega o player embutido escolhido no menu """
-		playerMod = self.playerMenu.GetLabelText(evt.GetId())
-		self.mainWin.configs["PlayerWin"]["moduleName"] = playerMod
+		moduleName = self.playerMenu.GetLabelText(evt.GetId())
+		self.mainWin.configs["PlayerWin"]["moduleName"] = moduleName
 		playerPanel = self.mainWin.playerWin.GetParent()
 		playerPanel.Freeze()
 		
@@ -129,16 +129,16 @@ class BarraControles( noteBook.NoteBookImage ):
 	def createPlayerWin(self, parent):
 		""" carrega o flash player """
 		configs = getattr(self.mainWin,"configs",None)
+		
 		if configs:
 			# seção de dados muito importante
 			if not configs.has_key("PlayerWin"):
-				configs["PlayerWin"]={}
+				configs["PlayerWin"] = {}
 				
 			# as configurações sempre devem existir
 			pwconfig = configs["PlayerWin"]
-			
-			pwconfig["moduleName"] = pwconfig.get("moduleName","flowPlayer")
-			pwconfig["skinName"] = pwconfig.get("skinName","")
+			pwconfig["moduleName"] = pwconfig.get("moduleName", "flowPlayer")
+			pwconfig["skinName"] = pwconfig.get("skinName", None)
 			
 			# importa o player escolhido pelo usuário
 			player = __import__(pwconfig["moduleName"], {}, {})
@@ -148,12 +148,13 @@ class BarraControles( noteBook.NoteBookImage ):
 				hostName = manager.Server.HOST,
 				skinName = pwconfig["skinName"]
 			)
-			self.mainWin.playerWin = player.Player(parent, **params)
+			self.mainWin.playerWin = playerWin = player.Player(parent, **params)
+			pwconfig["skinName"] = playerWin["skinName"]
 		else:
 			# evita que o programa trave caso algo dê errado
 			self.mainWin.playerWin = wx.Panel()
 		return self.mainWin.playerWin
-	
+		
 	def createBrowserWin(self, parent):
 		iewindow = browser.Browser(parent, self.mainWin)
 		self.mainWin.iewindow = iewindow

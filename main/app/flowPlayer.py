@@ -28,10 +28,9 @@ class Player(wx.Panel):
         self.skins = {}
         
         # defaut params
-        self.params["skinName"] = params.get("skinName", self.defaultSkin)
-        self.params["autostart"] = params.get("autostart", False)
-        self.params["hostName"] = params.get("hostName", "localhost")
-        self.params["portNumber"] = params.get("portNumber", 8000)
+        if not params.has_key("hostName"): self.params["hostName"] = "localhost"
+        if not params.has_key("portNumber"): self.params["portNumber"] = 8002
+        if not params.has_key("autostart"): self.params["autostart"] = False
         
         skinsPath = os.path.join(self.playerMedia, "skins")
         
@@ -42,6 +41,9 @@ class Player(wx.Panel):
                 self.skins[n] = name
         except: # assim, em caso de erro, teremos sempre a skin padrão
             self.skins["BlackWhite"] = "BlackWhite.swf"
+            
+        if not params.has_key("skinName") or not self.hasSkinName(params["skinName"]):
+            self.params["skinName"] = self.defaultSkin
             
         sizer = wx.BoxSizer(wx.VERTICAL)
         
@@ -71,21 +73,28 @@ class Player(wx.Panel):
         """ retorna os nomes das skins disponiveis """
         return self.skins.keys()
     
+    def hasSkinName(self, name):
+        return self.skins.has_key(name)
+        
     def getStreamName(self, size=25):
         letras = [char for char in string.ascii_letters]
         filename = "".join( [random.choice( letras) for i in range(size)] )
         return filename+".flv"
     
     def __setitem__(self, name, value):
-        assert self.params.has_key( name ), 'option "%s" not found!'%name
+        assert self.params.has_key( name ), 'set:option "%s" not found!'%name
         self.params[ name ] = value
+        
+    def __getitem__(self, name):
+        assert self.params.has_key( name ), 'get:option "%s" not found!'%name
+        return self.params[ name ]
         
     def get_params(self):
         previewImage = self.params.get("previewImage", "")
         streamName = self.params.get("streamName", self.getStreamName())
         
         hostName = self.params.get("hostName", "localhost")
-        portNumber = self.params.get("portNumber", 80)
+        portNumber = self.params.get("portNumber", 8002)
         hostDomain = "http://%s:%s"%(hostName, portNumber)
         staticUrl = hostDomain + "/static"
         
