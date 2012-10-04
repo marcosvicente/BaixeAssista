@@ -653,21 +653,6 @@ class Youtube( SiteBase ):
 		
 	def suportaSeekBar(self):
 		return True
-
-	def get_urls(self, params):
-		url_all = []
-		signature = params["sig"]
-		algorithm = params.get("algorithm",[""])[0]
-		ptchn = params.get("ptchn",[""])[0]
-		ptk = params.get("ptk",[""])[0]
-		burst = params.get("burst",[""])[0]
-		
-		for index, url in enumerate(params["url"]):
-			url_all.append(url+"&signature=%s&algorithm=%s&ptchn=%s&ptk=%s&burst=%s" %(
-				signature[index], algorithm, ptchn, ptk, burst
-			)
-		)
-		return url_all
 	
 	def getMessage(self, data):
 		try:
@@ -678,68 +663,60 @@ class Youtube( SiteBase ):
 		except: msg = ""
 		return msg
 	
+	def get_urls(self, params):
+		uparams = cgi.parse_qs(params["url_encoded_fmt_stream_map"][0])
+		params["quality"] = uparams["quality"]
+		params["type"] = uparams["type"]
+		urllist = []
+		for index, url in enumerate(uparams["url"]):
+			fullurl = url + "&signature=%s" %uparams["sig"][index]
+			urllist.append( fullurl )
+		return urllist
+	
 	def set_configs(self, video_info):
 		""" atualiza a dicionário de configuração """
 		self.configs["urls"] = self.get_urls( video_info )
 		
 		try: # video title
-			self.configs["title"] = video_info[ "title" ][0]
+			self.configs["title"] = video_info["title"][0]
 		except (KeyError, IndexError):
 			self.configs["title"] = get_radom_title()
 
 		try: # video thumbnail
-			self.configs["thumbnail_url"] = video_info[ "thumbnail_url" ][0]
+			self.configs["thumbnail_url"] = video_info["thumbnail_url"][0]
 		except (KeyError, IndexError):
 			self.configs["thumbnail_url"] = ""
 
 	def getLink(self):
-		url_default = ""
+		default_url = ""
 		vquality = self.params.get("qualidade", 2)
 		quality_opt = self.video_quality_opts[ vquality ]
 		
 		for index, _type in enumerate( self.raw_data["type"] ):
-			url = self.configs["urls"][index]
 			quality = self.raw_data['quality'][index]
+			url = self.configs["urls"][index]
 			
 			matchobj = re.search("video/([^\s;]+)", _type)
 			if matchobj: self.configs["ext"] = matchobj.group(1)
 			
 			# o formato video/webm, mostra-se impatível como o swf player
 			if re.match(quality_opt, quality):
-				return urllib.unquote_plus(url)+"&range=%s-"
-			elif not url_default:
-				url_default = urllib.unquote_plus(url) +"&range=%s-"
-		return url_default
+				return urllib.unquote_plus( url )+"&range=%s-"
+			
+			elif not default_url:
+				default_url = urllib.unquote_plus( url )+"&range=%s-"
+		return default_url
 		
-	def try_one(self, proxies, timeout):
+	def get_raw_data(self, proxies, timeout):
 		video_id = Universal.get_video_id(self.basename, self.url)
-		
 		url = self.info_url % video_id
 		fd = self.conecte(url, proxies=proxies, timeout=timeout)
 		data = fd.read(); fd.close()
 		return cgi.parse_qs( data )
 	
-	def try_two(self, proxies, timeout):
-		fd = self.conecte(self.url, proxies=proxies, timeout=timeout)
-		webpage = fd.read(); fd.close()
-		
-		matchobj = re.search(r'<script>\s*\(\s*function.*?(.*?)</script>', webpage, re.DOTALL)
-		sc_data = urllib.unquote_plus( matchobj.group(1) )
-		
-		sc_data = sc_data.replace(r"\"", "'")
-		matchobj = re.search("flashvars\s*=\s*'(.*?)'", sc_data)
-		querystr = matchobj.group(1)
-		
-		return cgi.parse_qs( querystr )
-		
 	def start_extraction(self, proxies={}, timeout=25):
-		try: data = self.try_two(proxies, timeout)
-		except: data = self.try_one(proxies, timeout)
-		
-		self.raw_data = data
-		self.message = self.getMessage(data)
-		
-		# atualiza o dicionário de parâmetros
+		self.raw_data = data = self.get_raw_data()
+		self.message = self.getMessage( data )
 		self.set_configs( data )
 		
 ######################################## VIMEO ########################################
@@ -2358,7 +2335,7 @@ if __name__ == "__main__":
 		print proxies["http"]
 		proxies = {}
 
-		if not checkSite("http://www.youtube.com/watch?v=YtkYaRVV6v8&feature=g-all-xit", proxies=proxies, quality=3):
+		if not checkSite("http://www.youtube.com/watch?feature=player_embedded&v=p8ucIL2tLLo", proxies=proxies, quality=3):
 			proxyManager.setBadIp( proxies )
 
 	del proxyManager
