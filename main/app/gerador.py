@@ -654,39 +654,15 @@ class Youtube( SiteBase ):
 	def suportaSeekBar(self):
 		return True
 	
-	def getMessage(self, data):
+	def getMessage(self):
 		try:
-			if data.get("status",[""])[0] == "fail":
-				reason = data.get("reason",[""])[0]
+			if self.raw_data.get("status",[""])[0] == "fail":
+				reason = self.raw_data.get("reason",[""])[0]
 				msg = u"%s informa: %s"%(self.basename, unicode(reason,"UTF-8"))
 			else: msg = ""
 		except: msg = ""
 		return msg
 	
-	def get_urls(self, params):
-		uparams = cgi.parse_qs(params["url_encoded_fmt_stream_map"][0])
-		params["quality"] = uparams["quality"]
-		params["type"] = uparams["type"]
-		urllist = []
-		for index, url in enumerate(uparams["url"]):
-			fullurl = url + "&signature=%s" %uparams["sig"][index]
-			urllist.append( fullurl )
-		return urllist
-	
-	def set_configs(self, video_info):
-		""" atualiza a dicionário de configuração """
-		self.configs["urls"] = self.get_urls( video_info )
-		
-		try: # video title
-			self.configs["title"] = video_info["title"][0]
-		except (KeyError, IndexError):
-			self.configs["title"] = get_radom_title()
-
-		try: # video thumbnail
-			self.configs["thumbnail_url"] = video_info["thumbnail_url"][0]
-		except (KeyError, IndexError):
-			self.configs["thumbnail_url"] = ""
-
 	def getLink(self):
 		default_url = ""
 		vquality = self.params.get("qualidade", 2)
@@ -701,8 +677,8 @@ class Youtube( SiteBase ):
 			
 			# o formato video/webm, mostra-se impatível como o swf player
 			if re.match(quality_opt, quality):
-				return urllib.unquote_plus( url )+"&range=%s-"
-			
+				if not re.match("video/webm", _type):
+					return urllib.unquote_plus( url )+"&range=%s-"
 			elif not default_url:
 				default_url = urllib.unquote_plus( url )+"&range=%s-"
 		return default_url
@@ -715,9 +691,25 @@ class Youtube( SiteBase ):
 		return cgi.parse_qs( data )
 	
 	def start_extraction(self, proxies={}, timeout=25):
-		self.raw_data = data = self.get_raw_data()
-		self.message = self.getMessage( data )
-		self.set_configs( data )
+		self.raw_data = self.get_raw_data(proxies, timeout)
+		self.message = self.getMessage()
+		
+		uparams = cgi.parse_qs(self.raw_data["url_encoded_fmt_stream_map"][0])
+		self.raw_data["quality"] = uparams["quality"]
+		self.raw_data["type"] = uparams["type"]
+		self.configs["urls"] = []
+		
+		for index, url in enumerate(uparams["url"]):
+			fullurl = url + "&signature=%s" %uparams["sig"][index]
+			self.configs["urls"].append( fullurl )
+			
+		try: self.configs["title"] = self.raw_data["title"][0]
+		except (KeyError, IndexError):
+			self.configs["title"] = get_radom_title()
+			
+		try: self.configs["thumbnail_url"] = self.raw_data["thumbnail_url"][0]
+		except (KeyError, IndexError):
+			self.configs["thumbnail_url"] = ""
 		
 ######################################## VIMEO ########################################
 class Vimeo( SiteBase ):

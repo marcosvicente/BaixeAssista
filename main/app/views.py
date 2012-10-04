@@ -27,7 +27,8 @@ def streamLoader( request ):
 	response["Content-Type"] = "video/%s" % videoManager.getVideoExt()
 	response["Content-Length"] = manage.getVideoSize()
 	response["Content-Transfer-Encoding"] = "binary"
-	response['Content-Disposition'] = 'attachment; filename=%s'%videoManager.getTitle()
+	filename = videoManager.getTitle().encode("utf-8","ignore")
+	response['Content-Disposition'] = 'attachment; filename=%s'%filename
 	response["Accept-Ranges"] = "bytes"
 	print response["Content-Type"]
 	return response
