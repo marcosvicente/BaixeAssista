@@ -1806,40 +1806,45 @@ class Vk( SiteBase ):
 		return videoLink
 	
 	def start_extraction(self, proxies={}, timeout=25):
-		try:
-			fd = self.conecte(self.url, proxies=proxies, timeout=timeout)
-			webdata = fd.read(); fd.close()
-		except: return
-		
-		mathobj = re.search("var\s*video_host\s*=\s*'(?P<url>.+?)'", webdata, re.DOTALL)
-		url = mathobj.group("url")
-
-		mathobj = re.search("var\s*video_uid\s*=\s*'(?P<uid>.+?)'", webdata, re.DOTALL)
-		uid = mathobj.group("uid")
-
-		mathobj = re.search("var\s*video_vtag\s*=\s*'(?P<vtag>.+?)'", webdata, re.DOTALL)
-		vtag = mathobj.group("vtag")
-
-		mathobj = re.search("var\s*video_max_hd\s*=\s*(?:')?(?P<max_hd>.+?)(?:')?", webdata, re.DOTALL)
-		max_hd = mathobj.group("max_hd")
-
-		mathobj = re.search("var\s*video_no_flv\s*=\s*(?:')?(?P<no_flv>.+?)(?:')?", webdata, re.DOTALL)
-		no_flv = mathobj.group("no_flv")
-
-		try: title = re.search("var\s*video_title\s*=\s*'(.+?)'", webdata).group(1)
-		except: title = get_radom_title()
-
 		## http://cs519609.userapi.com/u165193745/video/7cad4a848e.360.mp4
-		if int(no_flv):
-			if int(max_hd): self.configs[1] = url + "u%s/video/%s.240.mp4"%(uid, vtag)
-			self.configs[2] = url + "u%s/video/%s.360.mp4"%(uid, vtag)
+		fd = self.conecte(self.url, proxies=proxies, timeout=timeout)
+		webdata = fd.read(); fd.close()
+		params = {}
+		try:
+			mathobj = re.search("var\s*video_host\s*=\s*'(?P<url>.+?)'", webdata, re.DOTALL)
+			params["url"] = mathobj.group("url")
+			
+			mathobj = re.search("var\s*video_uid\s*=\s*'(?P<uid>.+?)'", webdata, re.DOTALL)
+			params["uid"] = mathobj.group("uid")
+	
+			mathobj = re.search("var\s*video_vtag\s*=\s*'(?P<vtag>.+?)'", webdata, re.DOTALL)
+			params["vtag"] = mathobj.group("vtag")
+	
+			mathobj = re.search("var\s*video_max_hd\s*=\s*(?:')?(?P<max_hd>.+?)(?:')?", webdata, re.DOTALL)
+			params["max_hd"] = mathobj.group("max_hd")
+	
+			mathobj = re.search("var\s*video_no_flv\s*=\s*(?:')?(?P<no_flv>.+?)(?:')?", webdata, re.DOTALL)
+			params["no_flv"] = mathobj.group("no_flv")
+		except:
+			matchobj = re.search("var\s*vars\s*=\s*{(?P<vars>.+?)}", webdata, re.DOTALL)
+			raw_params = matchobj.group("vars").replace(r'\"', '"')
+			params = dict([(a, (b or c)) for a,b,c in re.findall('"(.+?)"\s*:\s*(?:"(.*?)"|(-?\d*))',raw_params)])
+			params["url"] = "http://cs%s.vk.com" % params.pop("host")
+			
+		try: title = re.search("<title>(.+?)</title>", webdata).group(1)
+		except: title = get_radom_title()
+		
+		if int(params.get("no_flv",0)):
+			baseUrl = params["url"] + "/u%s/video/%s.{res}.mp4"%(params["uid"], params["vtag"])
+			url_hd240 = baseUrl.format(res = 240)
+			url_hd360 = baseUrl.format(res = 360)
 			ext = "mp4"
 		else:
-			url = url + "u%s/video/%s.flv"%(uid, vtag)
+			url_hd240 = url_hd360 = params["url"] + "u%s/video/%s.flv"%(params["uid"], params["vtag"])
 			ext = "flv"
 			
-		self.configs.update({"title": title, "ext": ext})
-
+		self.configs = {1: url_hd240, 2: url_hd360, "title": title, "ext": ext}
+		
 ###################################### XVIDEOS #######################################
 class Xvideos( SiteBase ):
 	## http://www.xvideos.com/video2037621/mommy_and_daughter_spreading
@@ -2327,7 +2332,7 @@ if __name__ == "__main__":
 		print proxies["http"]
 		proxies = {}
 
-		if not checkSite("http://www.youtube.com/watch?feature=player_embedded&v=p8ucIL2tLLo", proxies=proxies, quality=3):
+		if not checkSite("http://vk.com/video103395638_163156178", proxies=proxies, quality=3):
 			proxyManager.setBadIp( proxies )
 
 	del proxyManager
