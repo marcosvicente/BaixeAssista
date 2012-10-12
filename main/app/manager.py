@@ -23,13 +23,14 @@ import base64
 import select
 
 from main import settings
-from django.contrib.staticfiles.management.commands import runserver
+## Servidor multi-threading
+from main.concurrent_server.management.commands import runcserver
+
 from main.app import models # modelo de banco de dados
 import logging
 
 logger = logging.getLogger("main.app.manager")
-logger.info('STATIC DIR: "%s"'%settings.STATIC_PATH)
-    
+
 # INTERNACIONALIZATION
 def installTranslation(configs = None):
     """ instala as traduções apartir do arquivo de configurações. """
@@ -345,7 +346,6 @@ class Server( threading.Thread ):
     INT_TO_BOOL = {1: True, 0: False}
     
     HOST, PORT = "localhost", 8002
-    argv = "%s:%s"%(HOST, PORT)
     
     class __metaclass__(type):
         """ informa o estado do servidor, com base na variável ambiente """
@@ -366,10 +366,10 @@ class Server( threading.Thread ):
     
     def run(self):
         try:
-            cmd = runserver.Command()
+            cmd = runcserver.Command()
             Server.running = True
             logger.info("Server running...")
-            cmd.execute(self.argv, use_reloader=False)
+            cmd.execute("%s:%s"%(self.HOST, self.PORT), use_reloader=False)
         except Exception as e:
             logger.error("Server listen: %s"%e)
             Server.running = False
