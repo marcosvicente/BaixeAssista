@@ -120,7 +120,7 @@ class BaixeAssistaWin( wx.Frame ):
 
 		self.playerExterno = None
 		self.manage = self.startDown = None
-		self.globalInfo = manager.globalInfo
+		self.info = manager.Info
 		self.streamLoading = False
 		self.iewindow = None
 
@@ -170,7 +170,7 @@ class BaixeAssistaWin( wx.Frame ):
 		del self.playerExterno
 		del self.streamLoading
 		del self.configPath
-		del self.globalInfo
+		del self.info
 		del self.manage
 		del self.configs
 
@@ -782,7 +782,7 @@ class BaixeAssistaWin( wx.Frame ):
 					rowIndex = self.detailControl.getRowIndex( smanager.ident )
 					
 					for colIndex, infokey in enumerate( manager.StreamManager.listInfo ):
-						infoValue = self.globalInfo.get_info( smanager.ident, infokey )
+						infoValue = self.info.get( smanager.ident, infokey )
 						list_ctr.SetStringItem( rowIndex, colIndex, u"%s"%infoValue )
 						
 					# subprogressbar update

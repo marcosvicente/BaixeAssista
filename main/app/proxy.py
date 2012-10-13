@@ -23,14 +23,14 @@ class Proxylist( gerador.ConnectionProcessor ):
 	def __init__(self):
 		gerador.ConnectionProcessor.__init__(self)
 		self.countIp = 0; self.name = "proxylist"
-		manager.globalInfo.add_info( self.name)
+		manager.Info.add( self.name)
 		
 		self.cookie = {"Cookie": "cf_clearance=84d7c368a55ef2b26e6beb5ce041c935-1321375733-1800"}
 		self.proxylist_url = "http://www.proxylist.net/list/0/0/1/0/%d"
 		self.numPagina = 0
 
 	def __del__(self):
-		manager.globalInfo.del_info( self.name)
+		manager.Info.delete( self.name)
 
 	def getProxies(self, data):
 		listProxies = re.findall('<a href="/proxy/(\d+\.\d+\.\d+\.\d+:\d+)"', data)
@@ -53,7 +53,7 @@ class Proxylist( gerador.ConnectionProcessor ):
 		proxies = self.getProxies( webpage )
 		
 		self.countIp += len(proxies)
-		manager.globalInfo.set_info(self.name, self.name,
+		manager.Info.set(self.name, self.name,
 		    "%s pagina: %s numIP: %d"%(self.name, self.numPagina, len(proxies)))
 		self.numPagina += 1
 		return proxies
@@ -67,7 +67,7 @@ class Freeproxylists( gerador.ConnectionProcessor ):
 		self.regexHostPort = re.compile('IPDecode\("(.*?)"\).*?(\d{1,5})', re.DOTALL)
 		self.regexHost = re.compile("(\d{1,4}\.\d{1,4}\.\d{1,4}.\d{1,4})")
 		self.countIp = 0; self.name = "freeproxylists"
-		manager.globalInfo.add_info( self.name)
+		manager.Info.add( self.name)
 		
 		self.cookie = {"Cookie": "hl=en; pv=12; userno=20120614-007721"}
 		self.cookie_url = " http://www.freeproxylists.net/cookie.php?page=%s"
@@ -75,7 +75,7 @@ class Freeproxylists( gerador.ConnectionProcessor ):
 		self.numPagina = 1
 		
 	def __del__(self):
-		manager.globalInfo.del_info( self.name)
+		manager.Info.delete( self.name)
 
 	def getProxies(self, webpage):
 		host_port = []
@@ -111,7 +111,7 @@ class Freeproxylists( gerador.ConnectionProcessor ):
 			proxies = self.getProxies( webpage )
 			
 		self.countIp += len(proxies)
-		manager.globalInfo.set_info(self.name, self.name,
+		manager.Info.set(self.name, self.name,
 		    "%s pagina: %s numIP: %d"%(self.name, self.numPagina, len(proxies)))
 		self.numPagina += 1
 		return proxies
@@ -121,7 +121,7 @@ class Xroxy( gerador.ConnectionProcessor ):
 	def __init__(self):
 		gerador.ConnectionProcessor.__init__(self)
 		self.countIp = 0; self.name = "xroxy"
-		manager.globalInfo.add_info( self.name )
+		manager.Info.add( self.name )
 		
 		self.xroxy_url ="http://www.xroxy.com/proxylist.php?port=&type="\
 			"&ssl=&country=&latency=&reliability=&sort=reliability"\
@@ -129,7 +129,7 @@ class Xroxy( gerador.ConnectionProcessor ):
 		self.numPagina = 0
 
 	def __del__(self):
-		manager.globalInfo.del_info( self.name)
+		manager.Info.delete( self.name)
 
 	def getProxies(self, webpage):
 		host_port = re.findall("host=(\d{1,4}\.\d{1,4}\.\d{1,4}\.\d{1,4})&port=(\d{1,5})", webpage)
@@ -152,7 +152,7 @@ class Xroxy( gerador.ConnectionProcessor ):
 		proxies = self.getProxies( webpage )
 		self.countIp += len(proxies)
 		
-		manager.globalInfo.set_info(self.name, self.name, 
+		manager.Info.set(self.name, self.name, 
 		    "%s pagina: %s numIP: %d"%(self.name, self.numPagina, len(proxies)))
 		self.numPagina += 1
 		return proxies
@@ -199,7 +199,7 @@ class ProxyControl:
 			proxies = site.search()
 			
 			if proxies: self.listaIps.extend(proxies)
-			self.info += manager.globalInfo.get_info(site.name, site.name)
+			self.info += manager.Info.get(site.name, site.name)
 			self.info += "\n"
 			total += len(proxies)
 			

@@ -127,33 +127,29 @@ def security_save(filepath, _configobj=None, _list=None, newline="\n"):
             except: pass
         return False
     return True
-###############################################################################
-class GlobalInfo:
-    """ Guarda informações de estado de outros objetos.
-    O objetivo é criar um meio fácil de obter informações de objetos, no escopo
-    global, sem precisar ficar acessando o objeto diretamento """
 
-    def __init__(self):
-        self.info = {}
-
-    def add_info(self, keyRoot):
-        self.info[ keyRoot ] = {}
-
-    def del_info(self, keyRoot):
-        if self.info.has_key( keyRoot ):
-            del self.info[ keyRoot ]
-        return self.info.get(keyRoot, False)
-
-    def get_info(self, keyRoot, keyInfo):
-        return self.info.get(keyRoot, {}).get(keyInfo, "")
-
-    def set_info(self, keyRoot, keyInfo, valueInfo):
-        self.info[ keyRoot ][ keyInfo ] = valueInfo
-
-globalInfo = GlobalInfo()
-
+#################################### INFO ##################################
+class Info(object):
+    """ guarda o estado do objeto adicionado """
+    info = {}
+    
+    @classmethod
+    def add(cls, rootkey):
+        cls.info[rootkey]= {}
+        
+    @classmethod
+    def delete(cls, rootkey):
+        return cls.info.pop(rootkey, None)
+    
+    @classmethod
+    def get(cls, rootkey, infokey):
+        return cls.info.get(rootkey,{}).get(infokey,'')
+    
+    @classmethod    
+    def set(cls, rootkey, infokey, info):
+        cls.info[rootkey][infokey] = info
+        
 ################################## FLVPLAYER ##################################
-
 class FlvPlayer(threading.Thread):
     """ Classe usada no controle de programas externos(players) """
     
@@ -1081,7 +1077,7 @@ class Manage( object ):
         self.streamerList = []
         
         # manage log
-        globalInfo.add_info("manage")
+        Info.add("manage")
         # -----------------------------------------
         settings.MANAGE_OBJECT = self
         
@@ -1162,7 +1158,7 @@ class Manage( object ):
         """ deleta todas as variáveis do objeto """
         self.stopStreamers()
         
-        globalInfo.del_info("manage")
+        Info.delete("manage")
         settings.MANAGE_OBJECT = None
         # -------------------------------------------------------------------
         if not self.usingTempfile and not self.params.get("tempfile",False):
@@ -1456,7 +1452,7 @@ class StreamManager( threading.Thread):
         self.params[ key ] = value
         
     def __del__(self):
-        globalInfo.del_info( self.ident )
+        Info.delete( self.ident )
         del self.manage
         del self.params
 
@@ -1527,10 +1523,9 @@ class StreamManager( threading.Thread):
 
     def inicialize(self):
         """ iniciado com thread. Evita travar no init """
-        # globalinfo: add_info
-        globalInfo.add_info(self.ident)
-        globalInfo.set_info(self.ident, "state", _("Iniciando"))
-
+        Info.add(self.ident)
+        Info.set(self.ident, "state", _("Iniciando"))
+        
         with StreamManager.lockInicialize:
             timeout = self.params.get("timeout", 25)
             videoManager = self.manage.videoManager
@@ -1546,7 +1541,7 @@ class StreamManager( threading.Thread):
                 self.proxies, self.link = proxyManager.getProxyLink(timeout=timeout)
 
             ip = self.proxies.get("http",_(u"Conexão Padrão"))
-            globalInfo.set_info(self.ident, "http", ip)
+            Info.set(self.ident, "http", ip)
 
     def stop(self):
         """ pára toda a atividade da conexão """
@@ -1602,8 +1597,8 @@ class StreamManager( threading.Thread):
         return self.aguarde[1]
 
     def reset_info(self):
-        globalInfo.set_info(self.ident, "block_index", "")
-        globalInfo.set_info(self.ident, "local_speed", "")
+        Info.set(self.ident, "block_index", "")
+        Info.set(self.ident, "local_speed", "")
 
     def streamWrite(self, stream, nbytes):
         """ Escreve a stream de bytes dados de forma controlada """
@@ -1641,8 +1636,8 @@ class StreamManager( threading.Thread):
                 block_index = self.manage.interval.get_index(self.ident)
                 
                 # condição atual da conexão: Baixando
-                globalInfo.set_info(self.ident, "state", _("Baixando") )
-                globalInfo.set_info(self.ident, "block_index", block_index)
+                Info.set(self.ident, "state", _("Baixando") )
+                Info.set(self.ident, "block_index", block_index)
                 
                 # limita a leitura ao bloco de dados
                 if (self.numBytesLidos + block_read) > block_size:
@@ -1674,7 +1669,7 @@ class StreamManager( threading.Thread):
                 
                 # calcula a velocidade de transferência da conexão
                 speed = self.calc_speed(local_time, time.time(), self.numBytesLidos)
-                globalInfo.set_info(self.ident, 'local_speed', speed)
+                Info.set(self.ident, 'local_speed', speed)
                 
                 # tempo do download
                 self.manage.tempoDownload = self.calc_eta(start, time.time(), total, current)
@@ -1748,14 +1743,14 @@ class StreamManager( threading.Thread):
     
     @just_try()
     def fixeFalhaTransfer(self, errorstring, errornumber):
-        globalInfo.set_info(self.ident, 'state', errorstring)
+        Info.set(self.ident, 'state', errorstring)
         self.reset_info()
 
         bytesnumber = self.removaConfigs(errorstring, errornumber) # removendo configurações
         if errornumber == 3 or self.wasStopped(): return # retorna porque a conexao foi encerrada
         time.sleep(0.5)
 
-        globalInfo.set_info(self.ident, "state", _("Reconfigurando"))
+        Info.set(self.ident, "state", _("Reconfigurando"))
         time.sleep(0.5)
 
         ip = self.proxies.get("http", "default")
@@ -1778,7 +1773,7 @@ class StreamManager( threading.Thread):
                 self.proxies, self.link = proxyManager.getProxyLink(timeout=timeout)
                 self.usingProxy = False
                 
-        globalInfo.set_info(self.ident,"http",self.proxies.get("http",_(u"Conexão Padrão")))
+        Info.set(self.ident,"http",self.proxies.get("http",_(u"Conexão Padrão")))
 
     def conecte(self):
         videoManager = self.manage.videoManager
@@ -1789,7 +1784,7 @@ class StreamManager( threading.Thread):
         nfalhas = 0
         while not self.wasStopped() and nfalhas < self.params.get("reconexao",3):
             try:
-                globalInfo.set_info(self.ident, "state", _("Conectando"))
+                Info.set(self.ident, "state", _("Conectando"))
                 waittime = self.params.get("waittime", 2)
                 timeout = self.params.get("timeout", 25)
                 
@@ -1808,10 +1803,10 @@ class StreamManager( threading.Thread):
                     if stream: self.streamWrite(stream, len(stream))
                     return True
                 else:
-                    globalInfo.set_info(self.ident, "state", _(u"Resposta inválida"))
+                    Info.set(self.ident, "state", _(u"Resposta inválida"))
                     self.streamSocket.close(); time.sleep( waittime )
             except Exception as e:
-                globalInfo.set_info(self.ident, "state", _(u"Falha na conexão"))
+                Info.set(self.ident, "state", _(u"Falha na conexão"))
                 time.sleep( waittime )
                 
             # se passar do tempo de timeout o ip será descartado
@@ -1823,7 +1818,7 @@ class StreamManager( threading.Thread):
 
     def configure(self ):
         """ associa a conexão a uma parte da stream """
-        globalInfo.set_info(self.ident, "state", _("Ocioso"))
+        Info.set(self.ident, "state", _("Ocioso"))
 
         if not self.esperaSolicitada():
             with StreamManager.lockBlocoConfig:
@@ -1867,7 +1862,7 @@ class StreamManager( threading.Thread):
                 self.fixeFalhaTransfer(_("Incapaz de conectar"), 1)
                 print "SM - Err: %s" %(e)
         # estado final da conexão
-        globalInfo.set_info(self.ident, "state", _(u"Conexão parada"))
+        Info.set(self.ident, "state", _(u"Conexão parada"))
         
 #########################  STREAMANAGER: (megaupload, youtube) ######################
 class StreamManager_( StreamManager ):
@@ -1877,19 +1872,18 @@ class StreamManager_( StreamManager ):
         
     def inicialize(self):
         """ iniciado com thread. Evita travar no init """
-        # globalinfo: add_info
-        globalInfo.add_info( self.ident)
-        globalInfo.set_info(self.ident, "state", "Iniciando")
+        Info.add( self.ident)
+        Info.set(self.ident, "state", "Iniciando")
 
         if self.usingProxy == True: # conexão padrão - sem proxy
-            globalInfo.set_info(self.ident, "http", _(u"Conexão Padrão"))
+            Info.set(self.ident, "http", _(u"Conexão Padrão"))
         else:
             self.proxies = self.manage.proxyManager.proxyFormatado()
-            globalInfo.set_info(self.ident, "http", self.proxies['http'])
+            Info.set(self.ident, "http", self.proxies['http'])
             
     @just_try()
     def fixeFalhaTransfer(self, errorstring, errornumber):
-        globalInfo.set_info(self.ident, 'state', errorstring)
+        Info.set(self.ident, 'state', errorstring)
         self.reset_info()
 
         typechange = self.params.get("typechange", False)
@@ -1899,7 +1893,7 @@ class StreamManager_( StreamManager ):
         if errornumber == 3: return # retorna porque a conexao foi encerrada
         time.sleep(0.5)
 
-        globalInfo.set_info(self.ident, "state", _("Reconfigurando"))
+        Info.set(self.ident, "state", _("Reconfigurando"))
         time.sleep(0.5)
 
         if self.usingProxy:
@@ -1911,7 +1905,7 @@ class StreamManager_( StreamManager ):
             else:
                 self.usingProxy, self.proxies = False, proxyManager.proxyFormatado()
 
-        globalInfo.set_info(self.ident,"http",self.proxies.get("http",_(u"Conexão Padrão")))
+        Info.set(self.ident,"http",self.proxies.get("http",_(u"Conexão Padrão")))
 
     def conecte(self):
         videoManager = self.manage.videoManager
@@ -1923,16 +1917,16 @@ class StreamManager_( StreamManager ):
             try:
                 sleep_for = self.params.get("waittime",2)
 
-                globalInfo.set_info(self.ident, "state", _("Conectando"))
+                Info.set(self.ident, "state", _("Conectando"))
                 data = videoManager.get_init_page( self.proxies) # pagina incial
                 link = videoManager.get_file_link( data) # link de download
                 wait_for = videoManager.get_count( data) # contador
                 
                 for second in range(wait_for, 0, -1):
-                    globalInfo.set_info(self.ident, "state", _(u"Aguarde %02ds")%second)
+                    Info.set(self.ident, "state", _(u"Aguarde %02ds")%second)
                     time.sleep(1)
 
-                globalInfo.set_info(self.ident, "state", _("Conectando"))
+                Info.set(self.ident, "state", _("Conectando"))
                 self.streamSocket = videoManager.conecte(
                     link, proxies=self.proxies, headers={"Range":"bytes=%s-"%seekpos})
 
@@ -1946,11 +1940,11 @@ class StreamManager_( StreamManager ):
                     if stream: self.streamWrite(stream, len(stream))
                     return True
                 else:
-                    globalInfo.set_info(self.ident, "state", _(u"Resposta inválida"))
+                    Info.set(self.ident, "state", _(u"Resposta inválida"))
                     self.streamSocket.close()
                     time.sleep( sleep_for )
             except Exception as err:
-                globalInfo.set_info(self.ident, "state", _(u"Falha na conexão"))
+                Info.set(self.ident, "state", _(u"Falha na conexão"))
                 if hasattr(err, "code") and err.code == 503: return False
                 time.sleep( sleep_for )
             nfalhas += 1
@@ -1974,7 +1968,7 @@ class StreamManager_( StreamManager ):
             except Exception as err:
                 self.fixeFalhaTransfer(_("Incapaz de conectar"), 1)
                 print "SM - Err: %s" %err
-        globalInfo.set_info(self.ident, "state", _(u"Conexão parada"))
+        Info.set(self.ident, "state", _(u"Conexão parada"))
         
 ########################### EXECUÇÃO APARTIR DO SCRIPT  ###########################
 
