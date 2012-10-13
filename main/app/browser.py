@@ -358,7 +358,7 @@ class Browser(wx.Panel):
     def setNavStopLoading(self, webview):
         """ atualiza o evento de parada do carregamento da página """
         webview.loading = False
-
+        
     def OnTabClose(self, evt):
         """ impede que todas as páginas sejam fechadas """
         win = evt.GetEventObject()
@@ -609,9 +609,8 @@ class Browser(wx.Panel):
 
             self.current = webviewUrl
         
-        webview.RunScript( JS_LINK_REGISTER )
-        
         if not webview.JS_SCRIPT_RUN and webviewUrl.startswith("http"):
+            ## webview.RunScript( JS_LINK_REGISTER )
             webview.RunScript( JS_LINK_MONITOR )
             webview.RunScript( JS_LINK_EXTRACTOR )
             webview.JS_SCRIPT_RUN = True
@@ -635,8 +634,11 @@ class Browser(wx.Panel):
     def OnWebViewNewWindow(self, event):
         """ Controla a abertura de novas janelas """
         prev_title = self.webview.GetCurrentTitle()
-        self.webview.RunScript("document.title = link_clicked;")
-        link_clicked = self.webview.GetCurrentTitle()
+        self.webview.RunScript("document.title = clickedLink;")
+        clickedLink = self.webview.GetCurrentTitle()
+        
+        try: clickedLink = clickedLink.decode("utf-8")
+        except: clickedLink = clickedLink.encode("utf-8")
         
         self.webview.RunScript("document.title = '%s';" % prev_title)
         url = event.GetURL(); isValid = self.filtroUrl.isValid( url )
@@ -652,7 +654,7 @@ class Browser(wx.Panel):
                 self.controlEmbedUrls.Append( url )
                 self.controleFluxoUrlsEmbutidas()
 
-        if url == link_clicked and not self.pageExist(url) and not isValid and self.abasControl.GetPageCount() < 10:
+        if url == clickedLink and not self.pageExist(url) and not isValid and self.abasControl.GetPageCount() < 10:
             # geralmente a url vem duplacada, sendo a segunda a url
             # válida. Por isso sempre a segunda será usada na nova tabela.
             self.addNewTab( self.filtroUrl.extraiSegundUrl( url ) )
@@ -663,7 +665,7 @@ class Browser(wx.Panel):
         """ chamado sempre que a página termina de carregar """
         webview = evt.GetEventObject()
         self.setNavStopLoading(webview)
-
+        
     # Control bar events
     def OnLocationSelect(self, event):
         """ controla a seleção de uma url, carrega a url selecionada """
