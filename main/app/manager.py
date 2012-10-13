@@ -153,30 +153,10 @@ class GlobalInfo:
 globalInfo = GlobalInfo()
 
 ################################## FLVPLAYER ##################################
-def runElevated(cmd, params):
-    """ executa um processo, porém requistando permissões. """
-    import win32com.shell.shell as shell
-    from win32com.shell import shellcon
-    from win32con import SW_NORMAL
-    import win32event, win32api
 
-    process = shell.ShellExecuteEx(
-        lpVerb="runas", lpFile=cmd, fMask=shellcon.SEE_MASK_NOCLOSEPROCESS, 
-        lpParameters=params, nShow=SW_NORMAL
-    )
-    hProcess = process["hProcess"]
-    class Process:
-        processHandle = hProcess
-        @staticmethod
-        def terminate(): win32api.TerminateProcess(hProcess,0)
-        @staticmethod
-        def wait(): win32event.WaitForSingleObject(hProcess, win32event.INFINITE)
-    return Process
-
-class FlvPlayer( threading.Thread):
-    """ Classe de controle para player externo. 
-    O objetivo é abrir o player exeterno e indicar a ele o que fazer.
-    """
+class FlvPlayer(threading.Thread):
+    """ Classe usada no controle de programas externos(players) """
+    
     def __init__(self, cmd="", filename="stream", filepath="", host="localhost", port=80):
         threading.Thread.__init__(self)
         self.cmd, self.process, self.running = cmd, None, False
@@ -191,13 +171,34 @@ class FlvPlayer( threading.Thread):
         """ pára a execução do player """
         try: self.process.terminate()
         except: pass
-
+    
     def isRunning(self):
         return self.running
-
+    
+    @staticmethod
+    def runElevated(cmd, params):
+        """ executa um processo, porém requistando permissões. """
+        import win32com.shell.shell as shell
+        from win32com.shell import shellcon
+        from win32con import SW_NORMAL
+        import win32event, win32api
+        
+        process = shell.ShellExecuteEx(
+            lpVerb="runas", lpFile=cmd, fMask=shellcon.SEE_MASK_NOCLOSEPROCESS, 
+            lpParameters=params, nShow=SW_NORMAL
+        )
+        hProcess = process["hProcess"]
+        class Process:
+            processHandle = hProcess
+            @staticmethod
+            def terminate(): win32api.TerminateProcess(hProcess,0)
+            @staticmethod
+            def wait(): win32event.WaitForSingleObject(hProcess, win32event.INFINITE)
+        return Process
+    
     def run(self):
         try:
-            self.process = runElevated(self.cmd, self.url)
+            self.process = self.runElevated(self.cmd, self.url)
             self.running = True; self.process.wait()
         except ImportError:
             self.process = subprocess.Popen(self.url, executable=self.cmd)
