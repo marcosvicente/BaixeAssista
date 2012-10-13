@@ -41,27 +41,28 @@ def installTranslation(configs = None):
         except:
             configs = {}
     try: import gettext
-    except ImportError, err:
-        print "Error[import gettext] %s"%err
+    except ImportError as err:
+        logger.critical("import gettext: %s"%err)
         raise err
-
+    
     menus = configs.get("Menus", {})
     lang = menus.get("language", "en")
-
+    
     localepath = os.path.join(settings.APPDIR, "locale")
     language = gettext.translation("ba_trans", localepath, languages=[lang])
 
     # instala no espaço de nomes embutidos
     language.install(unicode=True)
-#######################################################################################
+    
+#################################### JUST_TRY ##################################
 class just_try:
     """ executa o méthodo dentro de um try:except """
     def __call__(this, method):
         def wrap(self, *args, **kwargs): # magic!
             try: method(self, *args, **kwargs)
-            except Exception as e:
-                print "JUST_TRY - Err: %s"%(e)
-                method.error = str(e)
+            except Exception as err:
+                logger.error("just-try: %s"%err)
+                method.error = str(err)
         return wrap
     
 def get_filename(filepath, fullname=True):
@@ -82,25 +83,18 @@ def security_save(filepath, _configobj=None, _list=None, newline="\n"):
     """
     try: # criando o caminho para o arquivo de backup
         filename = get_filename( filepath ) # nome do arquivo no path.
-        backFilePath = filepath.replace(filename, ("_"+filename))
-    except Exception, err:
-        try: print "Error[security_save:backfilename] %s"%err
-        except: pass
+        bkfilepath = filepath.replace(filename,("bk_"+filename))
+    except Exception as err:
+        logger.error(u"Path to backup file: %s"%err)
         return False
-    ######
+    
     # guarda o arquivo antigo temporariamente
-    if os.path.exists(filepath):
-        try: os.rename(filepath, backFilePath)
-        except Exception, err:
-            try: print "Error[security_save:rename-backfile] %s"%err
-            except: pass
-            try:
-                os.remove(backFilePath); os.rename(filepath,backFilePath)
-            except Exception, err:
-                try: print "Error[security_save:remove-backfile] %s"%err
-                except: pass
-                return False
-    ######
+    if os.path.exists( filepath ):
+        try: os.rename(filepath, bkfilepath)
+        except Exception as err:
+            logger.error(u"Rename config to backup: %s"%err)
+            return False
+            
     try: # começa a criação do novo arquivo de configuração
         with open(filepath, "w") as configsfile:
             if type(_list) is list:
@@ -109,21 +103,20 @@ def security_save(filepath, _configobj=None, _list=None, newline="\n"):
             elif isinstance(_configobj, configobj.ConfigObj):
                 _configobj.write( configsfile )
             # levanta a exeção com o objetivo de recuperar o arquivo original
-            else: raise AttributeError, "invalid attribute" 
-
-            if os.path.exists(filepath):
-                try: os.remove(backFilePath)
-                except: pass
-    except Exception, err:
-        try: print "Error[security_save:saving-configs] %s"%err
-        except: pass
-        # remove o arquivo atual do erro.
+            else:
+                raise AttributeError, "invalid config data"
         if os.path.exists(filepath):
+            try: os.remove(bkfilepath)
+            except: pass
+    except Exception as err:
+        logger.critical(u"Saving config file: %s"%err)
+        # remove o arquivo atual do erro.
+        if os.path.exists( filepath ):
             try: os.remove(filepath)
             except: pass
         # restaura o arquivo original
-        if not os.path.exists(filepath):
-            try: os.rename(backFilePath, filepath)
+        if not os.path.exists( filepath ):
+            try: os.rename(bkfilepath, filepath)
             except: pass
         return False
     return True
