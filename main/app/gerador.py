@@ -2113,15 +2113,31 @@ class Videoslasher( SiteBase ):
 	def suportaSeekBar(self):
 		return True
 	
+	def postPage(self, webpage, proxies, timeout):
+		matchobj = PutLocker.patternForm.search( webpage )
+		hashvalue =  matchobj.group("hash") or  matchobj.group("_hash")
+		hashname = matchobj.group("name") or  matchobj.group("_name")
+		confirmvalue = matchobj.group("confirm")
+		
+		data = urllib.urlencode({hashname: hashvalue, "confirm": confirmvalue})
+		fd = self.conecte(self.url, proxies=proxies, timeout=timeout, data=data)
+		webpage = fd.read(); fd.close()
+		return webpage
+	
 	def start_extraction(self, proxies={}, timeout=25):
 		fd = self.conecte(self.url, proxies=proxies, timeout=timeout)
-		webPage = fd.read(); fd.close()
+		firstWebpage = fd.read(); fd.close()
 		
-		matchobj = re.search("""playlist:\s*(?:'|")(/playlist/\w+)(?:'|")""", webPage, re.DOTALL)
-		pl_url = matchobj.group(1)
-		if pl_url[-1] != "/": pl_url += "/"
+		try: webpage = self.postPage(firstWebpage, proxies, timeout)
+		except: webpage = firstWebpage
 		
-		fd = self.conecte(self.domain + pl_url, proxies=proxies, timeout=timeout)
+		matchobj = re.search("""playlist:\s*(?:'|")(/playlist/\w+)(?:'|")""", webpage, re.DOTALL)
+		playlistUrl = matchobj.group(1)
+		
+		if not playlistUrl.endswith('/'):
+			playlistUrl += '/'
+		
+		fd = self.conecte(self.domain + playlistUrl, proxies=proxies, timeout=timeout)
 		rssData = fd.read(); fd.close()
 		
 		for item in re.findall("<item>(.+?)</item>", rssData, re.DOTALL):
@@ -2129,9 +2145,10 @@ class Videoslasher( SiteBase ):
 			if matchobj:
 				url = matchobj.group(1)
 				break
-		else: raise Exception
+		else:
+			raise Exception
 		
-		try: title = re.search("<title>(.+?)</title>", webPage, re.DOTALL).group(1)
+		try: title = re.search("<title>(.+?)</title>", webpage, re.DOTALL).group(1)
 		except: title = get_radom_title()
 		
 		self.configs = {"url": url+"&start=", "title": title}
