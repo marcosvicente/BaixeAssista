@@ -1,6 +1,6 @@
 var source_url = "";
 var ptrSearchURL = 0;
-var link_clicked = "";
+var clickedLink = "";
 var alive_time_count = 0;
 var pattern = /http:\/\/moevideo\.net\/video\.php\?file=\w+\.\w+/;
 
@@ -11,7 +11,7 @@ ptrSearchURL = setInterval(function() {
 			source_url = script_tags[i].src;
 			
 			if (pattern.test( source_url )) {
-				link_clicked = source_url; 
+				clickedLink = source_url; 
 				window.open( source_url );
 				clearInterval( ptrSearchURL );
 			}

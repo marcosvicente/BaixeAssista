@@ -1,10 +1,16 @@
-var override_open = window.open;
-var link_clicked = "";
+var old_open = window.open
+var clickedEvent = false
+var clickedLink = ""
 
-window.open = function(URL,name,specs,replace) {
-	if (URL && link_clicked && link_clicked === URL) {
-		return override_open(URL, name, specs, replace);
+document.onclick = function() {
+ clickedLink = event.srcElement.href
+ clickedEvent = true
+}
+
+window.open = function(URL, name, specs, replace) {
+	if (URL && clickedLink && clickedLink == URL && clickedEvent == true) {
+		clickedEvent = false; return old_open(URL, name, specs, replace);
 	} else {
-		return false;
+		return false
 	}
 }
