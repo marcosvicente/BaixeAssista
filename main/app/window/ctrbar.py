@@ -106,8 +106,8 @@ class BarraControles( noteBook.NoteBookImage ):
 		
 		# atualiza o player(automaticamente),quando ativado no menu.
 		if self.mainWin.cfg_menu.as_bool('playerEmbutido'):
-			self.mainWin.recarreguePlayer()
-	
+			self.mainWin.reloadPlayer()
+			
 	def loadEmbedPlayer(self, evt):
 		""" carrega o player embutido escolhido no menu """
 		moduleName = self.playerMenu.GetLabelText(evt.GetId())

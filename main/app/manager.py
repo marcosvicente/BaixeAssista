@@ -1065,7 +1065,6 @@ class Manage( object ):
         self.numTotalBytes = 0
         self.posInicialLeitura = 0
         self.updateRunning = False
-        self.streamServer = None
         self.usingTempfile = params.get("tempfile", False)
         self.streamerList = []
         
@@ -1109,8 +1108,7 @@ class Manage( object ):
         self.velocidadeGlobal = 0  # velocidade global da conexão
         self.tempoDownload = ""    # tempo total de download
         self.nBytesProntosEnvio = 0
-        self.fileManager = FileManager(
-            tempfile = self.params.get('tempfile', False))
+        self.fileManager = FileManager(tempfile = self.params.get('tempfile', False))
         
         # avalia se o arquivo pode ser resumido
         self.resumindo = self.fileManager.resume( self.videoTitle )
@@ -1165,7 +1163,6 @@ class Manage( object ):
         del self.proxyManager
         del self.urlManager
         del self.fileManager
-        del self.streamServer
         del self.interval
         del self.params
         # -------------------------------------------------------------------
@@ -1265,13 +1262,13 @@ class Manage( object ):
             yield copy
             
     @classmethod
-    def forceLocalServer(cls, port=80):
+    def forceLocalServer(cls, port=8005):
         """ força a execução do servidor na porta informada """
-        cls.localServer = Server(port = port)
-        cls.localServer.start()
+        server = Server(port = port)
+        server.start()
         # se iniciou com sucesso
         return Server.running
-    
+        
     def getInitPos(self):
         return self.params.get("seekpos",0)
     

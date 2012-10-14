@@ -118,7 +118,7 @@ class BaixeAssistaWin( wx.Frame ):
 
 		self.Bind(wx.EVT_CLOSE, self.baixeAssistaFinish)
 
-		self.playerExterno = None
+		self.externalPlayer = None
 		self.manage = self.startDown = None
 		self.info = manager.Info
 		self.streamLoading = False
@@ -167,7 +167,7 @@ class BaixeAssistaWin( wx.Frame ):
 		return icon
 
 	def __del__(self):
-		del self.playerExterno
+		del self.externalPlayer
 		del self.streamLoading
 		del self.configPath
 		del self.info
@@ -358,7 +358,7 @@ class BaixeAssistaWin( wx.Frame ):
 		self.Bind(wx.EVT_MENU, self.openMovieManager, id=200)
 		self.Bind(wx.EVT_MENU, self.openControlUpdadteIps, id=201)
 		
-		self.Bind(wx.EVT_MENU, self.ativeServidor, id=300)
+		self.Bind(wx.EVT_MENU, self.activeServer, id=300)
 		self.Bind(wx.EVT_MENU, self.setFullScreenMode, id=301)
 		self.Bind(wx.EVT_CHAR_HOOK, self.setFullScreenMode)
 
@@ -541,16 +541,10 @@ class BaixeAssistaWin( wx.Frame ):
 
 		t = threading.Thread(target=self.searchUpdateNow, args=(noInfo,))
 		t.start()
-
-	def getLinkControlVal(self):
-		""" retorna o valor do controlador no formato desejado """
-		url_str = self.controladorUrl.GetValue()
-		url, desc = self.urlManager.splitUrlDesc( url_str )
-		return url
-
+	
 	def startServer(self): # tenta iniciar o servidor
 		if not manager.Server.running:
-			if not manager.Manage.forceLocalServer(port = 80):
+			if not manager.Manage.forceLocalServer(port = 8015):
 				msg = u"".join([
 					_(u"O servidor falhou ao tentar iniciar no endereço: http://localhost:8080"),
 					_(u"\nDesmarque a opção no menu \"Ações / Ligar servidor\" para iniciar o download."),
@@ -560,59 +554,62 @@ class BaixeAssistaWin( wx.Frame ):
 				dlg.ShowModal(); dlg.Destroy()
 		return manager.Server.running
 		
-	def stopServer(self):
-		""" pára o servidor se ele já estiver ativado """
-		if manager.Server.running: manager.Manage.localServer.stop()
-		
-	def ativeServidor(self, evt):
+	def activeServer(self, evt):
 		""" inicia ou pára o servidor, com base no menu de controle """
 		if evt.IsChecked():
 			if not self.startServer():
 				self.menuAcoes.Check(evt.GetId(),False)
-		else: self.stopServer()
+		else: pass # Todo: executar parada do servidor
 		checked = self.menuAcoes.IsChecked( evt.GetId() )
 		self.cfg_menu["servidorAtivo"] = checked
+	
+	def setFullScreenMode(self, evt=None):
+		""" sincroniza o modo fullscreen do menu com o widget fullscreen button """
+		if evt.GetId() == 301 or (self.IsFullScreen() and evt.GetKeyCode() == wx.WXK_ESCAPE):
+			self.barraControles.setFullScreen(evt, self)
+		evt.Skip()
 		
 	def setPlayerPath(self):
 		""" chamada para modificar o caminho para o player externo """
 		dlg = wx.FileDialog(
 			self, message = _(u"Escolha o local do player (executável)"),
-			defaultDir = settings.APPDIR, 
-			defaultFile = "",
+			defaultDir = settings.APPDIR, defaultFile = '',
 			wildcard = "Player file (*.exe)|*.exe",
 			style = wx.OPEN)
-
+		
 		if dlg.ShowModal() == wx.ID_OK:
 			# caminho para o player externo
 			self.cfg_locais['playerPath'] = dlg.GetPath() 
-
+			
 		dlg.Destroy()
 
 		# confirma se um camnhinho foi escolhido
 		return self.cfg_locais['playerPath']
-
+			
+	def startExternalPlayer(self):
+		""" carrega o player externo """
+		if not self.cfg_locais["playerPath"]:
+			self.setPlayerPath()
+			
+		if self.streamLoading and self.cfg_locais["playerPath"]:
+			self.externalPlayer = manager.FlvPlayer(
+						self.cfg_locais["playerPath"], 
+						host = manager.Server.HOST, 
+						port = manager.Server.PORT)
+			self.externalPlayer.start()
+			
 	def stopExternalPlayer(self):
 		""" pára a execução do player externo """
-		if self.playerExterno and self.playerExterno.isRunning():
-			self.playerExterno.stop(); self.playerExterno = None
+		if self.externalPlayer and self.externalPlayer.isRunning():
+			self.externalPlayer.stop()
+			self.externalPlayer=None
 	
 	def stopEmbedPlayer(self):
 		""" recarrega o player embutido """
 		self.playerWin["autostart"] = False
 		self.playerWin.reload()
 		
-	def carreguePlayerExterno(self):
-		""" carrega o player externo """
-		if not self.streamLoading: return
-		if self.cfg_locais["playerPath"]:
-			self.playerExterno = manager.FlvPlayer(self.cfg_locais["playerPath"], 
-				host = manager.Server.HOST, port = manager.Server.PORT)
-			self.playerExterno.start()
-		else:
-			# caso não haja um caminho válido para o player
-			self.setPlayerPath()
-			
-	def recarreguePlayer(self):
+	def reloadPlayer(self):
 		""" recarrega o player para seu estado inicial """
 		if self.cfg_menu.as_bool('playerEmbutido'):
 			# o player iniciará automaticamente se baixando a stream
@@ -622,46 +619,41 @@ class BaixeAssistaWin( wx.Frame ):
 			self.playerWin.reload()
 		else:
 			self.stopExternalPlayer()
-			self.carreguePlayerExterno()
+			self.startExternalPlayer()
 	
-	def setFullScreenMode(self, evt=None):
-		""" sincroniza o modo fullscreen do menu com o widget fullscreen button """
-		if evt.GetId() == 301 or (self.IsFullScreen() and evt.GetKeyCode() == wx.WXK_ESCAPE):
-			self.barraControles.setFullScreen(evt, self)
-		evt.Skip()
-
 	def changePlayer(self, evt):
-		if self.manage: self.manage.stopStreamers()
 		menuid = evt.GetId() # id do menu que gerou o evento
+		serverIsActive = self.cfg_menu.as_bool('servidorAtivo')
 		
-		playerPath = self.cfg_locais['playerPath']
-		servidorAtivo = self.cfg_menu.as_bool('servidorAtivo')
-
 		if menuid == 100: # menu player embutido
 			self.cfg_menu['playerEmbutido'] = True
-			##if servidorAtivo and self.manage.streamServer:
+			if hasattr(self.manage,"stopStreamers"):
+				self.manage.stopStreamers()
 			# parando o player externo
 			self.stopExternalPlayer()
-
+			self.reloadPlayer()
+			
 		elif menuid == 102: # menu player externo
 			self.cfg_menu["playerEmbutido"] = False
+			if hasattr(self.manage,"stopStreamers"):
+				self.manage.stopStreamers()
+			# parando o player embutido
 			self.stopEmbedPlayer()
-
+			self.startExternalPlayer()
+			
 			# se não houver um caminho válido para o player externo
-			if not playerPath:
-				if not self.setPlayerPath():
-					self.menuPlayer.Check(100, True)
-					self.cfg_menu['playerEmbutido'] = True
-					return # cancelado
-
-			self.carreguePlayerExterno()
-
+			if not self.cfg_locais['playerPath']:
+				self.menuPlayer.Check(100, True)
+				
+				self.cfg_menu['playerEmbutido'] = True
+				self.reloadPlayer()
+				
 		elif menuid == 103: # menu reload player
-			self.recarreguePlayer()
+			self.reloadPlayer()
 
 		elif menuid == 104:
 			self.setPlayerPath()
-
+			
 	def criePainelEntradaUrls(self):
 		painel = wx.Panel(self, style = wx.BORDER_STATIC)
 
@@ -719,13 +711,13 @@ class BaixeAssistaWin( wx.Frame ):
 		self.progressBar.SetSize((w, h-3))
 
 	def openMovieManager(self, evt):
-		mv = movie.MovieManager(self, _("Visualize e/ou remova videos"))
-		mv.CenterOnParent(wx.BOTH)
+		mvr = movie.MovieManager(self, _("Visualize e/ou remova videos"))
+		mvr.CenterOnParent(wx.BOTH)
 
 	def openControlUpdadteIps(self, evt):
-		control = ipSearch.wIPSearch(self, _("Crie uma nova lista de ips..."))
+		ipsh = ipSearch.wIPSearch(self, _("Crie uma nova lista de ips..."))
 		# restaurando o último estado de cofiguração
-		control.setLastConfigs()
+		ipsh.setLastConfigs()
 		
 	def controleConexoes(self, evt=None, default=False):
 		""" Adiciona ou remove conexões """
@@ -791,11 +783,11 @@ class BaixeAssistaWin( wx.Frame ):
 					self.detailControl.GetListCtrl().RefreshItem( rowIndex )
 					
 			# ATUALIZA A STATUSBAR
-			velocidade = _(" V-Global: %s") % self.manage.velocidadeGlobal
-			tempo = _(u"Duração: %10s") % self.manage.tempoDownload
-			progresso = _("Progresso: %10s") %str( self.manage.progresso() )
-			porcentagem = "%5s"%self.manage.porcentagem()
-			self.updateStatusBar(velocidade, tempo, progresso, porcentagem)
+			infospeed = _(" V-Global: %s")% self.manage.velocidadeGlobal
+			infotime = _(u"Duração: %10s")% self.manage.tempoDownload
+			infoprog = _("Progresso: %10s")% str(self.manage.progresso())
+			infoporc = "%5s"% self.manage.porcentagem()
+			self.updateStatusBar(infospeed, infotime, infoprog, infoporc)
 		else:
 			status = self.startDown.get_status()
 			if status is True: # iniciou com sucesso
@@ -804,15 +796,21 @@ class BaixeAssistaWin( wx.Frame ):
 			elif status is False: # houve um erro.	
 				self.btnStartStopHandle()
 
-	def url_existe(self, url):
-		for url_dec in self.controladorUrl.GetStrings():
-			url_, dec = self.urlManager.splitUrlDesc( url_dec )
-			if url == url_: return True
+	def hasUrl(self, url):
+		""" verifica se a url já foi inserida no controlador de urls """
+		for urlPlusTitle in self.controladorUrl.GetStrings():
+			if self.urlManager.splitUrlDesc(urlPlusTitle)[0] == url:
+				return True
 		return False
-
+		
+	def getUrlOnly(self):
+		""" retorna o valor do controlador no formato desejado """
+		urlPlusTitle = self.controladorUrl.GetValue()
+		return self.urlManager.splitUrlDesc(urlPlusTitle)[0]
+	
 	def startLoading(self, evt=None):
 		if not self.streamLoading:
-			url = self.getLinkControlVal()
+			url = self.getUrlOnly()
 			# opção para uso de arquivo temporário
 			tempfile = self.barraControles.tempFileControl.GetValue()
 			# opção de qualidade do vídeo
@@ -823,9 +821,9 @@ class BaixeAssistaWin( wx.Frame ):
 				# inicia o objeto princial: main_obj
 				self.manage = manager.Manage( url, tempfile = tempfile, videoQuality = (vquality+1), #0+1=1
 								              maxsplit = maxsplit)
-			except Exception, err:
+			except Exception as err:
 				self.btnStartStopHandle()
-
+				
 				# O erro principal seria uma url inválida.
 				dlg = GMD.GenericMessageDialog(self, _(u"Erro: %s")%err, 
 								               _("Erro iniciando download."), wx.ICON_ERROR|wx.OK)
@@ -848,22 +846,22 @@ class BaixeAssistaWin( wx.Frame ):
 		# ajuda a indentificar a url
 		self.setUrlHelpText( title )
 
-		urlTitle = self.urlManager.joinUrlDesc(url, title)
-		self.controladorUrl.SetLabel(urlTitle)
+		urlPlusTitle = self.urlManager.joinUrlDesc(url, title)
+		self.controladorUrl.SetLabel(urlPlusTitle)
 
-		if not self.url_existe( url ):
-			self.controladorUrl.Append(urlTitle, title)
-
+		if not self.hasUrl( url ):
+			self.controladorUrl.Append(urlPlusTitle, title)
+			
 		# cancela o download atual
-		if self.cfg_menu.as_bool("servidorAtivo") and not self.startServer():
+		if self.cfg_menu.as_bool('servidorAtivo') and not self.startServer():
 			self.btnStartStopHandle(); return
-
+			
 		# adiciona as conexões padrão
 		self.controleConexoes(default=True)
-
-		if not self.cfg_menu.as_bool('playerEmbutido'):
-			self.carreguePlayerExterno()
-			
+		
+		# atualiza o player para o novo video
+		self.reloadPlayer()
+		
 		# desativando controles, para impedir modifição da configuração ao iniciar a tranferência.
 		self.barraControles.enableCtrs( False )
 
@@ -877,11 +875,11 @@ class BaixeAssistaWin( wx.Frame ):
 
 			self.streamLoading = False
 			self.stopExternalPlayer()
-			self.recarreguePlayer()
-
+			
 			# parando todas as conexões criadas
 			self.manage.ctrConnection.stopAllConnections()
 			self.detailControl.removaTodosItens()
+			self.manage.stopStreamers()
 			
 			#zera a barra de progresso
 			self.progressBar.SetValue(0.0)
