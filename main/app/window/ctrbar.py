@@ -146,6 +146,7 @@ class BarraControles( noteBook.NoteBookImage ):
 			player = getattr(swplayer, modulename)
 			
 			params = dict(
+				autostart = self.mainWin.isLoading(),
 				portNumber = manager.Server.PORT,
 				hostName = manager.Server.HOST,
 				skinName = pwconfig["skinName"]

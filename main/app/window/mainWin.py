@@ -178,7 +178,9 @@ class BaixeAssistaWin( wx.Frame ):
 	def caluculePorcentagem(currentValue, maxValue):
 		""" calcula a porcentagem sem formatar o retorno """
 		return (float(currentValue) / float(maxValue) *100.0)
-
+	
+	def isLoading(self): return self.streamLoading
+	
 	def getConfigs(self):
 		try:
 			configs = configobj.ConfigObj(self.configPath)
@@ -835,7 +837,7 @@ class BaixeAssistaWin( wx.Frame ):
 
 			# inicia: updateInterface
 			self.updateTimer.Start(500)
-
+	
 	def startStreamLoading(self):
 		self.streamLoading = True
 
