@@ -200,7 +200,6 @@ class FlvPlayer(threading.Thread):
 class Server( threading.Thread ):
     BOOL_TO_INT = {True: 1, False: 0}
     INT_TO_BOOL = {1: True, 0: False}
-    
     HOST, PORT = "localhost", 8002
     
     class __metaclass__(type):
@@ -214,9 +213,13 @@ class Server( threading.Thread ):
         def running(cls, flag):
             os.environ["LOCAL_SERVER_RUNNING"] = str(cls.BOOL_TO_INT[flag])
         
-    def __init__(self, host="localhost", port=80):
+    def __init__(self, host="localhost", port=8002):
         threading.Thread.__init__(self)
-        self.setDaemon( True )
+        self.setDaemon(True)
+        
+        # update host
+        Server.HOST = host
+        Server.PORT = port
         
     def stop(self): pass
     
