@@ -407,7 +407,7 @@ class UrlManager( UrlBase ):
         """ Adiciona o título e a url a base de dados. 
         É importante saber se a url já foi adicionada, use o método 'exist'
         """
-        try: lasturl = self.objects.latest("lasturl").lasturl
+        try: lasturl = models.LastUrl.objects.latest("address")
         except: lasturl = models.LastUrl()
         
         urlmodel = "%s[%s]"% tuple(self.analizeUrl(url))
