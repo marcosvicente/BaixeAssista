@@ -87,12 +87,12 @@ def copy_to_dest(source, destination):
 			exit(1)
 			
 def make_tree_dirs(location, *args):
+	def makedir(a, b):
+		path = os.path.join(a, b)
+		if not os.path.exists(path):
+			os.mkdir( path )
+		return path
 	for path in args:
-		def makedir(a, b):
-			path = os.path.join(a, b)
-			if not os.path.exists(path):
-				os.mkdir( path )
-			return path
 		reduce(makedir, [location]+path.split(os.sep))
 		
 # ---------------------------------------------------------------
