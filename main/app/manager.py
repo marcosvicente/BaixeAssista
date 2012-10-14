@@ -327,8 +327,8 @@ class ProxyManager:
 # LINK MANAGER: ADICIONA, REMOVE, E OBTÉM INFORMAÇÕES DOS LINKS ADICIONADAS
 class UrlBase(object):
     def __init__(self):
-        self.sep = u"::::"
-
+        self.sep = u"::::::"
+        
     def __del__(self):
         del self.sep
 

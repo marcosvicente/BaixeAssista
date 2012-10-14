@@ -97,10 +97,14 @@ class Player(wx.Panel):
     def __getitem__(self, name):
         assert self.params.has_key( name ), 'get:option "%s" not found!'%name
         return self.params[ name ]
+    
+    def pause(self):
+        """ pausa a execução do video """
+        self.webview.RunScript("BA_GLOBAL_PLAYER.pause();")
         
     def getParams(self):
         previmage = self.params.get("previewImage", "")
-        streamname = self.params.get("streamName", self.getStreamName())
+        streamname = self.params.get("streamName", self.getStreamName(5))
         
         hostname = self.params.get("hostName", "localhost")
         portnumber = self.params.get("portNumber", 8002)

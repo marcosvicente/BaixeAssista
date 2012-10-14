@@ -20,26 +20,23 @@
 		</script>
 		<script type="text/javascript">
 			$(document).ready(function() {
-				try {
-					// oculta a barra de rolagem vertical
-					document.body.style.overflow = "hidden";
-					
-					jwplayer('mediaplayer').setup({
-						'flashplayer': '{{params.swfplayer}}',
-						'file': '{{params.file}}',
-						'width': '100%', 'height': '100%',
-						'provider': '{{params.provider}}',
-						'skin': '{{params.skin}}',
-						'image': '{{params.image}}',
-						'autostart': '{{params.autostart}}',
-						'allowfullscreen': '{{params.allowfullscreen}}',
-						'allowscriptaccess': '{{params.allowscriptaccess}}',
-						'http.startparam': '{{params.http_startparam}}',
-						'viral.allowmenu': 'false'
-					});
-				} catch (e) {
-					alert(e);
-				}
+				// oculta a barra de rolagem vertical
+				document.body.style.overflow = "hidden";
+				
+				BA_GLOBAL_PLAYER = jwplayer('mediaplayer')
+				BA_GLOBAL_PLAYER.setup({
+					'flashplayer': '{{params.swfplayer}}',
+					'file': '{{params.file}}',
+					'width': '100%', 'height': '100%',
+					'provider': '{{params.provider}}',
+					'skin': '{{params.skin}}',
+					'image': '{{params.image}}',
+					'autostart': '{{params.autostart}}',
+					'allowfullscreen': '{{params.allowfullscreen}}',
+					'allowscriptaccess': '{{params.allowscriptaccess}}',
+					'http.startparam': '{{params.http_startparam}}',
+					'viral.allowmenu': 'false'
+				});
 			});
 		</script>
 	</head>

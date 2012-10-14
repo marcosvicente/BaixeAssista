@@ -26,25 +26,22 @@
 			$(document).ready(function() {
 				// oculta a barra de rolagem vertical
 				document.body.style.overflow = "hidden";
-				try {
-					flowplayer("player", "{{params.swfplayer}}", {
-						clip: {
-							url: "{{params.file}}",
-							autoPlay: {{params.autostart}},
-							provider: "{{params.provider}}"
+				
+				BA_GLOBAL_PLAYER = flowplayer("player", "{{params.swfplayer}}", {
+					clip: {
+						url: "{{params.file}}",
+						autoPlay: {{params.autostart}},
+						provider: "{{params.provider}}"
+					},
+					plugins: {
+						pseudo: {
+							url: "{{params.pluginskin}}"
 						},
-						plugins: {
-							pseudo: {
-								url: "{{params.pluginskin}}"
-							},
-							controls: {
-								url: "{{params.skin}}"
-							}
+						controls: {
+							url: "{{params.skin}}"
 						}
-					});
-				} catch(e) {
-					alert(e)
-				}
+					}
+				});
 			});
 		</script>
 	</head>

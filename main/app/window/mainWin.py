@@ -876,6 +876,9 @@ class BaixeAssistaWin( wx.Frame ):
 			self.streamLoading = False
 			self.stopExternalPlayer()
 			
+			if self.cfg_menu.as_bool('playerEmbutido'):
+				self.playerWin.pause()
+			
 			# parando todas as conexões criadas
 			self.manage.ctrConnection.stopAllConnections()
 			self.detailControl.removaTodosItens()
