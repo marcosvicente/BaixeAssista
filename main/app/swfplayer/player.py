@@ -88,7 +88,7 @@ class Player(wx.Panel):
     def getStreamName(self, size=25):
         letras = [char for char in string.ascii_letters]
         filename = "".join( [random.choice( letras) for i in range(size)] )
-        return filename+".flv"
+        return filename
     
     def __setitem__(self, name, value):
         assert self.params.has_key( name ), 'set:option "%s" not found!'%name
@@ -113,7 +113,7 @@ class Player(wx.Panel):
         
         swfplayer = "/".join([static, self.filesdirname, self.swf_players[0]])
         autostart = str(self.params["autostart"]).lower()
-        streamfile = domain + "/" + streamname
+        streamfile = domain + "/stream/" + streamname
         
         self.swf_players.reverse()
         

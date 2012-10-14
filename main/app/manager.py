@@ -146,11 +146,11 @@ class Info(object):
 class FlvPlayer(threading.Thread):
     """ Classe usada no controle de programas externos(players) """
     
-    def __init__(self, cmd="", filename="stream", filepath="", host="localhost", port=80):
+    def __init__(self, cmd="", filename="file", filepath="", host="localhost", port=80):
         threading.Thread.__init__(self)
         self.cmd, self.process, self.running = cmd, None, False
         
-        if not filepath: self.url = "http://%s:%d/%s" % (host, port, filename)
+        if not filepath: self.url = "http://%s:%d/stream/%s" % (host, port, filename)
         else: self.url = "\"%s\"" % filepath
         
         # pára com o processo principal
@@ -439,9 +439,10 @@ class UrlManager( UrlBase ):
         return [(self.formatUrl(query.url), query.title) 
                 for query in self.objects.all()
                 ]
-
+    
     def getLastUrl(self):
-        try: query = self.objects.latest("lasturl").lasturl
+        """ retorna a url do último video baixado """
+        try: query = models.LastUrl.objects.latest("address")
         except: query = None
         if query: url, title = query.address, query.title
         else: url, title = "http://", "..."
