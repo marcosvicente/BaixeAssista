@@ -27,18 +27,18 @@
 				// oculta a barra de rolagem vertical
 				document.body.style.overflow = "hidden";
 				try {
-					flowplayer("player", "{{params.swfPlayer}}", {
+					flowplayer("player", "{{params.swfplayer}}", {
 						clip: {
 							url: "{{params.file}}",
-							autoPlay: {{params.autoPlay}},
+							autoPlay: {{params.autostart}},
 							provider: "{{params.provider}}"
 						},
 						plugins: {
 							pseudo: {
-								url: "{{params.swfStreamPlugin}}"
+								url: "{{params.pluginskin}}"
 							},
 							controls: {
-								url: "{{params.controlSkin}}"
+								url: "{{params.skin}}"
 							}
 						}
 					});

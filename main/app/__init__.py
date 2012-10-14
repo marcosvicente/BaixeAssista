@@ -1,9 +1,8 @@
+from swfplayer import flowPlayer, jwPlayer
 import models
 import views
 import admin
 import browser
-import jwPlayer
-import flowPlayer
 import manager
 import gerador
 import window

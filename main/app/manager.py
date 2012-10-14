@@ -940,7 +940,6 @@ class Streamer( object ):
             else:
                 time.sleep(0.001)
                 
-        print "STREAMER STOPED %s"%self
         self.manage.removeStreamer(self)
         yield "\r\n" # end stream
         

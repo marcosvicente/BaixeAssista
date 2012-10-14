@@ -139,9 +139,11 @@ class BarraControles( noteBook.NoteBookImage ):
 			pwconfig = configs["PlayerWin"]
 			pwconfig["moduleName"] = pwconfig.get("moduleName", "flowPlayer")
 			pwconfig["skinName"] = pwconfig.get("skinName", None)
+			modulename  = str(pwconfig["moduleName"]) # string only
 			
 			# importa o player escolhido pelo usuário
-			player = __import__(pwconfig["moduleName"], {}, {})
+			swplayer = __import__("main.app.swfplayer", {}, {}, [modulename])
+			player = getattr(swplayer, modulename)
 			
 			params = dict(
 				portNumber = manager.Server.PORT,

@@ -1,10 +1,7 @@
 # -*- coding: ISO-8859-1 -*-
 
 import os
-import sys
-import re
 import wx
-import urllib
 import string
 import random
 import wx.html2 as Webview
@@ -13,15 +10,25 @@ from django.template import Context, Template, loader
 ########################################################################
 
 class Player(wx.Panel):
-    mediadir = template = ""
+    # template usando na renderização do player
+    template = ""
+    # nome da skin padrão usanda no playe
+    defaultskin = ""
+    # nome, base, do diretório do player
+    filesdirname = ""
+    # caminho, completo do diretório de arquivos do player
+    filesdir = ""
+    # caminho completo para o diretórios de skin do player
+    skinsdir = ""
+    # arquivos swfs
+    swf_players = []
     
     def __init__(self, parent, **params):
         """params = {}
         previewImage: local da imagem mostrada no backgroud do player.
         streamName: nome da stream de video sendo transferida.
         hostName: 
-        portNumber: 
-        skinName: 
+        portNumber:
         """
         wx.Panel.__init__(self, parent, style=0)
         self.params = params
@@ -37,6 +44,17 @@ class Player(wx.Panel):
         if not params.has_key("autostart"):
             self.params["autostart"] = False
         
+        try:
+            skins = os.listdir( self.skinsdir )
+            for filename in skins:
+                name = os.path.splitext(filename)[0]
+                self.skins[ name ] = filename
+        except: # skin usada no primeiro carregamento.
+            self.skins[ self.defaultskin ] = self.defaultskin+".swf"
+        
+        if not params.has_key("skinName") or not self.hasSkinName(params["skinName"]):
+            self.params["skinName"] = self.defaultskin
+            
         sizer = wx.BoxSizer(wx.VERTICAL)
         self.webview = Webview.WebView.New(self)
         
@@ -81,39 +99,41 @@ class Player(wx.Panel):
         return self.params[ name ]
         
     def getParams(self):
-        previewImage = self.params.get("previewImage",'')
-        streamName = self.params.get("streamName","stream.flv")
+        previmage = self.params.get("previewImage", "")
+        streamname = self.params.get("streamName", self.getStreamName())
         
-        hostName = self.params.get("hostName","localhost")
-        portNumber = self.params.get("portNumber",8002)
+        hostname = self.params.get("hostName", "localhost")
+        portnumber = self.params.get("portNumber", 8002)
         
-        domain = "http://%s:%s"%(hostName, portNumber)
-        static = domain + "/static"
+        domain = "http://%s:%s"%(hostname, portnumber)
+        static = domain + settings.STATIC_URL.rstrip("/")
         
+        skinname = self.skins.get(self.params["skinName"], self.defaultskin)
+        skin = "/".join([static, self.filesdirname, "skins", skinname])
+        
+        swfplayer = "/".join([static, self.filesdirname, self.swf_players[0]])
         autostart = str(self.params["autostart"]).lower()
-        skinName = self.skins.get(self.params["skinName"], self.defaultSkin)
-        
-        controlSkin = "/".join([static, "flowplayer/skins", skinName])
-        swfPlayer = "/".join(static, self.mediadir, self.swf_players[0])
-        streamFile = domain + "/" + streamName
+        streamfile = domain + "/" + streamname
         
         self.swf_players.reverse()
         
         params = {
-            "hostDomain": domain,
-            "file": streamFile,
-            "swfPlayer": swfPlayer,
+            "staticurl": static,
+            "hostdomain": domain,
+            "file": streamfile,
+            "swfplayer": swfplayer,
             "allowscriptaccess": "always",   
             "allowfullscreen": "true",
-            "image": previewImage,
-            "autoPlay": autostart,
+            "http_startparam": "start",
+            "image": previmage,
+            "autostart": autostart,
             "provider": "pseudo",
-            "controlSkin": controlSkin,
+            "skin": skin,
         }
         return params
     
     def reload(self):
-        """ recarrega a página, atualizando seu conteúdo """
+        """ recarrega a página atualizando os parâmetros do player """
         params = self.getParams()
         fullpage = self.getPlayerPage( params )
         self.webview.SetPage(fullpage, params["file"])
