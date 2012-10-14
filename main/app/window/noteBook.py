@@ -260,8 +260,8 @@ class PageBar( wx.Panel ):
             )
         
     def createFullScreenWidget(self, mainWin, pageTootip="", scalex=32, scaley=32):
-        imgCollapse = os.path.join(settings.IMAGES_DIR, "fullscreenIn.jpg")
-        imgExpad = os.path.join(settings.IMAGES_DIR, "fullscreenOut.jpg")
+        imgCollapse = os.path.join(settings.IMAGES_DIR, "fullscreen-in.jpg")
+        imgExpad = os.path.join(settings.IMAGES_DIR, "fullscreen-out.jpg")
         
         btnFullScreen = PageButton(self, imgCollapse, "", pageTootip, scalex, scaley, widget=True)
         self.widgets["FullScreen"]["btnWidget"] = btnFullScreen
@@ -334,7 +334,7 @@ if __name__ == "__main__":
         frame = wx.Frame(None, -1, "Fram", size = (800, 500))
         control = NoteBookImage( frame )
 
-        imgpath = os.path.join(settings.IMAGES_DIR, "fullscreenIn.jpg")
+        imgpath = os.path.join(settings.IMAGES_DIR, "fullscreen-in.jpg")
 
         for i in range(7):
             master = control.addPage(imgpath, "Page-%d"%i, "ButtonPage-%d"%i)
