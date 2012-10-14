@@ -378,14 +378,14 @@ class UrlBase(object):
 class UrlManager( UrlBase ):
     def __init__(self):
         super(UrlManager, self).__init__()
-        self.objects = models.Url.objects # acesso a queryset
-        self.lastUrl_objects = models.LastUrl.objects
-
+        # acesso a queryset
+        self.objects = models.Url.objects
+        
     def getUrlId(self, title):
         """ retorna o id da url, com base no título(desc) """
         query = self.objects.get(title = title)
         return self.splitBaseId( query.url )[-1]
-
+        
     def setTitleIndex(self, title):
         """ adiciona um índice ao título se ele já existir """
         pattern = title + "(?:###\d+)?"
@@ -405,21 +405,24 @@ class UrlManager( UrlBase ):
 
     def add(self, url, title):
         """ Adiciona o título e a url a base de dados. 
-        É importante saber se a url já foi adicionada, use o método 'exist'."""
-        urlname, urlid = self.analizeUrl(url)
-        urlmodel = "%s[%s]"%(urlname, urlid)
-
+        É importante saber se a url já foi adicionada, use o método 'exist'
+        """
+        try: lasturl = self.objects.latest("lasturl").lasturl
+        except: lasturl = models.LastUrl()
+        
+        urlmodel = "%s[%s]"% tuple(self.analizeUrl(url))
+        
         # impede títulos iguais
-        if self.objects.filter(title=title).count() > 0:
+        if self.objects.filter(title = title).count() > 0:
             title = self.setTitleIndex(title)
-
-        models.Url(url=urlmodel, title=title).save()
-
-        try:
-            lu = self.lastUrl_objects.latest("url")
-            lu.url = url; lu.title = title; lu.save()
-        except: models.LastUrl(url=url, title=title).save()
-
+        
+        # muitas urls para uma unica lasturl
+        lasturl.address = url; lasturl.title = title
+        lasturl.save()
+        
+        url = models.Url(url=urlmodel, title=title, lasturl = lasturl)
+        url.save()
+        
     def getTitleList(self):
         return [ query.title
                  for query in self.objects.all().order_by("title")
@@ -438,10 +441,12 @@ class UrlManager( UrlBase ):
                 ]
 
     def getLastUrl(self):
-        try: query = self.lastUrl_objects.latest("url")
-        except: return "http://", "..."
-        return (query.url, query.title)
-
+        try: query = self.objects.latest("lasturl").lasturl
+        except: query = None
+        if query: url, title = query.address, query.title
+        else: url, title = "http://", "..."
+        return (url, title)
+        
     def exist(self, url):
         """ avalia se a url já existe na base de dados """
         urlmodel = "%s[%s]"%self.analizeUrl(url)

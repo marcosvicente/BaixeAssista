@@ -1,17 +1,17 @@
 from django.db import models
 
 ########################################################################
-
-# Create your models here.
-class Url( models.Model ):
+class LastUrl( models.Model ):
 	title = models.TextField("Title", unique=True)
-	url = models.TextField("Url")
+	address = models.TextField("Url")
 	
 	def __unicode__(self):
 		return self.title
 	
 ########################################################################
-class LastUrl( models.Model ):
+class Url( models.Model ):
+	lasturl = models.ForeignKey(LastUrl)
+	
 	title = models.TextField("Title", unique=True)
 	url = models.TextField("Url")
 	
