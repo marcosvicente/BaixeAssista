@@ -510,36 +510,40 @@ class Browser(wx.Panel):
 
     def addNewMovieSite(self, event):
         dlg = wx.TextEntryDialog(self,
-                                 _("Entre com a url completa do site"), 
-                                 _("Adicione um novo site de filmes"), 
-                                 "", wx.OK|wx.CANCEL)
+             _("Entre com a url completa do site"), 
+             _("Adicione um novo site de filmes"), 
+             "", wx.OK|wx.CANCEL)
         dlg.CentreOnParent()
-
+        
         if dlg.ShowModal() == wx.ID_OK:
             local = dlg.GetValue()
             if not local: return
-
+            
             if not local.startswith("http://"):
                 local = "http://" + local
-            if not local[-1] == "/": local += "/"
-
+            if not local.endswith("/"):
+                local += "/"
+                
             # verifica se já foi adicionado.
             if self.objects.filter(site=local).count():
                 dlg = GMD.GenericMessageDialog(self,
-                                               _(u"O site dado já consta na lista de sites atual"), 
-                                               _(u"Atenção!"), wx.ICON_WARNING|wx.OK )
+                   _(u"O site dado já consta na lista de sites atual"), 
+                   _(u"Atenção!"), wx.ICON_WARNING|wx.OK )
                 dlg.ShowModal(); dlg.Destroy()
-            else: 
-                self.addSite( local ) # adicionando na base de dados.
-                self.location.Append( local)
+            else:
+                # adicionando à base de dados.
+                self.addSite( local )
+                
+                if not self.hasUrl( local ):
+                    self.location.Append( local)
         dlg.Destroy()
-
+        
     def removeMovieSite(self, evt):
         sites = self.getSites()
         dlg = wx.MultiChoiceDialog(self, 
-                                   _(u"Selecione uma ou mais urls e pressione 'OK' para removê-las."),
-                                   _(u"Sites para remoção."), sites)
-
+           _(u"Selecione uma ou mais urls e pressione 'OK' para removê-las."),
+           _(u"Sites para remoção."), sites)
+        
         if (dlg.ShowModal() == wx.ID_OK):
             selections = dlg.GetSelections()
             if len(selections) > 0:
@@ -660,7 +664,15 @@ class Browser(wx.Panel):
             self.addNewTab( self.filtroUrl.extraiSegundUrl( url ) )
 
         else: event.Veto()
-
+        
+    def hasUrl(self, url):
+        """ verifica se a url já foi inserida no controlador de urls """
+        if hasattr(self.mainWin, "urlManager"):
+            for urlPlusTitle in self.location.GetStrings():
+                if self.mainWin.urlManager.splitUrlDesc(urlPlusTitle)[0] == url:
+                    return True
+        return False
+        
     def OnWebViewLoaded(self, evt):
         """ chamado sempre que a página termina de carregar """
         webview = evt.GetEventObject()
@@ -676,7 +688,10 @@ class Browser(wx.Panel):
 
     def OnLocationEnter(self, event):
         url = self.location.GetValue()
-        self.location.Append(url)
+        
+        if not self.hasUrl(url):
+            self.location.Append(url)
+            
         self.webview.LoadURL(url)
 
     def OnPrevPageButton(self, event):

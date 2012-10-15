@@ -1933,35 +1933,30 @@ class Pornhub( SiteBase ):
 		return True
 
 	def start_extraction(self, proxies={}, timeout=25):
+		fd = self.conecte(self.url, proxies=proxies, timeout=timeout)
+		webpage = fd.read(); fd.close()
 		try:
-			fd = self.conecte(self.url, proxies=proxies, timeout=timeout)
-			webpage = fd.read(); fd.close()
-		except: return
-
-		## <video_url><![CDATA[http://cdn1b.video.pornhub.phncdn.com/videos/005/005/576/5005576.flv?rs=125&ri=600&s=1340328487&e=1340330287&h=717b8edd6e04c34e17ee054fb9ea1fcd]]></video_url>
-		## image_url>http://cdn1.image.pornhub.phncdn.com/thumbs/005/005/576/xxlarge.jpg?cache=6497524</image_url>
-		## var flashvars = {.*"video_url":"http%3A%2F%2Fcdn1b.video.pornhub.phncdn.com%2Fvideos%2F001%2F037%2F248%2F1037248.flv%3Frs%3D125%26ri%3D600%26s%3D1340409510%26e%3D1340411310%26h%3D62f117f5171484a9d63453ee9ef5558a", "video_title":"Two+Blonde+Girls+With+One+Guy"};
-		## "video_title":"Two+Blonde+Girls+With+One+Guy"
-		fs = ""
-		try:
+			fs = ""
 			matchobj = re.search('''(?:"|')video_url(?:"|')\s*:\s*(?:"|')(.+?)(?:"|')''', webpage, re.DOTALL)
-			url = urllib.unquote_plus( matchobj.group(1) )
-			try:
-				matchobj = re.search('''(?:"|')video_title(?:"|')\s*:\s*(?:"|')(.*?)(?:"|')''', webpage, re.DOTALL)
-				title = urllib.unquote_plus( matchobj.group(1) )
-			except: title = ""
+			try: url = base64.b64decode(urllib.unquote_plus(matchobj.group(1)))
+			except: url = urllib.unquote_plus(matchobj.group(1))
+			
+			matchobj = re.search('''(?:"|')video_title(?:"|')\s*:\s*(?:"|')(.*?)(?:"|')''', webpage, re.DOTALL)
+			try: title = urllib.unquote_plus( matchobj.group(1) )
+			except: title = get_radom_title()
 		except:
 			urlid = Universal.get_video_id(self.basename, self.url)
 			fd = self.conecte(self.apiUrl % urlid, proxies=proxies, timeout=timeout)
 			xmlData = fd.read(); fd.close()
-
+			
 			url = re.search("""<video_url><!\[CDATA\[(.+)\]\]></video_url>""", xmlData).group(1)
 
 			try: title = re.search("<video_title>(.*)</video_title>", xmlData).group(1)
-			except: title = ""
+			except: title = get_radom_title()
+			
 			try: fs = re.search("<flvStartAt>(.+)</flvStartAt>", xmlData).group(1)
 			except: fs = ""
-
+			
 		self.configs = {"url": url+(fs or "&fs="), "title": (title or get_radom_title())}
 
 ########################################################################
@@ -2349,7 +2344,7 @@ if __name__ == "__main__":
 		print proxies["http"]
 		proxies = {}
 
-		if not checkSite("http://vk.com/video103395638_163156178", proxies=proxies, quality=3):
+		if not checkSite("http://www.pornhub.com/view_video.php?viewkey=2057615854", proxies=proxies, quality=3):
 			proxyManager.setBadIp( proxies )
 
 	del proxyManager
