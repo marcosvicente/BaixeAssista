@@ -11,7 +11,8 @@ ptrSearchURL = setInterval(function() {
 			source_url = script_tags[i].src;
 			
 			if (pattern.test( source_url )) {
-				clickedLink = source_url; 
+				clickedLink = source_url;
+				clickedEvent = true;
 				window.open( source_url );
 				clearInterval( ptrSearchURL );
 			}
