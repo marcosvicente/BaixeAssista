@@ -2,10 +2,8 @@
 
 import os, sys
 import wx
-import re
 import time
 import wx.aui
-import configobj
 import wx.animate
 import wx.html2 as Webview
 import wx.lib.agw.genericmessagedialog as GMD
@@ -24,11 +22,10 @@ if __name__ == "__main__":
     
     os.chdir( mainDir )
 
-import gerador, manager
+import gerador
 from main import settings
 from main.app import models
 
-PROGRAM_VERSION = gerador.PROGRAM_VERSION
 SEARCH_ENGINE = "http://www.google.com.br/webhp?hl=pt-BR"
 
 with open(os.path.join(settings.APPDIR,"js","ml.js"), "r") as js_file:
@@ -37,64 +34,33 @@ with open(os.path.join(settings.APPDIR,"js","ml.js"), "r") as js_file:
 with open(os.path.join(settings.APPDIR,"js","el.js"), "r") as js_file:
     JS_LINK_EXTRACTOR = js_file.read()
     
-with open(os.path.join(settings.APPDIR,"js","rl.js"), "r") as js_file:
-    JS_LINK_REGISTER = js_file.read()
-    
 ######################################################################################
 
-class FiltroUrl:
+class FiltroUrl(object):
     def __init__(self ):
-        self.listaSite = gerador.Universal.get_sites()
+        self.allsites = gerador.Universal.get_sites()
         self.url, self.is_embed = "", False
-
-    def getUrl(self):
-        return self.url
-
-    def isEmbed(self):
-        return self.is_embed
-
-    def reverseUrl(self, url):
-        return "".join([url[i] for i in range(len(url)-1, -1, -1)])
-
-    def extraiSegundUrl(self, url):
-        http = "http://"; httpLen = len(http)
-        httpReverso = self.reverseUrl( http)
-        urlReversa = self.reverseUrl( url)
-
-        if len(url) > httpLen:
-            index = url.find(http, httpLen)
-            # retorna só a segunda url
-            if index >= 0: return url[index:]
-
-            index = urlReversa.find("=", httpLen)
-            if urlReversa.startswith( http ) and index >= 0:
-                return urlReversa[ :index]
-
-        # se a url não for dupla apenas retorna
-        return url
-
-    def isValid(self, url):
-        """ Cada site carregado pelo IE, terá sua url 
-        analizada com as regex dos sites suportados """
-        urls = [url, self.reverseUrl(url)]
         
-        for site in self.listaSite:
-            # as vezes a url válida está dentro de outra url, então search irá extraí-la
-            for url in urls:
-                matchobj = gerador.Universal.patternMatch(site, url)
-                if matchobj: # retorna só o grupo da url completa
-                    self.url = matchobj.group("inner_url")
-                    self.is_embed = gerador.Universal.isEmbed(url)
-                    return True
+    def isEmbed(self): return self.is_embed
+    def getUrl(self): return self.url
+    
+    def isValid(self, url):
+        """ Cada site carregado pelo IE, terá sua url analizada com as 
+        regex dos sites suportados """
+        for site in self.allsites:
+            matchobj = gerador.Universal.patternMatch(site, url)
+            if matchobj: # retorna só o grupo da url completa
+                self.url = matchobj.group("inner_url")
+                self.is_embed = gerador.Universal.isEmbed(url)
+                return True
         else:
             # anula as variaveis, para evitar pegar dados incorretos
             self.url, self.is_embed = "", False
-
             # quando a url analizada não for válida
             return False
 
 ##############################################################################
-class HistoryUrl:
+class HistoryUrl(object):
     """ Classe criada com o objetivo de corrigir o problema de histórico 
     atualmente encontrado na bliblioteca wxpython v2.9.3.1"""
     #----------------------------------------------------------------------
@@ -519,11 +485,9 @@ class Browser(wx.Panel):
             local = dlg.GetValue()
             if not local: return
             
-            if not local.startswith("http://"):
-                local = "http://" + local
-            if not local.endswith("/"):
-                local += "/"
-                
+            if not local.startswith("http://"): local = "http://" + local
+            if not local.endswith("/"): local += "/"
+            
             # verifica se já foi adicionado.
             if self.objects.filter(site=local).count():
                 dlg = GMD.GenericMessageDialog(self,
@@ -614,7 +578,6 @@ class Browser(wx.Panel):
             self.current = webviewUrl
         
         if not webview.JS_SCRIPT_RUN and webviewUrl.startswith("http"):
-            ## webview.RunScript( JS_LINK_REGISTER )
             webview.RunScript( JS_LINK_MONITOR )
             webview.RunScript( JS_LINK_EXTRACTOR )
             webview.JS_SCRIPT_RUN = True
@@ -657,11 +620,11 @@ class Browser(wx.Panel):
                 self.controlEmbedUrls.SetLabel( url )
                 self.controlEmbedUrls.Append( url )
                 self.controleFluxoUrlsEmbutidas()
-
+                
         if url == clickedLink and not self.pageExist(url) and not isValid and self.abasControl.GetPageCount() < 10:
             # geralmente a url vem duplacada, sendo a segunda a url
             # válida. Por isso sempre a segunda será usada na nova tabela.
-            self.addNewTab( self.filtroUrl.extraiSegundUrl( url ) )
+            self.addNewTab( url)
 
         else: event.Veto()
         
