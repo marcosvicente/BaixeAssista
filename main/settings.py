@@ -15,19 +15,21 @@ EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 25
 
 MANAGE_OBJECT = None
+PROJECTPATH = ""
 
 # cuidado com isso!!!
 SCRIPT_PATH = os.path.dirname(os.path.abspath(__file__))
 
+matchobj = re.search("(?P<maindir>.+main)", os.getcwd())
+if matchobj: PROJECTPATH = matchobj.group("maindir")
+
 # Diretórios contendo os scripts do programa
-if not re.match(".+main$", os.getcwd()):
-	PROJECTPATH = os.path.join(os.getcwd(), "main")
-else:
-	PROJECTPATH = os.getcwd()
+if not re.match(".+main$", PROJECTPATH):
+    PROJECTPATH = os.path.join(os.getcwd(), "main")
 
 # diretório do exectável final
-matchobj = re.search("(.+)main", PROJECTPATH)
-ROOT_DIR = matchobj.group(1)
+matchobj = re.search("(?P<roortdir>.+)main", PROJECTPATH)
+ROOT_DIR = matchobj.group("roortdir")
 
 STATIC_PATH = os.path.join(PROJECTPATH, "static")
 
@@ -41,10 +43,10 @@ VIDEOS_DIR_NAME = "STREAM-VIDEOS"
 DEFAULT_VIDEOS_DIR = os.path.join(ROOT_DIR, VIDEOS_DIR_NAME)
 
 if not PROJECTPATH in sys.path: # import do projeto
-	sys.path.append( PROJECTPATH )
-	
+    sys.path.append( PROJECTPATH )
+    
 if not APPDIR in sys.path: # import das apps
-	sys.path.append( APPDIR )
+    sys.path.append( APPDIR )
 # ------------------------------------------
 
 DATABASES = {
