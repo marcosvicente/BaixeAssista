@@ -2149,7 +2149,7 @@ class Videoslasher( SiteBase ):
 		self.configs = {"url": url+"&start=", "title": title}
 		
 #######################################################################################
-class Universal:
+class Universal(object):
 	"""A classe Universal, quarda varias informações e dados usados em
 	toda a extensão do programa. Ela é usada para diminuir o número de modificações
 	necessárias, quando adiciando suporte a um novo site vídeo.
@@ -2158,75 +2158,75 @@ class Universal:
 	SM_RANGE = staticmethod(lambda manage, noProxy=False, **params: manager.StreamManager_(manage, noProxy, **params))
 	sites = {}
 	
-	@staticmethod
-	def get_sites():
-		return Universal.sites.keys()
-
-	@staticmethod
-	def add_site(basename="", args=None, **kwargs):
+	@classmethod
+	def get_sites(cls):
+		return cls.sites.keys()
+	
+	@classmethod
+	def add_site(cls, basename="", args=None, **kwargs):
 		""" adiciona as referências para um novo site """
 		if args:
 			url, patterns, control, video_control = args
-
-			Universal.sites[ basename ] = {
+			
+			cls.sites[ basename ] = {
 				"video_control": video_control,
 				"control": control,
 				"patterns": patterns,
 				"url": url,
 			}
 		elif kwargs:
-			Universal.sites.update({ 
+			cls.sites.update({ 
 				basename: kwargs 
 			})
 
-	@staticmethod
-	def get_video_id(sitename, url):
+	@classmethod
+	def get_video_id(cls, sitename, url):
 		""" retorna o id da url """
-		matchobj = Universal.patternMatch(sitename, url)
+		matchobj = cls.patternMatch(sitename, url)
 		return matchobj.group("id")
 	
-	@staticmethod
-	def getStreamManager( url):
+	@classmethod
+	def getStreamManager(cls, url):
 		""" Procura pelo controlador de tranferênicia de arquivo de video"""
 		smanager = None
 		try:
-			for sitename in Universal.get_sites():
-				matchobj = Universal.patternMatch(sitename, url)
+			for sitename in cls.get_sites():
+				matchobj = cls.patternMatch(sitename, url)
 				if matchobj:
-					smanager = Universal.get_control( sitename)
+					smanager = cls.get_control( sitename)
 					break
-		except AssertionError, err:
+		except AssertionError as err:
 			raise AttributeError, _("Sem suporte para a url fornecida.")
 		assert smanager, _("url desconhecida!")
 		return smanager
 
-	@staticmethod
-	def getVideoManager( url):
+	@classmethod
+	def getVideoManager(cls, url):
 		""" Procura pelo controlador de video baseado na url dada """
 		vmanager = None
 		try:
-			for sitename in Universal.get_sites():
-				matchobj = Universal.patternMatch(sitename, url)
+			for sitename in cls.get_sites():
+				matchobj = cls.patternMatch(sitename, url)
 				if matchobj:
-					vmanager = Universal.get_video_control( sitename )
+					vmanager = cls.get_video_control( sitename )
 					break
-		except AssertionError, err:
+		except AssertionError as err:
 			raise AttributeError, _("Sem suporte para a url fornecida.")
 		assert vmanager, _("url desconhecida!")
 		return vmanager
 	
-	@staticmethod
-	def get_patterns(sitename, validar=True):
-		if validar: Universal.valide(sitename, "patterns")
-		return Universal.sites[ sitename ]["patterns"]
+	@classmethod
+	def get_patterns(cls, sitename, validar=True):
+		if validar: cls.valide(sitename, "patterns")
+		return cls.sites[ sitename ]["patterns"]
 
-	@staticmethod
-	def patternMatch(sitename, url):
+	@classmethod
+	def patternMatch(cls, sitename, url):
 		""" analiza se a url casa o padrão de urls.
 		Duas situações são possiveis:
 			A url é única; A url está dentro de outra url.
 		"""
-		patterns = Universal.get_patterns(sitename)
+		patterns = cls.get_patterns(sitename)
 		if type(patterns) is tuple:
 			for pattern in patterns:
 				if type(pattern) is list:
@@ -2244,12 +2244,12 @@ class Universal:
 			matchobj = patterns.match( url )
 		return matchobj
 
-	@staticmethod
-	def isEmbed(url):
+	@classmethod
+	def isEmbed(cls, url):
 		""" analiza se a url é de um player embutido """
 		sitename = manager.UrlManager.getBaseName(url)
-		patterns = Universal.get_patterns(sitename)
-		siteAttrs = Universal.sites[sitename]
+		patterns = cls.get_patterns(sitename)
+		siteAttrs = cls.sites[sitename]
 		if type(patterns) is tuple:
 			for pattern in patterns:
 				if type(pattern) is list:
@@ -2263,32 +2263,32 @@ class Universal:
 		else:
 			return siteAttrs.get("embed", False)
 
-	@staticmethod
-	def get_url(sitename, validar=True):
-		if validar: Universal.valide(sitename, "url")
-		return Universal.sites[ sitename ]["url"]
+	@classmethod
+	def get_url(cls, sitename, validar=True):
+		if validar: cls.valide(sitename, "url")
+		return cls.sites[ sitename ]["url"]
 
-	@staticmethod
-	def get_control(sitename, validar=True):
-		if validar: Universal.valide(sitename, "control")
-		return Universal.sites[ sitename ]["control"]
+	@classmethod
+	def get_control(cls, sitename, validar=True):
+		if validar: cls.valide(sitename, "control")
+		return cls.sites[ sitename ]["control"]
 
-	@staticmethod
-	def get_video_control(sitename, validar=True):
-		if validar: Universal.valide(sitename, "video_control")
-		return Universal.sites[ sitename ]["video_control"]
+	@classmethod
+	def get_video_control(cls, sitename, validar=True):
+		if validar: cls.valide(sitename, "video_control")
+		return cls.sites[ sitename ]["video_control"]
 
-	@staticmethod
-	def valide(sitename, obj):
-		assert bool(Universal.sites.get(sitename, None)), u"Site %s não encontrado"%sitename
+	@classmethod
+	def valide(cls, sitename, obj):
+		assert bool(cls.sites.get(sitename, None)), u"Site %s não encontrado"%sitename
 		if obj == "patterns":
-			assert bool(Universal.sites[sitename].get("patterns", None)), u"Padrão não definido para %s"%sitename
+			assert bool(cls.sites[sitename].get("patterns", None)), u"Padrão não definido para %s"%sitename
 		elif obj == "url":
-			assert bool(Universal.sites[sitename].get("url", None)), u"Url não definida para %s"%sitename
+			assert bool(cls.sites[sitename].get("url", None)), u"Url não definida para %s"%sitename
 		elif obj == "control":
-			assert bool(Universal.sites[sitename].get("control", None)), u"Controlador não definido para %s"%sitename
+			assert bool(cls.sites[sitename].get("control", None)), u"Controlador não definido para %s"%sitename
 		elif obj == "video_control":
-			assert bool(Universal.sites[sitename].get("video_control", None)), u"Controlador de video não definido para %s"%sitename
+			assert bool(cls.sites[sitename].get("video_control", None)), u"Controlador de video não definido para %s"%sitename
 
 #######################################################################################
 def is_site_class( item ):

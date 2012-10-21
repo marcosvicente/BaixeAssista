@@ -1624,72 +1624,67 @@ class StreamManager( threading.Thread):
 
         while not self.wasStopped() and self.numBytesLidos < block_size:
             if not self.manage.interval.hasInterval(self.ident): break
-            
             # bloqueia alterações sobre os dados do intervalo da conexão
-            lockIterval = self.manage.interval.get_lock( self.ident )
-            lockIterval.acquire()
-            try:
-                # bloco de bytes do intervalo. Poderá ser dinamicamente modificado
-                block_size = self.manage.interval.get_block_size(self.ident)
-                block_index = self.manage.interval.get_index(self.ident)
-                
-                # condição atual da conexão: Baixando
-                Info.set(self.ident, "state", _("Baixando") )
-                Info.set(self.ident, "block_index", block_index)
-                
-                # limita a leitura ao bloco de dados
-                if (self.numBytesLidos + block_read) > block_size:
-                    block_read = block_size - self.numBytesLidos
+            with self.manage.interval.get_lock( self.ident ):
+                try:
+                    # bloco de bytes do intervalo. Poderá ser dinamicamente modificado
+                    block_size = self.manage.interval.get_block_size(self.ident)
+                    block_index = self.manage.interval.get_index(self.ident)
                     
-                # inicia a leitura da stream
-                before = time.time()
-                streamData = self.streamSocket.read( block_read )
-                after = time.time()
-                
-                streamLen = len(streamData) # número de bytes baixados
-                
-                if self.esperaSolicitada(): # caso onde a seekbar é usada
-                    self.aguardeNotificacao(); break
+                    # condição atual da conexão: Baixando
+                    Info.set(self.ident, "state", _("Baixando") )
+                    Info.set(self.ident, "block_index", block_index)
                     
-                # o servidor fechou a conexão
-                if (block_read > 0 and streamLen == 0) or self.checkStreamError( streamData) != -1:
-                    self.fixeFalhaTransfer(_("Parado pelo servidor"), 2); break
+                    # limita a leitura ao bloco de dados
+                    if (self.numBytesLidos + block_read) > block_size:
+                        block_read = block_size - self.numBytesLidos
+                        
+                    # inicia a leitura da stream
+                    before = time.time()
+                    streamData = self.streamSocket.read( block_read )
+                    after = time.time()
                     
-                # ajusta a quantidade de bytes baixados a capacidade atual da rede, ou ate seu limite
-                block_read = self.best_block_size((after - before), streamLen)
-                
-                # começa a escrita da stream de video no arquivo local.
-                self.streamWrite(streamData, streamLen)
-                
-                start = self.manage.tempoInicialGlobal
-                current = self.manage.received_bytes() - self.manage.posInicialLeitura
-                total = self.manage.getVideoSize() - self.manage.posInicialLeitura
-                
-                # calcula a velocidade de transferência da conexão
-                speed = self.calc_speed(local_time, time.time(), self.numBytesLidos)
-                Info.set(self.ident, 'local_speed', speed)
-                
-                # tempo do download
-                self.manage.tempoDownload = self.calc_eta(start, time.time(), total, current)
-                # calcula a velocidade global
-                self.manage.velocidadeGlobal = self.calc_speed(start, time.time(), current)
-                
-                if self.numBytesLidos >= block_size:
-                    if self.manage.interval.canContinue(self.ident) and not self.manage.isComplete():
-                        self.manage.interval.remove( self.ident )# removendo o intervalo completo
-                        self.configure() # configurando um novo intervado
-                        interval_start = self.manage.interval.get_start(self.ident)
-                        local_time = time.time()# reiniciando as variáveis
-                        self.reset_info()
-                # sem redução de velocidade para o intervalo pricipal
-                elif self.manage.nowSending() != interval_start:
-                    self.slow_down(local_time, self.numBytesLidos)
-            except:
-                self.fixeFalhaTransfer(_("Erro de leitura"), 2)
-                break
-            finally:
-                # libera alterações sobre os dados da conexão
-                lockIterval.release()
+                    streamLen = len(streamData) # número de bytes baixados
+                    
+                    if self.esperaSolicitada(): # caso onde a seekbar é usada
+                        self.aguardeNotificacao(); break
+                        
+                    # o servidor fechou a conexão
+                    if (block_read > 0 and streamLen == 0) or self.checkStreamError( streamData) != -1:
+                        self.fixeFalhaTransfer(_("Parado pelo servidor"), 2); break
+                        
+                    # ajusta a quantidade de bytes baixados a capacidade atual da rede, ou ate seu limite
+                    block_read = self.best_block_size((after - before), streamLen)
+                    
+                    # começa a escrita da stream de video no arquivo local.
+                    self.streamWrite(streamData, streamLen)
+                    
+                    start = self.manage.tempoInicialGlobal
+                    current = self.manage.received_bytes() - self.manage.posInicialLeitura
+                    total = self.manage.getVideoSize() - self.manage.posInicialLeitura
+                    
+                    # calcula a velocidade de transferência da conexão
+                    speed = self.calc_speed(local_time, time.time(), self.numBytesLidos)
+                    Info.set(self.ident, 'local_speed', speed)
+                    
+                    # tempo do download
+                    self.manage.tempoDownload = self.calc_eta(start, time.time(), total, current)
+                    # calcula a velocidade global
+                    self.manage.velocidadeGlobal = self.calc_speed(start, time.time(), current)
+                    
+                    if self.numBytesLidos >= block_size:
+                        if self.manage.interval.canContinue(self.ident) and not self.manage.isComplete():
+                            self.manage.interval.remove( self.ident )# removendo o intervalo completo
+                            self.configure() # configurando um novo intervado
+                            interval_start = self.manage.interval.get_start(self.ident)
+                            local_time = time.time()# reiniciando as variáveis
+                            self.reset_info()
+                    # sem redução de velocidade para o intervalo pricipal
+                    elif self.manage.nowSending() != interval_start:
+                        self.slow_down(local_time, self.numBytesLidos)
+                except:
+                    self.fixeFalhaTransfer(_("Erro de leitura"), 2)
+                    break
         # -----------------------------------------------------
         if self.manage.interval.hasInterval( self.ident ):
             self.manage.interval.remove( self.ident )
