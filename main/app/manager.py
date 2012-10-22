@@ -535,8 +535,9 @@ class ResumeInfo( ResumeBase ):
         return bool(self.get(title))
 
     def remove(self, title):
-        self.objects.get(title=title).delete()
-
+        query = self.objects.filter(title=title)
+        if query.count() > 0: query.delete()
+        
     def get(self, title):
         try: query = self.objects.get(title=title)
         except: return
@@ -544,17 +545,17 @@ class ResumeInfo( ResumeBase ):
 
 ################################# FILEMANAGER ##################################
 # FILE MANAGER: TUDO ASSOCIADO A ESCRITA DA STREAM NO DISCO
-class FM_runLocked:
+class FM_runLocked(object):
     """ controla o fluxo de escrita e leitura no arquivo de vídeo """
     lock_run = threading.RLock()
-
+    
     def __call__(this, method):
         def wrapped_method(self, *args, **kwargs):
             with FM_runLocked.lock_run:
                 return method(self, *args, **kwargs)
         return wrapped_method
 
-class FileManager:
+class FileManager(object):
     def __init__(self, **params):
         """ params: {}
         - tempfile(default=False) -> indica o uso de um arquivo temporário para armazenamento.
@@ -563,7 +564,7 @@ class FileManager:
         self.params = params
         self.filePath = settings.DEFAULT_VIDEOS_DIR
         self.resumeInfo = ResumeInfo()
-
+        
     def __del__(self):
         try: self.file.close()
         except: pass
@@ -1060,7 +1061,6 @@ class ManageMiddleware(object):
         
 # GRUPO GLOBAL DE VARIAVEIS COMPARTILHADAS
 class Manage( object ):
-    syncLockWriteStream = threading.Lock()
     
     def __init__(self, URL = "", **params):
         """ params: {}
@@ -1323,10 +1323,13 @@ class Manage( object ):
         pendingIntervs.extend( self.interval.pending )
         pendingIntervs.sort()
         
-        self.fileManager.resumeInfo.add(
-            self.videoTitle, videoExt = self.videoExt, streamSize = self.getVideoSize(), 
-            seekPos = self.interval.seekpos, pending = pendingIntervs, numTotalBytes = self.numTotalBytes, 
-            nBytesProntosEnvio = self.nBytesProntosEnvio, videoQuality = self.params.get("videoQuality",2)
+        self.fileManager.resumeInfo.add(self.videoTitle, 
+            videoExt = self.videoExt, streamSize = self.getVideoSize(), 
+            seekPos = self.interval.seekpos, 
+            pending = pendingIntervs, 
+            numTotalBytes = self.numTotalBytes, 
+            nBytesProntosEnvio = self.nBytesProntosEnvio, 
+            videoQuality = self.params.get("videoQuality",2)
         )
 
     def porcentagem(self):
@@ -1340,43 +1343,38 @@ class Manage( object ):
 
     def setRandomRead(self, seekpos):
         """ Configura a leitura da stream para um ponto aleatório dela """
-        with Manage.syncLockWriteStream:
-            self.notifiqueConexoes(True)
+        self.notifiqueConexoes(True)
 
-            if not self.usingTempfile and not self.params.get("tempfile",False):
-                self.salveInfoResumo()
+        if not self.usingTempfile and not self.params.get("tempfile",False):
+            self.salveInfoResumo()
 
-            self.numTotalBytes = self.posInicialLeitura = seekpos
-            del self.interval, self.fileManager
+        self.numTotalBytes = self.posInicialLeitura = seekpos
+        del self.interval, self.fileManager
 
-            self.inicialize(tempfile = True, seekpos = seekpos)
-            self.params["seeking"] = True
-            self.start()
+        self.inicialize(tempfile = True, seekpos = seekpos)
+        self.params["seeking"] = True
+        self.start()
         return True
 
     def reloadSettings(self):
         if self.params.get("seeking", False):
-            with Manage.syncLockWriteStream:
-                self.notifiqueConexoes(True)
+            self.notifiqueConexoes(True)
 
-                self.numTotalBytes = self.posInicialLeitura = 0
-                del self.interval, self.fileManager
+            self.numTotalBytes = self.posInicialLeitura = 0
+            del self.interval, self.fileManager
 
-                self.inicialize(tempfile = self.usingTempfile, seekpos = 0)
-                self.params["seeking"] = False
-                self.start()
+            self.inicialize(tempfile = self.usingTempfile, seekpos = 0)
+            self.params["seeking"] = False
+            self.start()
         return True
 
     def notifiqueConexoes(self, flag):
         """ Informa as conexões que um novo ponto da stream está sendo lido """
         for smanager in self.ctrConnection.getConnections(): # coloca as conexões em estado ocioso
-            if flag is True:
-                smanager.fiqueEmEspera(True)
-            elif smanager.estaProntoContinuar():
-                # só libera a conexão da espera, quando ela confirmar
-                # que entendeu a condição de reconfiguração.
-                smanager.fiqueEmEspera(False)
-                
+            if flag: smanager.setWait()
+            elif smanager.isWaiting:
+                smanager.stopWait()
+            
     def updateVideoInfo(self, args=None):
         """ Atualiza as variáveis de transferência do vídeo. """
         startTime = time.time() # temporizador
@@ -1408,16 +1406,15 @@ class Manage( object ):
 
 ################################# STREAMANAGER ################################
 # CONNECTION MANANGER: GERENCIA O PROCESSO DE CONEXÃO
-
-class StreamManager( threading.Thread):
+class StreamManager(threading.Thread):
     lockBlocoConfig = threading.Lock()
     syncLockWriteStream = threading.Lock()
     lockBlocoFalha = threading.Lock()
-
+    
     # lockInicialize: impede que todas as conexões iniciem ao mesmo tempo.
     lockInicialize = threading.Lock()
     listStrErro = ["onCuePoint"]
-
+    
     # ordem correta das infos
     listInfo = ["http", "state", "block_index", "remainder_bytes", "local_speed"]
     
@@ -1439,8 +1436,11 @@ class StreamManager( threading.Thread):
         self.usingProxy = noProxy
         self.proxies = {}
         
-        self.link = self.linkSeek = ""
-        self.aguarde = [False, False]
+        self.link = self.linkSeek = ''
+        
+        self.lockWait = threading.Event()
+        self.isWaiting = False
+        self.lockWait.set()
         
         self.numBytesLidos = 0
         self.isRunning = True
@@ -1524,11 +1524,11 @@ class StreamManager( threading.Thread):
         Info.add(self.ident)
         Info.set(self.ident, "state", _("Iniciando"))
         
-        with StreamManager.lockInicialize:
+        with self.lockInicialize:
             timeout = self.params.get("timeout", 25)
             videoManager = self.manage.videoManager
             proxyManager = self.manage.proxyManager
-
+            
             ## evita a chamada ao método getVideoInfo
             if self.wasStopped(): return
 
@@ -1551,11 +1551,11 @@ class StreamManager( threading.Thread):
 
     def checkStreamError(self, stream):
         """Verifica se os dados da stream estao corretos"""
-        for err in StreamManager.listStrErro:
+        for err in self.listStrErro:
             index = stream.find( err )
             if index >= 0: return index
         return -1
-
+    
     @staticmethod
     def responseCheck(nbytes, seekpos, seekmax, headers):
         """ Verifica se o ponto de leitura atual, mais quanto falta da stream, 
@@ -1579,30 +1579,32 @@ class StreamManager( threading.Thread):
         length = seekpos + contentLength - nbytes
         return seekmax == length
 
-    def aguardeNotificacao(self):
+    def wait(self):
         """ aguarda o processo de configuração terminar """
-        self.aguarde[1] = True
-        while self.aguarde[0]: time.sleep(0.1)
-        self.aguarde[1] = False
-
-    def fiqueEmEspera(self, flag):
-        self.aguarde[0] = flag
-
-    def esperaSolicitada(self):
-        return self.aguarde[0]
-
-    def estaProntoContinuar(self):
-        return self.aguarde[1]
-
+        self.isWaiting = True; self.lockWait.wait()
+        self.isWaiting = False
+        
+    @property
+    def isWaiting(self):
+        return self.lockWait.isWaiting
+    
+    @isWaiting.setter
+    def isWaiting(self, flag):
+        self.lockWait.isWaiting = flag
+    
+    def setWait(self): self.lockWait.clear()
+    def stopWait(self): self.lockWait.set()
+    
     def reset_info(self):
         Info.set(self.ident, "block_index", "")
         Info.set(self.ident, "local_speed", "")
 
     def streamWrite(self, stream, nbytes):
         """ Escreve a stream de bytes dados de forma controlada """
-        with Manage.syncLockWriteStream:
-            hasInterval = self.manage.interval.hasInterval( self.ident )
-            if not self.wasStopped() and hasInterval and not self.esperaSolicitada():
+        with self.syncLockWriteStream:
+            if not self.wasStopped() and self.lockWait.is_set() and \
+                self.manage.interval.hasInterval(self.ident):
+                
                 start = self.manage.interval.get_start( self.ident )
                 offset = self.manage.interval.get_offset()
                 
@@ -1646,8 +1648,8 @@ class StreamManager( threading.Thread):
                     
                     streamLen = len(streamData) # número de bytes baixados
                     
-                    if self.esperaSolicitada(): # caso onde a seekbar é usada
-                        self.aguardeNotificacao(); break
+                    if not self.lockWait.is_set(): # caso onde a seekbar é usada
+                        self.wait(); break
                         
                     # o servidor fechou a conexão
                     if (block_read > 0 and streamLen == 0) or self.checkStreamError( streamData) != -1:
@@ -1679,9 +1681,11 @@ class StreamManager( threading.Thread):
                             interval_start = self.manage.interval.get_start(self.ident)
                             local_time = time.time()# reiniciando as variáveis
                             self.reset_info()
+                            
                     # sem redução de velocidade para o intervalo pricipal
                     elif self.manage.nowSending() != interval_start:
                         self.slow_down(local_time, self.numBytesLidos)
+                        
                 except:
                     self.fixeFalhaTransfer(_("Erro de leitura"), 2)
                     break
@@ -1710,12 +1714,13 @@ class StreamManager( threading.Thread):
     def removaConfigs(self, errorstring, errornumber):
         """ remove todas as configurações, importantes, dadas a conexão """
         if self.manage.interval.hasInterval(self.ident):
-            with Manage.syncLockWriteStream: # bloqueia o thread da instance, antes da escrita.
+            with self.syncLockWriteStream: # bloqueia o thread da instance, antes da escrita.
+                
                 index = self.manage.interval.get_index( self.ident)
                 start = self.manage.interval.get_start( self.ident)
                 end = self.manage.interval.get_end( self.ident)
                 block_size = self.manage.interval.get_block_size( self.ident)
-
+                
                 # indice, nbytes, start, end
                 self.manage.interval.pending_store(index, 
                     self.numBytesLidos, start, end, block_size
@@ -1723,9 +1728,11 @@ class StreamManager( threading.Thread):
                 # número de bytes lidos, antes da conexão apresentar o erro
                 bytesnumber = self.numBytesLidos - (block_size - (end - start))
                 self.manage.interval.remove(self.ident)
-        else: bytesnumber = 0
+        else:
+            bytesnumber = 0
+            
         ip = self.proxies.get("http", "default")
-
+        
         # remove as configs de video geradas pelo ip. A falha pode ter
         # sido causada por um servidor instável, lento ou negando conexões.
         del self.manage.videoManager[ ip ]
@@ -1812,9 +1819,9 @@ class StreamManager( threading.Thread):
     def configure(self ):
         """ associa a conexão a uma parte da stream """
         Info.set(self.ident, "state", _("Ocioso"))
-
-        if not self.esperaSolicitada():
-            with StreamManager.lockBlocoConfig:
+        
+        if self.lockWait.is_set():
+            with self.lockBlocoConfig:
 
                 if self.manage.interval.pending_count() > 0:
                     # associa um intervalo pendente(intervalos pendentes, são gerados em falhas de conexão)
@@ -1831,7 +1838,7 @@ class StreamManager( threading.Thread):
                 self.numBytesLidos = 0
         else:
             # aguarda a configuração terminar
-            self.aguardeNotificacao()
+            self.wait()
 
     def run(self):
         # configura um link inicial

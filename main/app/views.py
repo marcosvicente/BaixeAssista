@@ -19,6 +19,7 @@ def streamLoader( request ):
 		manage.reloadSettings()
 		status_code = 200
 	
+	seekpos = long(seekpos)
 	print status_code, seekpos, querystr
 	
 	streamer = manage.getStreamer()
@@ -30,7 +31,6 @@ def streamLoader( request ):
 	filename = videoManager.getTitle().encode("utf-8","ignore")
 	response['Content-Disposition'] = 'attachment; filename=%s'%filename
 	response["Accept-Ranges"] = "bytes"
-	print response["Content-Type"]
 	return response
 
 

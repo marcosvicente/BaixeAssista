@@ -54,7 +54,7 @@ class MovieManager(wx.MiniFrame):
 
 		# controlador de videos -------------------------------------------
 		self.controlMovies = wx.CheckListBox(self.painelControles, -1, wx.DefaultPosition)
-		self.controlMovies.Bind( wx.EVT_LEFT_DCLICK, self.openMovie )
+		self.controlMovies.Bind( wx.EVT_LEFT_DCLICK, self.open_movie )
 		# adiciona a lista de videos ao controle
 		moviesNames = self.urlManager.getTitleList()
 		self.controlMovies.AppendItems( moviesNames)
@@ -62,16 +62,16 @@ class MovieManager(wx.MiniFrame):
 		# remover e sair
 		self.removerSairId = 50
 		self.botaoRemoverSair = wx.Button(self.painelControles, self.removerSairId, _("remover e sair"))
-		self.botaoRemoverSair.Bind( wx.EVT_BUTTON, self.removeMovieDir)
-
+		self.botaoRemoverSair.Bind( wx.EVT_BUTTON, self.remove_movie)
+		
 		# remover
 		self.removerId = 75; self.listaRemovidos = []
 		self.botaoRemover = wx.Button(self.painelControles, self.removerId, _("remover"))
-		self.botaoRemover.Bind( wx.EVT_BUTTON, self.removeMovieDir)
+		self.botaoRemover.Bind( wx.EVT_BUTTON, self.remove_movie)
 
 		# confirmar e sair
 		self.botaoConfirmarSair = wx.Button(self.painelControles, -1, _("aplicar e sair"))
-		self.botaoConfirmarSair.Bind( wx.EVT_BUTTON, self.remover)
+		self.botaoConfirmarSair.Bind( wx.EVT_BUTTON, self.remove_movielist)
 		# inativo até o botão "botaoRemover" ser usado.
 		self.botaoConfirmarSair.Enable(False)
 		
@@ -109,28 +109,24 @@ class MovieManager(wx.MiniFrame):
 		del self.playerPath
 		del self.mainWin
 		
-	def applyChanges(self, filename):
+	def apply_changes(self, filename):
 		self.fileManager.resumeInfo.remove( filename )
 		self.urlManager.remove( filename )
-		
-	def str_decode(self, msg):
-		msgstr = ""
-		try: msgstr = msg.args[1].decode("utf-8","ignore")
-		except Exception, err:
-			try: msgstr = msg.decode("utf-8","ignore")
-			except: return ""
-		return msgstr
 	
-	def removefile(self, filename):
+	def remove_file(self, filename):
 		""" remove o arquivo de vídeo do disco """
+		filepath = ""
 		try:
-			os.remove( self.fileManager.getFilePath(filename) )
-			self.applyChanges(filename)
-		except os.error, err:
-			print "Erro removendo: %s"%self.str_decode( filename )
-			print "Causa: %s"%self.str_decode( err )
-			
-	def removeMovieDir(self, evt):
+			filepath = self.fileManager.getFilePath(filename)
+			os.remove(filepath)
+		except os.error as err:
+			print u"Erro removendo: %s" % (filepath or filename)
+			print u"Causa: %s" % err
+		finally:
+			if filepath and not os.path.exists(filepath):
+				self.apply_changes(filename)
+				
+	def remove_movie(self, evt):
 		win_id = evt.GetId()
 		showModalId = -1
 		if self.controlMovies.GetChecked():
@@ -147,9 +143,9 @@ class MovieManager(wx.MiniFrame):
 					# string do item removido
 					filename = self.controlMovies.GetString(checked[0])
 					self.controlMovies.Delete( checked[0] )
-
+					
 					if win_id == self.removerSairId:
-						self.removefile( filename )
+						self.remove_file( filename )
 						
 					elif win_id == self.removerId:
 						self.listaRemovidos.append( filename )
@@ -163,13 +159,13 @@ class MovieManager(wx.MiniFrame):
 			if showModalId == wx.ID_YES:
 				self.Close(True)
 				
-	def remover(self, evt):
+	def remove_movielist(self, evt):
 		""" remoção real dos arquivos removidos do controle """
 		for filename in self.listaRemovidos:
-			self.removefile( filename )
+			self.remove_file( filename )
 		self.Close(True)
 		
-	def openMovie(self, evt):
+	def open_movie(self, evt):
 		""" Abre o vídeo no player externo, quando um elemento for
 		clicado duas vezes pelo usuário. Isso permite uma pré-visualização 
 		do video antes que ele seja removido """
@@ -188,7 +184,7 @@ class MovieManager(wx.MiniFrame):
 
 	def OnCancel(self, event):
 		self.Close(True)
-
+	
 	def OnCloseWindow(self, event):
 		self.Destroy()
 		
