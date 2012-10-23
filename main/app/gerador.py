@@ -122,7 +122,7 @@ class ConnectionProcessor:
 		req.add_header("Connection", "keep-alive")
 		return req
 
-	def conecte(self, url="", headers={}, data=None, proxies={}, timeout=25, request=None, login=False):
+	def connect(self, url="", headers={}, data=None, proxies={}, timeout=25, request=None, login=False):
 		""" conecta a url data e retorna o objeto criado """
 		ip = proxies.get("http", "default")
 
@@ -268,7 +268,7 @@ class SiteBase(ConnectionProcessor):
 		headers.update( self.headers )
 		req = self.get_request(link, headers, data=None)
 		try:
-			fd = self.conecte(request = req, proxies=proxies, timeout=timeout)
+			fd = self.connect(request = req, proxies=proxies, timeout=timeout)
 			fd.close()
 		except:
 			fd = urllib.urlopen( link )
@@ -323,7 +323,7 @@ class Uploaded( SiteBase ):
 		""" extrai as informações necessárias, para a transferêcia do arquivo de video """
 		url_id = Universal.get_video_id(self.basename, self.url)
 
-		webPage = self.conecte(self.url, proxies=proxies, timeout=timeout).read()
+		webPage = self.connect(self.url, proxies=proxies, timeout=timeout).read()
 
 		# tamanho aproximado do arquivo
 		self.streamSize = self.get_file_size( webPage )
@@ -337,7 +337,7 @@ class Uploaded( SiteBase ):
 		except: ext = "file"
 
 		## {type:'download',url:'http://stor1074.uploaded.to/dl/46d975ec-a24e-4e88-a4c9-4000ce5bd1aa'}
-		data = self.conecte(self.captchaUrl%url_id, proxies=proxies, timeout=timeout).read()
+		data = self.connect(self.captchaUrl%url_id, proxies=proxies, timeout=timeout).read()
 		url = re.search("url:\s*(?:'|\")(.*)(?:'|\")", data).group(1)
 		self.configs = {"url": url, "ext": ext, "title": title}
 
@@ -369,7 +369,7 @@ class Metacafe( SiteBase ):
 		video_id = Universal.get_video_id(self.basename, self.url)
 		
 		url = "http://www.metacafe.com/watch/%s/" % video_id
-		fd = self.conecte( url, proxies=proxies, timeout=timeout)
+		fd = self.connect( url, proxies=proxies, timeout=timeout)
 		webpage = fd.read(); fd.close()
 		
 		matchobj = re.search("flashVarsCache\s*=\s*\{(.*?)\}", webpage)
@@ -413,7 +413,7 @@ class BlipTV( SiteBase ):
 		try:
 			## http://blip.tv/rv-news-net/episode-6099740?skin=json&version=2&no_wrap=1
 			json_url = self.url + cchar + "skin=json&version=2&no_wrap=1"
-			urlh = self.conecte(json_url, proxies=proxies, timeout=timeout)
+			urlh = self.connect(json_url, proxies=proxies, timeout=timeout)
 		except: return # falha obtendo a págian
 
 		if urlh.headers.get("Content-Type", "").startswith("video/"): # Direct download
@@ -478,7 +478,7 @@ class Dailymotion( SiteBase ):
 			video_id = Universal.get_video_id(self.basename, self.url)
 			video_extension = 'flv'
 
-			fd = self.conecte(self.url, proxies=proxies, 
+			fd = self.connect(self.url, proxies=proxies, 
 						      timeout=timeout, headers={'Cookie': 'family_filter=off'})
 			webpage = fd.read(); fd.close()
 		except: return # falha obtendo a página
@@ -539,7 +539,7 @@ class GoogleVideo( SiteBase ):
 		# Retrieve video webpage to extract further information
 		try:
 			url = "http://video.google.com/videoplay?docid=%s&hl=en&oe=utf-8" % video_id
-			fd = self.conecte(url, proxies=proxies, timeout=timeout)
+			fd = self.connect(url, proxies=proxies, timeout=timeout)
 			webpage = fd.read(); fd.close()
 		except: return # falha obtendo a página
 
@@ -601,7 +601,7 @@ class Photobucket( SiteBase ):
 
 		# Retrieve video webpage to extract further information
 		try:
-			fd = self.conecte(self.url, proxies=proxies, timeout=timeout)
+			fd = self.connect(self.url, proxies=proxies, timeout=timeout)
 			webpage = fd.read(); fd.close()
 		except: return # falha obtendo a página
 
@@ -686,7 +686,7 @@ class Youtube( SiteBase ):
 	def get_raw_data(self, proxies, timeout):
 		video_id = Universal.get_video_id(self.basename, self.url)
 		url = self.info_url % video_id
-		fd = self.conecte(url, proxies=proxies, timeout=timeout)
+		fd = self.connect(url, proxies=proxies, timeout=timeout)
 		data = fd.read(); fd.close()
 		return cgi.parse_qs( data )
 	
@@ -735,7 +735,7 @@ class Vimeo( SiteBase ):
 			video_id = Universal.get_video_id(self.basename, self.url)
 			url = "http://vimeo.com/moogaloop/load/clip:%s" % video_id
 
-			fd = self.conecte(url, proxies=proxies, timeout=timeout)
+			fd = self.connect(url, proxies=proxies, timeout=timeout)
 			webpage = fd.read(); fd.close()
 		except: return # falha obtendo a página
 
@@ -814,7 +814,7 @@ class MyVideo( SiteBase ):
 			video_id = Universal.get_video_id(self.basename, self.url)
 			url = 'http://www.myvideo.de/watch/%s' % video_id
 
-			fd = self.conecte(url, proxies=proxies, timeout=timeout)
+			fd = self.connect(url, proxies=proxies, timeout=timeout)
 			webpage = fd.read(); fd.close()
 		except: return # falha obtendo a página
 
@@ -854,7 +854,7 @@ class CollegeHumor( SiteBase ):
 	def start_extraction(self, proxies={}, timeout=25):
 		video_id = Universal.get_video_id(self.basename, self.url)
 		try:
-			fd = self.conecte(self.url, proxies=proxies, timeout=timeout)
+			fd = self.connect(self.url, proxies=proxies, timeout=timeout)
 			webpage = fd.read(); fd.close()
 		except: return # falha obtendo a página
 
@@ -866,7 +866,7 @@ class CollegeHumor( SiteBase ):
 		info = {'id': video_id, 'internal_id': internal_video_id}
 		xmlUrl = 'http://www.collegehumor.com/moogaloop/video:' + internal_video_id
 		try:
-			fd = self.conecte(xmlUrl, proxies=proxies, timeout=timeout)
+			fd = self.connect(xmlUrl, proxies=proxies, timeout=timeout)
 			metaXml = fd.read(); fd.close()
 		except: return # falha obtendo dados xml
 
@@ -901,7 +901,7 @@ class Videomega( SiteBase ):
 		return True
 	
 	def start_extraction(self, proxies={}, timeout=25):
-		fd = self.conecte(self.url, proxies=proxies, timeout=timeout)	
+		fd = self.connect(self.url, proxies=proxies, timeout=timeout)	
 		webpage = fd.read(); fd.close()
 		
 		matchobj = re.search("unescape\s*\((?:\"|')(.+)(?:\"|')\)", webpage)
@@ -1039,7 +1039,7 @@ class Videobb( SiteBase ):
 		video_id = Universal.get_video_id(self.basename, self.url)
 		url = self.settingsLink % video_id
 
-		fd = self.conecte(url, proxies=proxies, timeout=timeout)
+		fd = self.connect(url, proxies=proxies, timeout=timeout)
 		data = fd.read(); fd.close()
 
 		params = json.loads(data)
@@ -1233,7 +1233,7 @@ class Mixturecloud( SiteBase ):
 		video_id = Universal.get_video_id(self.basename, self.url)
 		url = "http://video.mixturecloud.com/video=%s"% video_id
 		
-		fd = self.conecte(url, proxies=proxies, timeout=timeout, login=True)
+		fd = self.connect(url, proxies=proxies, timeout=timeout, login=True)
 		webpage = fd.read(); fd.close()
 		
 		self.message = self.getMessage( webpage)
@@ -1277,7 +1277,7 @@ class Modovideo( SiteBase ):
 		url = 'http://www.modovideo.com/video.php?v=%s'%video_id
 
 		try:
-			fd = self.conecte(url, proxies=proxies, timeout=timeout)
+			fd = self.connect(url, proxies=proxies, timeout=timeout)
 			webpage = fd.read(); fd.close()
 		except: return # falha ao obter página
 
@@ -1290,7 +1290,7 @@ class Modovideo( SiteBase ):
 		# o link está dentro de <iframe>
 		## playerUrl = re.search('(?:<iframe)?.+?src="(.+?frame\.php\?v=.+?)"', webpage).group(1)
 		playerUrl = "http://www.modovideo.com/frame.php?v=%s"%video_id
-		fd = self.conecte(playerUrl, proxies=proxies, timeout=timeout)
+		fd = self.connect(playerUrl, proxies=proxies, timeout=timeout)
 		script = fd.read(); fd.close()
 
 		matchobj = re.search("\.setup\(\{\s*flashplayer:\s*\"(.+)\"", script, re.DOTALL|re.IGNORECASE)
@@ -1342,7 +1342,7 @@ class Videoweed( SiteBase ):
 			url_id = Universal.get_video_id(self.basename, self.url)
 			url = self.siteVideoLink % url_id
 
-			fd = self.conecte(url, proxies=proxies, timeout=timeout)
+			fd = self.connect(url, proxies=proxies, timeout=timeout)
 			webpage = fd.read(); fd.close()
 		except: return # falha obtendo a página
 
@@ -1352,7 +1352,7 @@ class Videoweed( SiteBase ):
 
 		try:
 			url = self.player_api % (filekey, url_id) # ip; id
-			fd = self.conecte(url, proxies=proxies, timeout=timeout)
+			fd = self.connect(url, proxies=proxies, timeout=timeout)
 			info_data = fd.read(); fd.close()
 		except: return # falha obtendo a página
 
@@ -1445,7 +1445,7 @@ class Veevr( SiteBase ):
 	def start_extraction(self, proxies={}, timeout=25):
 		try:
 			# página web inicial
-			fd = self.conecte(self.url, proxies=proxies, timeout=timeout)
+			fd = self.connect(self.url, proxies=proxies, timeout=timeout)
 			webpage = fd.read(); fd.close()
 		except: return # falha obtendo a página
 
@@ -1481,7 +1481,7 @@ class Veevr( SiteBase ):
 		ext = "mp4" # extensão padrão
 
 		if re.match(".+/Manifest\.", mediaUrl):
-			fd = self.conecte(mediaUrl, proxies=proxies, timeout=timeout)
+			fd = self.connect(mediaUrl, proxies=proxies, timeout=timeout)
 			xmlData = fd.read(); fd.close()
 
 			# documento xml
@@ -1544,7 +1544,7 @@ class PutLocker( SiteBase ):
 	def start_extraction(self, proxies={}, timeout=25):
 		# página web inicial
 		url = self.url.replace("/embed","/file")
-		fd = self.conecte(url, proxies=proxies, timeout=timeout)
+		fd = self.connect(url, proxies=proxies, timeout=timeout)
 		webpage = fd.read(); fd.close()
 
 		# messagem de erro. se houver alguma
@@ -1557,7 +1557,7 @@ class PutLocker( SiteBase ):
 		confirmvalue = matchobj.group("confirm")
 
 		data = urllib.urlencode({hashname: hashvalue, "confirm": confirmvalue})
-		fd = self.conecte(url, proxies=proxies, timeout=timeout, data=data)
+		fd = self.connect(url, proxies=proxies, timeout=timeout, data=data)
 		webpage = fd.read(); fd.close()
 
 		# extraindo o titulo.
@@ -1571,7 +1571,7 @@ class PutLocker( SiteBase ):
 		url = self.getFileBaseUrl + matchobj.group(1)
 
 		# começa a análize do xml
-		fd = self.conecte(url, proxies=proxies, timeout=timeout)
+		fd = self.connect(url, proxies=proxies, timeout=timeout)
 		rssData = fd.read(); fd.close()
 
 		ext = "flv" # extensão padrão.
@@ -1629,7 +1629,7 @@ class Moviezer( SiteBase ):
 
 	def start_extraction(self, proxies={}, timeout=25):
 		try:
-			fd = self.conecte(self.url, proxies=proxies, timeout=timeout)
+			fd = self.connect(self.url, proxies=proxies, timeout=timeout)
 			webpage = fd.read(); fd.close()
 
 			matchobj = re.search("flashvars\s*=\s*\{.*?'file':\s*'(?P<url>.*?)'", webpage, re.DOTALL)
@@ -1707,7 +1707,7 @@ class MoeVideo( SiteBase ):
 			video_id = Universal.get_video_id(self.basename, self.url)
 			postdata = self.getPostData( video_id )
 
-			fd = self.conecte(self.apiUrl, proxies=proxies, timeout=timeout, data=postdata)
+			fd = self.connect(self.apiUrl, proxies=proxies, timeout=timeout, data=postdata)
 			webdata = fd.read(); fd.close()
 
 			videoinfo = json.loads( webdata)
@@ -1743,7 +1743,7 @@ class Anitube( SiteBase ):
 		return True
 
 	def start_extraction(self, proxies={}, timeout=25):
-		fd = self.conecte(self.url, proxies=proxies, timeout=timeout)
+		fd = self.connect(self.url, proxies=proxies, timeout=timeout)
 		webdata = fd.read(); fd.close()
 		
 		## addParam("flashvars",'config=http://www.anitube.jp/nuevo/config.php?key=c3ce49fd327977f837ab')
@@ -1757,12 +1757,12 @@ class Anitube( SiteBase ):
 
 		## <file>http://lb01-wdc.anitube.com.br/42f56c9f566c1859da833f80131fdcd5/4fafe9c0/43595.flv</file>
 		## <title>Saint Seiya Omega 07</title>
-		fd = self.conecte(url, proxies=proxies, timeout=timeout)
+		fd = self.connect(url, proxies=proxies, timeout=timeout)
 		xmldata = fd.read(); fd.close()
 
 		if not re.match("http://www.anitube\.jp/nuevo/playlist\.php", url):
 			play_url = re.search("<playlist>(.*?)</playlist>", xmldata).group(1)
-			fd = self.conecte(play_url, proxies=proxies, timeout=timeout)
+			fd = self.connect(play_url, proxies=proxies, timeout=timeout)
 			xmldata = fd.read(); fd.close()
 
 		video_url = re.search("<file>(.*?)</file>", xmldata).group(1)
@@ -1807,7 +1807,7 @@ class Vk( SiteBase ):
 	
 	def start_extraction(self, proxies={}, timeout=25):
 		## http://cs519609.userapi.com/u165193745/video/7cad4a848e.360.mp4
-		fd = self.conecte(self.url, proxies=proxies, timeout=timeout)
+		fd = self.connect(self.url, proxies=proxies, timeout=timeout)
 		webdata = fd.read(); fd.close()
 		params = {}
 		try:
@@ -1865,7 +1865,7 @@ class Xvideos( SiteBase ):
 
 	def start_extraction(self, proxies={}, timeout=25):
 		try:
-			fd = self.conecte(self.url, proxies=proxies, timeout=timeout)
+			fd = self.connect(self.url, proxies=proxies, timeout=timeout)
 			webpage = fd.read(); fd.close()
 		except: return
 
@@ -1898,7 +1898,7 @@ class Redtube( SiteBase ):
 
 	def start_extraction(self, proxies={}, timeout=25):
 		try:
-			fd = self.conecte(self.url, proxies=proxies, timeout=timeout)
+			fd = self.connect(self.url, proxies=proxies, timeout=timeout)
 			webpage = fd.read(); fd.close()
 		except: return
 
@@ -1933,7 +1933,7 @@ class Pornhub( SiteBase ):
 		return True
 
 	def start_extraction(self, proxies={}, timeout=25):
-		fd = self.conecte(self.url, proxies=proxies, timeout=timeout)
+		fd = self.connect(self.url, proxies=proxies, timeout=timeout)
 		webpage = fd.read(); fd.close()
 		try:
 			fs = ""
@@ -1946,7 +1946,7 @@ class Pornhub( SiteBase ):
 			except: title = get_radom_title()
 		except:
 			urlid = Universal.get_video_id(self.basename, self.url)
-			fd = self.conecte(self.apiUrl % urlid, proxies=proxies, timeout=timeout)
+			fd = self.connect(self.apiUrl % urlid, proxies=proxies, timeout=timeout)
 			xmlData = fd.read(); fd.close()
 			
 			url = re.search("""<video_url><!\[CDATA\[(.+)\]\]></video_url>""", xmlData).group(1)
@@ -1988,7 +1988,7 @@ class DwShare( SiteBase ):
 		video_id = Universal.get_video_id(self.basename, self.url)
 		for videlink in self.videolink:
 			try:
-				fd = self.conecte(videlink % video_id, proxies=proxies, timeout=timeout)
+				fd = self.connect(videlink % video_id, proxies=proxies, timeout=timeout)
 				xmlData = fd.read(); fd.close(); break
 			except: continue
 		else: raise IOError
@@ -2052,7 +2052,7 @@ class Hostingbulk( SiteBase ):
 		video_id = Universal.get_video_id(self.basename, self.url)
 		url = self.controller["url"] % video_id
 
-		fd = self.conecte(url, proxies=proxies, timeout=timeout)
+		fd = self.connect(url, proxies=proxies, timeout=timeout)
 		webpage = fd.read(); fd.close()
 
 		matchobj = re.search("eval\(\s*function\s*\(.*\)\s*{.*?}\s*(.+)\)", webpage)
@@ -2115,12 +2115,12 @@ class Videoslasher( SiteBase ):
 		confirmvalue = matchobj.group("confirm")
 		
 		data = urllib.urlencode({hashname: hashvalue, "confirm": confirmvalue})
-		fd = self.conecte(self.url, proxies=proxies, timeout=timeout, data=data)
+		fd = self.connect(self.url, proxies=proxies, timeout=timeout, data=data)
 		webpage = fd.read(); fd.close()
 		return webpage
 	
 	def start_extraction(self, proxies={}, timeout=25):
-		fd = self.conecte(self.url, proxies=proxies, timeout=timeout)
+		fd = self.connect(self.url, proxies=proxies, timeout=timeout)
 		firstWebpage = fd.read(); fd.close()
 		
 		try: webpage = self.postPage(firstWebpage, proxies, timeout)
@@ -2132,7 +2132,7 @@ class Videoslasher( SiteBase ):
 		if not playlistUrl.endswith('/'):
 			playlistUrl += '/'
 		
-		fd = self.conecte(self.domain + playlistUrl, proxies=proxies, timeout=timeout)
+		fd = self.connect(self.domain + playlistUrl, proxies=proxies, timeout=timeout)
 		rssData = fd.read(); fd.close()
 		
 		for item in re.findall("<item>(.+?)</item>", rssData, re.DOTALL):
@@ -2337,14 +2337,16 @@ if __name__ == "__main__":
 		print "-"*25
 		return False
 	# ----------------------------------------------
-	proxyManager = manager.ProxyManager(None)
-
-	for n in range(proxyManager.getNumIps()):
-		proxies = proxyManager.proxyFormatado()
+	pxm = manager.ProxyManager()
+	
+	for n in range(pxm.get_num()):
+		proxies = pxm.get_formated()
 		print proxies["http"]
 		proxies = {}
-
+		
 		if not checkSite("http://www.pornhub.com/view_video.php?viewkey=2057615854", proxies=proxies, quality=3):
-			proxyManager.setBadIp( proxies )
-
-	del proxyManager
+			pxm.set_bad( proxies )
+	del pxm
+	
+	
+	

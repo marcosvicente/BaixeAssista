@@ -236,96 +236,66 @@ class Server( threading.Thread ):
         
 ################################ PROXYMANAGER ################################
 # PROXY MANAGER: TRABALHA OS IPS DE SERVIDORES PROXY
-class ProxyManager:
+class ProxyManager(object):
     lockNewIp = threading.Lock()
-
-    def __init__(self, manage):
-        self.manage = manage
-
+    
+    def __init__(self):
         self.configPath = os.path.join(settings.APPDIR, "configs")
         self.filePath = os.path.join(self.configPath, "ipSP.cfg")
-
-        fileIp = open( self.filePath )
-        self.listaIp = [ip[:-1] for ip in fileIp.readlines()]
-        fileIp.close() # close file
-
-        self.generator = self.create_generator()
-
+        
+        with open( self.filePath ) as fileIp:
+            self.iplist = [ip[:-1] for ip in fileIp.readlines()]
+        
+        self.generator = self.get_generator()
+        
     def __del__(self):
         self.save()
-        del self.configPath
-        del self.filePath
         del self.generator
-        del self.manage		
-        del self.listaIp
-
-    def getNumIps(self):
+        del self.iplist
+        
+    def get_num(self):
         """ retorna o número de ips armazenados no arquivo """
-        return len(self.listaIp)
-
+        return len(self.iplist)
+        
     def save(self):
         """ Salva todas as modificações """
-        if not security_save(self.filePath, _list=self.listaIp):
+        if not security_save(self.filePath, _list=self.iplist):
             print "Erro salvando lista de ips!!!"
             
-    def create_generator( self):
+    def get_generator(self):
         """ Cria um gerador para iterar sobre a lista de ips """
-        return (ip for ip in self.listaIp)
+        return (ip for ip in self.iplist)
 
-    def proxyFormatado( self):
+    def get_formated(self):
         """Retorna um servidor proxy ja mapeado: {"http": "http://0.0.0.0}"""
-        proxy = self.getNewProxy()
-        return self.formateProxy( proxy)
-
-    def formateProxy(self, proxy):
+        return self.formate( self.get_new() )
+        
+    def formate(self, proxy):
         """Retorna o servidor proxy mapeado: {"http": "http://0.0.0.0}"""
         return {"http": "http://%s"%proxy}
-
-    def getNewProxy(self):
+    
+    def get_new(self):
         """ retorna um novo ip sem formatação -> 250.180.200.125:8080 """
-        ProxyManager.lockNewIp.acquire()
-        try:
-            new_proxy = self.generator.next()
-        except StopIteration:
-            self.generator = self.create_generator()
-            new_proxy = self.generator.next()
-
-        ProxyManager.lockNewIp.release()
-        return new_proxy
-
-    def setBadIp(self, ip):
-        """ reoganiza a lista de ips, 
-        colocando os piores para o final """
+        with self.lockNewIp:
+            try: newip = self.generator.next()
+            except StopIteration:
+                self.generator = self.get_generator()
+                newip = self.generator.next()
+        return newip
+        
+    def set_bad(self, ip):
+        """ reoganiza a lista de ips, colocando os piores para o final """
         if type(ip) is dict: ip = ip["http"]
-
+        
         # remove a formatação do ip
         if ip.startswith("http://"):
-            httpLen = len("http://")
-            ip = ip[httpLen: ]
-
+            ip = ip[len("http://"):]
+        
         # remove o bad ip de sua localização atual
-        self.listaIp.remove( ip )
-
+        self.iplist.remove( ip )
         # desloca o bad ip para o final da lista
-        self.listaIp.append( ip )
-
-    def getProxyLink(self, timeout=25):
-        """ retona um endereço de um servidor 
-        proxy e um link para um arquivo de video.
-        """
-        vmanager = self.manage.videoManager
-
-        while True:	
-            proxy = self.getNewProxy()
-            proxies = self.formateProxy(proxy)
-
-            if vmanager.getVideoInfo(ntry=1, proxies=proxies, timeout=timeout):
-                videoLink = vmanager.getLink(); break
-            else:
-                self.setBadIp(proxies["http"])
-
-        return (proxies, videoLink)
-
+        self.iplist.append( ip )
+        
 ################################# LINKMANAGER #################################
 # LINK MANAGER: ADICIONA, REMOVE, E OBTÉM INFORMAÇÕES DOS LINKS ADICIONADAS
 class UrlBase(object):
@@ -1106,8 +1076,8 @@ class Manage( object ):
         self.ctrConnection = CTRConnection( self)
         
         # gerencia os endereços dos servidores proxies
-        self.proxyManager = ProxyManager( self)
-
+        self.proxyManager = ProxyManager()
+        
     def inicialize(self, **params):
         """ método chamado para realizar a configuração de leitura aleatória da stream """
         self.params.update( params )
@@ -1120,7 +1090,7 @@ class Manage( object ):
         
         # avalia se o arquivo pode ser resumido
         self.resumindo = self.fileManager.resume( self.videoTitle )
-
+        
         if self.resumindo:
             self.nBytesProntosEnvio = self.fileManager.resumeInfo.get_send_bytes()
             self.videoSize = self.fileManager.resumeInfo.get_file_size()
@@ -1236,8 +1206,8 @@ class Manage( object ):
 
             # quando a conexão padrão falha em obter os dados
             # é viável tentar com um ip de um servidro-proxy
-            proxy = self.proxyManager.proxyFormatado()
-
+            proxy = self.proxyManager.get_formated()
+            
         # testa se falhou em obter os dados necessários
         return (self.videoSize and self.videoTitle)
 
@@ -1433,7 +1403,7 @@ class StreamManager(threading.Thread):
         self.manage = manage
         
         # conexão com ou sem um servidor
-        self.usingProxy = noProxy
+        self.usingProxy = not noProxy
         self.proxies = {}
         
         self.link = self.linkSeek = ''
@@ -1526,25 +1496,22 @@ class StreamManager(threading.Thread):
         
         with self.lockInicialize:
             timeout = self.params.get("timeout", 25)
-            videoManager = self.manage.videoManager
-            proxyManager = self.manage.proxyManager
+            pxm = self.manage.proxyManager
+            vdm = self.manage.videoManager
             
             ## evita a chamada ao método getVideoInfo
             if self.wasStopped(): return
-
-            if self.usingProxy == True:
-                if videoManager.getVideoInfo(timeout=timeout):
-                    self.link = videoManager.getLink()
-            else:
-                self.proxies, self.link = proxyManager.getProxyLink(timeout=timeout)
-
-            ip = self.proxies.get("http",_(u"Conexão Padrão"))
-            Info.set(self.ident, "http", ip)
+            if self.usingProxy: self.proxies = pxm.get_formated()
+            
+            if vdm.getVideoInfo(proxies=self.proxies, timeout=timeout):
+                self.link = vdm.getLink()
+                
+            Info.set(self.ident, "http", self.proxies.get("http", _(u"Conexão Padrão")))
 
     def stop(self):
         """ pára toda a atividade da conexão """
         self.isRunning = False
-        self.fixeFalhaTransfer(_(u"Parado pelo usuário"), 3)
+        self.failure(_(u"Parado pelo usuário"), 3)
 
     def wasStopped(self):
         return (not self.isRunning)
@@ -1619,7 +1586,7 @@ class StreamManager(threading.Thread):
                 # bytes lidos da conexão.
                 self.numBytesLidos += nbytes
 
-    def inicieLeitura(self ):
+    def read(self ):
         block_read = 1024; local_time = time.time()
         block_size = self.manage.interval.get_block_size( self.ident )
         interval_start = self.manage.interval.get_start( self.ident)
@@ -1653,7 +1620,7 @@ class StreamManager(threading.Thread):
                         
                     # o servidor fechou a conexão
                     if (block_read > 0 and streamLen == 0) or self.checkStreamError( streamData) != -1:
-                        self.fixeFalhaTransfer(_("Parado pelo servidor"), 2); break
+                        self.failure(_("Parado pelo servidor"), 2); break
                         
                     # ajusta a quantidade de bytes baixados a capacidade atual da rede, ou ate seu limite
                     block_read = self.best_block_size((after - before), streamLen)
@@ -1687,7 +1654,7 @@ class StreamManager(threading.Thread):
                         self.slow_down(local_time, self.numBytesLidos)
                         
                 except:
-                    self.fixeFalhaTransfer(_("Erro de leitura"), 2)
+                    self.failure(_("Erro de leitura"), 2)
                     break
         # -----------------------------------------------------
         if self.manage.interval.hasInterval( self.ident ):
@@ -1738,11 +1705,11 @@ class StreamManager(threading.Thread):
         del self.manage.videoManager[ ip ]
         
         if ip != "default" and ((errornumber != 3 and errornumber == 1) or bytesnumber < 524288): # 512k
-            self.manage.proxyManager.setBadIp( ip ) # tira a prioridade de uso do ip.
+            self.manage.proxyManager.set_bad( ip ) # tira a prioridade de uso do ip.
         return bytesnumber
     
     @just_try()
-    def fixeFalhaTransfer(self, errorstring, errornumber):
+    def failure(self, errorstring, errornumber):
         Info.set(self.ident, 'state', errorstring)
         self.reset_info()
 
@@ -1752,30 +1719,34 @@ class StreamManager(threading.Thread):
 
         Info.set(self.ident, "state", _("Reconfigurando"))
         time.sleep(0.5)
-
-        ip = self.proxies.get("http", "default")
-        timeout = self.params.get("timeout", 25)
-        typechange = self.params.get("typechange", False)
-        videoManager = self.manage.videoManager
-        proxyManager = self.manage.proxyManager
         
-        if self.usingProxy:
-            if typechange:
-                proxies, link = proxyManager.getProxyLink(timeout=timeout)
-                self.usingProxy, self.proxies, self.link = True, proxies, link
+        timeout = self.params.get("timeout", 25)
+        change = self.params.get("typechange", False)
+        vdm = self.manage.videoManager
+        pxm = self.manage.proxyManager
+        
+        if self.usingProxy: self.proxies = {}
+        else: self.proxies = pxm.get_formated()
+        
+        if not self.usingProxy:
+            if change:
+                self.proxies = pxm.get_formated()
+                self.usingProxy = True
                 
         elif errornumber == 1 or bytesnumber < 524288: # 512k
-            if typechange:
-                if videoManager.getVideoInfo(timeout=timeout): # sucess
-                    self.proxies, self.link = {}, videoManager.getLink()
-                    self.usingProxy = True
-            else:
-                self.proxies, self.link = proxyManager.getProxyLink(timeout=timeout)
+            if change:
                 self.usingProxy = False
+                self.proxies = {}
+            else:
+                self.proxies = pxm.get_formated()
+                self.usingProxy = True
                 
-        Info.set(self.ident,"http",self.proxies.get("http",_(u"Conexão Padrão")))
+        if vdm.getVideoInfo(proxies=self.proxies, timeout=timeout):
+            self.link = vdm.getLink()
+            
+        Info.set(self.ident, "http", self.proxies.get("http", _(u"Conexão Padrão")))
 
-    def conecte(self):
+    def connect(self):
         videoManager = self.manage.videoManager
         seekpos = self.manage.interval.get_start(self.ident)
         streamSize = self.manage.getVideoSize()
@@ -1789,7 +1760,7 @@ class StreamManager(threading.Thread):
                 timeout = self.params.get("timeout", 25)
                 
                 # começa a conexão
-                self.streamSocket = videoManager.conecte(self.linkSeek, 
+                self.streamSocket = videoManager.connect(self.linkSeek, 
                         proxies=self.proxies, timeout=timeout, login=False)
                 
                 data = self.streamSocket.read( videoManager.STREAM_HEADER_SIZE )
@@ -1854,39 +1825,39 @@ class StreamManager(threading.Thread):
                     start = self.manage.videoManager.get_relative( start )
                     self.linkSeek = gerador.get_with_seek(self.link, start)
                     # Tenta conectar e iniciar a tranferência do arquivo de video.
-                    assert self.conecte(), "IO erro!"
-                    self.inicieLeitura()
-                # estado ocioso
-                else: time.sleep(1)
+                    assert self.connect(), "connect error"
+                    self.read()
+                else: # estado ocioso
+                    time.sleep(1)
             except Exception as e:
-                self.fixeFalhaTransfer(_("Incapaz de conectar"), 1)
+                self.failure(_("Incapaz de conectar"), 1)
                 print "SM - Err: %s" %(e)
         # estado final da conexão
         Info.set(self.ident, "state", _(u"Conexão parada"))
         
 #########################  STREAMANAGER: (megaupload, youtube) ######################
 class StreamManager_( StreamManager ):
-
+    
     def __init__(self, manage, noProxy= False, **params):
         StreamManager.__init__(self, manage, noProxy, **params)
-        
+    
     def inicialize(self):
         """ iniciado com thread. Evita travar no init """
-        Info.add( self.ident)
+        Info.add( self.ident )
         Info.set(self.ident, "state", "Iniciando")
-
-        if self.usingProxy == True: # conexão padrão - sem proxy
+        
+        if not self.usingProxy: # conexão padrão - sem proxy
             Info.set(self.ident, "http", _(u"Conexão Padrão"))
         else:
-            self.proxies = self.manage.proxyManager.proxyFormatado()
+            self.proxies = self.manage.proxyManager.get_formated()
             Info.set(self.ident, "http", self.proxies['http'])
             
     @just_try()
-    def fixeFalhaTransfer(self, errorstring, errornumber):
+    def failure(self, errorstring, errornumber):
         Info.set(self.ident, 'state', errorstring)
         self.reset_info()
 
-        typechange = self.params.get("typechange", False)
+        change = self.params.get("typechange", False)
         proxyManager = self.manage.proxyManager
 
         bytesnumber = self.removaConfigs(errorstring, errornumber) # removendo configurações
@@ -1895,19 +1866,23 @@ class StreamManager_( StreamManager ):
 
         Info.set(self.ident, "state", _("Reconfigurando"))
         time.sleep(0.5)
-
-        if self.usingProxy:
-            if typechange is True:
-                self.usingProxy, self.proxies = False, proxyManager.proxyFormatado()
+        
+        if not self.usingProxy:
+            if change:
+                self.proxies = proxyManager.get_formated()
+                self.usingProxy = False
+                
         elif errornumber == 1 or bytesnumber < 524288:
-            if typechange is True:
-                self.usingProxy, self.proxies = True, {}
+            if change:
+                self.usingProxy = False
+                self.proxies = {}
             else:
-                self.usingProxy, self.proxies = False, proxyManager.proxyFormatado()
-
-        Info.set(self.ident,"http",self.proxies.get("http",_(u"Conexão Padrão")))
-
-    def conecte(self):
+                self.proxies = proxyManager.get_formated()
+                self.usingProxy = True
+                
+        Info.set(self.ident, "http", self.proxies.get("http", _(u"Conexão Padrão")))
+    
+    def connect(self):
         videoManager = self.manage.videoManager
         seekpos = self.manage.interval.get_start( self.ident) # posição inicial de leitura
         streamSize = self.manage.getVideoSize()
@@ -1927,7 +1902,7 @@ class StreamManager_( StreamManager ):
                     time.sleep(1)
 
                 Info.set(self.ident, "state", _("Conectando"))
-                self.streamSocket = videoManager.conecte(
+                self.streamSocket = videoManager.connect(
                     link, proxies=self.proxies, headers={"Range":"bytes=%s-"%seekpos})
 
                 data = self.streamSocket.read( videoManager.STREAM_HEADER_SIZE )
@@ -1953,20 +1928,20 @@ class StreamManager_( StreamManager ):
     def run(self):
         # configura um link inicial
         self.inicialize()
-
+        
         while self.isRunning and not self.manage.isComplete():
             try:
-                # configura um intervalo para cada conexao
-                self.configure()
-
+                self.configure() # configura um intervalo para cada conexao
+                
                 if self.manage.interval.hasInterval( self.ident ):
                     # tentando estabelece a conexão como o servidor
-                    assert self.conecte(), "IO error!"
-                    self.inicieLeitura() # inicia a transferencia de dados
-                # estado ocioso
-                else: time.sleep(1)
+                    assert self.connect(), "conect error"
+                    # inicia a transferencia de dados
+                    self.read()
+                else: # estado ocioso
+                    time.sleep(1)
             except Exception as err:
-                self.fixeFalhaTransfer(_("Incapaz de conectar"), 1)
+                self.failure(_("Incapaz de conectar"), 1)
                 print "SM - Err: %s" %err
         Info.set(self.ident, "state", _(u"Conexão parada"))
         
