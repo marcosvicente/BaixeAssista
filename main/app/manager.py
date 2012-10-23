@@ -1710,23 +1710,22 @@ class StreamManager(threading.Thread):
     
     @just_try()
     def failure(self, errorstring, errornumber):
-        Info.set(self.ident, 'state', errorstring)
+        Info.set(self.ident, "state", errorstring)
         self.reset_info()
-
+        
         bytesnumber = self.removaConfigs(errorstring, errornumber) # removendo configurações
+        
         if errornumber == 3 or self.wasStopped(): return # retorna porque a conexao foi encerrada
         time.sleep(0.5)
-
+        
         Info.set(self.ident, "state", _("Reconfigurando"))
         time.sleep(0.5)
         
-        timeout = self.params.get("timeout", 25)
         change = self.params.get("typechange", False)
+        timeout = self.params.get("timeout", 25)
+        
         vdm = self.manage.videoManager
         pxm = self.manage.proxyManager
-        
-        if self.usingProxy: self.proxies = {}
-        else: self.proxies = pxm.get_formated()
         
         if not self.usingProxy:
             if change:
