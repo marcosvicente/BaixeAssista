@@ -688,21 +688,23 @@ class Interval:
         pending: lista de intervals pendetes(não baixados); 
         offset: deslocamento do ponteiro de escrita à esquerda.
         maxsize: tamanho do block que será segmentado.
+        min_block: tamanho mínimo(em bytes) para um bloco de bytes
         """
         assert params.get("maxsize",None), "maxsize is null"
-        self.locks = {}
+        self.min_block = params.get("min_block", 1024*512)
         
         self.send_info = {"nbytes":{}, "sending":0}
         self.seekpos = params.get("seekpos", 0)
         self.pending = params.get("pending", [])
-        self.__initpos = self.seekpos
         
         self.maxsize = params["maxsize"]
         self.maxsplit = params.get("maxsplit",2)
 
         self.default_block_size = self.calcule_block_size()
+        
         self.intervals = {}
-
+        self.locks = {}
+        
         # caso a posição inicial leitura seja maior que zero, offset 
         # ajusta essa posição para zero. equivalente a start - offset
         self.offset = params.get("offset", self.seekpos)
@@ -714,16 +716,16 @@ class Interval:
         del self.intervals
         del self.pending
     
-    def getInitPos(self):
-        return self.__initpos
-    
     def canContinue(self, obj_id):
         """ Avalia se o objeto conexão pode continuar a leitura, 
         sem comprometer a montagem da stream de vídeo(ou seja, sem corromper o arquivo) """
         if self.hasInterval(obj_id):
             return (self.get_end(obj_id) == self.seekpos)
         return False
-
+    
+    def get_min_block(self):
+        return self.min_block
+    
     def get_offset(self):
         """ offset deve ser usado somente para leitura """
         return self.offset
@@ -774,11 +776,11 @@ class Interval:
 
     def calcule_block_size(self):
         """ calcula quantos bytes serão lidos por conexão criada """
-        block_size = int(float(self.maxsize) / float(self.maxsplit))
-        min_size = 512*1024 # impede um bloco muito pequeno
-        if block_size < min_size: block_size = min_size 
-        return block_size
-
+        blocksize = int(float(self.maxsize) / float(self.maxsplit))
+        if blocksize < self.min_block: # respeita o tamanho mínimo.
+            blocksize = self.min_block
+        return blocksize
+        
     def updateIndex(self):
         """ reorganiza a tabela de indices """
         intervals = self.intervals.items()
@@ -828,7 +830,7 @@ class Interval:
             
         def is_suitable( data ):
             """ verifica se o intervalo é condidato a alteração """
-            return (get_average(data) > (256*1024))
+            return (get_average(data) > self.min_block)
         
         intervals = self.intervals.items()
         intervals.sort(key=lambda x: x[1][1])
@@ -874,7 +876,7 @@ class Interval:
             difer = self.maxsize - end
             
             # Quando o resto da stream for muito pequeno, adiciona ao final do interv.
-            if difer > 0 and difer < 512*1024: end += difer
+            if difer > 0 and difer < self.min_block: end += difer
             block_size = end - start
             
             self.intervals[obj_id] = [0, start, end, block_size]
@@ -1693,28 +1695,30 @@ class StreamManager(threading.Thread):
                     self.numBytesLidos, start, end, block_size
                 )
                 # número de bytes lidos, antes da conexão apresentar o erro
-                bytesnumber = self.numBytesLidos - (block_size - (end - start))
+                downbytes = self.numBytesLidos - (block_size - (end - start))
                 self.manage.interval.remove(self.ident)
         else:
-            bytesnumber = 0
+            downbytes = 0
             
         ip = self.proxies.get("http", "default")
+        min_block = self.manage.interval.get_min_block()
         
         # remove as configs de video geradas pelo ip. A falha pode ter
         # sido causada por um servidor instável, lento ou negando conexões.
         del self.manage.videoManager[ ip ]
         
-        if ip != "default" and ((errornumber != 3 and errornumber == 1) or bytesnumber < 524288): # 512k
-            self.manage.proxyManager.set_bad( ip ) # tira a prioridade de uso do ip.
-        return bytesnumber
-    
+        if ip != "default" and (errornumber == 1 or (errornumber != 3 and downbytes < min_block)):
+            # tira a prioridade de uso do ip.
+            self.manage.proxyManager.set_bad( ip )
+            print "Bad: %s - %s"%(ip, errornumber)
+        return downbytes
+        
     @just_try()
     def failure(self, errorstring, errornumber):
         Info.set(self.ident, "state", errorstring)
         self.reset_info()
         
-        bytesnumber = self.removaConfigs(errorstring, errornumber) # removendo configurações
-        
+        downbytes = self.removaConfigs(errorstring, errornumber) # removendo configurações
         if errornumber == 3 or self.wasStopped(): return # retorna porque a conexao foi encerrada
         time.sleep(0.5)
         
@@ -1731,8 +1735,7 @@ class StreamManager(threading.Thread):
             if change:
                 self.proxies = pxm.get_formated()
                 self.usingProxy = True
-                
-        elif errornumber == 1 or bytesnumber < 524288: # 512k
+        elif errornumber == 1 or downbytes < self.manage.interval.get_min_block():
             if change:
                 self.usingProxy = False
                 self.proxies = {}
@@ -1830,7 +1833,7 @@ class StreamManager(threading.Thread):
                     time.sleep(1)
             except Exception as e:
                 self.failure(_("Incapaz de conectar"), 1)
-                print "SM - Err: %s" %(e)
+                print "SM: %s" %(e)
         # estado final da conexão
         Info.set(self.ident, "state", _(u"Conexão parada"))
         
@@ -1859,7 +1862,7 @@ class StreamManager_( StreamManager ):
         change = self.params.get("typechange", False)
         proxyManager = self.manage.proxyManager
 
-        bytesnumber = self.removaConfigs(errorstring, errornumber) # removendo configurações
+        downbytes = self.removaConfigs(errorstring, errornumber) # removendo configurações
         if errornumber == 3: return # retorna porque a conexao foi encerrada
         time.sleep(0.5)
 
@@ -1870,8 +1873,7 @@ class StreamManager_( StreamManager ):
             if change:
                 self.proxies = proxyManager.get_formated()
                 self.usingProxy = False
-                
-        elif errornumber == 1 or bytesnumber < 524288:
+        elif errornumber == 1 or (downbytes < self.manage.interval.get_min_block()):
             if change:
                 self.usingProxy = False
                 self.proxies = {}
@@ -1941,7 +1943,7 @@ class StreamManager_( StreamManager ):
                     time.sleep(1)
             except Exception as err:
                 self.failure(_("Incapaz de conectar"), 1)
-                print "SM - Err: %s" %err
+                print "SM: %s" %err
         Info.set(self.ident, "state", _(u"Conexão parada"))
         
 ########################### EXECUÇÃO APARTIR DO SCRIPT  ###########################
