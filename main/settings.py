@@ -36,6 +36,7 @@ STATIC_PATH = os.path.join(PROJECTPATH, "static")
 APPDIR = os.path.join(PROJECTPATH, "app")
 CONFIGS_DIR = os.path.join(APPDIR, "configs")
 IMAGES_DIR = os.path.join(APPDIR, "images")
+LOGS_DIR = os.path.join(APPDIR, "logs")
 
 # pasta(diretório) padrão de vídeos
 VIDEOS_DIR_TEMP_NAME = "temp"
@@ -186,14 +187,14 @@ LOGGING = {
             'class': 'django.utils.log.AdminEmailHandler'
         },
          'BA_MANAGER': {
-            'filename': os.path.join(APPDIR, "logs", "manager.log"),
+            'filename': os.path.join(LOGS_DIR, "manager.log"),
             'class': 'logging.handlers.RotatingFileHandler',
             'maxBytes': 1024**2, # 1 MB
             'backupCount': 5,
             'level': 'DEBUG'
         },
         'BA_SEND_MAIL': {
-            'filename': os.path.join(APPDIR, "logs", "sendmail.log"),
+            'filename': os.path.join(LOGS_DIR, "sendmail.log"),
             'class': 'logging.handlers.RotatingFileHandler',
             'maxBytes': 1024**2, # 1 MB
             'backupCount': 5,
