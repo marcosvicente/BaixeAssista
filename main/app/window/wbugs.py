@@ -2,8 +2,10 @@
 import os
 import wx
 import sys
-import math
+import os
 import thread
+import glob
+
 import wx.lib.agw.genericmessagedialog as GMD
 
 curdir = os.path.dirname(os.path.abspath(__file__))
@@ -14,7 +16,9 @@ if not pardir in sys.path: sys.path.append( pardir )
 if not curdir in sys.path: sys.path.append( curdir )
 
 import bugs
+from django.conf import settings
 from manager import installTranslation, PROGRAM_VERSION
+
 ########################################################################
 
 class BugInfo( wx.MiniFrame ):
@@ -28,7 +32,7 @@ class BugInfo( wx.MiniFrame ):
 		
 		self.SetSize((640, 480))
 		self.SetMinSize((640, 480))
-		self.SetMaxSize((800, 600))
+		self.SetMaxSize((1024, 768))
 		
 		mainSizer = wx.BoxSizer(wx.VERTICAL)
 		gridSizer = wx.GridSizer(cols=1)
@@ -41,8 +45,8 @@ class BugInfo( wx.MiniFrame ):
 		
 		# *** ação executada antes do erro.
 		self.controlAction = wx.TextCtrl(self, style=wx.TE_MULTILINE)
-		helpText = _(u"Preencha com as ações realizadas, até ocorrer o erro.")
-		self.controlAction.SetToolTip(wx.ToolTip( helpText ))
+		help_text = _(u"Preencha com as ações realizadas, até ocorrer o erro.")
+		self.controlAction.SetToolTip(wx.ToolTip( help_text ))
 		bsizer.Add(self.controlAction, 1, wx.EXPAND)
 		# -----------------------------------------------------------
 		
@@ -52,8 +56,8 @@ class BugInfo( wx.MiniFrame ):
 		
 		# *** erro apresentado.
 		self.controlErro = wx.TextCtrl(self, style=wx.TE_MULTILINE)
-		helpText = _("Informe o erro que ocorreu.")
-		self.controlErro.SetToolTip(wx.ToolTip( helpText ))	
+		help_text = _("Informe o erro que ocorreu.")
+		self.controlErro.SetToolTip(wx.ToolTip( help_text ))	
 		bsizer.Add(self.controlErro, 1, wx.EXPAND)
 		# -----------------------------------------------------------
 		
@@ -63,8 +67,8 @@ class BugInfo( wx.MiniFrame ):
 		
 		# *** erro apresentado.
 		self.controlSugestoes = wx.TextCtrl(self, style=wx.TE_MULTILINE)
-		helpText = _(u"Você acha que o programa poderia ser melhor ?\nApresente sua idéia aqui.")
-		self.controlSugestoes.SetToolTip(wx.ToolTip( helpText ))
+		help_text = _(u"Você acha que o programa poderia ser melhor ?\nApresente sua idéia aqui.")
+		self.controlSugestoes.SetToolTip(wx.ToolTip( help_text ))
 		bsizer.Add(self.controlSugestoes, 1, wx.EXPAND)
 		# -----------------------------------------------------------
 		
@@ -73,9 +77,9 @@ class BugInfo( wx.MiniFrame ):
 		gridSizer.Add(bsizer, 1, wx.EXPAND|wx.ALL, 4)
 		
 		# *** erro apresentado.
-		self.controlMensagem= wx.TextCtrl(self, style=wx.TE_MULTILINE)
-		helpText = _(u"Tem algo a dizer ao desenvolvedor ?\nAqui é o local certo.")
-		self.controlMensagem.SetToolTip(wx.ToolTip( helpText ))		
+		self.controlMensagem = wx.TextCtrl(self, style=wx.TE_MULTILINE)
+		help_text = _(u"Tem algo a dizer ao desenvolvedor ?\nAqui é o local certo.")
+		self.controlMensagem.SetToolTip(wx.ToolTip( help_text ))		
 		bsizer.Add(self.controlMensagem, 1, wx.EXPAND)
 		# -----------------------------------------------------------	
 		box = wx.StaticBox(self, -1, _("Dados adicionais"))
@@ -83,10 +87,20 @@ class BugInfo( wx.MiniFrame ):
 		gridSizer.Add(bsizer, 1, wx.EXPAND|wx.ALL, 4)
 		
 		# *** erro apresentado.
-		self.controlExtra= wx.TextCtrl(self)
-		helpText = _(u"Você pode informar um endereço de \nemail para receber uma resposta.")
-		self.controlExtra.SetToolTip(wx.ToolTip( helpText ))		
+		self.controlExtra = wx.TextCtrl(self)
+		help_text = _(u"Você pode informar um endereço de \nemail para receber uma resposta.")
+		self.controlExtra.SetToolTip(wx.ToolTip( help_text ))		
 		bsizer.Add(self.controlExtra, 1, wx.EXPAND)
+		# -----------------------------------------------------------
+		
+		help_text = _(u"Os arquivos de log estão localizados em:\n - '%s'\neles podem ajudar "
+					 u"na resolução do problema.") % settings.LOGS_DIR
+					 
+		self.authLogs = wx.CheckBox(self, -1, _(u"Permiter que arquivos de log do programa, "
+											    u"sejam anexados ao formulário."))
+		self.authLogs.SetToolTip(wx.ToolTip( help_text ))
+		self.authLogs.SetValue(True)
+		bsizer.Add( self.authLogs )
 		# -----------------------------------------------------------
 		
 		bsizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -97,8 +111,8 @@ class BugInfo( wx.MiniFrame ):
 		bsizer.AddStretchSpacer()
 		
 		self.btnSendEmail = wx.Button(self, -1, _("Enviar"))
-		helpText = _(u"Envia o formulário para o email, pessoal, do desenvolvedor.")
-		self.btnSendEmail.SetToolTip(wx.ToolTip( helpText ))
+		help_text = _(u"Envia o formulário para o email, pessoal, do desenvolvedor.")
+		self.btnSendEmail.SetToolTip(wx.ToolTip( help_text ))
 		self.btnSendEmail.Bind(wx.EVT_BUTTON, self.sendFormHandle)
 		bsizer.Add(self.btnSendEmail)
 		
@@ -117,12 +131,13 @@ class BugInfo( wx.MiniFrame ):
 		if not self.sendingForm:
 			thread.start_new(self.sendMailForm, tuple())
 			self.sendingForm = True
-			
+		
 	def sendMailForm(self, args=None):
 		self.info.SetLabel(_("Enviando ..."))
 		
 		ibugs = bugs.Bugs(
 		    program = PROGRAM_VERSION,
+		    files = glob.glob(os.path.join(settings.LOGS_DIR,"*.log")) if self.authLogs.IsChecked() else [],
 		    steps = self.controlAction.GetValue(),
 		    error = self.controlErro.GetValue(),
 		    suggestion = self.controlSugestoes.GetValue(),
@@ -133,14 +148,14 @@ class BugInfo( wx.MiniFrame ):
 		
 		if sucess is True: # erro
 			wx.CallAfter(self.showSafeMessageDialog,
-				msgstr, _("Muito obrigado!"), style = wx.ICON_INFORMATION|wx.OK,
-			    p_destroy = True
+				msgstr, _("Muito obrigado!"), wx.ICON_INFORMATION|wx.OK,
+			    p_destroy = True # parent destroy
 			)
 		else: # erro enviando o form.
 			self.info.SetLabel("...")
 			
 			wx.CallAfter(self.showSafeMessageDialog,
-			    msgstr, _("Erro!"), style = wx.ICON_ERROR|wx.OK
+				msgstr, _("Erro!"), wx.ICON_ERROR|wx.OK
 			)
 			self.sendingForm = False
 		
