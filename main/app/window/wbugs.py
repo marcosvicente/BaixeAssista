@@ -100,7 +100,7 @@ class BugInfo( wx.MiniFrame ):
 											    u"sejam anexados ao formulário."))
 		self.authLogs.SetToolTip(wx.ToolTip( help_text ))
 		self.authLogs.SetValue(True)
-		bsizer.Add( self.authLogs )
+		bsizer.Add( self.authLogs, 0, wx.TOP, 5)
 		# -----------------------------------------------------------
 		
 		bsizer = wx.BoxSizer(wx.HORIZONTAL)
