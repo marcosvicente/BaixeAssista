@@ -1835,7 +1835,7 @@ class StreamManager(threading.Thread):
                     time.sleep(1)
             except Exception as err:
                 self.failure(_("Incapaz de conectar"), 1)
-                logger.error("%s: %s" %(self.__class__, err))
+                logger.error("%s: %s" %(self.__class__.__name__, err))
         Info.set(self.ident, "state", _(u"Conexão parada"))
         
 #########################  STREAMANAGER: (megaupload, youtube) ######################
@@ -1944,7 +1944,7 @@ class StreamManager_( StreamManager ):
                     time.sleep(1)
             except Exception as err:
                 self.failure(_("Incapaz de conectar"), 1)
-                logger.error("%s: %s" %(self.__class__, err))
+                logger.error("%s: %s" %(self.__class__.__name__, err))
         Info.set(self.ident, "state", _(u"Conexão parada"))
         
 ########################### EXECUÇÃO APARTIR DO SCRIPT  ###########################
