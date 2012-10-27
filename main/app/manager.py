@@ -1180,17 +1180,18 @@ class Manage( object ):
         return True # agora a transferência pode começar com sucesso.
 
     def getInfo(self, retry, proxy, recall):
+        vManager = self.videoManager
         nfalhas = 0
         while nfalhas < retry:
             downStartMsg = u"\n".join([
                 _(u"Coletando informações necessárias"),
                   u"IP: %s" % proxy.get("http", _(u"Conexão padrão")),
                 _(u"Tentativa %d/%d\n") % ((nfalhas+1), retry)
-            ])
+                ])
             # função de atualização externa
             recall(downStartMsg, "")
             
-            if self.videoManager.getVideoInfo(ntry=1, proxies=proxy):
+            if vManager.getVideoInfo(ntry=1, proxies=proxy):
                 # tamanho do arquivo de vídeo
                 self.videoSize = self.videoManager.getStreamSize()
                 # título do arquivo de video
@@ -1198,21 +1199,22 @@ class Manage( object ):
                 # extensão do arquivo de video
                 self.videoExt = self.videoManager.getVideoExt()
                 break # dados obtidos com sucesso
-
+                
             # função de atualização externa
-            recall(downStartMsg, self.videoManager.get_message())
+            recall(downStartMsg, vManager.get_message())
+            logger.debug("FailedGetInfo: %s Try: %s"%(vManager.get_basename(), nfalhas))
             nfalhas += 1
-
+            
             # downlad cancelado pelo usuário. 
             if self._canceledl: return False
-
+            
             # quando a conexão padrão falha em obter os dados
             # é viável tentar com um ip de um servidro-proxy
             proxy = self.proxyManager.get_formated()
-            
-        # testa se falhou em obter os dados necessários
-        return (self.videoSize and self.videoTitle)
-
+        infoStatus = (self.videoSize and self.videoTitle)
+        if infoStatus: logger.debug("SucessGetInfo: %s try: %s"%(vManager.get_basename(), nfalhas))
+        return infoStatus
+        
     @FM_runLocked()
     def recoverTempFile(self):
         """ tenta fazer a recuperação de um arquivo temporário """

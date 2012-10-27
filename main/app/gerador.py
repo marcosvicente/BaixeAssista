@@ -160,7 +160,10 @@ class SiteBase(ConnectionProcessor):
 		del self.params
 		del self.configs
 		del self.url
-
+	
+	def get_basename(self):
+		return self.basename
+	
 	def __delitem__(self, arg):
 		if self.has_section( arg ):
 			self.remove_section( arg )
