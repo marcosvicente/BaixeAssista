@@ -1193,11 +1193,11 @@ class Manage( object ):
             
             if vManager.getVideoInfo(ntry=1, proxies=proxy):
                 # tamanho do arquivo de vídeo
-                self.videoSize = self.videoManager.getStreamSize()
+                self.videoSize = vManager.getStreamSize()
                 # título do arquivo de video
-                self.videoTitle = self.videoManager.getTitle()
+                self.videoTitle = vManager.getTitle()
                 # extensão do arquivo de video
-                self.videoExt = self.videoManager.getVideoExt()
+                self.videoExt = vManager.getVideoExt()
                 break # dados obtidos com sucesso
                 
             # função de atualização externa
