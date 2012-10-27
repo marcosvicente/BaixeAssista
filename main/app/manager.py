@@ -1780,7 +1780,7 @@ class StreamManager(threading.Thread):
                 else:
                     Info.set(self.ident, "state", _(u"Resposta inválida"))
                     self.streamSocket.close(); time.sleep( waittime )
-            except Exception as e:
+            except Exception as err:
                 Info.set(self.ident, "state", _(u"Falha na conexão"))
                 time.sleep( waittime )
                 
@@ -1833,10 +1833,9 @@ class StreamManager(threading.Thread):
                     self.read()
                 else: # estado ocioso
                     time.sleep(1)
-            except Exception as e:
+            except Exception as err:
                 self.failure(_("Incapaz de conectar"), 1)
-                print "SM: %s" %(e)
-        # estado final da conexão
+                logger.error("%s: %s" %(self.__class__, err))
         Info.set(self.ident, "state", _(u"Conexão parada"))
         
 #########################  STREAMANAGER: (megaupload, youtube) ######################
@@ -1945,7 +1944,7 @@ class StreamManager_( StreamManager ):
                     time.sleep(1)
             except Exception as err:
                 self.failure(_("Incapaz de conectar"), 1)
-                print "SM: %s" %err
+                logger.error("%s: %s" %(self.__class__, err))
         Info.set(self.ident, "state", _(u"Conexão parada"))
         
 ########################### EXECUÇÃO APARTIR DO SCRIPT  ###########################
