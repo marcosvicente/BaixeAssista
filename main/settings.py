@@ -188,7 +188,14 @@ LOGGING = {
          'BA_MANAGER': {
             'filename': os.path.join(APPDIR, "logs", "manager.log"),
             'class': 'logging.handlers.RotatingFileHandler',
-            'maxBytes': 1024*1024*5, # 5 MB
+            'maxBytes': 1024**2, # 1 MB
+            'backupCount': 5,
+            'level': 'DEBUG'
+        },
+        'BA_SEND_MAIL': {
+            'filename': os.path.join(APPDIR, "logs", "sendmail.log"),
+            'class': 'logging.handlers.RotatingFileHandler',
+            'maxBytes': 1024**2, # 1 MB
             'backupCount': 5,
             'level': 'DEBUG'
         }
@@ -201,6 +208,11 @@ LOGGING = {
         },
         'main.app.manager': {
             'handlers': ['BA_MANAGER'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'main.app.bugs': {
+            'handlers': ['BA_SEND_MAIL'],
             'level': 'DEBUG',
             'propagate': False,
         }
