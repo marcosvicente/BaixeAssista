@@ -3,7 +3,7 @@ import os
 os.environ['DJANGO_SETTINGS_MODULE'] = "main.settings"
 from main.app.manager import Server
 from main.app.window import mainWin
-from main import imp_required
+from main import imps
 import wx
 
 sv = Server()
