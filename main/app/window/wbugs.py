@@ -121,7 +121,7 @@ class BugInfo( wx.MiniFrame ):
 	def sendForm(self, args=None):
 		self.info.SetLabel(_("Enviando ..."))
 		
-		info = bugs.BugInform(
+		info = bugs.Bugs(
 		    program = PROGRAM_VERSION,
 		    passos = self.controlAction.GetValue(),
 		    erro = self.controlErro.GetValue(),
