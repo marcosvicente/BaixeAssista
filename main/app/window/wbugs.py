@@ -24,7 +24,7 @@ class BugInfo( wx.MiniFrame ):
 		"""Constructor"""
 		wx.MiniFrame.__init__(self, parent, -1, title, style=wx.DEFAULT_FRAME_STYLE)
 		self.SetBackgroundColour(wx.WHITE)
-		self.enviandoForm = False
+		self.sendingForm = False
 		
 		self.SetSize((640, 480))
 		self.SetMinSize((640, 480))
@@ -114,48 +114,45 @@ class BugInfo( wx.MiniFrame ):
 		self.Show()
 		
 	def sendFormHandle(self, evt):
-		if not self.enviandoForm:
-			thread.start_new(self.sendForm, tuple())
-			self.enviandoForm = True
+		if not self.sendingForm:
+			thread.start_new(self.sendMailForm, tuple())
+			self.sendingForm = True
 			
-	def sendForm(self, args=None):
+	def sendMailForm(self, args=None):
 		self.info.SetLabel(_("Enviando ..."))
 		
-		info = bugs.Bugs(
+		ibugs = bugs.Bugs(
 		    program = PROGRAM_VERSION,
-		    passos = self.controlAction.GetValue(),
-		    erro = self.controlErro.GetValue(),
-		    sugestao = self.controlSugestoes.GetValue(),
-		    mensagem = self.controlMensagem.GetValue(),
+		    steps = self.controlAction.GetValue(),
+		    error = self.controlErro.GetValue(),
+		    suggestion = self.controlSugestoes.GetValue(),
+		    message = self.controlMensagem.GetValue(),
 		    extra = self.controlExtra.GetValue()
 		)
-		sucess, msgstr = info.informe()
+		sucess, msgstr = ibugs.report()
 		
 		if sucess is True: # erro
-			wx.CallAfter(
-			    self.showSafeMessageDialog,
-			    msgstr = msgstr, title = _("Muito obrigado!"),
-			    style = wx.ICON_INFORMATION|wx.OK,
-			    parentDestroy = True
+			wx.CallAfter(self.showSafeMessageDialog,
+				msgstr, _("Muito obrigado!"), style = wx.ICON_INFORMATION|wx.OK,
+			    p_destroy = True
 			)
 		else: # erro enviando o form.
 			self.info.SetLabel("...")
 			
-			wx.CallAfter(
-			    self.showSafeMessageDialog,
-			    msgstr = msgstr, title = _("Erro!"), 
-			    style = wx.ICON_ERROR|wx.OK
+			wx.CallAfter(self.showSafeMessageDialog,
+			    msgstr, _("Erro!"), style = wx.ICON_ERROR|wx.OK
 			)
-			self.enviandoForm = False
+			self.sendingForm = False
 		
-	def showSafeMessageDialog(self, **kwargs):
-		dlg = GMD.GenericMessageDialog(self, kwargs["msgstr"], kwargs["title"], kwargs["style"])					
+	def showSafeMessageDialog(self, *args, **kwargs):
+		p_destroy = kwargs.pop("p_destroy", False)
+		
+		dlg = GMD.GenericMessageDialog(self, *args, **kwargs)
 		dlg.ShowModal(); dlg.Destroy()
 		
 		# fecha o formulário concluindo o trabalho
-		if kwargs.get("parentDestroy",False):
-			self.Destroy()
-			
+		if p_destroy: self.Destroy()
+		
 	def OnCancel(self, evt):
 		self.Destroy()
 
