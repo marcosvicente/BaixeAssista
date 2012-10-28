@@ -15,9 +15,12 @@ if not pardir in sys.path: sys.path.append( pardir )
 if not curdir in sys.path: sys.path.append( curdir )
 
 import manager
+import logging
 ########################################################################
 
 class MovieManager(wx.MiniFrame):
+	logger = logging.getLogger("main.app.window.movie")
+	
 	def __init__( self, mainWin, title, pos=wx.DefaultPosition, 
 		          size=wx.DefaultSize, style=wx.DEFAULT_FRAME_STYLE ):
 
@@ -115,17 +118,16 @@ class MovieManager(wx.MiniFrame):
 	
 	def remove_file(self, filename):
 		""" remove o arquivo de vídeo do disco """
-		filepath = ""
 		try:
+			filepath = ""
 			filepath = self.fileManager.getFilePath(filename)
 			os.remove(filepath)
 		except os.error as err:
-			print u"Erro removendo: %s" % (filepath or filename)
-			print u"Causa: %s" % err
+			self.logger.error(u"Erro removendo: %s\nCausa: %s" %((filepath or filename), err))
 		finally:
 			if filepath and not os.path.exists(filepath):
 				self.apply_changes(filename)
-				
+			
 	def remove_movie(self, evt):
 		win_id = evt.GetId()
 		showModalId = -1

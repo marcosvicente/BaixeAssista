@@ -199,6 +199,13 @@ LOGGING = {
             'maxBytes': 1024**2, # 1 MB
             'backupCount': 5,
             'level': 'DEBUG'
+        },
+         'BA_WMOVIE': {
+            'filename': os.path.join(LOGS_DIR, "wmovie.log"),
+            'class': 'logging.handlers.RotatingFileHandler',
+            'maxBytes': 1024**2, # 1 MB
+            'backupCount': 5,
+            'level': 'DEBUG'
         }
     },
     'loggers': {
@@ -214,6 +221,11 @@ LOGGING = {
         },
         'main.app.bugs': {
             'handlers': ['BA_SEND_MAIL'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'main.app.window.movie': {
+            'handlers': ['BA_WMOVIE'],
             'level': 'DEBUG',
             'propagate': False,
         }
