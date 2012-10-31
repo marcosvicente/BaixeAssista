@@ -2176,7 +2176,8 @@ class Supervideo(SiteBase):
 		url = matchobj.group(1)
 		
 		matchobj = re.search("duration\s*:\s*\"(\d*?)\"", webpage, re.DOTALL)
-		duration = int(matchobj.group(1))
+		try: duration = int(matchobj.group(1))
+		except: duration = None
 		
 		try: title = re.search("<title>(.+?)</title>", webpage, re.DOTALL).group(1)
 		except: title = get_radom_title()
@@ -2190,10 +2191,17 @@ class Universal(object):
 	toda a extensão do programa. Ela é usada para diminuir o número de modificações
 	necessárias, quando adiciando suporte a um novo site vídeo.
 	"""
-	SM_SEEK  = staticmethod(lambda manage, noProxy=False, **params: manager.StreamManager(manage, noProxy, **params))
-	SM_RANGE = staticmethod(lambda manage, noProxy=False, **params: manager.StreamManager_(manage, noProxy, **params))
+	
 	sites = {}
 	
+	@staticmethod
+	def SM_SEEK(*args, **kwargs):
+		return manager.StreamManager(*args, **kwargs)
+	
+	@staticmethod
+	def SM_RANGE(*args, **kwargs):
+		return manager.StreamManager_(*args, **kwargs)
+		
 	@classmethod
 	def get_sites(cls):
 		return cls.sites.keys()
