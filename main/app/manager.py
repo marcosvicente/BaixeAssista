@@ -1734,17 +1734,14 @@ class StreamManager(threading.Thread):
         pxm = self.manage.proxyManager
         
         if not self.usingProxy:
-            if change:
-                self.proxies = pxm.get_formated()
-                self.usingProxy = True
+            if change: self.proxies = pxm.get_formated()
+            
         elif errornumber == 1 or downbytes < self.manage.interval.get_min_block():
-            if change:
-                self.usingProxy = False
-                self.proxies = {}
-            else:
-                self.proxies = pxm.get_formated()
-                self.usingProxy = True
-                
+            if change: self.proxies = {}
+            else: self.proxies = pxm.get_formated()
+        
+        self.usingProxy = bool(self.proxies)
+        
         if vdm.getVideoInfo(proxies=self.proxies, timeout=timeout):
             self.link = vdm.getLink()
             
@@ -1871,17 +1868,14 @@ class StreamManager_( StreamManager ):
         time.sleep(0.5)
         
         if not self.usingProxy:
-            if change:
-                self.proxies = proxyManager.get_formated()
-                self.usingProxy = False
+            if change: self.proxies = proxyManager.get_formated()
+            
         elif errornumber == 1 or (downbytes < self.manage.interval.get_min_block()):
-            if change:
-                self.usingProxy = False
-                self.proxies = {}
-            else:
-                self.proxies = proxyManager.get_formated()
-                self.usingProxy = True
-                
+            if change: self.proxies = {}
+            else: self.proxies = proxyManager.get_formated()
+            
+        self.usingProxy = bool(self.proxies)
+        
         Info.set(self.ident, "http", self.proxies.get("http", _(u"Conexão Padrão")))
     
     def connect(self):
