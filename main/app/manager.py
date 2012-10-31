@@ -1,6 +1,6 @@
 # -*- coding: ISO-8859-1 -*-
 ## guarda a versão do programa.
-from symbol import except_clause
+
 PROGRAM_VERSION = "0.2.3"
 PROGRAM_SYSTEM = {"Windows": "oswin", "Linux": "oslinux"}
 
