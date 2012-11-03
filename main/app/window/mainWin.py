@@ -773,17 +773,6 @@ class BaixeAssistaWin( wx.Frame ):
 			list_ctr = self.detailControl.GetListCtrl()			
 			for smanager in self.manage.ctrConnection.getConnections():
 				if not smanager.wasStopped(): # conexões paradas serão ignoradas
-					
-					if self.manage.videoManager.is_mp4():
-						ip = smanager.proxies.get("http", "default")
-						section = self.manage.videoManager.get_section( ip )
-						settings = section.get("settings", None)
-						
-						if not settings is None:
-							duration = settings.get("duration", None)
-							duration = self.playerWin.get_json("duration", duration)
-							settings["duration"] = duration
-							
 					rowIndex = self.detailControl.getRowIndex( smanager.ident )
 					
 					for colIndex, infokey in enumerate( manager.StreamManager.listInfo ):
