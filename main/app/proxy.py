@@ -38,7 +38,7 @@ class Proxylist( gerador.ConnectionProcessor ):
 	
 	def getWebPage(self, url, headers={}):
 		try:
-			fd = self.conecte( url, headers=headers)
+			fd = self.connect( url, headers=headers)
 			webpage = fd.read()
 			fd.close()
 		except: webpage = ""
@@ -90,7 +90,7 @@ class Freeproxylists( gerador.ConnectionProcessor ):
 	
 	def getWebPage(self, url, headers={}):
 		try:
-			fd = self.conecte(url, headers=headers)
+			fd = self.connect(url, headers=headers)
 			webpage = fd.read()
 			fd.close()
 		except: webpage = ""
@@ -137,7 +137,7 @@ class Xroxy( gerador.ConnectionProcessor ):
 	
 	def getWebPage(self, url):
 		try:
-			fd = self.conecte( url )
+			fd = self.connect( url )
 			webpage = fd.read()
 			fd.close()
 		except: webpage = ""
@@ -158,7 +158,7 @@ class Xroxy( gerador.ConnectionProcessor ):
 		return proxies
 
 ########################################################################
-class ProxyControl:
+class ProxyControl(object):
 	""" Controla a pesquisa de obtenção de ips """
 	def __init__(self, searsh=False, **params):
 		""" params: {}
@@ -207,7 +207,7 @@ class ProxyControl:
 		return self.listaIps
 	
 ########################################################################
-class CtrSearch:
+class CtrSearch(object):
 	#----------------------------------------------------------------------
 	def __init__(self, **params):
 		""" params: {}
@@ -327,14 +327,14 @@ class TesteIP( threading.Thread ):
 		for index in range(num_of_tests):
 			try:
 				seekpos = 1024 + random.randint(0, int(streamSize*0.75))
-				streamSocket = self.videoManager.conecte(
+				streamSocket = self.videoManager.connect(
 				    gerador.get_with_seek(streamLink, seekpos),
 				    headers = {"Range": "bytes=%s-" %seekpos},
 				    proxies = proxies, 
 				    timeout = 30
 				)
 				data = streamSocket.read( cache_size )
-				stream, header = SM.__get_FLVheader(data, seekpos)
+				stream, header = SM.get_FLVheader(data, seekpos)
 				
 				# valida o cabeçalho de resposta
 				isValid = SM.responseCheck(len(header), seekpos, streamSize, streamSocket.headers)
@@ -349,7 +349,8 @@ class TesteIP( threading.Thread ):
 						# conta o número de testes, que obtiveram sucesso
 						sucess_len += 1
 				streamSocket.close()
-			except Exception as e:
+			except Exception as err:
+				print address, err
 				sucess_len -= 1
 				
 			# pára o teste de leitura
