@@ -179,6 +179,7 @@ class SiteBase(ConnectionProcessor):
 	
 	def __delitem__(self, arg):
 		self.section.delete(arg)
+		self.configs.clear()
 		
 	def get_message(self):
 		return self.message
