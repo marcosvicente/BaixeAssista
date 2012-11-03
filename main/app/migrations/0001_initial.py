@@ -1,0 +1,101 @@
+# -*- coding: utf-8 -*-
+import datetime
+from south.db import db
+from south.v2 import SchemaMigration
+from django.db import models
+
+
+class Migration(SchemaMigration):
+
+    def forwards(self, orm):
+        # Adding model 'LastUrl'
+        db.create_table('app_lasturl', (
+            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('title', self.gf('django.db.models.fields.TextField')(unique=True)),
+            ('address', self.gf('django.db.models.fields.TextField')()),
+        ))
+        db.send_create_signal('app', ['LastUrl'])
+
+        # Adding model 'Url'
+        db.create_table('app_url', (
+            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('lasturl', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['app.LastUrl'])),
+            ('title', self.gf('django.db.models.fields.TextField')(unique=True)),
+            ('url', self.gf('django.db.models.fields.TextField')()),
+        ))
+        db.send_create_signal('app', ['Url'])
+
+        # Adding model 'Resume'
+        db.create_table('app_resume', (
+            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('title', self.gf('django.db.models.fields.TextField')()),
+            ('streamDownBytes', self.gf('django.db.models.fields.PositiveIntegerField')()),
+            ('streamQuality', self.gf('django.db.models.fields.PositiveIntegerField')()),
+            ('streamSize', self.gf('django.db.models.fields.PositiveIntegerField')()),
+            ('resumePosition', self.gf('django.db.models.fields.PositiveIntegerField')()),
+            ('streamExt', self.gf('django.db.models.fields.CharField')(max_length=50)),
+            ('resumeBLocks', self.gf('django.db.models.fields.TextField')()),
+            ('sendBytes', self.gf('django.db.models.fields.PositiveIntegerField')()),
+        ))
+        db.send_create_signal('app', ['Resume'])
+
+        # Adding model 'Browser'
+        db.create_table('app_browser', (
+            ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('site', self.gf('django.db.models.fields.TextField')(null=True)),
+            ('lastsite', self.gf('django.db.models.fields.TextField')(null=True)),
+            ('historysite', self.gf('django.db.models.fields.TextField')(null=True)),
+        ))
+        db.send_create_signal('app', ['Browser'])
+
+
+    def backwards(self, orm):
+        # Deleting model 'LastUrl'
+        db.delete_table('app_lasturl')
+
+        # Deleting model 'Url'
+        db.delete_table('app_url')
+
+        # Deleting model 'Resume'
+        db.delete_table('app_resume')
+
+        # Deleting model 'Browser'
+        db.delete_table('app_browser')
+
+
+    models = {
+        'app.browser': {
+            'Meta': {'object_name': 'Browser'},
+            'historysite': ('django.db.models.fields.TextField', [], {'null': 'True'}),
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'lastsite': ('django.db.models.fields.TextField', [], {'null': 'True'}),
+            'site': ('django.db.models.fields.TextField', [], {'null': 'True'})
+        },
+        'app.lasturl': {
+            'Meta': {'object_name': 'LastUrl'},
+            'address': ('django.db.models.fields.TextField', [], {}),
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'title': ('django.db.models.fields.TextField', [], {'unique': 'True'})
+        },
+        'app.resume': {
+            'Meta': {'object_name': 'Resume'},
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'resumeBLocks': ('django.db.models.fields.TextField', [], {}),
+            'resumePosition': ('django.db.models.fields.PositiveIntegerField', [], {}),
+            'sendBytes': ('django.db.models.fields.PositiveIntegerField', [], {}),
+            'streamDownBytes': ('django.db.models.fields.PositiveIntegerField', [], {}),
+            'streamExt': ('django.db.models.fields.CharField', [], {'max_length': '50'}),
+            'streamQuality': ('django.db.models.fields.PositiveIntegerField', [], {}),
+            'streamSize': ('django.db.models.fields.PositiveIntegerField', [], {}),
+            'title': ('django.db.models.fields.TextField', [], {})
+        },
+        'app.url': {
+            'Meta': {'object_name': 'Url'},
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'lasturl': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['app.LastUrl']"}),
+            'title': ('django.db.models.fields.TextField', [], {'unique': 'True'}),
+            'url': ('django.db.models.fields.TextField', [], {})
+        }
+    }
+
+    complete_apps = ['app']
