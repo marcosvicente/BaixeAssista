@@ -1,7 +1,7 @@
 # -*- coding: ISO-8859-1 -*-
 ## guarda a versão do programa.
 
-PROGRAM_VERSION = "0.2.3"
+PROGRAM_VERSION = "0.2.4"
 PROGRAM_SYSTEM = {"Windows": "oswin", "Linux": "oslinux"}
 
 import sys
@@ -55,7 +55,7 @@ def installTranslation(configs = None):
     language.install(unicode=True)
     
 #################################### JUST_TRY ##################################
-class just_try:
+class just_try(object):
     """ executa o méthodo dentro de um try:except """
     def __call__(this, method):
         def wrap(self, *args, **kwargs): # magic!
