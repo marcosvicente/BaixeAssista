@@ -7,6 +7,7 @@ import random
 import wx.html2 as Webview
 from main import settings
 from django.template import Context, Template, loader
+import json
 ########################################################################
 
 class Player(wx.Panel):
@@ -31,6 +32,7 @@ class Player(wx.Panel):
         portNumber:
         """
         wx.Panel.__init__(self, parent, style=0)
+        self.json_data = {}
         self.params = params
         self.skins = {}
         
@@ -59,6 +61,7 @@ class Player(wx.Panel):
         self.webview = Webview.WebView.New(self)
         
         self.Bind(Webview.EVT_WEB_VIEW_NAVIGATING, self.OnWebViewNavigating, self.webview)
+        self.Bind(Webview.EVT_WEB_VIEW_TITLE_CHANGED, self.InterfaceJson, self.webview)
         sizer.Add(self.webview, 1, wx.EXPAND)
         
         self.SetSizer(sizer)
@@ -101,7 +104,15 @@ class Player(wx.Panel):
     def pause(self):
         """ pausa a execução do video """
         self.webview.RunScript("BA_GLOBAL_PLAYER.pause();")
-        
+    
+    def get_json(self, name, default=None):
+        return self.json_data.get(name, default)
+    
+    def InterfaceJson(self, event):
+        data = self.webview.GetCurrentTitle()
+        try: self.json_data.update(json.loads(data))
+        except: pass
+    
     def getParams(self):
         previmage = self.params.get("previewImage", "")
         streamname = self.params.get("streamName", self.getStreamName(5))
