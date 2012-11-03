@@ -332,7 +332,7 @@ class TesteIP( threading.Thread ):
 				    proxies = proxies, 
 				    timeout = 30
 				)
-				data = streamSocket.read( self.videoManager.STREAM_HEADER_SIZE )
+				data = streamSocket.read( self.videoManager.get_header_size() )
 				stream, header = SM.getStreamHeader(data, seekpos)
 				
 				# valida o cabeçalho de resposta
