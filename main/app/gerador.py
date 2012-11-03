@@ -76,7 +76,7 @@ def get_with_seek(link, seek):
 	return link
 
 ########################################################################
-class ConnectionProcessor:
+class ConnectionProcessor(object):
 	def __init__(self):
 		"""Constructor"""
 		self.ip_section = {}
@@ -144,8 +144,9 @@ class ConnectionProcessor:
 
 #################################### BASEVIDEOSITE ####################################
 class SiteBase(ConnectionProcessor):
-	STREAM_HEADER = "FLV\x01\x01\x00\x00\x00\t\x00\x00\x00\t"
-	STREAM_HEADER_SIZE = len(STREAM_HEADER)
+	MP4_HEADER = "\x00\x00\x00\x1cftypmp42\x00\x00\x00\x01isommp423gp5\x00\x00\x00*freevideo served by mod_h264_streaming"
+	FLV_HEADER = "FLV\x01\x01\x00\x00\x00\t\x00\x00\x00\t"
+	
 	#----------------------------------------------------------------------
 	def __init__(self, **params):
 		ConnectionProcessor.__init__(self)
@@ -167,15 +168,22 @@ class SiteBase(ConnectionProcessor):
 	def __delitem__(self, arg):
 		if self.has_section( arg ):
 			self.remove_section( arg )
-
+			
 	def get_message(self):
 		return self.message
 
 	def suportaSeekBar(self):
 		return False
 	
-	def getStreamHeader(self):
-		return self.STREAM_HEADER
+	def get_stream_header(self):
+		if self.is_mp4(): header = self.MP4_HEADER
+		else: header = self.FLV_HEADER
+		return header
+	
+	def get_header_size(self):
+		if self.is_mp4(): size = len(self.MP4_HEADER)
+		else: size = len(self.FLV_HEADER)
+		return size
 	
 	def get_video_id(self):
 		""" retorna só o id do video """
@@ -203,7 +211,7 @@ class SiteBase(ConnectionProcessor):
 					else:
 						section["settings"] = self.configs # relaciona as configs ao ip
 						break # sucesso!
-				except Exception as e:
+				except Exception as err:
 					pass
 				nfalhas += 1
 		else:
@@ -237,15 +245,16 @@ class SiteBase(ConnectionProcessor):
 		return self.configs["duration"]
 	
 	def get_relative(self, pos):
+		""" retorna o valor de pos em bytes relativo a duração em mp4 """
 		if self.has_duration(): # if 'video/mp4' file
-			try: result = float(self.get_duration())*(float(pos)/self.getStreamSize())
+			try: result = float(self.get_duration()) * (float(pos)/self.getStreamSize())
 			except: result = 0
 		else: result = pos
 		return result
 	
 	def get_relative_mp4(self, pos):
 		if self.has_duration(): # if 'video/mp4' file
-			try: result = (float(pos)/self.get_duration())*self.getStreamSize()
+			try: result = (float(pos)/self.get_duration()) * self.getStreamSize()
 			except: result = 0
 		else: result = pos
 		return result
@@ -1510,7 +1519,7 @@ class PutLocker( SiteBase ):
 		    re.compile("(?P<inner_url>(?:http://)?www\.putlocker\.com/file/(?P<id>\w+))"),
 		    [re.compile("(?P<inner_url>(?:http://)?www\.putlocker\.com/embed/(?P<id>\w+))")]
 		    ),
-		"control": "SM_RANGE",
+		"control": "SM_SEEK",
 		"video_control": None
 	}
 	patternForm = re.compile(
@@ -1569,24 +1578,25 @@ class PutLocker( SiteBase ):
 
 		# começa a extração do link vídeo.
 		## playlist: '/get_file.php?stream=WyJORVE0TkRjek5FUkdPRFJETkRKR05Eb3',
-		pattern = """playlist:\s*(?:'|")(/get_file\.php\?stream=.+?(?:'|"))"""
+		pattern = "playlist:\s*(?:'|\")(/get_file\.php\?stream=.+?)(?:'|\")"
 		matchobj = re.search(pattern, webpage, re.DOTALL|re.IGNORECASE)
 		url = self.getFileBaseUrl + matchobj.group(1)
-
+		
 		# começa a análize do xml
 		fd = self.connect(url, proxies=proxies, timeout=timeout)
 		rssData = fd.read(); fd.close()
 
 		ext = "flv" # extensão padrão.
-
+		## print rssData
+		
 		# url do video.
 		url = re.search("<media:content url=\"(.+?)\"", rssData).group(1)
-		url = self.unescape( url )
-
+		url = self.unescape( url ).replace("'","").replace('"',"")
+		
 		try: ext = re.search("type=\"video/([\w-]+)", rssData).group(1)
 		except: pass # usa a extensão padrão.
 		
-		self.configs = {"url": url, "title":title, "ext": ext}
+		self.configs = {"url": url+"&start=", "title":title, "ext": ext}
 
 ###################################### PUTLOCKER ######################################
 class Sockshare( PutLocker ):
@@ -1598,7 +1608,7 @@ class Sockshare( PutLocker ):
 		     re.compile("(?P<inner_url>(?:http://)?www\.sockshare\.com/file/(?P<id>\w+))"),
 		    [re.compile("(?P<inner_url>(?:http://)?www\.sockshare\.com/embed/(?P<id>\w+))")]
 		    ),
-		"control": "SM_RANGE", 
+		"control": "SM_SEEK", 
 		"video_control": None
 	}
 
@@ -2396,38 +2406,5 @@ for sitename, site in filter(is_site_class, locals().items()):
 			register_site(name, site)
 	else:
 		register_site(basename, site)
-#######################################################################################
-
-if __name__ == "__main__":
-	def checkSite(url="", proxies={}, timeout=30, **params):
-		""" verifica se o site dado por 'baseName' está respondendo as requisições """
-		baseName = manager.UrlManager.getBaseName( url )
-		print "Checking: ", baseName
-
-		site_control = Universal.get_video_control(baseName)
-		s_control = site_control(url, **params)
-		
-		if s_control.getVideoInfo(1, proxies=proxies, timeout=timeout):
-			print "Url: %s" % s_control.getLink()
-			print "Size: %s" % s_control.getStreamSize()
-			print "Title: %s" % s_control.getTitle()
-			print "-"*25
-			return True
-		else:
-			print "MSG: %s"%s_control.get_message()
-		print "-"*25
-		return False
-	# ----------------------------------------------
-	pxm = manager.ProxyManager()
-	
-	for n in range(pxm.get_num()):
-		proxies = pxm.get_formated()
-		print proxies["http"]
-		proxies = {}
-		
-		if not checkSite("http://www.videobash.com/video_show/fail-compilation-october-2012-432285", proxies=proxies, quality=3):
-			pxm.set_bad( proxies )
-	del pxm
-	
 	
 	
