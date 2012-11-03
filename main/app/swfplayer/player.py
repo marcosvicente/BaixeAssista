@@ -123,6 +123,9 @@ class Player(wx.Panel):
         domain = "http://%s:%s"%(hostname, portnumber)
         static = domain + settings.STATIC_URL.rstrip("/")
         
+        jqueryscript = "/".join([static, "js", "jquery-1.8.2.min.js"])
+        jsonscript = "/".join([static, "js", "jquery-1.8.2.min.js"])
+        
         skinname = self.skins.get(self.params["skinName"], self.defaultskin)
         skin = "/".join([static, self.filesdirname, "skins", skinname])
         
@@ -136,6 +139,8 @@ class Player(wx.Panel):
             "staticurl": static,
             "hostdomain": domain,
             "file": streamfile,
+            "jqueryscript": jqueryscript,
+            "jsonscript": jsonscript,
             "swfplayer": swfplayer,
             "allowscriptaccess": "always",   
             "allowfullscreen": "true",
