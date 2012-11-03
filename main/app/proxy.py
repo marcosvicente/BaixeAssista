@@ -323,16 +323,20 @@ class TesteIP( threading.Thread ):
 		sucess_len = 0; speed_list = []
 		SM = manager.StreamManager
 		cache_size = 128
+		index = 0
 		
-		for index in range(num_of_tests):
+		while self.isRunning and index < num_of_tests:
+			# retorna quando a meta de ips for alcaçada.
+			if self.ctrSearch.getNumIps() >= num_of_ips: return
 			try:
 				seekpos = 1024 + random.randint(0, int(streamSize*0.75))
+				
 				streamSocket = self.videoManager.connect(
 				    gerador.get_with_seek(streamLink, seekpos),
 				    headers = {"Range": "bytes=%s-" %seekpos},
-				    proxies = proxies, 
-				    timeout = 30
-				)
+				    proxies = proxies, timeout = 30
+					)
+				
 				data = streamSocket.read( cache_size )
 				stream, header = SM.get_FLVheader(data, seekpos)
 				
@@ -352,10 +356,7 @@ class TesteIP( threading.Thread ):
 			except Exception as err:
 				print address, err
 				sucess_len -= 1
-				
-			# pára o teste de leitura
-			if self.ctrSearch.getNumIps() >= num_of_ips: return
-			if not self.isRunning: return
+			index += 1
 			
 		# um erro de tolerância
 		if num_of_tests - sucess_len  < 2:
