@@ -322,6 +322,7 @@ class TesteIP( threading.Thread ):
 		num_of_ips = self.params.get("num_of_ips", 10)
 		sucess_len = 0; speed_list = []
 		SM = manager.StreamManager
+		cache_size = 128
 		
 		for index in range(num_of_tests):
 			try:
@@ -332,12 +333,11 @@ class TesteIP( threading.Thread ):
 				    proxies = proxies, 
 				    timeout = 30
 				)
-				data = streamSocket.read( self.videoManager.get_header_size() )
-				stream, header = SM.getStreamHeader(data, seekpos)
+				data = streamSocket.read( cache_size )
+				stream, header = SM.__get_FLVheader(data, seekpos)
 				
 				# valida o cabeçalho de resposta
-				isValid = SM.responseCheck(len(header), seekpos, 
-				                           streamSize, streamSocket.headers)
+				isValid = SM.responseCheck(len(header), seekpos, streamSize, streamSocket.headers)
 				
 				if isValid and (streamSocket.code == 200 or streamSocket.code == 206):
 					before = time.time(); stream = streamSocket.read(block_size)
