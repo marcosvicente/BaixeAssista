@@ -22,7 +22,7 @@ if __name__ == "__main__":
     
     os.chdir( mainDir )
 
-import gerador
+import gerador, manager
 from main import settings
 from main.app import models
 
@@ -45,19 +45,19 @@ class FiltroUrl(object):
     def getUrl(self): return self.url
     
     def isValid(self, url):
-        """ Cada site carregado pelo IE, terá sua url analizada com as 
-        regex dos sites suportados """
-        for site in self.allsites:
-            matchobj = gerador.Universal.patternMatch(site, url)
+        """ Cada site carregado pelo IE, terá sua url analizada com as regex dos sites suportados """
+        try: basename = manager.UrlManager.getBaseName(url)
+        except: basename = "" # nem toda url terá uma base correta
+        if basename and (basename in self.allsites):
+            matchobj = gerador.Universal.patternMatch(basename, url)
             if matchobj: # retorna só o grupo da url completa
                 self.url = matchobj.group("inner_url")
                 self.is_embed = gerador.Universal.isEmbed(url)
                 return True
-        else:
-            # anula as variaveis, para evitar pegar dados incorretos
-            self.url, self.is_embed = "", False
-            # quando a url analizada não for válida
-            return False
+        # anula as variaveis, para evitar pegar dados incorretos
+        self.url, self.is_embed = "", False
+        # quando a url analizada não for válida
+        return False
 
 ##############################################################################
 class HistoryUrl(object):
