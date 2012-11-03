@@ -43,6 +43,9 @@ VIDEOS_DIR_TEMP_NAME = "temp"
 VIDEOS_DIR_NAME = "STREAM-VIDEOS"
 DEFAULT_VIDEOS_DIR = os.path.join(ROOT_DIR, VIDEOS_DIR_NAME)
 
+if not ROOT_DIR in sys.path: # import do projeto
+    sys.path.append( ROOT_DIR )
+    
 if not PROJECTPATH in sys.path: # import do projeto
     sys.path.append( PROJECTPATH )
     
