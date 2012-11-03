@@ -906,7 +906,7 @@ class Streamer( object ):
         print "STREAMER STARTED %s"%self
         
         if self.manage.getInitPos() > 0:
-            yield self.manage.videoManager.getStreamHeader()
+            yield self.manage.videoManager.get_stream_header()
         
         while self.sended < self.manage.getVideoSize():
             if self.stop_now: break # stop streamer loop
@@ -922,7 +922,9 @@ class Streamer( object ):
             else:
                 time.sleep(0.001)
                 
-        self.manage.removeStreamer(self)
+        if hasattr(self.manage, "removeStreamer"):
+            self.manage.removeStreamer(self)
+            
         yield "\r\n" # end stream
         
     def __del__(self):
@@ -1348,7 +1350,10 @@ class Manage( object ):
             if flag: smanager.setWait()
             elif smanager.isWaiting:
                 smanager.stopWait()
-            
+                
+    def get_cache_size(self):
+        return self.nBytesProntosEnvio
+    
     def updateVideoInfo(self, args=None):
         """ Atualiza as variáveis de transferência do vídeo. """
         startTime = time.time() # temporizador
@@ -1548,7 +1553,7 @@ class StreamManager(threading.Thread):
         if seekpos == 0: nbytes = 0
         # comprimento total(considerando os bytes removidos), da stream
         length = seekpos + contentLength - nbytes
-        return seekmax == length
+        return (seekmax == length)
 
     def wait(self):
         """ aguarda o processo de configuração terminar """
@@ -1671,17 +1676,34 @@ class StreamManager(threading.Thread):
         self.reset_info()
     
     @staticmethod
-    def getStreamHeader(stream, seekpos, header=""):
-        if stream.startswith("FLV") and (stream.endswith("\t") or stream.endswith("\t"+("\x00"*4))):
-            if seekpos == 0: header = stream
-            else: header, stream = stream, ""
-            
-        elif stream[:9].startswith("FLV") and stream[:9].endswith("\t"):
-            if seekpos == 0: header = stream[:9]
-            else: header = stream[:9]; stream = stream[9:]
-            
+    def __get_FLVheader(stream, seekpos):
+        header = ""
+        if stream.startswith("FLV"):
+            if (stream[:13].endswith("\t"+("\x00"*4)) or stream[:13].endswith(("\x00"*3)+"\t")):
+                if seekpos == 0: header = stream[:13]
+                else: header, stream = stream[:13], stream[13:]
+            elif stream[:9].endswith("\t"):
+                if seekpos == 0: header = stream[:9]
+                else: header, stream = stream[:9], stream[9:]
         return stream, header
     
+    def getStreamHeader(self, stream, seekpos, cache_size):
+        if self.manage.videoManager.is_mp4():
+            header = ""
+            if seekpos > cache_size:
+                while self.manage.get_cache_size() < cache_size:
+                    Info.set(self.ident, "state", _("Aguardando cache"))
+                    if self.wasStopped(): return
+                    time.sleep(0.5) # sem cache fica impossível verificar o header
+                for index, char in enumerate(self.manage.fileManager.read(0, cache_size)[0]):
+                    if stream[index] == char: header += char
+                    else: break
+                hsize = len(header)
+                stream = stream[hsize:]
+        else:
+            stream, header = self.__get_FLVheader(stream, seekpos)
+        return stream, header
+        
     def removaConfigs(self, errorstring, errornumber):
         """ remove todas as configurações, importantes, dadas a conexão """
         if self.manage.interval.hasInterval(self.ident):
@@ -1752,7 +1774,7 @@ class StreamManager(threading.Thread):
         seekpos = self.manage.interval.get_start(self.ident)
         streamSize = self.manage.getVideoSize()
         initTime = time.time()
-
+        cache_size = 256
         nfalhas = 0
         while not self.wasStopped() and nfalhas < self.params.get("reconexao",3):
             try:
@@ -1764,14 +1786,23 @@ class StreamManager(threading.Thread):
                 self.streamSocket = videoManager.connect(self.linkSeek, 
                         proxies=self.proxies, timeout=timeout, login=False)
                 
-                data = self.streamSocket.read( videoManager.STREAM_HEADER_SIZE )
-                stream, header = self.getStreamHeader(data, seekpos)
+                code = self.streamSocket.code
+                stream = self.streamSocket.read(cache_size)
+                stream, header = self.getStreamHeader(stream, seekpos, cache_size)
+                headers = self.streamSocket.headers
                 
+                contentType = headers.get("Content-Type","")
+                matchobj = re.match("(?:video/(?P<videotype>.*)|application/octet.*)", contentType)
+                is_video = bool(matchobj)
+                try:
+                    vtype = matchobj.group("videotype")
+                    is_mp4 = vtype.lower().startswith("mp4")
+                except:
+                    is_mp4 = False
                 # verifica a validade a resposta.
-                isValid = self.responseCheck(len(header), seekpos, 
-                                             streamSize, self.streamSocket.headers)
+                isValid = self.responseCheck(len(header), seekpos, streamSize, headers)
                 
-                if (isValid or videoManager.is_mp4()) and self.streamSocket.code == 200:
+                if (isValid or (is_video and (videoManager.is_mp4() or is_mp4))) and (code == 200 or code == 206):
                     if stream: self.streamWrite(stream, len(stream))
                     return True
                 else:
@@ -1901,7 +1932,7 @@ class StreamManager_( StreamManager ):
                 self.streamSocket = videoManager.connect(
                     link, proxies=self.proxies, headers={"Range":"bytes=%s-"%seekpos})
 
-                data = self.streamSocket.read( videoManager.STREAM_HEADER_SIZE )
+                data = self.streamSocket.read( videoManager.get_header_size() )
                 stream, header = self.getStreamHeader(data, seekpos)
                 
                 isValid = self.responseCheck(len(header), seekpos, 
