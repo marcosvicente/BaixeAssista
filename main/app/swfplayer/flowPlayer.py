@@ -11,6 +11,7 @@ class Player( player.Player ):
     
     template = "flowplayer.html"
     filesdirname = "flowplayer"
+    playerapi = "flowplayer-3.2.11.min.js"
     
     # pasta com os arquivos do player
     filesdir = os.path.join(settings.STATIC_PATH, filesdirname)

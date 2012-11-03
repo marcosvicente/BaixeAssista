@@ -17,6 +17,8 @@ class Player(wx.Panel):
     defaultskin = ""
     # nome, base, do diretório do player
     filesdirname = ""
+    # script que fará o carregamento do player, expondo seu dados e atributos.
+    playerapi = ""
     # caminho, completo do diretório de arquivos do player
     filesdir = ""
     # caminho completo para o diretórios de skin do player
@@ -124,7 +126,8 @@ class Player(wx.Panel):
         static = domain + settings.STATIC_URL.rstrip("/")
         
         jqueryscript = "/".join([static, "js", "jquery-1.8.2.min.js"])
-        jsonscript = "/".join([static, "js", "jquery-1.8.2.min.js"])
+        jsonscript = "/".join([static, "js", "json2.js"])
+        playerscript = "/".join([static, self.filesdirname, "js", self.playerapi])
         
         skinname = self.skins.get(self.params["skinName"], self.defaultskin)
         skin = "/".join([static, self.filesdirname, "skins", skinname])
@@ -141,6 +144,7 @@ class Player(wx.Panel):
             "file": streamfile,
             "jqueryscript": jqueryscript,
             "jsonscript": jsonscript,
+            "playerscript": playerscript,
             "swfplayer": swfplayer,
             "allowscriptaccess": "always",   
             "allowfullscreen": "true",

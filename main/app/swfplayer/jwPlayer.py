@@ -11,6 +11,7 @@ class Player( player.Player ):
     
     template = "jwplayer.html"
     filesdirname = "jwplayer"
+    playerapi = "jwplayer.js"
     
     # pasta com os arquivos do player
     filesdir = os.path.join(settings.STATIC_PATH, filesdirname)
