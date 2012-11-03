@@ -1519,7 +1519,7 @@ class PutLocker( SiteBase ):
 		    re.compile("(?P<inner_url>(?:http://)?www\.putlocker\.com/file/(?P<id>\w+))"),
 		    [re.compile("(?P<inner_url>(?:http://)?www\.putlocker\.com/embed/(?P<id>\w+))")]
 		    ),
-		"control": "SM_SEEK",
+		"control": "SM_RANGE",
 		"video_control": None
 	}
 	patternForm = re.compile(
@@ -1608,7 +1608,7 @@ class Sockshare( PutLocker ):
 		     re.compile("(?P<inner_url>(?:http://)?www\.sockshare\.com/file/(?P<id>\w+))"),
 		    [re.compile("(?P<inner_url>(?:http://)?www\.sockshare\.com/embed/(?P<id>\w+))")]
 		    ),
-		"control": "SM_SEEK", 
+		"control": "SM_RANGE", 
 		"video_control": None
 	}
 
@@ -2169,7 +2169,7 @@ class Supervideo(SiteBase):
 		"patterns": (
 	        [re.compile("(?P<inner_url>http://supervideo\.biz/(?P<id>.+))")],
 	    ),
-		"control": "SM_SEEK",
+		"control": "SM_RANGE",
 		"video_control": None
 	}
 	
@@ -2177,7 +2177,7 @@ class Supervideo(SiteBase):
 		SiteBase.__init__(self, **params)
 		self.basename = "supervideo.biz"
 		self.url = url
-		
+	
 	def start_extraction(self, proxies={}, timeout=25):
 		fd = self.connect(self.url, proxies=proxies, timeout=timeout)
 		webpage = fd.read(); fd.close()
@@ -2204,7 +2204,7 @@ class Videobash(SiteBase):
 			re.compile("(?P<inner_url>http://www\.videobash\.com/(?P<id>.+))"),
 	        [re.compile("(?P<inner_url>http://www\.videobash\.com/embed/(?P<id>.+))")],
 	    ),
-		"control": "SM_SEEK",
+		"control": "SM_RANGE",
 		"video_control": None
 	}
 	
@@ -2230,7 +2230,7 @@ class Videobash(SiteBase):
 		try: title = re.search("<title>(.+?)</title>", webpage, re.DOTALL).group(1)
 		except: title = get_radom_title()
 		
-		self.configs = {"url": url+"&start=", "title": title, "duration": duration}	
+		self.configs = {"url": url, "title": title, "duration": duration}	
 		
 #######################################################################################
 class Universal(object):

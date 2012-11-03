@@ -1791,18 +1791,10 @@ class StreamManager(threading.Thread):
                 stream, header = self.getStreamHeader(stream, seekpos, cache_size)
                 headers = self.streamSocket.headers
                 
-                contentType = headers.get("Content-Type","")
-                matchobj = re.match("(?:video/(?P<videotype>.*)|application/octet.*)", contentType)
-                is_video = bool(matchobj)
-                try:
-                    vtype = matchobj.group("videotype")
-                    is_mp4 = vtype.lower().startswith("mp4")
-                except:
-                    is_mp4 = False
                 # verifica a validade a resposta.
                 isValid = self.responseCheck(len(header), seekpos, streamSize, headers)
                 
-                if (isValid or (is_video and (videoManager.is_mp4() or is_mp4))) and (code == 200 or code == 206):
+                if isValid and (code == 200 or code == 206):
                     if stream: self.streamWrite(stream, len(stream))
                     return True
                 else:
@@ -1913,8 +1905,8 @@ class StreamManager_( StreamManager ):
         videoManager = self.manage.videoManager
         seekpos = self.manage.interval.get_start( self.ident) # posição inicial de leitura
         streamSize = self.manage.getVideoSize()
+        cache_size = 256
         nfalhas = 0
-
         while nfalhas < self.params.get("reconexao",1):
             try:
                 sleep_for = self.params.get("waittime",2)
@@ -1929,15 +1921,17 @@ class StreamManager_( StreamManager ):
                     time.sleep(1)
 
                 Info.set(self.ident, "state", _("Conectando"))
+                link = gerador.get_with_seek(link, seekpos)
+                
                 self.streamSocket = videoManager.connect(
                     link, proxies=self.proxies, headers={"Range":"bytes=%s-"%seekpos})
-
-                data = self.streamSocket.read( videoManager.get_header_size() )
-                stream, header = self.getStreamHeader(data, seekpos)
+                
+                data = self.streamSocket.read( cache_size )
+                stream, header = self.getStreamHeader(data, seekpos, cache_size)
                 
                 isValid = self.responseCheck(len(header), seekpos, 
                                              streamSize, self.streamSocket.headers)
-
+                
                 if isValid and (self.streamSocket.code == 200 or self.streamSocket.code == 206):
                     if stream: self.streamWrite(stream, len(stream))
                     return True
