@@ -1676,7 +1676,7 @@ class StreamManager(threading.Thread):
         self.reset_info()
     
     @staticmethod
-    def __get_FLVheader(stream, seekpos):
+    def get_FLVheader(stream, seekpos):
         header = ""
         if stream.startswith("FLV"):
             if (stream[:13].endswith("\t"+("\x00"*4)) or stream[:13].endswith(("\x00"*3)+"\t")):
@@ -1701,7 +1701,7 @@ class StreamManager(threading.Thread):
                 hsize = len(header)
                 stream = stream[hsize:]
         else:
-            stream, header = self.__get_FLVheader(stream, seekpos)
+            stream, header = self.get_FLVheader(stream, seekpos)
         return stream, header
         
     def removaConfigs(self, errorstring, errornumber):
