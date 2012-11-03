@@ -76,42 +76,57 @@ def get_with_seek(link, seek):
 	return link
 
 ########################################################################
-class ConnectionProcessor(object):
+class Section(object):
 	def __init__(self):
-		"""Constructor"""
-		self.ip_section = {}
-		self.loginSucess = False
-
+		self.section = {}
+		
+	def add(self, name):
+		self.section[name] = {}
+	
+	def has(self, name):
+		return self.section.has_key(name)
+	
+	def get(self, name):
+		if not self.has(name): self.add(name)
+		return self.section[name]
+	
+	def delete(self, name):
+		self.section.pop(name,None)
+		
 	def __del__(self):
-		del self.ip_section
-
-	def get_section(self, section_name):
-		if not self.has_section(section_name):
-			self.create_section(section_name)
-		return self.ip_section[ section_name ]
-
-	def has_section(self, section_name):
-		return self.ip_section.has_key(section_name)
-
-	def create_section(self, section_name):
-		self.ip_section[ section_name ] = {}
-
-	def remove_section(self, section_name):
-		if self.has_section(section_name):
-			del self.ip_section[ section_name ]
-
+		del self.section
+		
+	def __delitem__(self, name):
+		del self.section[name]
+		
+	def __getitem__(self, name):
+		if not self.has(name): self.add(name)
+		return self.section[name]
+	
+	def __setitem__(self, name, value):
+		self.section[name] = value
+		
+class ConnectionProcessor(object):
+	""" Processa conexões guardando 'cookies' e dados por ips """
+	def __init__(self):
+		self.section = Section()
+		self.logged = False
+		
+	def __del__(self):
+		del self.section
+		
 	def set_cookiejar(self, section_name, cookieJar):
-		section = self.get_section( section_name )
+		section = self.section[ section_name ]
 		section["cookieJar"] = cookieJar
-
+		
 	def has_cookieJar(self, section_name):
-		section = self.get_section( section_name )
+		section = self.section[ section_name ]
 		return section.has_key("cookieJar")
-
+		
 	def get_cookieJar(self, section_name):
-		section = self.get_section( section_name )
+		section = self.section[ section_name ]
 		return section["cookieJar"]
-
+		
 	def login(self, opener=None, timeout=0):
 		""" struct login"""
 		return True
@@ -126,20 +141,17 @@ class ConnectionProcessor(object):
 		""" conecta a url data e retorna o objeto criado """
 		ip = proxies.get("http", "default")
 
-		if not self.has_cookieJar(ip):
-			self.set_cookiejar(ip, cookielib.CookieJar())
-
-		if request is None:
-			request = self.get_request(url, headers, data)
-
+		if not self.has_cookieJar(ip): self.set_cookiejar(ip, cookielib.CookieJar())
+		if request is None: request = self.get_request(url, headers, data)
+		
 		processor = urllib2.HTTPCookieProcessor(cookiejar= self.get_cookieJar( ip ))
 		opener = urllib2.build_opener(processor, urllib2.ProxyHandler(proxies))
-
+		
 		# faz o login se necessário
-		if not self.loginSucess or login:
-			self.loginSucess = self.login(opener, timeout=timeout)
-			if not self.loginSucess: return
-
+		if not self.logged or login:
+			self.logged = self.login(opener, timeout=timeout)
+			if not self.logged: return
+			
 		return opener.open(request, timeout=timeout)
 
 #################################### BASEVIDEOSITE ####################################
@@ -166,9 +178,8 @@ class SiteBase(ConnectionProcessor):
 		return self.basename
 	
 	def __delitem__(self, arg):
-		if self.has_section( arg ):
-			self.remove_section( arg )
-			
+		self.section.delete(arg)
+		
 	def get_message(self):
 		return self.message
 
@@ -194,9 +205,9 @@ class SiteBase(ConnectionProcessor):
 
 	def getVideoInfo(self, ntry=3, proxies={}, timeout=30):
 		ip = proxies.get("http","default")
-		section = self.get_section( ip )
+		section = self.section.get( ip )
 		settings = section.get("settings",None)
-
+		
 		# extrai o titulo e o link do video, se já não tiverem sido extraidos
 		if not settings:
 			nfalhas = 0
