@@ -71,9 +71,8 @@ class Player(wx.Panel):
         
     @classmethod
     def getPlayerPage(cls, params):
-        tmpl_dir = os.path.join(settings.APPDIR, "templates")
-        try: tmpl = loader.find_template(cls.template, dirs=(tmpl_dir,))[0]
-        except: tmpl = loader.get_template(os.path.join(tmpl_dir, cls.template))
+        try: tmpl = loader.get_template(cls.template)
+        except: tmpl = loader.find_template(cls.template, dirs=(settings.TEMPLATE_PATH,))[0]
         return tmpl.render(Context({"params": params}))
     
     def OnWebViewNavigating(self, evt):
