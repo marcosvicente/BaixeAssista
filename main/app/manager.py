@@ -527,13 +527,13 @@ class FileManager(object):
         # local para o novo arquivo.
         filepath = self.getFilePath( filename )
         
-        class sucess:
+        class sucess(object):
             def __init__(self):
                 self.msg = _(u"O arquivo foi recuperado com sucesso!")
                 self.sucess = False
             def get_msg(self): return self.msg
             
-        class error:
+        class error(object):
             bad_file_msg = u"".join([
                 _(u"O arquivo de vídeo está corrompido!"), 
                 _(u"\nIsso por causa da \"seekbar\".")
@@ -545,7 +545,7 @@ class FileManager(object):
             def set_f_msg(self, msg): self.msg %= msg
             def set_msg(self, msg): self.msg = msg
             
-        class copy:
+        class copy(object):
             warning = _(u"O arquivo já existe!")
             
             def __init__(self):
@@ -580,6 +580,7 @@ class FileManager(object):
                     cp.inProgress = True
                     
                     while not cp.cancel:
+                        if filesize == 0: break # zerodivision erro!
                         cp.progress = ((float(bytes_count)/filesize)*100.0)
                         
                         stream = self.file.read( block_size )
@@ -593,7 +594,7 @@ class FileManager(object):
                         yield cp # update progress
                     cp.sucess = not cp.cancel
                     yield cp # after break
-            except Exception, err:
+            except Exception as err:
                 cp.err.set_f_msg( str(err) )
                 cp.error = True
         if cp.cancel: # cancel copy
@@ -632,7 +633,7 @@ class FileManager(object):
 
 ################################## INTERVALO ###################################
 # INDEXADOR: TRABALHA A DIVISÃO DA STREAM
-class Interval:
+class Interval(object):
     def __init__(self, **params):
         """params = {}; 
         seekpos: posição inicial de leitura da stream; 
@@ -873,7 +874,7 @@ class Streamer(object):
             time.sleep(0.001)
         print "Exiting: %s"%self
         raise StopIteration
-        
+
     def __del__(self):
         self.stop()
         del self.manage
