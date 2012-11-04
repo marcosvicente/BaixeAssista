@@ -884,7 +884,7 @@ class BaixeAssistaWin( wx.Frame ):
 			# parando todas as conexões criadas
 			self.manage.ctrConnection.stopAllConnections()
 			self.detailControl.removaTodosItens()
-			self.manage.stopStreamers()
+			self.manage.stop_streamers()
 			
 			#zera a barra de progresso
 			self.progressBar.SetValue(0.0)

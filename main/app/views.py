@@ -14,21 +14,23 @@ def streamLoader( request ):
 	
 	if seekpos > 0 and manage.videoManager.suportaSeekBar():
 		manage.setRandomRead( seekpos )
-		status_code = 206
+		statuscode = 206
 	else:
 		manage.reloadSettings()
-		status_code = 200
+		statuscode = 200
 	
 	seekpos = long(seekpos)
-	print status_code, seekpos, querystr
+	print statuscode, seekpos, querystr
 	
-	streamer = manage.getStreamer()
-	response = HttpResponse(streamer.get_chunks(), status = status_code)
+	filename = manage.getVideoTitle()
+	filename = filename.encode("utf-8","ignore")
+	videoSize = manage.getVideoSize()
+	videoExt = manage.getVideoExt()
 	
-	response["Content-Type"] = "video/%s" % videoManager.getVideoExt()
-	response["Content-Length"] = manage.getVideoSize()
+	response = HttpResponse(manage.get_streamer(), status = statuscode)
+	response["Content-Type"] = "video/%s" %videoExt
+	response["Content-Length"] = videoSize
 	response["Content-Transfer-Encoding"] = "binary"
-	filename = videoManager.getTitle().encode("utf-8","ignore")
 	response['Content-Disposition'] = 'attachment; filename=%s'%filename
 	response["Accept-Ranges"] = "bytes"
 	return response

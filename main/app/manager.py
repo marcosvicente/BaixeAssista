@@ -843,46 +843,41 @@ class Interval:
 ################################ main : manage ################################
 import gerador
 
-class Streamer( object ):
+class Streamer(object):
     """ lê e retorna a stream de dados """
     #----------------------------------------------------------------------
-    def __init__(self, manage):
+    def __init__(self, manage, blocksize = 524288):
         self.seekpos = self.sended = 0
+        self.blocksize = blocksize
         self.manage = manage
-        self.stop_now = False
-        
-    def stop(self): self.stop_now = True
+        self._stop = False
     
-    def get_chunks(self, block_size=524288):
-        self.manage.appendStreamer( self)
-        print "STREAMER STARTED %s"%self
+    def stop(self): self._stop=True
+    
+    def __iter__(self):
+        self.manage.add_streamer(self)
         
         if self.manage.getInitPos() > 0:
             yield self.manage.videoManager.get_stream_header()
         
-        while self.sended < self.manage.getVideoSize():
-            if self.stop_now: break # stop streamer loop
+        while (not self._stop and self.sended < self.manage.getVideoSize()):
             if self.seekpos < self.manage.cacheBytesCount:
-                block_len = block_size
+                blocklen = self.blocksize
                 
-                if (self.seekpos + block_len) > self.manage.cacheBytesCount:
-                    block_len = self.manage.cacheBytesCount - self.seekpos
+                if (self.seekpos + blocklen) > self.manage.cacheBytesCount:
+                    blocklen = self.manage.cacheBytesCount - self.seekpos
                     
-                stream, self.seekpos = self.manage.fileManager.read(self.seekpos, block_len)
-                self.sended += block_len
+                stream, self.seekpos = self.manage.fileManager.read(self.seekpos, blocklen)
+                self.sended += blocklen
                 yield stream
-            else:
-                time.sleep(0.001)
-                
-        if hasattr(self.manage, "removeStreamer"):
-            self.manage.removeStreamer(self)
-            
-        yield "\r\n" # end stream
+            time.sleep(0.001)
+        print "Exiting: %s"%self
+        raise StopIteration
         
     def __del__(self):
-        print "STREAMER STOPED %s"%self
+        self.stop()
         del self.manage
-
+        
 ########################################################################
 class CTRConnection(object):
     """ controla todas as conexões criadas """
@@ -1024,7 +1019,7 @@ class Manage( object ):
         
         # controla a obtenção de links, tamanho do arquivo, title, etc.
         vmanager = gerador.Universal.getVideoManager( self.streamUrl )
-        # pode ser alterado em "inicialize", se resumindo.
+        # pode ser alterado em "inicialize", se resuming.
         qualidade = self.params.get("videoQuality", 2)
         self.videoManager = vmanager(self.streamUrl, qualidade=qualidade)
         
@@ -1045,9 +1040,9 @@ class Manage( object ):
         self.fileManager = FileManager(tempfile = self.params.get('tempfile', False))
         
         # avalia se o arquivo pode ser resumido
-        self.resumindo = self.fileManager.resume( self.videoTitle )
+        self.resuming = self.fileManager.resume( self.videoTitle )
         
-        if self.resumindo:
+        if self.resuming:
             self.cacheBytesCount = self.fileManager.resumeInfo["cacheBytesCount"]
             self.cacheBytesTotal = self.fileManager.resumeInfo["cacheBytesTotal"]
             
@@ -1066,18 +1061,25 @@ class Manage( object ):
             
             self.posInicialLeitura = self.cacheBytesTotal
 
-    def getStreamer(self):
+    def get_streamer(self):
         """ streamer controla a leitura dos bytes enviados ao player """
-        return Streamer( self )
+        return Streamer(self)
     
-    def appendStreamer(self, streamer): self.streamerList.append(streamer)
-    def removeStreamer(self, streamer): self.streamerList.remove(streamer)
-    def stopStreamers(self):
-        for streamer in self.streamerList: streamer.stop()
+    def add_streamer(self, streamer):
+        if not streamer in self.streamerList:
+            self.streamerList.append(streamer)
+            
+    def del_streamer(self, streamer):
+        if streamer in self.streamerList:
+            self.streamerList.remove(streamer)
+            
+    def stop_streamers(self):
+        for streamer in self.streamerList:
+            streamer.stop()
         
     def delete_vars(self):
         """ deleta todas as variáveis do objeto """
-        self.stopStreamers()
+        self.stop_streamers()
         
         Info.delete("manage")
         settings.MANAGE_OBJECT = None
@@ -1111,7 +1113,7 @@ class Manage( object ):
                 title = self.urlManager.getUrlTitle(self.streamUrl)
                 self.videoTitle = title or self.videoTitle
 
-        if not self.resumindo:
+        if not self.resuming:
             self.fileManager.setFileExt(self.videoExt)
             self.fileManager.cacheFile( self.videoTitle )
 
@@ -1210,10 +1212,12 @@ class Manage( object ):
         return self.cacheBytesTotal
         
     def getInitPos(self): return self.params.get("seekpos",0)
+    def isResuming(self): return self.resuming
     def canceledl(self): self._canceledl = True
     def getVideoTitle(self): return self.videoTitle
     def getUrl(self): return self.streamUrl
     def getVideoSize(self): return self.videoSize
+    def getVideoExt(self): return self.videoExt
     def nowSending(self): return self.interval.send_info['sending']
     def get_cache_size(self): return self.cacheBytesCount
     
