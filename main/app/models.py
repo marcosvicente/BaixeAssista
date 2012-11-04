@@ -1,17 +1,9 @@
 from django.db import models
+import cPickle
+import manager
 
 ########################################################################
 class LastUrl( models.Model ):
-	title = models.TextField("Title", unique=True)
-	address = models.TextField("Url")
-	
-	def __unicode__(self):
-		return self.title
-	
-########################################################################
-class Url( models.Model ):
-	lasturl = models.ForeignKey(LastUrl)
-	
 	title = models.TextField("Title", unique=True)
 	url = models.TextField("Url")
 	
@@ -19,16 +11,41 @@ class Url( models.Model ):
 		return self.title
 	
 ########################################################################
+class Url(models.Model, manager.UrlBase):
+	title = models.TextField("Title", unique=True)
+	_url = models.TextField("Url")
+	
+	@property
+	def url(self):
+		return self.formatUrl(self._url)
+	
+	@url.setter
+	def url(self, data):
+		self._url = self.shortUrl(data)
+		
+	def __unicode__(self):
+		return self.title
+	
+########################################################################
 class Resume( models.Model ):
 	title = models.TextField("Title")
-	streamDownBytes = models.PositiveIntegerField("Stream downloaded bytes")
-	streamQuality = models.PositiveIntegerField("Stream quality")
-	streamSize = models.PositiveIntegerField("Stream size")
-	resumePosition = models.PositiveIntegerField("Resume position")
-	streamExt = models.CharField("Stream extension", max_length=50)
-	resumeBLocks = models.TextField("Stream resume block")
-	sendBytes = models.PositiveIntegerField("Stream size")
-
+	
+	videoExt = models.CharField("Stream extension", max_length=50)
+	videoSize = models.PositiveIntegerField("Stream size")
+	seekPos = models.PositiveIntegerField("Resume position")
+	_pending = models.TextField("Stream resume block")
+	videoQuality = models.PositiveIntegerField("Video quality")
+	cacheBytesTotal = models.PositiveIntegerField("Stream downloaded bytes")
+	cacheBytesCount = models.PositiveIntegerField("Stream size")
+	
+	@property
+	def pending(self):
+		return cPickle.loads(self._pending.encode("ascii"))
+		
+	@pending.setter
+	def pending(self, data):
+		self._pending = cPickle.dumps(data)
+		
 	def __unicode__(self):
 		return self.title
 	

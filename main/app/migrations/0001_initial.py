@@ -12,16 +12,15 @@ class Migration(SchemaMigration):
         db.create_table('app_lasturl', (
             ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('title', self.gf('django.db.models.fields.TextField')(unique=True)),
-            ('address', self.gf('django.db.models.fields.TextField')()),
+            ('url', self.gf('django.db.models.fields.TextField')()),
         ))
         db.send_create_signal('app', ['LastUrl'])
 
         # Adding model 'Url'
         db.create_table('app_url', (
             ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('lasturl', self.gf('django.db.models.fields.related.ForeignKey')(to=orm['app.LastUrl'])),
             ('title', self.gf('django.db.models.fields.TextField')(unique=True)),
-            ('url', self.gf('django.db.models.fields.TextField')()),
+            ('_url', self.gf('django.db.models.fields.TextField')()),
         ))
         db.send_create_signal('app', ['Url'])
 
@@ -29,13 +28,13 @@ class Migration(SchemaMigration):
         db.create_table('app_resume', (
             ('id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
             ('title', self.gf('django.db.models.fields.TextField')()),
-            ('streamDownBytes', self.gf('django.db.models.fields.PositiveIntegerField')()),
-            ('streamQuality', self.gf('django.db.models.fields.PositiveIntegerField')()),
-            ('streamSize', self.gf('django.db.models.fields.PositiveIntegerField')()),
-            ('resumePosition', self.gf('django.db.models.fields.PositiveIntegerField')()),
-            ('streamExt', self.gf('django.db.models.fields.CharField')(max_length=50)),
-            ('resumeBLocks', self.gf('django.db.models.fields.TextField')()),
-            ('sendBytes', self.gf('django.db.models.fields.PositiveIntegerField')()),
+            ('videoExt', self.gf('django.db.models.fields.CharField')(max_length=50)),
+            ('videoSize', self.gf('django.db.models.fields.PositiveIntegerField')()),
+            ('seekPos', self.gf('django.db.models.fields.PositiveIntegerField')()),
+            ('_pending', self.gf('django.db.models.fields.TextField')()),
+            ('videoQuality', self.gf('django.db.models.fields.PositiveIntegerField')()),
+            ('cacheBytesTotal', self.gf('django.db.models.fields.PositiveIntegerField')()),
+            ('cacheBytesCount', self.gf('django.db.models.fields.PositiveIntegerField')()),
         ))
         db.send_create_signal('app', ['Resume'])
 
@@ -73,28 +72,27 @@ class Migration(SchemaMigration):
         },
         'app.lasturl': {
             'Meta': {'object_name': 'LastUrl'},
-            'address': ('django.db.models.fields.TextField', [], {}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'title': ('django.db.models.fields.TextField', [], {'unique': 'True'})
+            'title': ('django.db.models.fields.TextField', [], {'unique': 'True'}),
+            'url': ('django.db.models.fields.TextField', [], {})
         },
         'app.resume': {
             'Meta': {'object_name': 'Resume'},
+            '_pending': ('django.db.models.fields.TextField', [], {}),
+            'cacheBytesCount': ('django.db.models.fields.PositiveIntegerField', [], {}),
+            'cacheBytesTotal': ('django.db.models.fields.PositiveIntegerField', [], {}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'resumeBLocks': ('django.db.models.fields.TextField', [], {}),
-            'resumePosition': ('django.db.models.fields.PositiveIntegerField', [], {}),
-            'sendBytes': ('django.db.models.fields.PositiveIntegerField', [], {}),
-            'streamDownBytes': ('django.db.models.fields.PositiveIntegerField', [], {}),
-            'streamExt': ('django.db.models.fields.CharField', [], {'max_length': '50'}),
-            'streamQuality': ('django.db.models.fields.PositiveIntegerField', [], {}),
-            'streamSize': ('django.db.models.fields.PositiveIntegerField', [], {}),
-            'title': ('django.db.models.fields.TextField', [], {})
+            'seekPos': ('django.db.models.fields.PositiveIntegerField', [], {}),
+            'title': ('django.db.models.fields.TextField', [], {}),
+            'videoExt': ('django.db.models.fields.CharField', [], {'max_length': '50'}),
+            'videoQuality': ('django.db.models.fields.PositiveIntegerField', [], {}),
+            'videoSize': ('django.db.models.fields.PositiveIntegerField', [], {})
         },
         'app.url': {
             'Meta': {'object_name': 'Url'},
+            '_url': ('django.db.models.fields.TextField', [], {}),
             'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'lasturl': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['app.LastUrl']"}),
-            'title': ('django.db.models.fields.TextField', [], {'unique': 'True'}),
-            'url': ('django.db.models.fields.TextField', [], {})
+            'title': ('django.db.models.fields.TextField', [], {'unique': 'True'})
         }
     }
 

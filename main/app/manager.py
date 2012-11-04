@@ -26,9 +26,16 @@ from main import settings
 ## Servidor multi-threading
 from main.concurrent_server.management.commands import runcserver
 
-from main.app import models # modelo de banco de dados
-import logging
+class model(object):
+    """ resolve problema com importação circular """
+    class __metaclass__(type):
+        @property
+        def models(self):
+            """ modelo de banco de dados """
+            from main.app import models
+            return models
 
+import logging
 logger = logging.getLogger("main.app.manager")
 
 # INTERNACIONALIZATION
@@ -299,36 +306,39 @@ class ProxyManager(object):
 ################################# LINKMANAGER #################################
 # LINK MANAGER: ADICIONA, REMOVE, E OBTÉM INFORMAÇÕES DOS LINKS ADICIONADAS
 class UrlBase(object):
-    def __init__(self):
-        self.sep = u"::::::"
-        
-    def __del__(self):
-        del self.sep
-
-    def joinUrlDesc(self, url, desc):
+    sep = u"::::::"; short = u"%s[%s]"
+    
+    @classmethod
+    def joinUrlDesc(cls, url, desc):
         """ junta a url com sua decrição(título), usando o separador padrão """
-        return u"%s %s %s"%(url, self.sep, desc)
-
-    def splitUrlDesc(self, url_desc_str):
+        return u"%s %s %s"%(url, cls.sep, desc)
+    
+    @classmethod
+    def splitUrlDesc(cls, string):
         """ separa a url de sua decrição(título), usando o separador padrão """
-        str_split = url_desc_str.rsplit( self.sep, 1)
+        str_split = string.rsplit(cls.sep, 1)
         if len(str_split) == 2:
-            url, desc = str_split
-            return url.strip(), desc.strip()
-        # caso não haja ainda, uma desc(título)
-        return str_split[0], ""
-
-    def splitBaseId(self, value):
+            url, title = str_split[0].strip(), str_split[1].strip()
+        else:
+            url, title = str_split[0], ""
+        return url, title
+    
+    @staticmethod
+    def splitBaseId(string):
         """ value: megavideo[t53vqf0l] -> (megavideo, t53vqf0l) """
-        base, id = value.split("[")
-        return base, id[:-1] #remove ]
-
-    def formatUrl(self, valor):
+        matchobj = re.search("(?P<base>.+?)\[(?P<id>.+)\]", string, re.S|re.U)
+        return (matchobj.group("base"), matchobj.group("id"))
+    
+    @classmethod
+    def formatUrl(cls, string):
         """ megavideo[t53vqf0l] -> http://www.megavideo.com/v=t53vqf0l """
-        import gerador
-        base, id = self.splitBaseId( valor )
-        return gerador.Universal.get_url( base ) % id
-
+        import gerador; base, strID = cls.splitBaseId( string )
+        return gerador.Universal.get_url( base ) % strID
+    
+    @classmethod
+    def shortUrl(cls, url):
+        return cls.short %cls.analizeUrl( url )
+        
     @staticmethod
     def getBaseName(url):
         """ http://www.megavideo.com/v=t53vqf0l -> megavideo.com """
@@ -339,30 +349,33 @@ class UrlBase(object):
         else:# para url sem www inicial
             basename = "%s.%s"%tuple(netloc_split[0:2])
         return basename
-
-    def analizeUrl(self, url):
+    
+    @classmethod
+    def analizeUrl(cls, url):
         """ http://www.megavideo.com/v=t53vqf0l -> (megavideo.com, t53vqf0l) """
-        import gerador
-        basename = self.getBaseName(url)
+        import gerador; basename = cls.getBaseName( url )
         urlid = gerador.Universal.get_video_id(basename, url)
         return (basename, urlid)
-
+        
 ########################################################################
 class UrlManager( UrlBase ):
     def __init__(self):
         super(UrlManager, self).__init__()
         # acesso a queryset
-        self.objects = models.Url.objects
+        self.objects = model.models.Url.objects
         
     def getUrlId(self, title):
         """ retorna o id da url, com base no título(desc) """
+        import gerador
         query = self.objects.get(title = title)
-        return self.splitBaseId( query.url )[-1]
+        basename = self.getBaseName( query.url )
+        return gerador.Universal.get_video_id(basename, query.url)
         
     def setTitleIndex(self, title):
         """ adiciona um índice ao título se ele já existir """
         pattern = title + "(?:###\d+)?"
-        query = self.objects.filter(title__regex = pattern).order_by("title")
+        query = self.objects.filter(title__regex = pattern)
+        query = query.order_by("title")
         count = query.count()
         if count > 0:
             db_title = query[count-1].title # last title
@@ -371,7 +384,7 @@ class UrlManager( UrlBase ):
             except: index = 0
             title = title + ("###%d"%(index+1))
         return title
-
+        
     def remove(self, title):
         """ remove todas as referêcias do banco de dados, com base no título """
         self.objects.get(title=title).delete()
@@ -380,139 +393,77 @@ class UrlManager( UrlBase ):
         """ Adiciona o título e a url a base de dados. 
         É importante saber se a url já foi adicionada, use o método 'exist'
         """
-        try: lasturl = models.LastUrl.objects.latest("address")
-        except: lasturl = models.LastUrl()
-        
-        urlmodel = "%s[%s]"% tuple(self.analizeUrl(url))
+        try: lasturl = model.models.LastUrl.objects.latest("url")
+        except: lasturl = model.models.LastUrl()
         
         # impede títulos iguais
         if self.objects.filter(title = title).count() > 0:
             title = self.setTitleIndex(title)
         
         # muitas urls para uma unica lasturl
-        lasturl.address = url; lasturl.title = title
+        lasturl.url = url; lasturl.title = title
         lasturl.save()
         
-        url = models.Url(url=urlmodel, title=title, lasturl = lasturl)
-        url.save()
+        model.models.Url(_url = self.shortUrl(url), title=title).save()
         
     def getTitleList(self):
-        return [ query.title
-                 for query in self.objects.all().order_by("title")
-                 ]
+        return [query.title for query in self.objects.all().order_by("title")]
 
     def getUrlTitle(self, url):
-        urlmodel = "%s[%s]"%self.analizeUrl(url)
-        try: query = self.objects.get(url = urlmodel)
-        except: return ""
+        try: query = self.objects.get(_url = self.shortUrl(url))
+        except: query = model.models.Url(title = "")
         return query.title
-
+        
     def getUrlTitleList(self):
         """ retorna todas as urls e titulos adicionados na forma [(k,v),] """
-        return [(self.formatUrl(query.url), query.title) 
-                for query in self.objects.all()
-                ]
-    
+        return [(query.url, query.title) for query in self.objects.all()]
+        
     def getLastUrl(self):
         """ retorna a url do último video baixado """
-        try: query = models.LastUrl.objects.latest("address")
-        except: query = None
-        if query: url, title = query.address, query.title
-        else: url, title = "http://", "..."
-        return (url, title)
+        try: query = model.models.LastUrl.objects.latest("url")
+        except: query = model.models.LastUrl(url="http://", title="...")
+        return (query.url, query.title)
         
     def exist(self, url):
         """ avalia se a url já existe na base de dados """
-        urlmodel = "%s[%s]"%self.analizeUrl(url)
-        query = self.objects.filter(url=urlmodel)
+        query = self.objects.filter(_url = self.shortUrl(url))
         return (query.count() > 0) # se maior então existe
-
+        
 ########################################################################
-class ResumeBase(object):
-    """ Cria a estrutura de amazenamento de dados de resumo """
-    #----------------------------------------------------------------------
+class ResumeInfo(object):
     def __init__(self):
-        """Constructor"""
+        self.objects = model.models.Resume.objects
         self.query = None
-
-    def base64Encode(self, value):
-        """ codifica o tipo de Python em 'value' para tipo 'cPickle' -> 'base64'"""
-        return base64.b64encode(cPickle.dumps(value))
-
-    def sha_encode(self, value):
-        """ codifica 'value' dado para formato de dados 'cha' """
-        try: value = sha.sha( value ).hexdigest()
-        except:
-            try: value = unicodedata.normalize("NFKD", unicode(value,"UTF-8"))
-            except: value = unicodedata.normalize("NFKD", value)
-            osha = sha.sha( value.encode("ASCII","ignore") )
-            value = osha.hexdigest()
-        return value
-
-    def update(self, title):
-        self.query = self.get(title)
-
-    def get_file_quality(self):
-        return self.query.streamQuality
-
-    def get_file_ext(self):
-        return self.query.streamExt
-
-    def get_file_size(self):
-        """retorna o tamanho total do arquivo sendo resumido"""
-        return self.query.streamSize
-
-    def get_seek_pos(self):
-        """retorna a posição do próximo bloco de bytes"""
-        return self.query.resumePosition
-
-    def get_intervals(self):
-        """retorna a lista de intervalos pendentes"""
-        resumeblocks = self.query.resumeBLocks.encode("ascii")
-        return cPickle.loads( resumeblocks )
-
-    def get_send_bytes(self):
-        """ número de bytes que serão enviados ao player """
-        return self.query.sendBytes
-
-    def get_bytes_total(self):
-        """ número de total de bytes baixados """
-        return self.query.streamDownBytes
-
-class ResumeInfo( ResumeBase ):
-    def __init__(self):
-        super(ResumeInfo, self).__init__()
-        self.objects = models.Resume.objects
-
+        
     def add(self, title, **kwargs):
-        """filename: videoExt; streamSize; seekPos; 
-        pending; numTotalBytes; nBytesProntosEnvio; videoQuality
+        """ kwargs = {}
+         - fields:{videoExt; videoSize; seekPos; pending; 
+                  cacheBytesTotal; cacheBytesCount; 
+                  videoQuality}
         """
-        try: query = self.objects.get(title=title)
-        except: query = models.Resume()
-
-        query.title = title
-        query.resumeBLocks = cPickle.dumps(kwargs["pending"])
-        query.streamDownBytes = kwargs["numTotalBytes"]
-        query.sendBytes = kwargs["nBytesProntosEnvio"]
-        query.streamQuality = kwargs["videoQuality"]
-        query.streamSize = kwargs["streamSize"]
-        query.resumePosition = kwargs["seekPos"]
-        query.streamExt = kwargs["videoExt"]
-        query.save() # sanvando no banco de dados
-
-    def has_info(self, title):
-        return bool(self.get(title))
-
-    def remove(self, title):
-        query = self.objects.filter(title=title)
-        if query.count() > 0: query.delete()
+        try: query = self.objects.get(title=title) # get existent
+        except: query = model.models.Resume(title=title) # create new
+        for key in kwargs: setattr(query, key, kwargs[key])
+        query.save() # salvando no banco de dados
         
     def get(self, title):
         try: query = self.objects.get(title=title)
-        except: return
+        except: query = model.models.Resume()
         return query
-
+        
+    def update(self, title):
+        self.query = self.get(title)
+        
+    def __getitem__(self, name):
+        return getattr(self.query, name)
+    
+    def has(self, title):
+        return bool(self.get(title).pk)
+        
+    def remove(self, title):
+        query = self.objects.filter(title=title)
+        if query.count() > 0: query.delete()
+    
 ################################# FILEMANAGER ##################################
 # FILE MANAGER: TUDO ASSOCIADO A ESCRITA DA STREAM NO DISCO
 class FM_runLocked(object):
@@ -546,12 +497,13 @@ class FileManager(object):
         
     def getFilePath(self, filename):
         """ retorna o caminho completo para o local do arquivo """
-        query = self.resumeInfo.get( filename )
-
-        if query: videoExt = query.streamExt
-        else: videoExt = self.params.get("videoExt","")
+        if self.resumeInfo.has( filename ):
+            videoExt = self.resumeInfo.get( filename ).videoExt
+        else:
+            videoExt = self.params.get("videoExt","")
+        
         videoExt = videoExt or "flv"
-
+        
         try: filename = unicodedata.normalize("NFKD", unicode(filename,"UTF-8"))
         except: filename = unicodedata.normalize("NFKD", filename)
         filename = filename.encode("ASCII","ignore")
@@ -651,7 +603,7 @@ class FileManager(object):
 
     def resume(self, filename):
         """ faz o resumo de 'filename', caso haja as informaçãos necessárias em 'resumeInfo'"""
-        if filename and self.params.get("tempfile",False) is False and self.resumeInfo.has_info( filename ):
+        if filename and self.params.get("tempfile",False) is False and self.resumeInfo.has( filename ):
             self.file = open(self.getFilePath( filename ), "r+b")
             self.resumeInfo.update( filename ); return True
         return False # o arquivo não está sendo resumido
@@ -910,11 +862,11 @@ class Streamer( object ):
         
         while self.sended < self.manage.getVideoSize():
             if self.stop_now: break # stop streamer loop
-            if self.seekpos < self.manage.nBytesProntosEnvio:
+            if self.seekpos < self.manage.cacheBytesCount:
                 block_len = block_size
                 
-                if (self.seekpos + block_len) > self.manage.nBytesProntosEnvio:
-                    block_len = self.manage.nBytesProntosEnvio - self.seekpos
+                if (self.seekpos + block_len) > self.manage.cacheBytesCount:
+                    block_len = self.manage.cacheBytesCount - self.seekpos
                     
                 stream, self.seekpos = self.manage.fileManager.read(self.seekpos, block_len)
                 self.sended += block_len
@@ -1044,7 +996,7 @@ class Manage( object ):
         assert URL, _("Entre com uma url primeiro!")
         self.streamUrl = URL # guarda a url do video
         self.params = params
-        self.numTotalBytes = 0
+        self.cacheBytesTotal = 0
         self.posInicialLeitura = 0
         self.updateRunning = False
         self.usingTempfile = params.get("tempfile", False)
@@ -1089,44 +1041,40 @@ class Manage( object ):
         self._canceledl = False    # cancelar o download?
         self.velocidadeGlobal = 0  # velocidade global da conexão
         self.tempoDownload = ""    # tempo total de download
-        self.nBytesProntosEnvio = 0
+        self.cacheBytesCount = 0
         self.fileManager = FileManager(tempfile = self.params.get('tempfile', False))
         
         # avalia se o arquivo pode ser resumido
         self.resumindo = self.fileManager.resume( self.videoTitle )
         
         if self.resumindo:
-            self.nBytesProntosEnvio = self.fileManager.resumeInfo.get_send_bytes()
-            self.videoSize = self.fileManager.resumeInfo.get_file_size()
-            self.numTotalBytes = self.fileManager.resumeInfo.get_bytes_total()
-            seekpos = self.fileManager.resumeInfo.get_seek_pos()
-            intervs = self.fileManager.resumeInfo.get_intervals()
-
+            self.cacheBytesCount = self.fileManager.resumeInfo["cacheBytesCount"]
+            self.cacheBytesTotal = self.fileManager.resumeInfo["cacheBytesTotal"]
+            
+            self.videoSize = self.fileManager.resumeInfo["videoSize"]
+            seekpos = self.fileManager.resumeInfo["seekPos"]
+            intervs = self.fileManager.resumeInfo["pending"]
+            
             # Sem o parâmetro qualidade do resumo, o usuário poderia 
             # corromper o arquivo de video, dando uma qualidade diferente
-            self.params["videoQuality"] = self.fileManager.resumeInfo.get_file_quality()
-            self.videoExt = self.fileManager.resumeInfo.get_file_ext()
-
+            self.params["videoQuality"] = self.fileManager.resumeInfo["videoQuality"]
+            self.videoExt = self.fileManager.resumeInfo["videoExt"]
+            
             self.interval = Interval(maxsize = self.videoSize,
                                      seekpos = seekpos, offset = 0, pending = intervs,
                                      maxsplit = self.params.get("maxsplit", 2))
             
-            self.posInicialLeitura = self.numTotalBytes
+            self.posInicialLeitura = self.cacheBytesTotal
 
     def getStreamer(self):
         """ streamer controla a leitura dos bytes enviados ao player """
         return Streamer( self )
     
-    def appendStreamer(self, streamer):
-        self.streamerList.append(streamer)
-        
-    def removeStreamer(self, streamer):
-        self.streamerList.remove(streamer)
-    
+    def appendStreamer(self, streamer): self.streamerList.append(streamer)
+    def removeStreamer(self, streamer): self.streamerList.remove(streamer)
     def stopStreamers(self):
-        for streamer in self.streamerList:
-            streamer.stop()
-            
+        for streamer in self.streamerList: streamer.stop()
+        
     def delete_vars(self):
         """ deleta todas as variáveis do objeto """
         self.stopStreamers()
@@ -1252,71 +1200,59 @@ class Manage( object ):
         server.start()
         # se iniciou com sucesso
         return Server.running
-        
-    def getInitPos(self):
-        return self.params.get("seekpos",0)
     
     def isComplete(self):
         """ informa se o arquivo já foi completamente baixado """
         return (self.received_bytes() >= (self.getVideoSize()-25))
-
-    def canceledl(self):
-        self._canceledl = True
-
-    def getVideoTitle(self):
-        return self.videoTitle
-
-    def getUrl(self):
-        return self.streamUrl
-
-    def getVideoSize(self):
-        return self.videoSize
-
-    def nowSending(self):
-        return self.interval.send_info['sending']
-
+    
     def received_bytes(self):
         """ retorna o numero total de bytes transferidos """
-        return self.numTotalBytes
-
+        return self.cacheBytesTotal
+        
+    def getInitPos(self): return self.params.get("seekpos",0)
+    def canceledl(self): self._canceledl = True
+    def getVideoTitle(self): return self.videoTitle
+    def getUrl(self): return self.streamUrl
+    def getVideoSize(self): return self.videoSize
+    def nowSending(self): return self.interval.send_info['sending']
+    def get_cache_size(self): return self.cacheBytesCount
+    
     @FM_runLocked()
     def salveInfoResumo(self):
         """ salva todos os dados necessários para o resumo do arquivo atual """
         self.ctrConnection.removeStopedConnection()
-        pendingIntervs = [] # coleta geral de informações.
-        
+        pending = [] # coleta geral de informações.
         for smanager in self.ctrConnection.getConnections():
             ident = smanager.ident
             # a conexão deve estar ligada a um interv
             if self.interval.hasInterval( ident ):
-                pendingIntervs.append((
+                pending.append((
                     self.interval.get_index( ident), 
                     smanager.numBytesLidos, 
                     self.interval.get_start( ident), 
                     self.interval.get_end( ident),
                     self.interval.get_block_size( ident)
                 ))
-        pendingIntervs.extend( self.interval.pending )
-        pendingIntervs.sort()
+        pending.extend( self.interval.pending )
+        pending.sort()
         
         self.fileManager.resumeInfo.add(self.videoTitle, 
-            videoExt = self.videoExt, streamSize = self.getVideoSize(), 
-            seekPos = self.interval.seekpos, 
-            pending = pendingIntervs, 
-            numTotalBytes = self.numTotalBytes, 
-            nBytesProntosEnvio = self.nBytesProntosEnvio, 
+            videoExt = self.videoExt, pending = pending,
+            videoSize = self.videoSize, seekPos = self.interval.seekpos, 
+            cacheBytesTotal = self.cacheBytesTotal, 
+            cacheBytesCount = self.cacheBytesCount, 
             videoQuality = self.params.get("videoQuality",2)
         )
-
+        
     def porcentagem(self):
         """ Progresso do download em porcentagem """
-        return StreamManager.calc_percent(self.numTotalBytes, self.getVideoSize())
+        return StreamManager.calc_percent(self.cacheBytesTotal, self.getVideoSize())
 
     def progresso(self):
         """ Progresso do download """
-        return "%s / %s"%(StreamManager.format_bytes( self.numTotalBytes ), 
+        return "%s / %s"%(StreamManager.format_bytes( self.cacheBytesTotal ), 
                           StreamManager.format_bytes( self.getVideoSize() ))
-
+        
     def setRandomRead(self, seekpos):
         """ Configura a leitura da stream para um ponto aleatório dela """
         self.notifiqueConexoes(True)
@@ -1324,7 +1260,7 @@ class Manage( object ):
         if not self.usingTempfile and not self.params.get("tempfile",False):
             self.salveInfoResumo()
 
-        self.numTotalBytes = self.posInicialLeitura = seekpos
+        self.cacheBytesTotal = self.posInicialLeitura = seekpos
         del self.interval, self.fileManager
 
         self.inicialize(tempfile = True, seekpos = seekpos)
@@ -1336,7 +1272,7 @@ class Manage( object ):
         if self.params.get("seeking", False):
             self.notifiqueConexoes(True)
 
-            self.numTotalBytes = self.posInicialLeitura = 0
+            self.cacheBytesTotal = self.posInicialLeitura = 0
             del self.interval, self.fileManager
 
             self.inicialize(tempfile = self.usingTempfile, seekpos = 0)
@@ -1350,9 +1286,6 @@ class Manage( object ):
             if flag: smanager.setWait()
             elif smanager.isWaiting:
                 smanager.stopWait()
-                
-    def get_cache_size(self):
-        return self.nBytesProntosEnvio
     
     def updateVideoInfo(self, args=None):
         """ Atualiza as variáveis de transferência do vídeo. """
@@ -1366,17 +1299,17 @@ class Manage( object ):
 
                 if intervstart >= 0:
                     startabs = intervstart - self.interval.get_offset()
-                    self.nBytesProntosEnvio = startabs + nbytes
+                    self.cacheBytesCount = startabs + nbytes
 
                 elif self.isComplete(): # isComplete: tira a necessidade de uma igualdade absoluta
-                    self.nBytesProntosEnvio = self.getVideoSize()
+                    self.cacheBytesCount = self.getVideoSize()
 
                 if not self.usingTempfile and not self.params.get("tempfile",False):
                     # salva os dados de resumo no interval de tempo 300s=5min
                     if time.time() - startTime > 300: 
                         startTime = time.time()
                         self.salveInfoResumo()
-
+                        
                 # reinicia a atividade das conexões
                 self.notifiqueConexoes(False)
             except: time.sleep(3) # tempo de recuperação
@@ -1589,7 +1522,7 @@ class StreamManager(threading.Thread):
                 self.manage.fileManager.write(pos, stream)
                 
                 # quanto ja foi baixado da stream
-                self.manage.numTotalBytes += nbytes
+                self.manage.cacheBytesTotal += nbytes
                 self.manage.interval.send_info["nbytes"][start] += nbytes
                 
                 # bytes lidos da conexão.
