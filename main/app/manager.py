@@ -1802,6 +1802,7 @@ class StreamManager(threading.Thread):
                     self.streamSocket.close(); time.sleep( waittime )
             except Exception as err:
                 Info.set(self.ident, "state", _(u"Falha na conexão"))
+                logger.error("%s Connecting: %s" %(self.__class__.__name__, err))
                 time.sleep( waittime )
                 
             # se passar do tempo de timeout o ip será descartado
@@ -1855,12 +1856,11 @@ class StreamManager(threading.Thread):
                     time.sleep(1)
             except Exception as err:
                 self.failure(_("Incapaz de conectar"), 1)
-                logger.error("%s: %s" %(self.__class__.__name__, err))
+                logger.error("%s Mainloop: %s" %(self.__class__.__name__, err))
         Info.set(self.ident, "state", _(u"Conexão parada"))
         
 #########################  STREAMANAGER: (megaupload, youtube) ######################
 class StreamManager_( StreamManager ):
-    
     def __init__(self, manage, noProxy= False, **params):
         StreamManager.__init__(self, manage, noProxy, **params)
     
@@ -1941,7 +1941,7 @@ class StreamManager_( StreamManager ):
                     time.sleep( sleep_for )
             except Exception as err:
                 Info.set(self.ident, "state", _(u"Falha na conexão"))
-                if hasattr(err, "code") and err.code == 503: return False
+                logger.error("%s Connecting: %s" %(self.__class__.__name__, err))
                 time.sleep( sleep_for )
             nfalhas += 1
         return False #nao foi possivel conectar
@@ -1963,7 +1963,7 @@ class StreamManager_( StreamManager ):
                     time.sleep(1)
             except Exception as err:
                 self.failure(_("Incapaz de conectar"), 1)
-                logger.error("%s: %s" %(self.__class__.__name__, err))
+                logger.error("%s Mainloop: %s" %(self.__class__.__name__, err))
         Info.set(self.ident, "state", _(u"Conexão parada"))
         
 ########################### EXECUÇÃO APARTIR DO SCRIPT  ###########################
