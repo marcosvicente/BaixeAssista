@@ -1,7 +1,7 @@
 from django.template import Context, Template, loader, defaulttags, defaultfilters, loader_tags
 from django.contrib.messages.storage import fallback
 from django.core.mail.backends import smtp
-from app.swfplayer import flowPlayer, jwPlayer
+from app.swfplayer import FlowPlayer, JWPlayer
 import app.views
 import app.admin
 import app.browser

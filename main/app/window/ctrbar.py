@@ -63,13 +63,13 @@ class BarraControles( noteBook.NoteBookImage ):
 		# make a menu
 		self.playerMenu = wx.Menu()
 		# item.SetBitmap(bmp)
-		self.playerMenu.AppendRadioItem(self.popupID1, "jwPlayer")
-		self.playerMenu.AppendRadioItem(self.popupID2, "flowPlayer")
+		self.playerMenu.AppendRadioItem(self.popupID1, "JWPlayer")
+		self.playerMenu.AppendRadioItem(self.popupID2, "FlowPlayer")
 		
 		self.Bind(wx.EVT_MENU, self.loadEmbedPlayer, id=self.popupID1)
 		self.Bind(wx.EVT_MENU, self.loadEmbedPlayer, id=self.popupID2)
 		
-		checkopts = {"jwPlayer": self.popupID1, "flowPlayer": self.popupID2}
+		checkopts = {"JWPlayer": self.popupID1, "FlowPlayer": self.popupID2}
 		moduleName = self.mainWin.configs["PlayerWin"]["moduleName"]
 		self.playerMenu.Check(checkopts[ moduleName ], True)
 		
