@@ -28,10 +28,10 @@ from main.app import models
 
 SEARCH_ENGINE = "http://www.google.com.br/webhp?hl=pt-BR"
 
-with open(os.path.join(settings.APPDIR,"js","ml.js"), "r") as js_file:
+with open(os.path.join(settings.STATIC_PATH,"js","ml.js"), "r") as js_file:
     JS_LINK_MONITOR = js_file.read()
 
-with open(os.path.join(settings.APPDIR,"js","el.js"), "r") as js_file:
+with open(os.path.join(settings.STATIC_PATH,"js","el.js"), "r") as js_file:
     JS_LINK_EXTRACTOR = js_file.read()
     
 ######################################################################################
