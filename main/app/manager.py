@@ -458,7 +458,7 @@ class ResumeInfo(object):
         return getattr(self.query, name)
     
     def has(self, title):
-        return bool(self.get(title).pk)
+        return (not self.get(title).pk is None)
         
     def remove(self, title):
         query = self.objects.filter(title=title)
@@ -644,7 +644,7 @@ class Interval(object):
         min_block: tamanho mínimo(em bytes) para um bloco de bytes
         """
         assert params.get("maxsize",None), "maxsize is null"
-        self.min_block = params.get("min_block", 1024*512)
+        self.min_block = params.get("min_block", 1024**2)
         
         self.send_info = {"nbytes":{}, "sending":0}
         self.seekpos = params.get("seekpos", 0)
@@ -1842,7 +1842,7 @@ class StreamManager_( StreamManager ):
     def connect(self):
         videoManager = self.manage.videoManager
         seekpos = self.manage.interval.get_start( self.ident) # posição inicial de leitura
-        streamSize = self.manage.getVideoSize()
+        streamsize = self.manage.getVideoSize()
         cache_size = 256
         nfalhas = 0
         while nfalhas < self.params.get("reconexao",1):
@@ -1861,14 +1861,14 @@ class StreamManager_( StreamManager ):
                 Info.set(self.ident, "state", _("Conectando"))
                 link = gerador.get_with_seek(link, seekpos)
                 
-                self.streamSocket = videoManager.connect(
-                    link, proxies=self.proxies, headers={"Range":"bytes=%s-"%seekpos})
+                self.streamSocket = videoManager.connect(link, proxies=self.proxies, 
+                    headers={"Range":"bytes=%s-%s"%(seekpos, streamsize)})
                 
                 data = self.streamSocket.read( cache_size )
                 stream, header = self.getStreamHeader(data, seekpos, cache_size)
                 
                 isValid = self.responseCheck(len(header), seekpos, 
-                                             streamSize, self.streamSocket.headers)
+                                             streamsize, self.streamSocket.headers)
                 
                 if isValid and (self.streamSocket.code == 200 or self.streamSocket.code == 206):
                     if stream: self.streamWrite(stream, len(stream))
