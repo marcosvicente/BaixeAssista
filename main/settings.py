@@ -194,6 +194,7 @@ LOGGING = {
          'BA_MANAGER': {
             'filename': os.path.join(LOGS_DIR, "manager.log"),
             'class': 'logging.handlers.RotatingFileHandler',
+            'formatter': 'simple',
             'maxBytes': 1024**2, # 1 MB
             'backupCount': 5,
             'level': 'DEBUG'
@@ -201,6 +202,7 @@ LOGGING = {
         'BA_SEND_MAIL': {
             'filename': os.path.join(LOGS_DIR, "sendmail.log"),
             'class': 'logging.handlers.RotatingFileHandler',
+            'formatter': 'simple',
             'maxBytes': 1024**2, # 1 MB
             'backupCount': 5,
             'level': 'DEBUG'
@@ -208,6 +210,7 @@ LOGGING = {
          'BA_WMOVIE': {
             'filename': os.path.join(LOGS_DIR, "wmovie.log"),
             'class': 'logging.handlers.RotatingFileHandler',
+            'formatter': 'simple',
             'maxBytes': 1024**2, # 1 MB
             'backupCount': 5,
             'level': 'DEBUG'
