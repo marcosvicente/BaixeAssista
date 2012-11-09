@@ -469,7 +469,6 @@ class ResumeInfo(object):
 class FM_runLocked(object):
     """ controla o fluxo de escrita e leitura no arquivo de vídeo """
     lock_run = threading.RLock()
-    
     def __call__(this, method):
         def wrapped_method(self, *args, **kwargs):
             with FM_runLocked.lock_run:
@@ -1019,13 +1018,11 @@ class Manage( object ):
         self.inicialize()
         
         # controla a obtenção de links, tamanho do arquivo, title, etc.
-        vmanager = gerador.Universal.getVideoManager( self.streamUrl )
-        # pode ser alterado em "inicialize", se resuming.
-        qualidade = self.params.get("videoQuality", 2)
-        self.videoManager = vmanager(self.streamUrl, qualidade=qualidade)
+        self.clsVideoManager = gerador.Universal.getVideoManager(self.streamUrl)
+        self.videoManager = self.createVideoManager()
         
         # controle das conexões
-        self.ctrConnection = CTRConnection( self)
+        self.ctrConnection = CTRConnection(self)
         
         # gerencia os endereços dos servidores proxies
         self.proxyManager = ProxyManager()
@@ -1061,7 +1058,11 @@ class Manage( object ):
                                      maxsplit = self.params.get("maxsplit", 2))
             
             self.posInicialLeitura = self.cacheBytesTotal
-
+    
+    def createVideoManager(self):
+        """ controla a obtenção de links, tamanho do arquivo, title, etc """
+        return self.clsVideoManager(self.streamUrl, qualidade=self.params.get("videoQuality",2))
+        
     def get_streamer(self):
         """ streamer controla a leitura dos bytes enviados ao player """
         return Streamer(self)
@@ -1353,7 +1354,8 @@ class StreamManager(threading.Thread):
         self.usingProxy = not noProxy
         self.proxies = {}
         
-        self.link = self.linkSeek = ''
+        self.link = self.linkSeek = ""
+        self.videoManager = self.manage.createVideoManager()
         
         self.lockWait = threading.Event()
         self.isWaiting = False
@@ -1440,21 +1442,16 @@ class StreamManager(threading.Thread):
         """ iniciado com thread. Evita travar no init """
         Info.add(self.ident)
         Info.set(self.ident, "state", _("Iniciando"))
+        timeout = self.params.get("timeout", 25)
         
-        with self.lockInicialize:
-            timeout = self.params.get("timeout", 25)
-            pxm = self.manage.proxyManager
-            vdm = self.manage.videoManager
+        if self.usingProxy:
+            self.proxies = self.manage.proxyManager.get_formated()
+        
+        if self.videoManager.getVideoInfo(proxies=self.proxies, timeout=timeout):
+            self.link = self.videoManager.getLink()
             
-            ## evita a chamada ao método getVideoInfo
-            if self.wasStopped(): return
-            if self.usingProxy: self.proxies = pxm.get_formated()
+        Info.set(self.ident, "http", self.proxies.get("http", _(u"Conexão Padrão")))
             
-            if vdm.getVideoInfo(proxies=self.proxies, timeout=timeout):
-                self.link = vdm.getLink()
-                
-            Info.set(self.ident, "http", self.proxies.get("http", _(u"Conexão Padrão")))
-
     def stop(self):
         """ pára toda a atividade da conexão """
         self.isRunning = False
@@ -1626,21 +1623,7 @@ class StreamManager(threading.Thread):
         return stream, header
     
     def getStreamHeader(self, stream, seekpos, cache_size):
-        if self.manage.videoManager.is_mp4():
-            header = ""
-            if seekpos > cache_size:
-                while self.manage.get_cache_size() < cache_size:
-                    Info.set(self.ident, "state", _("Aguardando cache"))
-                    if self.wasStopped(): return
-                    time.sleep(0.5) # sem cache fica impossível verificar o header
-                for index, char in enumerate(self.manage.fileManager.read(0, cache_size)[0]):
-                    if stream[index] == char: header += char
-                    else: break
-                hsize = len(header)
-                stream = stream[hsize:]
-        else:
-            stream, header = self.get_FLVheader(stream, seekpos)
-        return stream, header
+        return self.get_FLVheader(stream, seekpos)
         
     def removaConfigs(self, errorstring, errornumber):
         """ remove todas as configurações, importantes, dadas a conexão """
@@ -1667,7 +1650,7 @@ class StreamManager(threading.Thread):
         
         # remove as configs de video geradas pelo ip. A falha pode ter
         # sido causada por um servidor instável, lento ou negando conexões.
-        del self.manage.videoManager[ ip ]
+        del self.videoManager[ ip ]
         
         if ip != "default" and (errornumber == 1 or (errornumber != 3 and downbytes < min_block)):
             # tira a prioridade de uso do ip.
@@ -1690,25 +1673,21 @@ class StreamManager(threading.Thread):
         change = self.params.get("typechange", False)
         timeout = self.params.get("timeout", 25)
         
-        vdm = self.manage.videoManager
-        pxm = self.manage.proxyManager
-        
         if not self.usingProxy:
-            if change: self.proxies = pxm.get_formated()
+            if change: self.proxies = self.manage.proxyManager.get_formated()
             
         elif errornumber == 1 or downbytes < self.manage.interval.get_min_block():
             if change: self.proxies = {}
-            else: self.proxies = pxm.get_formated()
+            else: self.proxies = self.manage.proxyManager.get_formated()
         
         self.usingProxy = bool(self.proxies)
         
-        if vdm.getVideoInfo(proxies=self.proxies, timeout=timeout):
-            self.link = vdm.getLink()
+        if self.videoManager.getVideoInfo(proxies=self.proxies, timeout=timeout):
+            self.link = self.videoManager.getLink()
             
         Info.set(self.ident, "http", self.proxies.get("http", _(u"Conexão Padrão")))
 
     def connect(self):
-        videoManager = self.manage.videoManager
         seekpos = self.manage.interval.get_start(self.ident)
         streamSize = self.manage.getVideoSize()
         initTime = time.time()
@@ -1721,8 +1700,8 @@ class StreamManager(threading.Thread):
                 timeout = self.params.get("timeout", 25)
                 
                 # começa a conexão
-                self.streamSocket = videoManager.connect(self.linkSeek, 
-                        proxies=self.proxies, timeout=timeout, login=False)
+                self.streamSocket = self.videoManager.connect(self.linkSeek, 
+                                        proxies=self.proxies, timeout=timeout, login=False)
                 
                 code = self.streamSocket.code
                 stream = self.streamSocket.read(cache_size)
@@ -1785,7 +1764,7 @@ class StreamManager(threading.Thread):
 
                 if self.manage.interval.hasInterval( self.ident ):
                     start = self.manage.interval.get_start( self.ident )
-                    start = self.manage.videoManager.get_relative( start )
+                    start = self.videoManager.get_relative( start )
                     self.linkSeek = gerador.get_with_seek(self.link, start)
                     # Tenta conectar e iniciar a tranferência do arquivo de video.
                     assert self.connect(), "connect error"
@@ -1840,7 +1819,6 @@ class StreamManager_( StreamManager ):
         Info.set(self.ident, "http", self.proxies.get("http", _(u"Conexão Padrão")))
     
     def connect(self):
-        videoManager = self.manage.videoManager
         seekpos = self.manage.interval.get_start( self.ident) # posição inicial de leitura
         streamsize = self.manage.getVideoSize()
         cache_size = 256
@@ -1850,9 +1828,9 @@ class StreamManager_( StreamManager ):
                 sleep_for = self.params.get("waittime",2)
 
                 Info.set(self.ident, "state", _("Conectando"))
-                data = videoManager.get_init_page( self.proxies) # pagina incial
-                link = videoManager.get_file_link( data) # link de download
-                wait_for = videoManager.get_count( data) # contador
+                data = self.videoManager.get_init_page( self.proxies) # pagina incial
+                link = self.videoManager.get_file_link( data) # link de download
+                wait_for = self.videoManager.get_count( data) # contador
                 
                 for second in range(wait_for, 0, -1):
                     Info.set(self.ident, "state", _(u"Aguarde %02ds")%second)
@@ -1861,8 +1839,8 @@ class StreamManager_( StreamManager ):
                 Info.set(self.ident, "state", _("Conectando"))
                 link = gerador.get_with_seek(link, seekpos)
                 
-                self.streamSocket = videoManager.connect(link, proxies=self.proxies, 
-                    headers={"Range":"bytes=%s-%s"%(seekpos, streamsize)})
+                self.streamSocket = self.videoManager.connect(link, proxies = self.proxies, 
+                                      headers={"Range":"bytes=%s-%s"%(seekpos, streamsize)})
                 
                 data = self.streamSocket.read( cache_size )
                 stream, header = self.getStreamHeader(data, seekpos, cache_size)
