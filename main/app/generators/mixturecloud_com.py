@@ -1,0 +1,137 @@
+from _sitebase import *
+
+################################# VIDEO_MIXTURECLOUD ##################################
+class Mixturecloud( SiteBase ):
+    ## http://www.mixturecloud.com/video=iM1zoh
+    ## http://www.mixturecloud.com/download=MB8JBD
+    ## http://www.mixturecloud.com/media/anSK2C
+    ## http://player.mixturecloud.com/embed=Sc0oym
+    ## http://player.mixturecloud.com/video/zQfFrx.swf
+    ## http://video.mixturecloud.com/video=jlkjljk
+    ## http://www.mixturevideo.com/video=xFRjoQ
+    controller = {
+        "url": "http://www.mixturecloud.com/video=%s",
+        "basenames": ["video.mixturecloud","mixturecloud.com","player.mixturecloud","mixturevideo.com"],
+        "patterns": (
+            re.compile("(?P<inner_url>(?:http://)?www\.mixturecloud\.com/(?:video=|download=|media/)(?P<id>\w+))"),
+            re.compile("(?P<inner_url>(?:http://)?video\.mixturecloud\.com/video=(?P<id>\w+))"), [
+                re.compile("(?P<inner_url>(?:http://)?player\.mixturecloud\.com/(?:embed=|video/)(?P<id>\w+)(?:\.swf)?)"),
+                re.compile("(?P<inner_url>(?:http://)?www.mixturevideo.com/video=(?P<id>\w+))")
+            ],
+        ),
+        "control": "SM_SEEK",
+        "video_control": None
+    }
+    
+    def __init__(self, url, **params):
+        SiteBase.__init__(self, **params)
+        # parte principal da url usada como elemento chave no programa
+        self.basename = manager.UrlManager.getBaseName( url )
+        self.url = url
+        
+    def getPostData(self, webpage=""):
+        """ extrai informações da página de login para o post """
+        longin_data = {
+            "email": "creachut@temporarioemail.com.br",
+            "password": "creachut@temporarioemail.com.br", 
+            "submit_form_login": 1,
+            "submit_key": ""}
+
+        regex_str = ['name="submit_form_login" value="(\w+?)".*?',
+                     'name="submit_key" value="(\w*?)"']        
+        matchobj = re.search("".join(regex_str), webpage, re.DOTALL)
+
+        if matchobj:
+            longin_data["submit_form_login"] = matchobj.group(1)
+            longin_data["submit_key"] = matchobj.group(2)
+
+        return urllib.urlencode( longin_data )
+
+    def login(self, opener, timeout):
+        """ faz o login necessário para transferir o arquivo de vídeo.
+        opener é quem armazerá o cookie """
+        try:
+            url = "http://www.mixturecloud.com/login"
+            response = opener.open(url, timeout=timeout)
+            loginPage = response.read()
+            response.close()
+
+            # dados do método post
+            post_data = self.getPostData( loginPage )
+
+            # logando
+            response = opener.open(url, data = post_data, timeout=timeout)
+            response.close()
+            sucess = True
+        except Exception, err:
+            sucess = False
+        return sucess
+
+    def suportaSeekBar(self):
+        return True
+
+    def getLink(self):
+        vquality = int(self.params.get("qualidade", 2))
+
+        optToNotFound = self.configs.get(1, None)
+        optToNotFound = self.configs.get(2, optToNotFound)
+        optToNotFound = self.configs.get(3, optToNotFound)
+
+        videoLink = self.configs.get(vquality, optToNotFound)
+        return videoLink
+
+    def getMessage(self, webpage):
+        matchobj = re.search('<div class="alert i_alert red".*?>(?P<msg>.+?)</div>', webpage)
+        try: msg = u"%s informa: %s"%(self.basename, unicode(matchobj.group("msg"),"UTF-8"))
+        except: msg = ""
+        return msg
+    
+    def get_configs(self, webpage):
+        info = {}
+        try:
+            matchobj = re.search("<title.*>(.+?)</title>", webpage)
+            info["title"] = matchobj.group(1)
+        except:
+            # usa um titulo gerado de caracteres aleatórios
+            info["title"] = get_radom_title()
+
+        try: # ** URL NORMAL **
+            matchobj = re.search("flashvars.+(?:'|\")file(?:'|\")\s*:\s*(?:'|\")(.+?\.flv.*?)(?:'|\")", webpage, re.DOTALL|re.IGNORECASE)
+            flv_code = matchobj.group(1)
+
+            #'streamer':'http://www441.mixturecloud.com/streaming.php?key_stream=a31dff5ee1528ded3df4841b6364f9b5'
+            matchobj = re.search("flashvars.+(?:'|\")streamer(?:'|\")\s*:\s*(?:'|\")(.+?)(?:'|\")", webpage, re.DOTALL|re.IGNORECASE)
+            streamer = matchobj.group(1)
+
+            # guarda a url para atualizar nas configs
+            info[1] = "%s&file=%s&start="%(streamer, flv_code)
+        except: pass
+
+        try: # ** URL HD **
+            matchobj = re.search("property=\"og:video\"\s*content=\".+hd\.file=(.+?\.flv)", webpage, re.DOTALL|re.IGNORECASE)
+            if matchobj: 
+                flv_code_hd = matchobj.group(1)
+            else:
+                matchobj = re.search("flashvars.+(?:'|\")hd\.file(?:'|\")\s*:\s*(?:'|\")(.*?\.flv)(?:'|\")", webpage, re.DOTALL|re.IGNORECASE)
+                flv_code_hd = matchobj.group(1)
+
+            matchobj = re.search("property=\"og:video\"\s*content=\".+streamer=(.+?)\"", webpage, re.DOTALL|re.IGNORECASE)
+
+            if matchobj:
+                streamer_hd = matchobj.group(1)
+                info[2] = "%s&file=%s&start="%(streamer_hd, flv_code_hd)
+            else:
+                info[2] = "%s&file=%s&start="%(streamer, flv_code_hd)
+        except: pass
+
+        return info
+
+    def start_extraction(self, proxies={}, timeout=25):
+        video_id = Universal.get_video_id(self.basename, self.url)
+        url = "http://video.mixturecloud.com/video=%s"% video_id
+        
+        fd = self.connect(url, proxies=proxies, timeout=timeout, login=True)
+        webpage = fd.read(); fd.close()
+        
+        self.message = self.getMessage( webpage)
+        self.configs.update(self.get_configs(webpage))
