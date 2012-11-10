@@ -776,7 +776,7 @@ class BaixeAssistaWin( wx.Frame ):
 					rowIndex = self.detailControl.getRowIndex( smanager.ident )
 					
 					for colIndex, infokey in enumerate( manager.StreamManager.listInfo ):
-						infoValue = self.info.get( smanager.ident, infokey )
+						infoValue = smanager.info.get( smanager.ident, infokey )
 						list_ctr.SetStringItem( rowIndex, colIndex, u"%s"%infoValue )
 						
 					# subprogressbar update

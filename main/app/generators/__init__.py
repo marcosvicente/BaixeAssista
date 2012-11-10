@@ -1,6 +1,6 @@
 # coding: utf-8
-from main.app import manager
 from django.conf import settings
+from main.app import manager
 import os, sys
 
 class Universal(object):

@@ -954,8 +954,8 @@ class CTRConnection(object):
 
     def addConnection(self, refer):
         """ adiciona a referência para uma nova conexão criada """
-        msgerr = u"referência '%s' inválida" % refer
-        assert isinstance(refer, (StreamManager, StreamManager_)), msgerr
+        #msgerr = u"referência '%s' inválida" % refer
+        #assert isinstance(refer, (StreamManager, StreamManager_)), msgerr
         self.connList.append( refer)
 
     def getnActiveConnection(self):
@@ -1367,6 +1367,7 @@ class StreamManager(threading.Thread):
         
         self.link = self.linkSeek = ""
         self.videoManager = self.manage.createVideoManager()
+        self.info = Info
         
         self.lockWait = threading.Event()
         self.isWaiting = False
@@ -1380,7 +1381,7 @@ class StreamManager(threading.Thread):
         self.params[ key ] = value
         
     def __del__(self):
-        Info.delete( self.ident )
+        self.info.delete( self.ident )
         del self.manage
         del self.params
 
@@ -1451,8 +1452,8 @@ class StreamManager(threading.Thread):
 
     def inicialize(self):
         """ iniciado com thread. Evita travar no init """
-        Info.add(self.ident)
-        Info.set(self.ident, "state", _("Iniciando"))
+        self.info.add(self.ident)
+        self.info.set(self.ident, "state", _("Iniciando"))
         timeout = self.params.get("timeout", 25)
         
         if self.usingProxy:
@@ -1461,7 +1462,7 @@ class StreamManager(threading.Thread):
         if self.videoManager.getVideoInfo(proxies=self.proxies, timeout=timeout):
             self.link = self.videoManager.getLink()
             
-        Info.set(self.ident, "http", self.proxies.get("http", _(u"Conexão Padrão")))
+        self.info.set(self.ident, "http", self.proxies.get("http", _(u"Conexão Padrão")))
             
     def stop(self):
         """ pára toda a atividade da conexão """
@@ -1518,8 +1519,8 @@ class StreamManager(threading.Thread):
     def stopWait(self): self.lockWait.set()
     
     def reset_info(self):
-        Info.set(self.ident, "block_index", "")
-        Info.set(self.ident, "local_speed", "")
+        self.info.set(self.ident, "block_index", "")
+        self.info.set(self.ident, "local_speed", "")
 
     def streamWrite(self, stream, nbytes):
         """ Escreve a stream de bytes dados de forma controlada """
@@ -1556,8 +1557,8 @@ class StreamManager(threading.Thread):
                     block_index = self.manage.interval.get_index(self.ident)
                     
                     # condição atual da conexão: Baixando
-                    Info.set(self.ident, "state", _("Baixando") )
-                    Info.set(self.ident, "block_index", block_index)
+                    self.info.set(self.ident, "state", _("Baixando") )
+                    self.info.set(self.ident, "block_index", block_index)
                     
                     # limita a leitura ao bloco de dados
                     if (self.numBytesLidos + block_read) > block_size:
@@ -1589,7 +1590,7 @@ class StreamManager(threading.Thread):
                     
                     # calcula a velocidade de transferência da conexão
                     speed = self.calc_speed(local_time, time.time(), self.numBytesLidos)
-                    Info.set(self.ident, 'local_speed', speed)
+                    self.info.set(self.ident, 'local_speed', speed)
                     
                     # tempo do download
                     self.manage.tempoDownload = self.calc_eta(start, time.time(), total, current)
@@ -1671,14 +1672,14 @@ class StreamManager(threading.Thread):
         
     @just_try()
     def failure(self, errorstring, errornumber):
-        Info.set(self.ident, "state", errorstring)
+        self.info.set(self.ident, "state", errorstring)
         self.reset_info()
         
         downbytes = self.removaConfigs(errorstring, errornumber) # removendo configurações
         if errornumber == 3 or self.wasStopped(): return # retorna porque a conexao foi encerrada
         time.sleep(0.5)
         
-        Info.set(self.ident, "state", _("Reconfigurando"))
+        self.info.set(self.ident, "state", _("Reconfigurando"))
         time.sleep(0.5)
         
         change = self.params.get("typechange", False)
@@ -1696,7 +1697,7 @@ class StreamManager(threading.Thread):
         if self.videoManager.getVideoInfo(proxies=self.proxies, timeout=timeout):
             self.link = self.videoManager.getLink()
             
-        Info.set(self.ident, "http", self.proxies.get("http", _(u"Conexão Padrão")))
+        self.info.set(self.ident, "http", self.proxies.get("http", _(u"Conexão Padrão")))
 
     def connect(self):
         seekpos = self.manage.interval.get_start(self.ident)
@@ -1706,7 +1707,7 @@ class StreamManager(threading.Thread):
         nfalhas = 0
         while not self.wasStopped() and nfalhas < self.params.get("reconexao",3):
             try:
-                Info.set(self.ident, "state", _("Conectando"))
+                self.info.set(self.ident, "state", _("Conectando"))
                 waittime = self.params.get("waittime", 2)
                 timeout = self.params.get("timeout", 25)
                 
@@ -1726,10 +1727,10 @@ class StreamManager(threading.Thread):
                     if stream: self.streamWrite(stream, len(stream))
                     return True
                 else:
-                    Info.set(self.ident, "state", _(u"Resposta inválida"))
+                    self.info.set(self.ident, "state", _(u"Resposta inválida"))
                     self.streamSocket.close(); time.sleep( waittime )
             except Exception as err:
-                Info.set(self.ident, "state", _(u"Falha na conexão"))
+                self.info.set(self.ident, "state", _(u"Falha na conexão"))
                 logger.error("%s Connecting: %s" %(self.__class__.__name__, err))
                 time.sleep( waittime )
                 
@@ -1742,7 +1743,7 @@ class StreamManager(threading.Thread):
 
     def configure(self ):
         """ associa a conexão a uma parte da stream """
-        Info.set(self.ident, "state", _("Ocioso"))
+        self.info.set(self.ident, "state", _("Ocioso"))
         
         if self.lockWait.is_set():
             with self.lockBlocoConfig:
@@ -1785,7 +1786,7 @@ class StreamManager(threading.Thread):
             except Exception as err:
                 self.failure(_("Incapaz de conectar"), 1)
                 logger.error("%s Mainloop: %s" %(self.__class__.__name__, err))
-        Info.set(self.ident, "state", _(u"Conexão parada"))
+        self.info.set(self.ident, "state", _(u"Conexão parada"))
         
 #########################  STREAMANAGER: (megaupload, youtube) ######################
 class StreamManager_( StreamManager ):
@@ -1794,18 +1795,18 @@ class StreamManager_( StreamManager ):
     
     def inicialize(self):
         """ iniciado com thread. Evita travar no init """
-        Info.add( self.ident )
-        Info.set(self.ident, "state", "Iniciando")
+        self.info.add( self.ident )
+        self.info.set(self.ident, "state", "Iniciando")
         
         if not self.usingProxy: # conexão padrão - sem proxy
-            Info.set(self.ident, "http", _(u"Conexão Padrão"))
+            self.info.set(self.ident, "http", _(u"Conexão Padrão"))
         else:
             self.proxies = self.manage.proxyManager.get_formated()
-            Info.set(self.ident, "http", self.proxies['http'])
+            self.info.set(self.ident, "http", self.proxies['http'])
             
     @just_try()
     def failure(self, errorstring, errornumber):
-        Info.set(self.ident, 'state', errorstring)
+        self.info.set(self.ident, 'state', errorstring)
         self.reset_info()
 
         change = self.params.get("typechange", False)
@@ -1815,7 +1816,7 @@ class StreamManager_( StreamManager ):
         if errornumber == 3: return # retorna porque a conexao foi encerrada
         time.sleep(0.5)
 
-        Info.set(self.ident, "state", _("Reconfigurando"))
+        self.info.set(self.ident, "state", _("Reconfigurando"))
         time.sleep(0.5)
         
         if not self.usingProxy:
@@ -1827,7 +1828,7 @@ class StreamManager_( StreamManager ):
             
         self.usingProxy = bool(self.proxies)
         
-        Info.set(self.ident, "http", self.proxies.get("http", _(u"Conexão Padrão")))
+        self.info.set(self.ident, "http", self.proxies.get("http", _(u"Conexão Padrão")))
     
     def connect(self):
         seekpos = self.manage.interval.get_start( self.ident) # posição inicial de leitura
@@ -1838,16 +1839,16 @@ class StreamManager_( StreamManager ):
             try:
                 sleep_for = self.params.get("waittime",2)
 
-                Info.set(self.ident, "state", _("Conectando"))
+                self.info.set(self.ident, "state", _("Conectando"))
                 data = self.videoManager.get_init_page( self.proxies) # pagina incial
                 link = self.videoManager.get_file_link( data) # link de download
                 wait_for = self.videoManager.get_count( data) # contador
                 
                 for second in range(wait_for, 0, -1):
-                    Info.set(self.ident, "state", _(u"Aguarde %02ds")%second)
+                    self.info.set(self.ident, "state", _(u"Aguarde %02ds")%second)
                     time.sleep(1)
 
-                Info.set(self.ident, "state", _("Conectando"))
+                self.info.set(self.ident, "state", _("Conectando"))
                 link = generators.sitebase.get_with_seek(link, seekpos)
                 
                 self.streamSocket = self.videoManager.connect(link, proxies = self.proxies, 
@@ -1863,11 +1864,11 @@ class StreamManager_( StreamManager ):
                     if stream: self.streamWrite(stream, len(stream))
                     return True
                 else:
-                    Info.set(self.ident, "state", _(u"Resposta inválida"))
+                    self.info.set(self.ident, "state", _(u"Resposta inválida"))
                     self.streamSocket.close()
                     time.sleep( sleep_for )
             except Exception as err:
-                Info.set(self.ident, "state", _(u"Falha na conexão"))
+                self.info.set(self.ident, "state", _(u"Falha na conexão"))
                 logger.error("%s Connecting: %s" %(self.__class__.__name__, err))
                 time.sleep( sleep_for )
             nfalhas += 1
@@ -1891,7 +1892,7 @@ class StreamManager_( StreamManager ):
             except Exception as err:
                 self.failure(_("Incapaz de conectar"), 1)
                 logger.error("%s Mainloop: %s" %(self.__class__.__name__, err))
-        Info.set(self.ident, "state", _(u"Conexão parada"))
+        self.info.set(self.ident, "state", _(u"Conexão parada"))
         
 ########################### EXECUÇÃO APARTIR DO SCRIPT  ###########################
 
