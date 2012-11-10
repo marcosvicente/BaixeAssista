@@ -149,28 +149,42 @@ class Universal(object):
         elif obj == "video_control":
             assert bool(cls.sites[sitename].get("video_control", None)), u"Controlador de video não definido para %s"%sitename
 
-#######################################################################################
+# -----------------------------------------------------------------------------
+def get_classref_inmodule(filemod):
+    """ retorna só a referência da classe site no módulo.
+     O referência de classe, depende da variável 'controller' para ser uma referência válida.
+     retorna None, se nada for encontrado.
+    """
+    for key in filemod.__dict__:
+        classref = filemod.__dict__[key]
+        if callable(classref) and hasattr(classref, "controller"):
+            return classref
+        
 def find_all_sites():
-    """ retorna só os site devidamente configurados """
-    # o fator de não usar __file__, é que o path fica estático ao script ser compilador.
-    path = os.path.join(settings.APPDIR, "generators")
-    try:
-        sitename, classdef  = item
-        return (callable(classdef) and issubclass(classdef,SiteBase) and hasattr(classdef,"controller"))
-    except:
-        return False
+    """ retorna toda a lista de scripts(já importada) das definições dos sites suportados. """
+    sitelist = []
+    for filename in os.listdir(os.path.join(settings.APPDIR, "generators")):
+        name, ext = os.path.splitext( filename )
+        name = str(name) # __import__ crash unicode.
+        if not name.startswith("_"):
+            filemod = __import__( name )
+            sitelist.append( filemod )
+    return sitelist
     
 def register_site(basename, site):
     if site.controller["video_control"] is None:
         site.controller["video_control"] = site
+        
     if isinstance(site.controller["control"], (str, unicode)):
         control = getattr(Universal, site.controller["control"])
         site.controller["control"] = control
+        
     Universal.add_site(basename, **site.controller)
     
-for sitename, site in filter(is_site_class, locals().items()):
+for site in filter(get_classref_inmodule, find_all_sites()):
     default = manager.UrlBase.getBaseName(site.controller["url"])
     basename = site.controller.get("basenames", default)    
+    
     if type(basename) is list:
         for name in basename:
             register_site(name, site)
