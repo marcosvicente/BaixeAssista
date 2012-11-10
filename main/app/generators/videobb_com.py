@@ -74,7 +74,7 @@ class Videobb( SiteBase ):
         return urls
 
     def getNewUrl(self, url, params):
-        """ Faz a conversão da url antiga e inválida, para a mais nova. """
+        """ Faz a conversï¿½o da url antiga e invï¿½lida, para a mais nova. """
         new_url = url.replace(":80", "")
 
         g_ads = self.get_gads(params)
@@ -96,15 +96,7 @@ class Videobb( SiteBase ):
         optToNotFound = self.configs.get(2, optToNotFound)
         optToNotFound = self.configs.get(3, optToNotFound)
         return self.configs.get(vquality, optToNotFound)
-
-    def getTitle(self):
-        title = self.configs["title"]
-        title = urllib.unquote_plus( title)
-        title = DECODE( title) # decodifica o title
-        # remove caracteres invalidos
-        title = clearTitle( title )
-        return limiteTexto( title )
-
+       
     def start_extraction(self, proxies={}, timeout=25):
         video_id = Universal.get_video_id(self.basename, self.url)
         url = self.settingsLink % video_id
@@ -119,7 +111,7 @@ class Videobb( SiteBase ):
             self.configs["token1"] = urls["token1"]
         except: pass
 
-        # urls com nível de resução
+        # urls com nï¿½vel de resuï¿½ï¿½o
         self.configs.update( self.get_res_urls(params) )
 
         self.configs["title"] = self.get_title(params)
