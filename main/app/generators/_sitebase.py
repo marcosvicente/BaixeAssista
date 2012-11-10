@@ -20,51 +20,6 @@ import xml.etree.ElementTree
 from main.app.generators import Universal
 from main.app import manager
 
-# versão será mantida pelo módulo principal
-PROGRAM_VERSION = manager.PROGRAM_VERSION
-#######################################################################################
-
-def DECODE(texto, alter="ISO-8859-1"):
-    """ Tenta decodificar para utf-8. 
-    Em caso de erro, a decodificação alternativa será usada """
-    try:
-        texto = texto.decode('utf-8')
-    except UnicodeDecodeError:
-        texto = texto.decode(alter)
-    except Exception:
-        pass
-    return texto
-
-def ENCODE(texto, alter="ISO-8859-1"):
-    """ Tenta codificar para utf-8. 
-    Em caso de erro, a codficação alternativa será usada """
-    try:
-        texto = texto.encode('utf-8')
-    except UnicodeEncodeError:
-        texto = texto.encode( alter)
-    except Exception:
-        pass
-    return texto
-
-def limiteTexto(texto, nCaracter=50, final="..."):
-    if len(texto) > nCaracter:
-        texto = texto[ :nCaracter] + final
-    return texto
-
-def clearTitle( title):
-    """ remove todos os carecteres considerados inválidos """
-    return re.sub(r"[/*&:|\"\'=\\?<>!%$@#()]+", "_", title)
-
-def get_radom_title(size=25):
-    chars = [char for char in string.ascii_letters]
-    return "".join([random.choice(chars) for i in range(size)])
-
-def get_with_seek(link, seek):
-    if link[-1] == ",": link += str(seek)
-    if re.match(".+(?:start=|ec_seek=|fs=)", link): link += str(seek)
-    if re.match(".+(?:range=%s-)", link): link %= str(seek)
-    return link
-
 ########################################################################
 class Section(object):
     def __init__(self):
