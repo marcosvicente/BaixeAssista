@@ -31,7 +31,7 @@ class Mixturecloud( SiteBase ):
         self.url = url
         
     def getPostData(self, webpage=""):
-        """ extrai informações da página de login para o post """
+        """ extrai informaï¿½ï¿½es da pï¿½gina de login para o post """
         longin_data = {
             "email": "creachut@temporarioemail.com.br",
             "password": "creachut@temporarioemail.com.br", 
@@ -49,14 +49,14 @@ class Mixturecloud( SiteBase ):
         return urllib.urlencode( longin_data )
 
     def login(self, opener, timeout):
-        """ faz o login necessário para transferir o arquivo de vídeo. opener é quem armazerá o cookie """
+        """ faz o login necessï¿½rio para transferir o arquivo de vï¿½deo. opener ï¿½ quem armazerï¿½ o cookie """
         try:
             url = "http://www.mixturecloud.com/login"
             response = opener.open(url, timeout=timeout)
             loginPage = response.read()
             response.close()
             
-            # dados do método post
+            # dados do mï¿½todo post
             post_data = self.getPostData( loginPage )
 
             # logando
@@ -89,8 +89,8 @@ class Mixturecloud( SiteBase ):
             matchobj = re.search("<title.*>(.+?)</title>", webpage)
             info["title"] = matchobj.group(1)
         except:
-            # usa um titulo gerado de caracteres aleatórios
-            info["title"] = get_radom_title()
+            # usa um titulo gerado de caracteres aleatï¿½rios
+            info["title"] = sites.get_random_text()
 
         try: # ** URL NORMAL **
             matchobj = re.search("flashvars.+(?:'|\")file(?:'|\")\s*:\s*(?:'|\")(.+?\.flv.*?)(?:'|\")", webpage, re.DOTALL|re.IGNORECASE)

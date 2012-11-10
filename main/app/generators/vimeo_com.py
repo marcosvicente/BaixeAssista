@@ -27,7 +27,7 @@ class Vimeo( SiteBase ):
         webpage = fd.read(); fd.close()
         
         try: video_title = re.search(r'<caption>(.*?)</caption>', webpage).group(1)
-        except: video_title = get_radom_title()
+        except: video_title = sites.get_random_text()
         
         try:# Extract uploader
             mobj = re.search(r'<uploader_url>http://vimeo.com/(.*?)</uploader_url>', webpage)

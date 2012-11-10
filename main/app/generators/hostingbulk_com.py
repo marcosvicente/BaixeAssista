@@ -74,6 +74,6 @@ class Hostingbulk( SiteBase ):
                 duration = None
         
         try: title = re.search("<title>(.+)</title>", webpage).group(1)
-        except: title = get_radom_title()
+        except: title = sites.get_random_text()
         
         self.configs = {"url": url+"?start=", "title": title, "duration": duration}

@@ -57,7 +57,7 @@ class Vk( SiteBase ):
             params["url"] = "http://cs%s.vk.com" % params.pop("host")
             
         try: title = re.search("<title>(.+?)</title>", webdata).group(1)
-        except: title = get_radom_title()
+        except: title = sites.get_random_text()
         
         if int(params.get("no_flv",0)):
             baseUrl = params["url"] + "/u%s/video/%s.{res}.mp4"%(params["uid"], params["vtag"])

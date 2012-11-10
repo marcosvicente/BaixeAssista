@@ -45,6 +45,6 @@ class Anitube( SiteBase ):
         video_url = re.search("<file>(.*?)</file>", xmldata).group(1)
 
         try: title = re.search("<title>(.*?)</title>", xmldata).group(1)
-        except: title = get_radom_title()
+        except: title = sites.get_random_text()
 
         self.configs = {"url": video_url+"?start=", "title": title}

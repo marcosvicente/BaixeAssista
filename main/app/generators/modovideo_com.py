@@ -40,9 +40,9 @@ class Modovideo( SiteBase ):
         try: self.configs["title"] = re.search("<title.*>(.+?)</title>", webpage).group(1)
         except:
             try: self.configs["title"] = re.search("<meta name=\"title\" content=\"(.+?)\"\s*/>", webpage).group(1)
-            except: self.configs["title"] = get_radom_title() # usa um titulo gerado de caracteres aleatórios
+            except: self.configs["title"] = sites.get_random_text() # usa um titulo gerado de caracteres aleatï¿½rios
             
-        # o link está dentro de <iframe>
+        # o link estï¿½ dentro de <iframe>
         ## playerUrl = re.search('(?:<iframe)?.+?src="(.+?frame\.php\?v=.+?)"', webpage).group(1)
         playerUrl = "http://www.modovideo.com/frame.php?v=%s"%video_id
         

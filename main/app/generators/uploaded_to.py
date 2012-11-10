@@ -35,12 +35,12 @@ class Uploaded( SiteBase ):
     def get_file_size(self, data):
         search = self.matchFileSize.search(data)
         size, unit = search.group(1), search.group(2)
-        # conversão da unidade para bytes
+        # conversï¿½o da unidade para bytes
         bytes_size = float(size.replace(",",".")) * self.unidades[ unit.upper() ]
         return long( bytes_size )
 
     def start_extraction(self, proxies={}, timeout=25):
-        """ extrai as informações necessárias, para a transferêcia do arquivo de video """
+        """ extrai as informaï¿½ï¿½es necessï¿½rias, para a transferï¿½cia do arquivo de video """
         url_id = Universal.get_video_id(self.basename, self.url)
 
         webPage = self.connect(self.url, proxies=proxies, timeout=timeout).read()
@@ -50,9 +50,9 @@ class Uploaded( SiteBase ):
 
         # nome do arquivo
         try: title = re.search("<title>(.*)</title>", webPage).group(1)
-        except: title = get_radom_title()
+        except: title = sites.get_random_text()
 
-        # extensão do arquivo
+        # extensï¿½o do arquivo
         try: ext = self.matchFileExt.search(title).group(1)
         except: ext = "file"
 

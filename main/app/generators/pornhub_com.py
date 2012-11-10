@@ -34,7 +34,7 @@ class Pornhub( SiteBase ):
             
             matchobj = re.search('''(?:"|')video_title(?:"|')\s*:\s*(?:"|')(.*?)(?:"|')''', webpage, re.DOTALL)
             try: title = urllib.unquote_plus( matchobj.group(1) )
-            except: title = get_radom_title()
+            except: title = sites.get_random_text()
         except:
             urlid = Universal.get_video_id(self.basename, self.url)
             fd = self.connect(self.apiUrl % urlid, proxies=proxies, timeout=timeout)
@@ -43,9 +43,9 @@ class Pornhub( SiteBase ):
             url = re.search("""<video_url><!\[CDATA\[(.+)\]\]></video_url>""", xmlData).group(1)
 
             try: title = re.search("<video_title>(.*)</video_title>", xmlData).group(1)
-            except: title = get_radom_title()
+            except: title = sites.get_random_text()
             
             try: fs = re.search("<flvStartAt>(.+)</flvStartAt>", xmlData).group(1)
             except: fs = ""
             
-        self.configs = {"url": url+(fs or "&fs="), "title": (title or get_radom_title())}
+        self.configs = {"url": url+(fs or "&fs="), "title": (title or sites.get_random_text())}

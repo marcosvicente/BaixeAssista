@@ -31,7 +31,7 @@ class Photobucket( SiteBase ):
             mobj = re.search(r'<meta name="description" content="(.+)"', webpage)
             video_title = mobj.group(1).decode('utf-8')
         except:
-            video_title = get_radom_title()
+            video_title = sites.get_random_text()
 
         self.configs = {
             'url': video_url.decode('utf-8'),

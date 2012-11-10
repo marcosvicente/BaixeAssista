@@ -18,7 +18,7 @@ class Veevr( SiteBase ):
         self.url = url
 
     def start_extraction(self, proxies={}, timeout=25):
-        # página web inicial
+        # pï¿½gina web inicial
         fd = self.connect(self.url, proxies=proxies, timeout=timeout)
         webpage = fd.read(); fd.close()
         
@@ -28,30 +28,30 @@ class Veevr( SiteBase ):
                 "playlist:.+?url:\s*(?:'|\")(%s)(?:'|\")"%patternUrl, 
                 webpage, re.DOTALL|re.IGNORECASE
             )
-            # url final para o vídeo ?
+            # url final para o vï¿½deo ?
             mediaUrl = urllib.unquote_plus( matchobj.group(1) )
         except Exception as err:
             matchobj = re.search(
                 "playlist:.+url:\s*(?:'|\")(http://hwcdn.net/.+/cds/.+?token=.+?)(?:'|\")", 
                 webpage, re.DOTALL|re.IGNORECASE )
 
-            # url final para o vídeo
+            # url final para o vï¿½deo
             mediaUrl = matchobj.group(1)
             mediaUrl = urllib.unquote_plus( mediaUrl )
 
-        # iniciando a extração do título do vídeo
+        # iniciando a extraï¿½ï¿½o do tï¿½tulo do vï¿½deo
         try:
             matchobj = re.search("property=\"og:title\" content=\"(.+?)\"", webpage)
             title = matchobj.group(1)
         except:
             try:
                 matchobj = re.search("property=\"og:description\" content=\"(.+?)\"", webpage)
-                title = matchobj.group(1)[:25] # apenas parte da descrição será usada                            
+                title = matchobj.group(1)[:25] # apenas parte da descriï¿½ï¿½o serï¿½ usada                            
             except:
-                # usa um titulo gerado de caracteres aleatórios
-                title = get_radom_title()
+                # usa um titulo gerado de caracteres aleatï¿½rios
+                title = sites.get_random_text()
 
-        ext = "mp4" # extensão padrão
+        ext = "mp4" # extensï¿½o padrï¿½o
 
         if re.match(".+/Manifest\.", mediaUrl):
             fd = self.connect(mediaUrl, proxies=proxies, timeout=timeout)
@@ -60,13 +60,13 @@ class Veevr( SiteBase ):
             # documento xml
             mdoc = xml.etree.ElementTree.fromstring( xmlData )
 
-            # url final para o vídeo
+            # url final para o vï¿½deo
             media = mdoc.find("{http://ns.adobe.com/f4m/1.0}media")
             mediaUrl = media.attrib["url"] + "Seg1-Frag1"
 
             try:
                 mimeType = mdoc.find("{http://ns.adobe.com/f4m/1.0}mimeType")
-                ext = mimeType.text.split("/", 1)[-1] # extensão representada pelo texto da tag
-            except:pass # em caso de erro, usa a extesão padrão
+                ext = mimeType.text.split("/", 1)[-1] # extensï¿½o representada pelo texto da tag
+            except:pass # em caso de erro, usa a extesï¿½o padrï¿½o
 
         self.configs = {"url": mediaUrl, "ext": ext, "title": title}

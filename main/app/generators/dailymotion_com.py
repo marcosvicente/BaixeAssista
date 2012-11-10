@@ -38,7 +38,7 @@ class Dailymotion( SiteBase ):
             mobj = re.search(r'<meta property="og:title" content="(?P<title>[^"]*)" />', webpage)
             video_title = htmlParser.unescape(mobj.group('title'))
         except:
-            video_title = get_radom_title()
+            video_title = sites.get_random_text()
 
         matchobj = re.search(r'(?im)<span class="owner[^\"]+?">[^<]+?<a [^>]+?>([^<]+?)</a></span>', webpage)
         video_uploader = matchobj.group(1)

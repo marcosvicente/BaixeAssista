@@ -43,6 +43,6 @@ class Metacafe( SiteBase ):
         highMediaURL = highMediaURL.replace("\/", "/")
         
         try: title = re.search("<title>(.+)</title>", webpage).group(1)
-        except: title = get_radom_title()
+        except: title = sites.get_random_text()
         
         self.configs = {1: lowMediaURL, 2: highMediaURL, 'title': title}

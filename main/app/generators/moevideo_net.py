@@ -72,9 +72,9 @@ class MoeVideo( SiteBase ):
         try: self.setErrorMessage(url, videoinfo)
         except:pass
 
-        # obtendo o título do video
+        # obtendo o tï¿½tulo do video
         try: title = self.extraticTitle( url)
-        except: title = get_radom_title()
+        except: title = sites.get_random_text()
 
         self.configs = {"url": url, "title": title}
         

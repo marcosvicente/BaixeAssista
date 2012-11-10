@@ -19,7 +19,7 @@ class Videoweed( SiteBase ):
     def __init__(self, url, **params):
         SiteBase.__init__(self, **params)
         self.player_api = "http://www.videoweed.es/api/player.api.php?key=%s&user=undefined&codes=undefined&pass=undefined&file=%s"
-        # link direto para o site(não embutido)
+        # link direto para o site(nï¿½o embutido)
         self.siteVideoLink = "http://www.videoweed.es/file/%s"
         # parte principal da url usada como elemento chave no programa
         self.basename = manager.UrlManager.getBaseName( url )
@@ -58,6 +58,6 @@ class Videoweed( SiteBase ):
         elif seekparm.rfind("=") < 0: seekparm += "="
         
         try: title = urllib.unquote_plus( params["title"] )
-        except: title = get_radom_title()
+        except: title = sites.get_random_text()
         
         self.configs = {1: url + seekparm, "title": title}

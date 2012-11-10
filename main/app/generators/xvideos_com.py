@@ -26,7 +26,7 @@ class Xvideos( SiteBase ):
         video_data = cgi.parse_qs(flashvar)
 
         try: title = re.search("<title>(.*?)</title>", webpage).group(1)
-        except: title = get_radom_title()
+        except: title = sites.get_random_text()
 
         self.configs = {"url": video_data["flv_url"][0]+"&fs=", "title": title}
         

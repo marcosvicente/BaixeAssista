@@ -65,7 +65,7 @@ class PutLocker( SiteBase ):
 
         # extraindo o titulo.
         try: title = re.search("<title>(.*?)</title>", webpage).group(1)
-        except: title = get_radom_title()
+        except: title = sites.get_random_text()
 
         # começa a extração do link vídeo.
         ## playlist: '/get_file.php?stream=WyJORVE0TkRjek5FUkdPRFJETkRKR05Eb3',

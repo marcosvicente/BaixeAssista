@@ -51,7 +51,7 @@ class Youtube( SiteBase ):
             matchobj = re.search("video/([^\s;]+)", _type)
             if matchobj: self.configs["ext"] = matchobj.group(1)
             
-            # o formato video/webm, mostra-se impatível como o swf player
+            # o formato video/webm, mostra-se impatï¿½vel como o swf player
             if re.match(quality_opt, quality):
                 if not re.match("video/webm", _type):
                     return urllib.unquote_plus( url )+"&range=%s-"
@@ -81,7 +81,7 @@ class Youtube( SiteBase ):
             
         try: self.configs["title"] = self.raw_data["title"][0]
         except (KeyError, IndexError):
-            self.configs["title"] = get_radom_title()
+            self.configs["title"] = sites.get_random_text()
             
         try: self.configs["thumbnail_url"] = self.raw_data["thumbnail_url"][0]
         except (KeyError, IndexError):

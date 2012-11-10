@@ -29,6 +29,6 @@ class Moviezer( SiteBase ):
         url = matchobj.group("url")
         
         try: title = re.search("<title>(?P<title>.*?)</title>", webpage).group("title")
-        except: title = get_radom_title()
+        except: title = sites.get_random_text()
         
         self.configs = {"url": url+"?start=", "title": title}

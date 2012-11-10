@@ -35,6 +35,6 @@ class Videobash(SiteBase):
         except: duration = None
         
         try: title = re.search("<title>(.+?)</title>", webpage, re.DOTALL).group(1)
-        except: title = get_radom_title()
+        except: title = sites.get_random_text()
         
         self.configs = {"url": url, "title": title, "duration": duration}    

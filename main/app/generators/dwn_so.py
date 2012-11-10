@@ -40,7 +40,7 @@ class DwShare( SiteBase ):
         if url[-2:] == ",0": url = url[:-1]
         
         try: title = re.search("""title\s*=\s*(?:'|")(.*?)(?:'|")""", xmlData, re.DOTALL).group(1)
-        except: title = get_radom_title()
+        except: title = sites.get_random_text()
         
         self.configs = {"url": url, "title": title}
         

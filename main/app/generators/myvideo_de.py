@@ -28,7 +28,7 @@ class MyVideo( SiteBase ):
         video_url = mobj.group(1) + ('/%s.flv' % video_id)
         
         try: video_title = re.search('<title>([^<]+)</title>', webpage).group(1)
-        except: video_title = get_radom_title()
+        except: video_title = sites.get_random_text()
         
         self.configs = {
             'id': video_id,
