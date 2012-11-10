@@ -167,10 +167,8 @@ def find_all_sites():
         name, ext = os.path.splitext( filename )
         name = str(name) # __import__ crash unicode.
         if not name.startswith("_"):
-            modname = "%s.%s"%(Universal.__module__, name)
-            print "importando %s"%modname
-            filemod = __import__( modname )
-            sitelist.append( filemod )
+            filemod = __import__(Universal.__module__, {}, {}, [name])
+            sitelist.append(getattr(filemod, name))
     return sitelist
     
 def register_site(basename, site):
@@ -182,8 +180,8 @@ def register_site(basename, site):
         site.controller["control"] = control
         
     Universal.add_site(basename, **site.controller)
-    
-for site in filter(get_classref_inmodule, find_all_sites()):
+
+for site in map(get_classref_inmodule, find_all_sites()):
     default = manager.UrlBase.getBaseName(site.controller["url"])
     basename = site.controller.get("basenames", default)    
     
