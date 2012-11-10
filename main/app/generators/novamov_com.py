@@ -1,8 +1,9 @@
+# coding: utf-8
 from videoweed_es import *
 
 ####################################### NOVAMOV #######################################
 class Novamov( Videoweed ):
-    """ Novamov: segue a mesma sequÍncia lÛgica de Videoweed """
+    """ Novamov: segue a mesma sequ√™ncia l√≥gica de Videoweed """
     ## http://www.novamov.com/video/cfqxscgot96pe
     ## http://embed.novamov.com/embed.php?width=520&height=320&v=cfqxscgot96pe&px=1
     controller = {
@@ -18,11 +19,11 @@ class Novamov( Videoweed ):
     
     def __init__(self, url, **params):
         """Constructor"""
-        # objetos de Videoweed n„o anulados nessa inicializaÁ„o,
-        # ser„o considerados objetos v·lidos para novos objetos de Novamov.
+        # objetos de Videoweed n√£o anulados nessa inicializa√ß√£o,
+        # ser√£o considerados objetos v√°lidos para novos objetos de Novamov.
         Videoweed.__init__(self, url, **params)
         self.player_api = "http://www.novamov.com/api/player.api.php?key=%s&user=undefined&codes=1&pass=undefined&file=%s"
-        # link direto para o site(n„o embutido)
+        # link direto para o site(n√£o embutido)
         self.siteVideoLink = "http://www.novamov.com/video/%s"
         # parte principal da url usada como elemento chave no programa
         self.basename = manager.UrlManager.getBaseName( url )

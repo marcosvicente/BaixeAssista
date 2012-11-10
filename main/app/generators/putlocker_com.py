@@ -1,3 +1,4 @@
+# coding: utf-8
 from _sitebase import *
 
 ###################################### PUTLOCKER ######################################
@@ -44,7 +45,7 @@ class PutLocker( SiteBase ):
         return s
 
     def start_extraction(self, proxies={}, timeout=25):
-        # p·gina web inicial
+        # p√°gina web inicial
         url = self.url.replace("/embed","/file")
         fd = self.connect(url, proxies=proxies, timeout=timeout)
         webpage = fd.read(); fd.close()
@@ -52,7 +53,7 @@ class PutLocker( SiteBase ):
         # messagem de erro. se houver alguma
         self.message = self.getMessage( webpage )
 
-        # padr„o captua de dados
+        # padr√£o captua de dados
         matchobj = self.patternForm.search( webpage )
         hashvalue =  matchobj.group("hash") or  matchobj.group("_hash")
         hashname = matchobj.group("name") or  matchobj.group("_name")
@@ -66,17 +67,17 @@ class PutLocker( SiteBase ):
         try: title = re.search("<title>(.*?)</title>", webpage).group(1)
         except: title = get_radom_title()
 
-        # comeÁa a extraÁ„o do link vÌdeo.
+        # come√ßa a extra√ß√£o do link v√≠deo.
         ## playlist: '/get_file.php?stream=WyJORVE0TkRjek5FUkdPRFJETkRKR05Eb3',
         pattern = "playlist:\s*(?:'|\")(/get_file\.php\?stream=.+?)(?:'|\")"
         matchobj = re.search(pattern, webpage, re.DOTALL|re.IGNORECASE)
         url = self.getFileBaseUrl + matchobj.group(1)
         
-        # comeÁa a an·lize do xml
+        # come√ßa a an√°lize do xml
         fd = self.connect(url, proxies=proxies, timeout=timeout)
         rssData = fd.read(); fd.close()
 
-        ext = "flv" # extens„o padr„o.
+        ext = "flv" # extens√£o padr√£o.
         ## print rssData
         
         # url do video.
@@ -84,6 +85,6 @@ class PutLocker( SiteBase ):
         url = self.unescape( url ).replace("'","").replace('"',"")
         
         try: ext = re.search("type=\"video/([\w-]+)", rssData).group(1)
-        except: pass # usa a extens„o padr„o.
+        except: pass # usa a extens√£o padr√£o.
         
         self.configs = {"url": url+"&start=", "title":title, "ext": ext}

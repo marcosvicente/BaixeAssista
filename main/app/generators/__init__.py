@@ -167,7 +167,9 @@ def find_all_sites():
         name, ext = os.path.splitext( filename )
         name = str(name) # __import__ crash unicode.
         if not name.startswith("_"):
-            filemod = __import__( name )
+            modname = "%s.%s"%(Universal.__module__, name)
+            print "importando %s"%modname
+            filemod = __import__( modname )
             sitelist.append( filemod )
     return sitelist
     

@@ -1,4 +1,4 @@
-# -*- coding: ISO-8859-1 -*-
+# coding: utf-8
 import os
 import re
 import sys
@@ -20,13 +20,13 @@ import xml.etree.ElementTree
 from main.app.generators import Universal
 from main.app import manager
 
-# vers„o ser· mantida pelo mÛdulo principal
+# vers√£o ser√° mantida pelo m√≥dulo principal
 PROGRAM_VERSION = manager.PROGRAM_VERSION
 #######################################################################################
 
 def DECODE(texto, alter="ISO-8859-1"):
     """ Tenta decodificar para utf-8. 
-    Em caso de erro, a decodificaÁ„o alternativa ser· usada """
+    Em caso de erro, a decodifica√ß√£o alternativa ser√° usada """
     try:
         texto = texto.decode('utf-8')
     except UnicodeDecodeError:
@@ -37,7 +37,7 @@ def DECODE(texto, alter="ISO-8859-1"):
 
 def ENCODE(texto, alter="ISO-8859-1"):
     """ Tenta codificar para utf-8. 
-    Em caso de erro, a codficaÁ„o alternativa ser· usada """
+    Em caso de erro, a codfica√ß√£o alternativa ser√° usada """
     try:
         texto = texto.encode('utf-8')
     except UnicodeEncodeError:
@@ -52,7 +52,7 @@ def limiteTexto(texto, nCaracter=50, final="..."):
     return texto
 
 def clearTitle( title):
-    """ remove todos os carecteres considerados inv·lidos """
+    """ remove todos os carecteres considerados inv√°lidos """
     return re.sub(r"[/*&:|\"\'=\\?<>!%$@#()]+", "_", title)
 
 def get_radom_title(size=25):
@@ -97,7 +97,7 @@ class Section(object):
         self.section[name] = value
         
 class ConnectionProcessor(object):
-    """ Processa conexıes guardando 'cookies' e dados por ips """
+    """ Processa conex√µes guardando 'cookies' e dados por ips """
     def __init__(self):
         self.section = Section()
         self.logged = False
@@ -137,7 +137,7 @@ class ConnectionProcessor(object):
         processor = urllib2.HTTPCookieProcessor(cookiejar= self.get_cookieJar( ip ))
         opener = urllib2.build_opener(processor, urllib2.ProxyHandler(proxies))
         
-        # faz o login se necess·rio
+        # faz o login se necess√°rio
         if not self.logged or login:
             self.logged = self.login(opener, timeout=timeout)
             if not self.logged: return
@@ -188,7 +188,7 @@ class SiteBase(ConnectionProcessor):
         return size
     
     def get_video_id(self):
-        """ retorna sÛ o id do video """
+        """ retorna s√≥ o id do video """
         return Universal.get_video_id(self.basename, self.url)
     
     def get_init_page(self, proxies={}, timeout=30):    
@@ -199,7 +199,7 @@ class SiteBase(ConnectionProcessor):
         section = self.section.get( ip )
         settings = section.get("settings",None)
         
-        # extrai o titulo e o link do video, se j· n„o tiverem sido extraidos
+        # extrai o titulo e o link do video, se j√° n√£o tiverem sido extraidos
         if not settings:
             nfalhas = 0
             while nfalhas < ntry:
@@ -217,7 +217,7 @@ class SiteBase(ConnectionProcessor):
                     pass
                 nfalhas += 1
         else:
-            self.configs = section["settings"] # transfere para vari·vel de trabalho
+            self.configs = section["settings"] # transfere para vari√°vel de trabalho
 
         return self.has_link() and self.has_title() and self.streamSize
 
@@ -247,7 +247,7 @@ class SiteBase(ConnectionProcessor):
         return self.configs["duration"]
     
     def get_relative(self, pos):
-        """ retorna o valor de pos em bytes relativo a duraÁ„o em mp4 """
+        """ retorna o valor de pos em bytes relativo a dura√ß√£o em mp4 """
         if self.has_duration(): # if 'video/mp4' file
             try: result = float(self.get_duration()) * (float(pos)/self.getStreamSize())
             except: result = 0
@@ -276,7 +276,7 @@ class SiteBase(ConnectionProcessor):
         return limiteTexto(title)
 
     def get_size(self, proxies={}, timeout=60):
-        """ retorna o tamanho do arquivo de vÌdeo, atravÈs do cabeÁalho de resposta """
+        """ retorna o tamanho do arquivo de v√≠deo, atrav√©s do cabe√ßalho de resposta """
         link = get_with_seek(self.getLink(), 0)
         headers = {"Range": "bytes=0-"}
         headers.update( self.headers )
