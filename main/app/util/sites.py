@@ -33,7 +33,7 @@ def clear_text(text):
     """ remove todos os carecteres considerados inválidos """
     return re.sub(r"[/*&:|\"\'=\\?<>!%$@#()]+", "_", text)
 
-def get_radom_text(size=25):
+def get_random_text(size=25):
     return binascii.hexlify(os.urandom(int(size*0.5)))
 
 def get_with_seek(link, seek):
