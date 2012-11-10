@@ -22,7 +22,8 @@ if __name__ == "__main__":
     
     os.chdir( mainDir )
 
-import gerador, manager
+import manager
+from main.app import generators
 from main import settings
 from main.app import models
 
@@ -38,7 +39,7 @@ with open(os.path.join(settings.STATIC_PATH,"js","el.js"), "r") as js_file:
 
 class FiltroUrl(object):
     def __init__(self ):
-        self.allsites = gerador.Universal.get_sites()
+        self.allsites = generators.Universal.get_sites()
         self.url, self.is_embed = "", False
         
     def isEmbed(self): return self.is_embed
@@ -49,10 +50,10 @@ class FiltroUrl(object):
         try: basename = manager.UrlManager.getBaseName(url)
         except: basename = "" # nem toda url terá uma base correta
         if basename and (basename in self.allsites):
-            matchobj = gerador.Universal.patternMatch(basename, url)
+            matchobj = generators.Universal.patternMatch(basename, url)
             if matchobj: # retorna só o grupo da url completa
                 self.url = matchobj.group("inner_url")
-                self.is_embed = gerador.Universal.isEmbed(url)
+                self.is_embed = generators.Universal.isEmbed(url)
                 return True
         # anula as variaveis, para evitar pegar dados incorretos
         self.url, self.is_embed = "", False

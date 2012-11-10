@@ -1,10 +1,11 @@
+# coding: utf-8
 from main.app import manager
 from django.conf import settings
 import os, sys
 
 class Universal(object):
-    """ A classe Universal, quarda varias informações e dados usados em toda a extensão do programa. 
-     Ela é usada para diminuir o número de modificações necessárias, quando adicionando suporte a um novo site de vídeo.
+    """ A classe Universal, quarda varias informaÃ§Ãµes e dados usados em toda a extensÃ£o do programa. 
+     Ela Ã© usada para diminuir o nÃºmero de modificaÃ§Ãµes necessÃ¡rias, quando adicionando suporte a um novo site de vÃ­deo.
     """
     sites = {}
     
@@ -22,7 +23,7 @@ class Universal(object):
     
     @classmethod
     def add_site(cls, basename="", args=None, **kwargs):
-        """ adiciona as referências para um novo site """
+        """ adiciona as referÃªncias para um novo site """
         if args:
             url, patterns, control, video_control = args
             
@@ -45,7 +46,7 @@ class Universal(object):
     
     @classmethod
     def getStreamManager(cls, url):
-        """ Procura pelo controlador de tranferênicia de arquivo de video"""
+        """ Procura pelo controlador de tranferÃªnicia de arquivo de video"""
         smanager = None
         try:
             for sitename in cls.get_sites():
@@ -80,9 +81,9 @@ class Universal(object):
 
     @classmethod
     def patternMatch(cls, sitename, url):
-        """ analiza se a url casa o padrão de urls.
-        Duas situações são possiveis:
-            A url é única; A url está dentro de outra url.
+        """ analiza se a url casa o padrÃ£o de urls.
+        Duas situaÃ§Ãµes sÃ£o possiveis:
+            A url Ã© Ãºnica; A url estÃ¡ dentro de outra url.
         """
         patterns = cls.get_patterns(sitename)
         if type(patterns) is tuple:
@@ -104,7 +105,7 @@ class Universal(object):
 
     @classmethod
     def isEmbed(cls, url):
-        """ analiza se a url é de um player embutido """
+        """ analiza se a url Ã© de um player embutido """
         sitename = manager.UrlManager.getBaseName(url)
         patterns = cls.get_patterns(sitename)
         siteAttrs = cls.sites[sitename]
@@ -138,20 +139,20 @@ class Universal(object):
 
     @classmethod
     def valide(cls, sitename, obj):
-        assert bool(cls.sites.get(sitename, None)), u"Site %s não encontrado"%sitename
+        assert bool(cls.sites.get(sitename, None)), u"Site %s nÃ£o encontrado"%sitename
         if obj == "patterns":
-            assert bool(cls.sites[sitename].get("patterns", None)), u"Padrão não definido para %s"%sitename
+            assert bool(cls.sites[sitename].get("patterns", None)), u"PadrÃ£o nÃ£o definido para %s"%sitename
         elif obj == "url":
-            assert bool(cls.sites[sitename].get("url", None)), u"Url não definida para %s"%sitename
+            assert bool(cls.sites[sitename].get("url", None)), u"Url nÃ£o definida para %s"%sitename
         elif obj == "control":
-            assert bool(cls.sites[sitename].get("control", None)), u"Controlador não definido para %s"%sitename
+            assert bool(cls.sites[sitename].get("control", None)), u"Controlador nÃ£o definido para %s"%sitename
         elif obj == "video_control":
-            assert bool(cls.sites[sitename].get("video_control", None)), u"Controlador de video não definido para %s"%sitename
+            assert bool(cls.sites[sitename].get("video_control", None)), u"Controlador de video nÃ£o definido para %s"%sitename
 
 # -----------------------------------------------------------------------------
 def get_classref_inmodule(filemod):
-    """ retorna só a referência da classe site no módulo.
-     O referência de classe, depende da variável 'controller' para ser uma referência válida.
+    """ retorna sÃ³ a referÃªncia da classe site no mÃ³dulo.
+     O referÃªncia de classe, depende da variÃ¡vel 'controller' para ser uma referÃªncia vÃ¡lida.
      retorna None, se nada for encontrado.
     """
     for key in filemod.__dict__:
@@ -160,7 +161,7 @@ def get_classref_inmodule(filemod):
             return classref
         
 def find_all_sites():
-    """ retorna toda a lista de scripts(já importada) das definições dos sites suportados. """
+    """ retorna toda a lista de scripts(jÃ¡ importada) das definiÃ§Ãµes dos sites suportados. """
     sitelist = []
     for filename in os.listdir(os.path.join(settings.APPDIR, "generators")):
         name, ext = os.path.splitext( filename )

@@ -1,7 +1,7 @@
 # -*- coding: ISO-8859-1 -*-
 ## guarda a versão do programa.
 
-PROGRAM_VERSION = "0.2.4"
+PROGRAM_VERSION = "0.2.3"
 PROGRAM_SYSTEM = {"Windows": "oswin", "Linux": "oslinux"}
 
 import sys
@@ -26,6 +26,7 @@ from main import settings
 ## Servidor multi-threading
 from main.concurrent_server.management.commands import runcserver
 
+# ------------------------------------------------------
 class model(object):
     """ resolve problema com importação circular """
     class __metaclass__(type):
@@ -34,7 +35,20 @@ class model(object):
             """ modelo de banco de dados """
             from main.app import models
             return models
-
+        
+# ------------------------------------------------------
+class generators(object):
+    class __metaclass__(type):
+        @property
+        def universal(self):
+            from main.app.generators import Universal
+            return Universal
+        @property
+        def sitebase(self):
+            from main.app.generators import _sitebase
+            return _sitebase
+            
+# ------------------------------------------------------
 import logging
 logger = logging.getLogger("main.app.manager")
 
@@ -332,8 +346,8 @@ class UrlBase(object):
     @classmethod
     def formatUrl(cls, string):
         """ megavideo[t53vqf0l] -> http://www.megavideo.com/v=t53vqf0l """
-        import gerador; base, strID = cls.splitBaseId( string )
-        return gerador.Universal.get_url( base ) % strID
+        base, strID = cls.splitBaseId( string )
+        return generators.universal.get_url( base ) % strID
     
     @classmethod
     def shortUrl(cls, url):
@@ -353,8 +367,8 @@ class UrlBase(object):
     @classmethod
     def analizeUrl(cls, url):
         """ http://www.megavideo.com/v=t53vqf0l -> (megavideo.com, t53vqf0l) """
-        import gerador; basename = cls.getBaseName( url )
-        urlid = gerador.Universal.get_video_id(basename, url)
+        basename = cls.getBaseName( url )
+        urlid = generators.universal.get_video_id(basename, url)
         return (basename, urlid)
         
 ########################################################################
@@ -366,10 +380,9 @@ class UrlManager( UrlBase ):
         
     def getUrlId(self, title):
         """ retorna o id da url, com base no título(desc) """
-        import gerador
         query = self.objects.get(title = title)
         basename = self.getBaseName( query.url )
-        return gerador.Universal.get_video_id(basename, query.url)
+        return generators.universal.get_video_id(basename, query.url)
         
     def setTitleIndex(self, title):
         """ adiciona um índice ao título se ele já existir """
@@ -841,8 +854,6 @@ class Interval(object):
             self.updateIndex()
 
 ################################ main : manage ################################
-import gerador
-
 class Streamer(object):
     """ lê e retorna a stream de dados """
     #----------------------------------------------------------------------
@@ -885,7 +896,7 @@ class CTRConnection(object):
     def __init__(self, manage):
         self.manage = manage
         # controla a transferência do arquivo de vídeo.
-        self.streamManager = gerador.Universal.getStreamManager( manage.streamUrl )
+        self.streamManager = generators.universal.getStreamManager( manage.streamUrl )
         # guarda as conexoes criadas
         self.connList = []
         
@@ -1018,7 +1029,7 @@ class Manage( object ):
         self.inicialize()
         
         # controla a obtenção de links, tamanho do arquivo, title, etc.
-        self.clsVideoManager = gerador.Universal.getVideoManager(self.streamUrl)
+        self.clsVideoManager = generators.universal.getVideoManager(self.streamUrl)
         self.videoManager = self.createVideoManager()
         
         # controle das conexões
@@ -1765,7 +1776,7 @@ class StreamManager(threading.Thread):
                 if self.manage.interval.hasInterval( self.ident ):
                     start = self.manage.interval.get_start( self.ident )
                     start = self.videoManager.get_relative( start )
-                    self.linkSeek = gerador.get_with_seek(self.link, start)
+                    self.linkSeek = generators.sitebase.get_with_seek(self.link, start)
                     # Tenta conectar e iniciar a tranferência do arquivo de video.
                     assert self.connect(), "connect error"
                     self.read()
@@ -1837,7 +1848,7 @@ class StreamManager_( StreamManager ):
                     time.sleep(1)
 
                 Info.set(self.ident, "state", _("Conectando"))
-                link = gerador.get_with_seek(link, seekpos)
+                link = generators.sitebase.get_with_seek(link, seekpos)
                 
                 self.streamSocket = self.videoManager.connect(link, proxies = self.proxies, 
                                       headers={"Range":"bytes=%s-%s"%(seekpos, streamsize)})

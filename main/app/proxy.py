@@ -7,7 +7,7 @@ import urllib
 import urllib2
 import random
 import threading
-import gerador
+import generators
 import socket
 import manager
 
@@ -17,11 +17,11 @@ try: _("test translation")
 except: manager.installTranslation()
 #######################################################################################
 
-class Proxylist( gerador.ConnectionProcessor ):
+class Proxylist( generators._sitebase.ConnectionProcessor ):
 	"""Trabalha extraindo proxies de paginas da web"""
 	#----------------------------------------------------------------------
 	def __init__(self):
-		gerador.ConnectionProcessor.__init__(self)
+		generators._sitebase.ConnectionProcessor.__init__(self)
 		self.countIp = 0; self.name = "proxylist"
 		manager.Info.add( self.name)
 		
@@ -59,11 +59,11 @@ class Proxylist( gerador.ConnectionProcessor ):
 		return proxies
 	
 ########################################################################
-class Freeproxylists( gerador.ConnectionProcessor ):
+class Freeproxylists( generators._sitebase.ConnectionProcessor ):
 	"""Trabalha extraindo proxies de paginas da web"""
 	#----------------------------------------------------------------------
 	def __init__(self):
-		gerador.ConnectionProcessor.__init__(self)
+		generators._sitebase.ConnectionProcessor.__init__(self)
 		self.regexHostPort = re.compile('IPDecode\("(.*?)"\).*?(\d{1,5})', re.DOTALL)
 		self.regexHost = re.compile("(\d{1,4}\.\d{1,4}\.\d{1,4}.\d{1,4})")
 		self.countIp = 0; self.name = "freeproxylists"
@@ -117,9 +117,9 @@ class Freeproxylists( gerador.ConnectionProcessor ):
 		return proxies
 	
 ########################################################################
-class Xroxy( gerador.ConnectionProcessor ):
+class Xroxy( generators._sitebase.ConnectionProcessor ):
 	def __init__(self):
-		gerador.ConnectionProcessor.__init__(self)
+		generators._sitebase.ConnectionProcessor.__init__(self)
 		self.countIp = 0; self.name = "xroxy"
 		manager.Info.add( self.name )
 		
@@ -301,7 +301,7 @@ class TesteIP( threading.Thread ):
 		
 		# objeto que trabalha as informações dos vídeos
 		url = self.params.get("url","")
-		vManager = gerador.Universal.getVideoManager( url )
+		vManager = generators.Universal.getVideoManager( url )
 		self.videoManager = vManager( url )
 		
 	def stop(self):
@@ -332,7 +332,7 @@ class TesteIP( threading.Thread ):
 				seekpos = 1024 + random.randint(0, int(streamSize*0.75))
 				
 				streamSocket = self.videoManager.connect(
-				    gerador.get_with_seek(streamLink, seekpos),
+				    generators._sitebase.get_with_seek(streamLink, seekpos),
 				    headers = {"Range": "bytes=%s-" %seekpos},
 				    proxies = proxies, timeout = 30
 					)
