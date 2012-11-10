@@ -5,7 +5,6 @@ import sys
 import os
 import thread
 import glob
-
 import wx.lib.agw.genericmessagedialog as GMD
 
 curdir = os.path.dirname(os.path.abspath(__file__))
@@ -15,9 +14,9 @@ pardir = os.path.split( curdir )[0]
 if not pardir in sys.path: sys.path.append( pardir )
 if not curdir in sys.path: sys.path.append( curdir )
 
-import bugs
 from django.conf import settings
-from manager import installTranslation, PROGRAM_VERSION
+from main.app.manager import PROGRAM_VERSION
+from main.app import bugs
 
 ########################################################################
 
@@ -176,8 +175,8 @@ if __name__ == "__main__":
 	# muda para o diretório pai por depender dos recursos dele.
 	os.chdir( pardir )
 	
-	# instala as traduções.
-	installTranslation()
+	from main.app.util import base
+	base.trans_install() # instala as traduções.
 	
 	def onClose(evt):
 		obj = evt.GetEventObject()

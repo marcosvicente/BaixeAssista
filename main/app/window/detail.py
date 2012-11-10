@@ -208,8 +208,8 @@ if __name__ == "__main__":
 	# muda para o diretório pai por depender dos recursos dele.
 	os.chdir( pardir )
 	
-	# instala as traduções.
-	manager.installTranslation() 
+	from main.app.util import base
+	base.trans_install() # instala as traduções.
 	
 	app = wx.App(False)
 	try:

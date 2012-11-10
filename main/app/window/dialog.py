@@ -23,8 +23,8 @@ if __name__ == "__main__":
 	# dir com os diretórios do projeto
 	os.chdir( parent_dir )
 	
-	from manager import installTranslation
-	installTranslation() # instala as traduções.
+	from main.app.util import base
+	base.trans_install() # instala as traduções.
 #################################################################################################
 
 class ProgressDialog( wx.MiniFrame):

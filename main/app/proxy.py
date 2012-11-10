@@ -12,9 +12,11 @@ import socket
 import manager
 
 from main import settings
+from main.app.util import base
 
 try: _("test translation")
-except: manager.installTranslation()
+except: base.trans_install() # instala as traduções.
+
 #######################################################################################
 
 class Proxylist( generators._sitebase.ConnectionProcessor ):

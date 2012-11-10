@@ -20,14 +20,14 @@ pardir = os.path.split( curdir )[0]
 if not pardir in sys.path: sys.path.append( pardir )
 if not curdir in sys.path: sys.path.append( curdir )
 
+from main.app.util import base
+base.trans_install() # instala as traduções.
+
 # módulos do projeto
 import manager
 import updater
-
-# Instalando a tradução
-manager.installTranslation()
-
-import browser, proxy
+import browser
+import proxy
 
 # módulos do pacote window
 import updatedialog
@@ -295,7 +295,7 @@ class BaixeAssistaWin( wx.Frame ):
 			self.SetSize((ww, wh))
 
 	def salveConfigs(self):
-		if not manager.security_save(self.configPath, _configobj=self.configs):
+		if not base.security_save(self.configPath, _configobj=self.configs):
 			print "Erro[MainWin] salvando arquivo de configuração!!!"
 
 	def crieBarraMenus(self):

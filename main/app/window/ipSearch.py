@@ -270,8 +270,8 @@ if __name__ == "__main__":
 	# dir com os diretórios do projeto
 	os.chdir( pardir )
 	
-	# instala as traduções.
-	manager.installTranslation() 
+	from main.app.util import base
+	base.trans_install() # instala as traduções.
 	
 	def onClose(evt):
 		obj = evt.GetEventObject()
