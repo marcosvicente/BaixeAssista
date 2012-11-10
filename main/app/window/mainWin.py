@@ -37,9 +37,6 @@ import wbugs
 import dialog
 import detail
 import movie
-
-# A versão será mantida pelo módulo principal
-PROGRAM_VERSION = manager.PROGRAM_VERSION
 ########################################################################
 
 class StartDown(threading.Thread):
@@ -104,7 +101,7 @@ class StartDown(threading.Thread):
 class BaixeAssistaWin( wx.Frame ):
 	def __init__(self):
 		""" BaixeAssistaWin: representação principal da interface gráfica """
-		wx.Frame.__init__(self, None, wx.ID_ANY, "BaixeAssista v%s"%PROGRAM_VERSION, size=(800,600))
+		wx.Frame.__init__(self, None, wx.ID_ANY, "BaixeAssista v%s"%settings.PROGRAM_VERSION, size=(800,600))
 		self.SetIcon( self.getMovieIcon() )
 		
 		# configurações gerais da aplicação
@@ -394,7 +391,7 @@ class BaixeAssistaWin( wx.Frame ):
 		# First we create and fill the info object
 		info = wx.AboutDialogInfo()
 		info.Name = "BaixeAssista"
-		info.Version = "v%s"%PROGRAM_VERSION
+		info.Version = "v%s"%settings.PROGRAM_VERSION
 		info.Copyright = "(C) 2012 Programmers and Coders Everywhere"
 
 		description = u"".join([

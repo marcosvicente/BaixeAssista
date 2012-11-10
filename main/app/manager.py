@@ -1,9 +1,4 @@
 # -*- coding: ISO-8859-1 -*-
-## guarda a versão do programa.
-
-PROGRAM_VERSION = "0.2.3"
-PROGRAM_SYSTEM = {"Windows": "oswin", "Linux": "oslinux"}
-
 import sys
 import sha
 import os
@@ -1271,8 +1266,8 @@ class StreamManager(threading.Thread):
         self.proxies = {}
         
         self.link = self.linkSeek = ""
-        self.videoManager = self.manage.createVideoManager()
-        self.info = Info
+        self.videoManager = manage.createVideoManager()
+        self.info = Info()
         
         self.lockWait = threading.Event()
         self.isWaiting = False
@@ -1286,10 +1281,10 @@ class StreamManager(threading.Thread):
         self.params[ key ] = value
         
     def __del__(self):
-        self.info.delete( self.ident )
+        self.info.delete(self.ident)
         del self.manage
         del self.params
-
+        
     @staticmethod
     def calc_eta(start, now, total, current):
         if total is None: return '--:--'

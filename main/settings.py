@@ -4,6 +4,10 @@ import os, sys, re
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
+# Definem a versão e o sistema operacional do programa
+PROGRAM_VERSION = "0.2.3"
+PROGRAM_SYSTEM = {"Windows": "oswin", "Linux": "oslinux"}
+
 ADMINS = (
     # ('Your Name', 'your_email@example.com'),
 )

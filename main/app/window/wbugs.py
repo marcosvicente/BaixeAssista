@@ -15,7 +15,6 @@ if not pardir in sys.path: sys.path.append( pardir )
 if not curdir in sys.path: sys.path.append( curdir )
 
 from django.conf import settings
-from main.app.manager import PROGRAM_VERSION
 from main.app import bugs
 
 ########################################################################
@@ -135,7 +134,7 @@ class BugInfo( wx.MiniFrame ):
 		self.info.SetLabel(_("Enviando ..."))
 		
 		ibugs = bugs.Bugs(
-		    program = PROGRAM_VERSION,
+		    program = settings.PROGRAM_VERSION,
 		    files = glob.glob(os.path.join(settings.LOGS_DIR,"*.log")) if self.authLogs.IsChecked() else [],
 		    steps = self.controlAction.GetValue(),
 		    error = self.controlErro.GetValue(),

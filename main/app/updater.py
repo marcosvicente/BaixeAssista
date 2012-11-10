@@ -21,11 +21,11 @@ if __name__ == "__main__":
 	
 	
 from django.conf import settings
-from manager import StreamManager, PROGRAM_VERSION, PROGRAM_SYSTEM
+from manager import StreamManager
 from main.app.util import base
 
 ################################# RELEASE ##################################
-class Release:
+class Release(object):
 	""" Busca por novas versões do programa """
 	#----------------------------------------------------------------------
 	def __init__(self):
@@ -43,8 +43,8 @@ class Release:
 			try: version = matchobj.group("version")
 			except: continue
 			
-			if version > PROGRAM_VERSION:
-				info  = _(u"Versão atual do programa - BaixeAssista v%s\n\n") % PROGRAM_VERSION
+			if version > settings.PROGRAM_VERSION:
+				info  = _(u"Versão atual do programa - BaixeAssista v%s\n\n") % settings.PROGRAM_VERSION
 				info += _(u"Versão lançada: %s\n") % filename
 				info += _(u"Descrição: %s\n") % summary
 				info += _(u"Enviado: %s\n") % uploaded
@@ -217,14 +217,14 @@ class Updater(object):
 		for link in links:
 			packet, program = self.get_versions( link )
 
-			if program == PROGRAM_VERSION:
+			if program == settings.PROGRAM_VERSION:
 				if packet > self.packetVersion and not link in v_links:
 					osystem = self.get_system_name( link )
 
-					if PROGRAM_SYSTEM.get(platform.system(),"") == osystem:
+					if settings.PROGRAM_SYSTEM.get(platform.system(),"") == osystem:
 						v_links.append( link )
 
-			elif program > PROGRAM_VERSION:
+			elif program > settings.PROGRAM_VERSION:
 				# caso a versão atual seja mais antiga, avisa o usuário para atualizar
 				# isso ocorrerá caso não haja mais atualizações para a versão atual
 				self.oldRelease = True

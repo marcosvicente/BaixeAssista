@@ -9,7 +9,7 @@ import configobj
 import platform
 
 os.environ['DJANGO_SETTINGS_MODULE'] = "main.settings"
-from main.app import manager
+from django.conf import settings
 
 EXTS_PATTERN = [".+pyc$", ".+pyo$"] # ext final
 TARGET_DIR = os.path.join(os.getcwd(), "main")
@@ -218,9 +218,10 @@ List of options:
         exit(0)
         
     pkv = params.get("--pkv","0.0.0")
-    pgv = manager.PROGRAM_VERSION
-    system = manager.PROGRAM_SYSTEM[platform.system()]
-
+    
+    pgv = settings.PROGRAM_VERSION
+    system = settings.PROGRAM_SYSTEM[platform.system()]
+    
     # remove todos .pyc .pyo por segurança
     clean_all_nopy( TARGET_DIR )
 
