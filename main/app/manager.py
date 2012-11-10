@@ -584,7 +584,7 @@ class Interval(object):
     def canContinue(self, obj_id):
         """ Avalia se o objeto conexão pode continuar a leitura, 
         sem comprometer a montagem da stream de vídeo(ou seja, sem corromper o arquivo) """
-        if self.hasInterval(obj_id):
+        if self.has(obj_id):
             return (self.get_end(obj_id) == self.seekpos)
         return False
     
@@ -616,10 +616,10 @@ class Interval(object):
         if values != -1: return values[3]
         return values
 
-    def hasInterval(self, obj_id):
+    def has(self, obj_id):
         """ avalia se o objeto tem um intervalo ligado a ele """
         return bool(self.intervals.get(obj_id, None))
-
+    
     def get_first_start( self):
         """ retorna o começo(start) do primeiro intervalo da lista de intervals """
         intervs = [interval[1] for interval in self.intervals.values()] + \
@@ -769,7 +769,7 @@ class Streamer(object):
         self.manage.add_streamer(self)
         
         if self.manage.getInitPos() > 0:
-            yield self.manage.videoManager.get_stream_header()
+            yield self.manage.videoManager.get_header()
         
         while (not self._stop and self.sended < self.manage.getVideoSize()):
             if self.seekpos < self.manage.cacheBytesCount:
@@ -1142,7 +1142,7 @@ class Manage( object ):
         for smanager in self.ctrConnection.getConnections():
             ident = smanager.ident
             # a conexão deve estar ligada a um interv
-            if self.interval.hasInterval( ident ):
+            if self.interval.has( ident ):
                 pending.append((
                     self.interval.get_index( ident), 
                     smanager.numBytesLidos, 
@@ -1378,29 +1378,6 @@ class StreamManager(threading.Thread):
             index = stream.find( err )
             if index >= 0: return index
         return -1
-    
-    @staticmethod
-    def responseCheck(nbytes, seekpos, seekmax, headers):
-        """ Verifica se o ponto de leitura atual, mais quanto falta da stream, 
-        corresponde ao comprimento total dela"""
-        contentLength = headers.get("Content-Length", None)
-        contentType = headers.get("Content-Type", None)
-
-        if contentType is None: return False
-        is_video = bool(re.match("(video/.*$|application/octet.*$)", contentType))
-
-        if not is_video or contentLength is None: return False
-        contentLength = long(contentLength)
-
-        # video.mixturecloud: bug de 1bytes
-        if seekpos != 0 and seekmax == (seekpos + contentLength + 1): return True
-        if seekmax == contentLength: return True
-
-        # no bytes 0 o tamanho do arquivo é o original
-        if seekpos == 0: nbytes = 0
-        # comprimento total(considerando os bytes removidos), da stream
-        length = seekpos + contentLength - nbytes
-        return (seekmax == length)
 
     def wait(self):
         """ aguarda o processo de configuração terminar """
@@ -1422,12 +1399,10 @@ class StreamManager(threading.Thread):
         self.info.set(self.ident, "block_index", "")
         self.info.set(self.ident, "local_speed", "")
 
-    def streamWrite(self, stream, nbytes):
+    def write(self, stream, nbytes):
         """ Escreve a stream de bytes dados de forma controlada """
         with self.syncLockWriteStream:
-            if not self.wasStopped() and self.lockWait.is_set() and \
-                self.manage.interval.hasInterval(self.ident):
-                
+            if self.isRunning and self.lockWait.is_set() and self.manage.interval.has(self.ident):
                 start = self.manage.interval.get_start( self.ident )
                 offset = self.manage.interval.get_offset()
                 
@@ -1448,7 +1423,7 @@ class StreamManager(threading.Thread):
         interval_start = self.manage.interval.get_start( self.ident)
 
         while not self.wasStopped() and self.numBytesLidos < block_size:
-            if not self.manage.interval.hasInterval(self.ident): break
+            if not self.manage.interval.has(self.ident): break
             # bloqueia alterações sobre os dados do intervalo da conexão
             with self.manage.interval.get_lock( self.ident ):
                 try:
@@ -1482,7 +1457,7 @@ class StreamManager(threading.Thread):
                     block_read = self.best_block_size((after - before), streamLen)
                     
                     # começa a escrita da stream de video no arquivo local.
-                    self.streamWrite(streamData, streamLen)
+                    self.write(streamData, streamLen)
                     
                     start = self.manage.tempoInicialGlobal
                     current = self.manage.received_bytes() - self.manage.posInicialLeitura
@@ -1513,7 +1488,7 @@ class StreamManager(threading.Thread):
                     self.failure(_("Erro de leitura"), 2)
                     break
         # -----------------------------------------------------
-        if self.manage.interval.hasInterval( self.ident ):
+        if self.manage.interval.has( self.ident ):
             self.manage.interval.remove( self.ident )
             self.manage.interval.remove_lock( self.ident )
             
@@ -1521,25 +1496,10 @@ class StreamManager(threading.Thread):
             self.streamSocket.close()
             
         self.reset_info()
-    
-    @staticmethod
-    def get_FLVheader(stream, seekpos):
-        header = ""
-        if stream.startswith("FLV"):
-            if (stream[:13].endswith("\t"+("\x00"*4)) or stream[:13].endswith(("\x00"*3)+"\t")):
-                if seekpos == 0: header = stream[:13]
-                else: header, stream = stream[:13], stream[13:]
-            elif stream[:9].endswith("\t"):
-                if seekpos == 0: header = stream[:9]
-                else: header, stream = stream[:9], stream[9:]
-        return stream, header
-    
-    def getStreamHeader(self, stream, seekpos, cache_size):
-        return self.get_FLVheader(stream, seekpos)
         
-    def removaConfigs(self, errorstring, errornumber):
+    def unconfig(self, errorstring, errornumber):
         """ remove todas as configurações, importantes, dadas a conexão """
-        if self.manage.interval.hasInterval(self.ident):
+        if self.manage.interval.has(self.ident):
             with self.syncLockWriteStream: # bloqueia o thread da instance, antes da escrita.
                 
                 index = self.manage.interval.get_index( self.ident)
@@ -1575,7 +1535,7 @@ class StreamManager(threading.Thread):
         self.info.set(self.ident, "state", errorstring)
         self.reset_info()
         
-        downbytes = self.removaConfigs(errorstring, errornumber) # removendo configurações
+        downbytes = self.unconfig(errorstring, errornumber) # removendo configurações
         if errornumber == 3 or self.wasStopped(): return # retorna porque a conexao foi encerrada
         time.sleep(0.5)
         
@@ -1617,14 +1577,14 @@ class StreamManager(threading.Thread):
                 
                 code = self.streamSocket.code
                 stream = self.streamSocket.read(cache_size)
-                stream, header = self.getStreamHeader(stream, seekpos, cache_size)
+                stream, header = self.videoManager.get_stream_header(stream, seekpos)
                 headers = self.streamSocket.headers
                 
                 # verifica a validade a resposta.
-                isValid = self.responseCheck(len(header), seekpos, streamSize, headers)
+                isValid = self.videoManager.check_response(len(header), seekpos, streamSize, headers)
                 
                 if isValid and (code == 200 or code == 206):
-                    if stream: self.streamWrite(stream, len(stream))
+                    if stream: self.write(stream, len(stream))
                     return True
                 else:
                     self.info.set(self.ident, "state", _(u"Resposta inválida"))
@@ -1656,7 +1616,7 @@ class StreamManager(threading.Thread):
                     self.manage.interval.new_set( self.ident )
 
                     # como novos intervalos não são infinitos, atribui um novo, apartir de um já existente.
-                    if not self.manage.interval.hasInterval( self.ident ):
+                    if not self.manage.interval.has( self.ident ):
                         self.manage.interval.derivative_set( self.ident )
                         
                 # bytes lido do intervalo atual(como os blocos reduzem seu tamanho, o número inicial será sempre zero).
@@ -1674,7 +1634,7 @@ class StreamManager(threading.Thread):
                 # configura um intervalo para cada conexao
                 self.configure()
 
-                if self.manage.interval.hasInterval( self.ident ):
+                if self.manage.interval.has( self.ident ):
                     start = self.manage.interval.get_start( self.ident )
                     start = self.videoManager.get_relative( start )
                     self.linkSeek = sites.get_with_seek(self.link, start)
@@ -1712,10 +1672,10 @@ class StreamManager_( StreamManager ):
         change = self.params.get("typechange", False)
         proxyManager = self.manage.proxyManager
 
-        downbytes = self.removaConfigs(errorstring, errornumber) # removendo configurações
+        downbytes = self.unconfig(errorstring, errornumber) # removendo configurações
         if errornumber == 3: return # retorna porque a conexao foi encerrada
         time.sleep(0.5)
-
+        
         self.info.set(self.ident, "state", _("Reconfigurando"))
         time.sleep(0.5)
         
@@ -1755,13 +1715,13 @@ class StreamManager_( StreamManager ):
                                       headers={"Range":"bytes=%s-%s"%(seekpos, streamsize)})
                 
                 data = self.streamSocket.read( cache_size )
-                stream, header = self.getStreamHeader(data, seekpos, cache_size)
+                stream, header = self.videoManager.get_stream_header(data, seekpos)
                 
-                isValid = self.responseCheck(len(header), seekpos, 
-                                             streamsize, self.streamSocket.headers)
+                isValid = self.videoManager.check_response(len(header), seekpos, 
+                                                           streamsize, self.streamSocket.headers)
                 
                 if isValid and (self.streamSocket.code == 200 or self.streamSocket.code == 206):
-                    if stream: self.streamWrite(stream, len(stream))
+                    if stream: self.write(stream, len(stream))
                     return True
                 else:
                     self.info.set(self.ident, "state", _(u"Resposta inválida"))
@@ -1782,7 +1742,7 @@ class StreamManager_( StreamManager ):
             try:
                 self.configure() # configura um intervalo para cada conexao
                 
-                if self.manage.interval.hasInterval( self.ident ):
+                if self.manage.interval.has( self.ident ):
                     # tentando estabelece a conexão como o servidor
                     assert self.connect(), "conect error"
                     # inicia a transferencia de dados

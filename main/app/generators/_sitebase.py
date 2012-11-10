@@ -20,64 +20,54 @@ import xml.etree.ElementTree
 from main.app.generators import Universal
 from main.app import manager
 from main.app.util import sites
-
-########################################################################
-class Section(object):
-    def __init__(self):
-        self.section = {}
-        
-    def add(self, name):
-        self.section[name] = {}
-    
-    def has(self, name):
-        return self.section.has_key(name)
-    
-    def get(self, name):
-        if not self.has(name): self.add(name)
-        return self.section[name]
-    
-    def delete(self, name):
-        self.section.pop(name,None)
-        
-    def __del__(self):
-        del self.section
-        
-    def __delitem__(self, name):
-        del self.section[name]
-        
-    def __getitem__(self, name):
-        if not self.has(name): self.add(name)
-        return self.section[name]
-    
-    def __setitem__(self, name, value):
-        self.section[name] = value
         
 class ConnectionProcessor(object):
     """ Processa conexões guardando 'cookies' e dados por ips """
     def __init__(self):
-        self.section = Section()
+        self.cookiejar = cookielib.CookieJar()
+        self.cookieProcessor = urllib2.HTTPCookieProcessor(cookiejar = self.cookiejar)
+        self.opener = urllib2.build_opener(self.cookieProcessor)
         self.logged = False
-        
-    def __del__(self):
-        del self.section
-        
-    def set_cookiejar(self, section_name, cookieJar):
-        section = self.section[ section_name ]
-        section["cookieJar"] = cookieJar
-        
-    def has_cookieJar(self, section_name):
-        section = self.section[ section_name ]
-        return section.has_key("cookieJar")
-        
-    def get_cookieJar(self, section_name):
-        section = self.section[ section_name ]
-        return section["cookieJar"]
         
     def login(self, opener=None, timeout=0):
         """ struct login"""
         return True
+    
+    @staticmethod
+    def get_stream_header(stream, seekpos, header=""):
+        if stream.startswith("FLV"):
+            if (stream[:13].endswith("\t"+("\x00"*4)) or stream[:13].endswith(("\x00"*3)+"\t")):
+                if seekpos == 0: header = stream[:13]
+                else: header, stream = stream[:13], stream[13:]
+            elif stream[:9].endswith("\t"):
+                if seekpos == 0: header = stream[:9]
+                else: header, stream = stream[:9], stream[9:]
+        return stream, header
+    
+    @staticmethod
+    def check_response(offset, seekpos, seekmax, headers):
+        """ Verifica se o ponto de leitura atual, mais quanto falta da stream, 
+        corresponde ao comprimento total dela """
+        contentLength = headers.get("Content-Length", None)
+        contentType = headers.get("Content-Type", None)
+        
+        if contentType is None: return False
+        is_video = bool(re.match("(video/.*$|application/octet.*$)", contentType))
 
-    def get_request(self, url, headers, data):
+        if not is_video or contentLength is None: return False
+        contentLength = long(contentLength)
+
+        # video.mixturecloud: bug de 1bytes
+        if seekpos != 0 and seekmax == (seekpos + contentLength + 1): return True
+        if seekmax == contentLength: return True
+
+        # no bytes 0 o tamanho do arquivo é o original
+        if seekpos == 0: offset = 0
+        # comprimento total(considerando os bytes removidos), da stream
+        length = seekpos + contentLength - offset
+        return seekmax == length
+    
+    def get_request(self, url, headers={}, data=None):
         req = urllib2.Request(url, headers=headers, data=data)
         req.add_header("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:11.0) Gecko/20100101 Firefox/11.0")
         req.add_header("Connection", "keep-alive")
@@ -85,20 +75,16 @@ class ConnectionProcessor(object):
 
     def connect(self, url="", headers={}, data=None, proxies={}, timeout=25, request=None, login=False):
         """ conecta a url data e retorna o objeto criado """
-        ip = proxies.get("http", "default")
-
-        if not self.has_cookieJar(ip): self.set_cookiejar(ip, cookielib.CookieJar())
         if request is None: request = self.get_request(url, headers, data)
         
-        processor = urllib2.HTTPCookieProcessor(cookiejar= self.get_cookieJar( ip ))
-        opener = urllib2.build_opener(processor, urllib2.ProxyHandler(proxies))
+        self.opener.add_handler(urllib2.ProxyHandler(proxies))
         
         # faz o login se necessário
         if not self.logged or login:
-            self.logged = self.login(opener, timeout=timeout)
+            self.logged = self.login(self.opener, timeout=timeout)
             if not self.logged: return
             
-        return opener.open(request, timeout=timeout)
+        return self.opener.open(request, timeout=timeout)
 
 #################################### BASEVIDEOSITE ####################################
 class SiteBase(ConnectionProcessor):
@@ -122,18 +108,17 @@ class SiteBase(ConnectionProcessor):
     
     def get_basename(self):
         return self.basename
-    
+        
     def __delitem__(self, arg):
-        self.section.delete(arg)
         self.configs.clear()
         
-    def get_message(self):
-        return self.message
-
-    def suportaSeekBar(self):
-        return False
+    def __getitem__(self, name):
+        return self.configs[name]
+        
+    def get_message(self): return self.message
+    def suportaSeekBar(self): return False
     
-    def get_stream_header(self):
+    def get_header(self):
         if self.is_mp4(): header = self.MP4_HEADER
         else: header = self.FLV_HEADER
         return header
@@ -151,40 +136,35 @@ class SiteBase(ConnectionProcessor):
         assert self.getVideoInfo(proxies=proxies, timeout=timeout)
 
     def getVideoInfo(self, ntry=3, proxies={}, timeout=30):
-        ip = proxies.get("http","default")
-        section = self.section.get( ip )
-        settings = section.get("settings",None)
-        
         # extrai o titulo e o link do video, se já não tiverem sido extraidos
-        if not settings:
+        if not self.configs:
             nfalhas = 0
             while nfalhas < ntry:
                 try:
                     self.start_extraction(proxies=proxies, timeout=timeout)
-                    if not self.streamSize: # extrai e guarda o tanho do arquivo
-                        self.streamSize = self.get_size(proxies=proxies, timeout=timeout)
+                    # extrai e guarda o tanho do arquivo
+                    if not self.streamSize: self.streamSize = self.get_size(proxies=proxies, timeout=timeout)
+                    
                     if not self.has_link() or not self.has_title() or not self.streamSize:
                         self.configs = {}; nfalhas += 1
                         continue # falhou em obter o link ou titulo
-                    else:
-                        section["settings"] = self.configs # relaciona as configs ao ip
-                        break # sucesso!
+                    
+                    else: break # sucesso!
                 except Exception as err:
                     pass
                 nfalhas += 1
-        else:
-            self.configs = section["settings"] # transfere para variável de trabalho
-
         return self.has_link() and self.has_title() and self.streamSize
 
     def has_link(self):
-        try: return bool(self.getLink())
-        except: return False
-
+        try: haslink = bool(self.getLink())
+        except: haslink = False
+        return haslink
+    
     def has_title(self):
-        try: return bool(self.getTitle())
-        except: return False
-
+        try: hastitle = bool(self.getTitle())
+        except: hastitle = False
+        return hastitle
+    
     def get_file_link(self, data):
         """ retorna o link para download do arquivo de video """
         return self.getLink()
@@ -233,15 +213,17 @@ class SiteBase(ConnectionProcessor):
 
     def get_size(self, proxies={}, timeout=60):
         """ retorna o tamanho do arquivo de vídeo, através do cabeçalho de resposta """
-        link = sites.get_with_seek(self.getLink(), 0)
+        link = self.getLink()
+        linkseek = sites.get_with_seek(link, 0)
         headers = {"Range": "bytes=0-"}
         headers.update( self.headers )
-        req = self.get_request(link, headers, data=None)
         try:
+            req = self.get_request(linkseek, headers)
             fd = self.connect(request = req, proxies=proxies, timeout=timeout)
             fd.close()
         except:
-            fd = urllib.urlopen( link )
+            link = link.rsplit("&",1)[0]
+            fd = self.connect(url=link, timeout=timeout)
             fd.close()
         length = fd.headers.get("Content-Length", None)
         assert (length and (fd.code == 200 or fd.code == 206))
