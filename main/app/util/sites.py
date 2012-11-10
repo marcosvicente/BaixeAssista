@@ -1,10 +1,11 @@
+# coding: utf-8
 import binascii
 import os
 import re
 
 def DECODE(texto, alter="ISO-8859-1"):
     """ Tenta decodificar para utf-8. 
-    Em caso de erro, a decodificaÁ„o alternativa ser· usada """
+    Em caso de erro, a decodifica√ß√£o alternativa ser√° usada """
     try:
         texto = texto.decode('utf-8')
     except UnicodeDecodeError:
@@ -15,7 +16,7 @@ def DECODE(texto, alter="ISO-8859-1"):
 
 def ENCODE(texto, alter="ISO-8859-1"):
     """ Tenta codificar para utf-8. 
-    Em caso de erro, a codficaÁ„o alternativa ser· usada """
+    Em caso de erro, a codfica√ß√£o alternativa ser√° usada """
     try:
         texto = texto.encode('utf-8')
     except UnicodeEncodeError:
@@ -29,7 +30,7 @@ def limite_text(text, maxchars=50, endchars="..."):
     return text
 
 def clear_text(text):
-    """ remove todos os carecteres considerados inv·lidos """
+    """ remove todos os carecteres considerados inv√°lidos """
     return re.sub(r"[/*&:|\"\'=\\?<>!%$@#()]+", "_", text)
 
 def get_radom_text(size=25):
