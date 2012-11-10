@@ -90,14 +90,11 @@ class Videobb( SiteBase ):
 
     def getLink(self):
         vquality = int(self.params.get("qualidade", 2))
-
         optToNotFound = self.configs.get("token1", None)
         optToNotFound = self.configs.get(1, optToNotFound)
         optToNotFound = self.configs.get(2, optToNotFound)
         optToNotFound = self.configs.get(3, optToNotFound)
-
-        videoLink = self.configs.get(vquality, optToNotFound)
-        return videoLink
+        return self.configs.get(vquality, optToNotFound)
 
     def getTitle(self):
         title = self.configs["title"]

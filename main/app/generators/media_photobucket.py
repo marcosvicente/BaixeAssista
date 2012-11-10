@@ -17,19 +17,15 @@ class Photobucket( SiteBase ):
         self.url = url
 
     def start_extraction(self, proxies={}, timeout=25):
+        fd = self.connect(self.url, proxies=proxies, timeout=timeout)
+        webpage = fd.read(); fd.close()
         video_extension = 'flv'
-
-        # Retrieve video webpage to extract further information
-        try:
-            fd = self.connect(self.url, proxies=proxies, timeout=timeout)
-            webpage = fd.read(); fd.close()
-        except: return # falha obtendo a página
-
+        
         # Extract URL, uploader, and title from webpage
         mobj = re.search(r'<link rel="video_src" href=".*\?file=([^"]+)" />', webpage)
         mediaURL = urllib.unquote(mobj.group(1))
         video_url = mediaURL
-
+        
         try:
             mobj = re.search(r'<meta name="description" content="(.+)"', webpage)
             video_title = mobj.group(1).decode('utf-8')
@@ -44,3 +40,4 @@ class Photobucket( SiteBase ):
             'format': u'NA',
             'player_url': None
         }
+        

@@ -16,19 +16,16 @@ class Redtube( SiteBase ):
         self.basename = "redtube.com"
         self.url = url
 
-    def suportaSeekBar(self):
-        return True
-
+    def suportaSeekBar(self): return True
+    
     def start_extraction(self, proxies={}, timeout=25):
-        try:
-            fd = self.connect(self.url, proxies=proxies, timeout=timeout)
-            webpage = fd.read(); fd.close()
-        except: return
-
+        fd = self.connect(self.url, proxies=proxies, timeout=timeout)
+        webpage = fd.read(); fd.close()
+        
         flashvar = re.search("""so\.addParam\((?:"|')flashvars(?:"|'),\s*(?:"|')(.*?)(?:"|')""", webpage).group(1)
         video_data = cgi.parse_qs(flashvar)
 
         try: title = re.search("<title>(.*?)</title>", webpage).group(1)
         except: title = get_radom_title()
-
+        
         self.configs = {"url": video_data["flv_h264_url"][0]+"&ec_seek=", "title": title}

@@ -18,22 +18,17 @@ class CollegeHumor( SiteBase ):
 
     def start_extraction(self, proxies={}, timeout=25):
         video_id = Universal.get_video_id(self.basename, self.url)
-        try:
-            fd = self.connect(self.url, proxies=proxies, timeout=timeout)
-            webpage = fd.read(); fd.close()
-        except: return # falha obtendo a página
-
-        m = re.search(r'id="video:(?P<internalvideoid>[0-9]+)"', webpage)
-        if m is None: return
-
-        internal_video_id = m.group('internalvideoid')
-
+        fd = self.connect(self.url, proxies=proxies, timeout=timeout)
+        webpage = fd.read(); fd.close()
+        
+        matchobj = re.search(r'id="video:(?P<internalvideoid>[0-9]+)"', webpage)
+        internal_video_id = matchobj.group('internalvideoid')
+        
         info = {'id': video_id, 'internal_id': internal_video_id}
         xmlUrl = 'http://www.collegehumor.com/moogaloop/video:' + internal_video_id
-        try:
-            fd = self.connect(xmlUrl, proxies=proxies, timeout=timeout)
-            metaXml = fd.read(); fd.close()
-        except: return # falha obtendo dados xml
+        
+        fd = self.connect(xmlUrl, proxies=proxies, timeout=timeout)
+        metaXml = fd.read(); fd.close()
 
         mdoc = xml.etree.ElementTree.fromstring(metaXml)
         videoNode = mdoc.findall('./video')[0]
@@ -44,6 +39,6 @@ class CollegeHumor( SiteBase ):
             info['thumbnail'] = videoNode.findall('./thumbnail')[0].text
             info['ext'] = info['url'].rpartition('.')[2]
             info['format'] = info['ext']
-        except: pass
-
+        except:
+            pass
         self.configs = info

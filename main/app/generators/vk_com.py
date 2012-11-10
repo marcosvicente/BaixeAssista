@@ -15,7 +15,6 @@ class Vk( SiteBase ):
     }
 
     def __init__(self, url, **params):
-        """Constructor"""
         SiteBase.__init__(self, **params)
         self.basename = "vk.com"
         self.url = url
@@ -25,14 +24,11 @@ class Vk( SiteBase ):
     
     def getLink(self):
         vquality = int(self.params.get("qualidade", 2))
-        
         optToNotFound = self.configs.get(1, None)
         optToNotFound = self.configs.get(2, optToNotFound)
         optToNotFound = self.configs.get(3, optToNotFound)
+        return self.configs.get(vquality, optToNotFound)
         
-        videoLink = self.configs.get(vquality, optToNotFound)
-        return videoLink
-    
     def start_extraction(self, proxies={}, timeout=25):
         ## http://cs519609.userapi.com/u165193745/video/7cad4a848e.360.mp4
         fd = self.connect(self.url, proxies=proxies, timeout=timeout)

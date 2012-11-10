@@ -1,4 +1,4 @@
-from _sitebase import *
+from videobb_com import *
 
 ###################################### USERPORN #######################################
 class Userporn( Videobb ):

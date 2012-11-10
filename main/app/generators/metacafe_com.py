@@ -21,8 +21,7 @@ class Metacafe( SiteBase ):
         optToNotFound = self.configs.get(1, None)
         optToNotFound = self.configs.get(2, optToNotFound)
         optToNotFound = self.configs.get(3, optToNotFound)
-        videoLink = self.configs.get(vquality, optToNotFound)
-        return videoLink
+        return self.configs.get(vquality, optToNotFound)
     
     def start_extraction(self, proxies={}, timeout=25):
         video_id = Universal.get_video_id(self.basename, self.url)

@@ -20,14 +20,12 @@ class BlipTV( SiteBase ):
     def start_extraction(self, proxies={}, timeout=25):
         if '?' in self.url: cchar = '&'
         else: cchar = '?'
-
         info = None
-        try:
-            ## http://blip.tv/rv-news-net/episode-6099740?skin=json&version=2&no_wrap=1
-            json_url = self.url + cchar + "skin=json&version=2&no_wrap=1"
-            urlh = self.connect(json_url, proxies=proxies, timeout=timeout)
-        except: return # falha obtendo a págian
 
+        ## http://blip.tv/rv-news-net/episode-6099740?skin=json&version=2&no_wrap=1
+        json_url = self.url + cchar + "skin=json&version=2&no_wrap=1"
+        urlh = self.connect(json_url, proxies=proxies, timeout=timeout)
+        
         if urlh.headers.get("Content-Type", "").startswith("video/"): # Direct download
             basename = self.url.split("/")[-1]
             title,ext = os.path.splitext(basename)

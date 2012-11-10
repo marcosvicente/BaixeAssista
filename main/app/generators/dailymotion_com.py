@@ -17,15 +17,12 @@ class Dailymotion( SiteBase ):
         self.url = url
 
     def start_extraction(self, proxies={}, timeout=25):
-        try:
-            video_id = Universal.get_video_id(self.basename, self.url)
-            video_extension = 'flv'
-
-            fd = self.connect(self.url, proxies=proxies, 
-                              timeout=timeout, headers={'Cookie': 'family_filter=off'})
-            webpage = fd.read(); fd.close()
-        except: return # falha obtendo a página
-
+        video_id = Universal.get_video_id(self.basename, self.url)
+        fd = self.connect(self.url, proxies=proxies, timeout=timeout, headers={'Cookie': 'family_filter=off'})
+        webpage = fd.read(); fd.close()
+        
+        video_extension = 'flv'
+        
         # Extract URL, uploader and title from webpage
         mobj = re.search(r'addVariable\(\"sequence\"\s*,\s*\"(.+?)\"\)', webpage, re.DOTALL|re.IGNORECASE)
 
@@ -42,11 +39,9 @@ class Dailymotion( SiteBase ):
         except:
             video_title = get_radom_title()
 
-        mobj = re.search(r'(?im)<span class="owner[^\"]+?">[^<]+?<a [^>]+?>([^<]+?)</a></span>', webpage)
-        if mobj is None: return
-
-        video_uploader = mobj.group(1)
-
+        matchobj = re.search(r'(?im)<span class="owner[^\"]+?">[^<]+?<a [^>]+?>([^<]+?)</a></span>', webpage)
+        video_uploader = matchobj.group(1)
+        
         self.configs = {
             'id':        video_id.decode('utf-8'),
             'url':        video_url.decode('utf-8'),

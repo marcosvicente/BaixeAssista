@@ -48,14 +48,13 @@ class Mixturecloud( SiteBase ):
         return urllib.urlencode( longin_data )
 
     def login(self, opener, timeout):
-        """ faz o login necessário para transferir o arquivo de vídeo.
-        opener é quem armazerá o cookie """
+        """ faz o login necessário para transferir o arquivo de vídeo. opener é quem armazerá o cookie """
         try:
             url = "http://www.mixturecloud.com/login"
             response = opener.open(url, timeout=timeout)
             loginPage = response.read()
             response.close()
-
+            
             # dados do método post
             post_data = self.getPostData( loginPage )
 
@@ -63,22 +62,19 @@ class Mixturecloud( SiteBase ):
             response = opener.open(url, data = post_data, timeout=timeout)
             response.close()
             sucess = True
-        except Exception, err:
+        except Exception as err:
             sucess = False
         return sucess
-
+    
     def suportaSeekBar(self):
         return True
 
     def getLink(self):
         vquality = int(self.params.get("qualidade", 2))
-
         optToNotFound = self.configs.get(1, None)
         optToNotFound = self.configs.get(2, optToNotFound)
         optToNotFound = self.configs.get(3, optToNotFound)
-
-        videoLink = self.configs.get(vquality, optToNotFound)
-        return videoLink
+        return self.configs.get(vquality, optToNotFound)
 
     def getMessage(self, webpage):
         matchobj = re.search('<div class="alert i_alert red".*?>(?P<msg>.+?)</div>', webpage)
@@ -135,3 +131,5 @@ class Mixturecloud( SiteBase ):
         
         self.message = self.getMessage( webpage)
         self.configs.update(self.get_configs(webpage))
+        
+        

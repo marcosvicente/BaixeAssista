@@ -1,4 +1,4 @@
-from _sitebase import *
+from videoweed_es import *
 
 ####################################### NOVAMOV #######################################
 class Novamov( Videoweed ):
@@ -23,7 +23,7 @@ class Novamov( Videoweed ):
         Videoweed.__init__(self, url, **params)
         self.player_api = "http://www.novamov.com/api/player.api.php?key=%s&user=undefined&codes=1&pass=undefined&file=%s"
         # link direto para o site(não embutido)
-        self.siteVideoLink = "http://www.novamov.com/video/%s"        
+        self.siteVideoLink = "http://www.novamov.com/video/%s"
         # parte principal da url usada como elemento chave no programa
         self.basename = manager.UrlManager.getBaseName( url )
         self.url = url

@@ -19,39 +19,33 @@ class Vimeo( SiteBase ):
         self.url = url
 
     def start_extraction(self, proxies={}, timeout=25):
-        try:
-            # extrai o id do video
-            video_id = Universal.get_video_id(self.basename, self.url)
-            url = "http://vimeo.com/moogaloop/load/clip:%s" % video_id
+        video_id = Universal.get_video_id(self.basename, self.url)
+        url = "http://vimeo.com/moogaloop/load/clip:%s" % video_id
 
-            fd = self.connect(url, proxies=proxies, timeout=timeout)
-            webpage = fd.read(); fd.close()
-        except: return # falha obtendo a página
-
-        try:# Extract title
-            mobj = re.search(r'<caption>(.*?)</caption>', webpage)
-            video_title = mobj.group(1).decode('utf-8')
-        except:
-            video_title = get_radom_title()
-
+        fd = self.connect(url, proxies=proxies, timeout=timeout)
+        webpage = fd.read(); fd.close()
+        
+        try: video_title = re.search(r'<caption>(.*?)</caption>', webpage).group(1)
+        except: video_title = get_radom_title()
+        
         try:# Extract uploader
             mobj = re.search(r'<uploader_url>http://vimeo.com/(.*?)</uploader_url>', webpage)
             video_uploader = mobj.group(1).decode('utf-8')
         except:
             video_uploader = ""
-
+            
         try:# Extract video thumbnail
             mobj = re.search(r'<thumbnail>(.*?)</thumbnail>', webpage)
             video_thumbnail = mobj.group(1).decode('utf-8')
         except:
             video_thumbnail = ""
-
+            
         video_description = 'Foo.'
-
+        
         # Vimeo specific: extract request signature
         mobj = re.search(r'<request_signature>(.*?)</request_signature>', webpage)
         sig = mobj.group(1).decode('utf-8')
-
+        
         # Vimeo specific: extract video quality information
         mobj = re.search(r'<isHD>(\d+)</isHD>', webpage)
         quality = mobj.group(1).decode('utf-8')

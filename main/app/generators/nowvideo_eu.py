@@ -1,4 +1,4 @@
-from _sitebase import *
+from videoweed_es import *
 
 ####################################### NOVAMOV #######################################
 class NowVideo( Videoweed ):

@@ -1,4 +1,4 @@
-from _sitebase import *
+from putlocker_com import *
 
 ########################################################################
 class Videoslasher( SiteBase ):

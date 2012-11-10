@@ -13,9 +13,8 @@ class Sockshare( PutLocker ):
         "control": "SM_RANGE", 
         "video_control": None
     }
-
+    
     def __init__(self, url, **params):
-        """Constructor"""
         PutLocker.__init__(self, url, **params)
         self.getFileBaseUrl = "http://www.sockshare.com"
         self.basename = "sockshare.com"

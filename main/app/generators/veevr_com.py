@@ -17,12 +17,10 @@ class Veevr( SiteBase ):
         self.url = url
 
     def start_extraction(self, proxies={}, timeout=25):
-        try:
-            # página web inicial
-            fd = self.connect(self.url, proxies=proxies, timeout=timeout)
-            webpage = fd.read(); fd.close()
-        except: return # falha obtendo a página
-
+        # página web inicial
+        fd = self.connect(self.url, proxies=proxies, timeout=timeout)
+        webpage = fd.read(); fd.close()
+        
         try:
             patternUrl = "http://mps.hwcdn.net/.+?/ads/videos/download.+?"
             matchobj = re.search(
@@ -31,7 +29,7 @@ class Veevr( SiteBase ):
             )
             # url final para o vídeo ?
             mediaUrl = urllib.unquote_plus( matchobj.group(1) )
-        except Exception, err:
+        except Exception as err:
             matchobj = re.search(
                 "playlist:.+url:\s*(?:'|\")(http://hwcdn.net/.+/cds/.+?token=.+?)(?:'|\")", 
                 webpage, re.DOTALL|re.IGNORECASE )

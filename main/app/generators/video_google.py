@@ -17,17 +17,14 @@ class GoogleVideo( SiteBase ):
         self.url = url
 
     def start_extraction(self, proxies={}, timeout=25):
-        # extrai o id da url
         video_id = Universal.get_video_id(self.basename, self.url)
+        
+        url = "http://video.google.com/videoplay?docid=%s&hl=en&oe=utf-8" % video_id
+        fd = self.connect(url, proxies=proxies, timeout=timeout)
+        webpage = fd.read(); fd.close()
+        
         video_extension = "mp4"
-
-        # Retrieve video webpage to extract further information
-        try:
-            url = "http://video.google.com/videoplay?docid=%s&hl=en&oe=utf-8" % video_id
-            fd = self.connect(url, proxies=proxies, timeout=timeout)
-            webpage = fd.read(); fd.close()
-        except: return # falha obtendo a página
-
+        
         # Extract URL, uploader, and title from webpage
         mobj = re.search(r"download_url:'([^']+)'", webpage)
         if mobj is None:

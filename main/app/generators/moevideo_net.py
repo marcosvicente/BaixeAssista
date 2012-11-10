@@ -59,19 +59,16 @@ class MoeVideo( SiteBase ):
             self.message = msg
 
     def start_extraction(self, proxies={}, timeout=25):
-        try:
-            video_id = Universal.get_video_id(self.basename, self.url)
-            postdata = self.getPostData( video_id )
-
-            fd = self.connect(self.apiUrl, proxies=proxies, timeout=timeout, data=postdata)
-            webdata = fd.read(); fd.close()
-
-            videoinfo = json.loads( webdata)
-            url = self.extratcLink( videoinfo)
-        except: return # falha obtendo a página
-
-        try:
-            self.setErrorMessage(url, videoinfo)
+        video_id = Universal.get_video_id(self.basename, self.url)
+        postdata = self.getPostData( video_id )
+        
+        fd = self.connect(self.apiUrl, proxies=proxies, timeout=timeout, data=postdata)
+        webdata = fd.read(); fd.close()
+        
+        videoinfo = json.loads( webdata)
+        url = self.extratcLink( videoinfo)
+        
+        try: self.setErrorMessage(url, videoinfo)
         except:pass
 
         # obtendo o título do video
@@ -79,3 +76,5 @@ class MoeVideo( SiteBase ):
         except: title = get_radom_title()
 
         self.configs = {"url": url, "title": title}
+        
+        

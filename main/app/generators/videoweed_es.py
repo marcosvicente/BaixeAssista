@@ -24,37 +24,29 @@ class Videoweed( SiteBase ):
         self.basename = manager.UrlManager.getBaseName( url )
         self.url = url
         
-    def suportaSeekBar(self):
-        return True
-
+    def suportaSeekBar(self): return True
+    
     def getLink(self):
         vquality = int(self.params.get("qualidade", 2))
-
         optToNotFound = self.configs.get(1, None)
         optToNotFound = self.configs.get(2, optToNotFound)
         optToNotFound = self.configs.get(3, optToNotFound)
-
-        videoLink = self.configs.get(vquality, optToNotFound)
-        return videoLink
-
+        return self.configs.get(vquality, optToNotFound)
+        
     def start_extraction(self, proxies={}, timeout=25):
-        try:
-            url_id = Universal.get_video_id(self.basename, self.url)
-            url = self.siteVideoLink % url_id
+        url_id = Universal.get_video_id(self.basename, self.url)
+        url = self.siteVideoLink % url_id
 
-            fd = self.connect(url, proxies=proxies, timeout=timeout)
-            webpage = fd.read(); fd.close()
-        except: return # falha obtendo a página
+        fd = self.connect(url, proxies=proxies, timeout=timeout)
+        webpage = fd.read(); fd.close()
 
         ## flashvars.filekey="189.24.243.113-505db61fc331db7a2a7fa91afb22e74d-"
         matchobj = re.search('flashvars\.filekey="(.+?)"', webpage)
         filekey = matchobj.group(1)
-
-        try:
-            url = self.player_api % (filekey, url_id) # ip; id
-            fd = self.connect(url, proxies=proxies, timeout=timeout)
-            info_data = fd.read(); fd.close()
-        except: return # falha obtendo a página
+        
+        url = self.player_api % (filekey, url_id) # ip; id
+        fd = self.connect(url, proxies=proxies, timeout=timeout)
+        info_data = fd.read(); fd.close()
 
         params = dict(re.findall("(\w+)=(.*?)&", info_data))
 
@@ -62,10 +54,9 @@ class Videoweed( SiteBase ):
         seekparm = urllib.unquote_plus( params["seekparm"] )
 
         if not seekparm: seekparm = "?start="
-        elif seekparm.rfind("=") < 0:
-            seekparm = seekparm + "="
-            
+        elif seekparm.rfind("=") < 0: seekparm += "="
+        
         try: title = urllib.unquote_plus( params["title"] )
         except: title = get_radom_title()
-
+        
         self.configs = {1: url + seekparm, "title": title}

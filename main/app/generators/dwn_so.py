@@ -42,3 +42,5 @@ class DwShare( SiteBase ):
         except: title = get_radom_title()
         
         self.configs = {"url": url, "title": title}
+        
+        

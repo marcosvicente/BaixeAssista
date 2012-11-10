@@ -1,11 +1,10 @@
 from main.app import manager
 from django.conf import settings
-import os
+import os, sys
 
 class Universal(object):
-    """A classe Universal, quarda varias informações e dados usados em
-    toda a extensão do programa. Ela é usada para diminuir o número de modificações
-    necessárias, quando adiciando suporte a um novo site vídeo.
+    """ A classe Universal, quarda varias informações e dados usados em toda a extensão do programa. 
+     Ela é usada para diminuir o número de modificações necessárias, quando adicionando suporte a um novo site de vídeo.
     """
     sites = {}
     
