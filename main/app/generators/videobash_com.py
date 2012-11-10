@@ -8,7 +8,7 @@ class Videobash(SiteBase):
     controller = {
         "url": "http://www.videobash.com/%s", 
         "patterns": (
-            re.compile("(?P<inner_url>http://www\.videobash\.com/(?P<id>.+))"),
+            re.compile("(?P<inner_url>http://www\.videobash\.com/(?P<id>.+?\d+$))"),
             [re.compile("(?P<inner_url>http://www\.videobash\.com/(embed/?P<id>.+))")],
         ),
         "control": "SM_RANGE",
