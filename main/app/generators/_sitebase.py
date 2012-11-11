@@ -58,15 +58,21 @@ class ConnectionProcessor(object):
         contentLength = long(contentLength)
 
         # video.mixturecloud: bug de 1bytes
-        if seekpos != 0 and seekmax == (seekpos + contentLength + 1): return True
-        if seekmax == contentLength: return True
-
-        # no bytes 0 o tamanho do arquivo é o original
-        if seekpos == 0: offset = 0
-        # comprimento total(considerando os bytes removidos), da stream
-        length = seekpos + contentLength - offset
-        return seekmax == length
-    
+        is_valid = (seekpos != 0 and seekmax == (seekpos +contentLength +1))
+        
+        if not is_valid: is_valid = (seekmax == contentLength)
+        
+        if not is_valid:
+            # no bytes 0 o tamanho do arquivo é o original
+            if seekpos == 0: _offset = 0
+            else: _offset = offset
+            
+            # comprimento total(considerando os bytes removidos), da stream
+            length = seekpos + contentLength - _offset
+            is_valid = (seekmax == length)
+        
+        return is_valid
+        
     def get_request(self, url, headers={}, data=None):
         req = urllib2.Request(url, headers=headers, data=data)
         req.add_header("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:11.0) Gecko/20100101 Firefox/11.0")

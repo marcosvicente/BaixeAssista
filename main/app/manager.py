@@ -1693,7 +1693,7 @@ class StreamManager_( StreamManager ):
     def connect(self):
         seekpos = self.manage.interval.get_start( self.ident) # posição inicial de leitura
         streamsize = self.manage.getVideoSize()
-        cache_size = 256
+        cache_size = 128
         nfalhas = 0
         while nfalhas < self.params.get("reconexao",1):
             try:
@@ -1707,15 +1707,15 @@ class StreamManager_( StreamManager ):
                 for second in range(wait_for, 0, -1):
                     self.info.set(self.ident, "state", _(u"Aguarde %02ds")%second)
                     time.sleep(1)
-
+                
                 self.info.set(self.ident, "state", _("Conectando"))
                 link = sites.get_with_seek(link, seekpos)
                 
                 self.streamSocket = self.videoManager.connect(link, proxies = self.proxies, 
                                       headers={"Range":"bytes=%s-%s"%(seekpos, streamsize)})
                 
-                data = self.streamSocket.read( cache_size )
-                stream, header = self.videoManager.get_stream_header(data, seekpos)
+                stream = self.streamSocket.read( cache_size )
+                stream, header = self.videoManager.get_stream_header(stream, seekpos)
                 
                 isValid = self.videoManager.check_response(len(header), seekpos, 
                                                            streamsize, self.streamSocket.headers)

@@ -1,7 +1,9 @@
 # coding: utf-8
 from django.conf import settings
 from main.app import manager
+from main.app import util
 import os, sys
+import glob
 
 class Universal(object):
     """ A classe Universal, quarda varias informações e dados usados em toda a extensão do programa. 
@@ -155,17 +157,16 @@ def get_classref_inmodule(filemod):
      O referência de classe, depende da variável 'controller' para ser uma referência válida.
      retorna None, se nada for encontrado.
     """
-    for key in filemod.__dict__:
-        classref = filemod.__dict__[key]
+    for key in dir(filemod):
+        classref = getattr(filemod, key)
         if callable(classref) and hasattr(classref, "controller"):
             return classref
         
 def find_all_sites():
     """ retorna toda a lista de scripts(já importada) das definições dos sites suportados. """
     sitelist = []
-    for filename in os.listdir(os.path.join(settings.APPDIR, "generators")):
-        name, ext = os.path.splitext( filename )
-        name = str(name) # __import__ crash unicode.
+    for filepath in glob.glob(os.path.join(settings.APPDIR, "generators", "*.py")):
+        name = util.base.get_filename(filepath, False)
         if not name.startswith("_"):
             filemod = __import__(Universal.__module__, {}, {}, [name])
             sitelist.append(getattr(filemod, name))

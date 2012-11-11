@@ -20,8 +20,7 @@ class Vk( SiteBase ):
         self.basename = "vk.com"
         self.url = url
         
-    def suportaSeekBar(self):
-        return True
+    def suportaSeekBar(self): return True
     
     def getLink(self):
         vquality = int(self.params.get("qualidade", 2))
@@ -60,12 +59,12 @@ class Vk( SiteBase ):
         except: title = sites.get_random_text()
         
         if int(params.get("no_flv",0)):
-            baseUrl = params["url"] + "/u%s/video/%s.{res}.mp4"%(params["uid"], params["vtag"])
+            baseUrl = params["url"] + "/u%s/videos/%s.{res}.mp4"%(params["uid"], params["vtag"])
             url_hd240 = baseUrl.format(res = 240)
             url_hd360 = baseUrl.format(res = 360)
             ext = "mp4"
         else:
-            url_hd240 = url_hd360 = params["url"] + "u%s/video/%s.flv"%(params["uid"], params["vtag"])
+            url_hd240 = url_hd360 = params["url"] + "u%s/videos/%s.flv"%(params["uid"], params["vtag"])
             ext = "flv"
             
         self.configs = {1: url_hd240, 2: url_hd360, "title": title, "ext": ext}
