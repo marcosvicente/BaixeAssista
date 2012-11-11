@@ -1,8 +1,9 @@
 # coding: utf-8
-from videobb_com import *
+from _sitebase import *
+import videobb_com
 
 ###################################### VIDEOZER #######################################
-class Videozer( Videobb):
+class Videozer( videobb_com.Videobb ):
     ## http://www.videozer.com/video/ceN9vZXa
     controller = {
         "url": "http://www.videozer.com/video/%s", 
@@ -12,7 +13,7 @@ class Videozer( Videobb):
     }
     
     def __init__(self, url, **params):
-        Videobb.__init__(self, url, **params)
+        super(self.__class__, self).__init__(url, **params)
         self.settingsLink = 'http://www.videozer.com/player_control/settings.php?v=%s&fv=v1.1.14'
         self.env = ["cfg","environment"]
         self.res = ["cfg","quality"]

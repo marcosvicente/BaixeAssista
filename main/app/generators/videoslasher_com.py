@@ -1,5 +1,6 @@
 # coding: utf-8
-from putlocker_com import *
+from _sitebase import *
+import putlocker_com
 
 ########################################################################
 class Videoslasher( SiteBase ):
@@ -31,7 +32,8 @@ class Videoslasher( SiteBase ):
         return True
     
     def postPage(self, webpage, proxies, timeout):
-        matchobj = PutLocker.patternForm.search( webpage )
+        matchobj = putlocker_com.PutLocker.patternForm.search( webpage )
+        
         hashvalue =  matchobj.group("hash") or  matchobj.group("_hash")
         hashname = matchobj.group("name") or  matchobj.group("_name")
         confirmvalue = matchobj.group("confirm")

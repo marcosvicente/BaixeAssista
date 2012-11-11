@@ -1,8 +1,9 @@
 # coding: utf-8
-from putlocker_com import *
+from _sitebase import *
+import putlocker_com
 
 ###################################### PUTLOCKER ######################################
-class Sockshare( PutLocker ):
+class Sockshare( putlocker_com.PutLocker ):
     ## http://www.sockshare.com/file/E6DDA74FBBBFFC12
     ## http://www.sockshare.com/embed/E6DDA74FBBBFFC12
     controller = {
@@ -16,7 +17,8 @@ class Sockshare( PutLocker ):
     }
     
     def __init__(self, url, **params):
-        PutLocker.__init__(self, url, **params)
+        super(self.__class__, self).__init__(url, **params)
         self.getFileBaseUrl = "http://www.sockshare.com"
         self.basename = "sockshare.com"
         self.url = url
+        

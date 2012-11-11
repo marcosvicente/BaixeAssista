@@ -1,8 +1,9 @@
 # coding: utf-8
-from videoweed_es import *
+from _sitebase import *
+import videoweed_es
 
 ####################################### NOVAMOV #######################################
-class Novamov( Videoweed ):
+class Novamov( videoweed_es.Videoweed ):
     """ Novamov: segue a mesma sequência lógica de Videoweed """
     ## http://www.novamov.com/video/cfqxscgot96pe
     ## http://embed.novamov.com/embed.php?width=520&height=320&v=cfqxscgot96pe&px=1
@@ -18,10 +19,9 @@ class Novamov( Videoweed ):
     }
     
     def __init__(self, url, **params):
-        """Constructor"""
         # objetos de Videoweed não anulados nessa inicialização,
         # serão considerados objetos válidos para novos objetos de Novamov.
-        Videoweed.__init__(self, url, **params)
+        super(self.__class__, self).__init__(url, **params)
         self.player_api = "http://www.novamov.com/api/player.api.php?key=%s&user=undefined&codes=1&pass=undefined&file=%s"
         # link direto para o site(não embutido)
         self.siteVideoLink = "http://www.novamov.com/video/%s"
