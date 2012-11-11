@@ -152,25 +152,21 @@ class Universal(object):
             assert bool(cls.sites[sitename].get("video_control", None)), u"Controlador de video não definido para %s"%sitename
 
 # -----------------------------------------------------------------------------
-def get_classref_inmodule(filemod):
-    """ retorna só a referência da classe site no módulo.
-     O referência de classe, depende da variável 'controller' para ser uma referência válida.
-     retorna None, se nada for encontrado.
-    """
-    for key in dir(filemod):
-        classref = getattr(filemod, key)
-        if callable(classref) and hasattr(classref, "controller"):
+def get_classref(filemod):
+    """ retorna apenas, sites com a variável de controle(controller) """
+    for classref in filemod.__dict__.values():
+        if callable(classref) and hasattr(classref,"controller"):
             return classref
         
 def find_all_sites():
     """ retorna toda a lista de scripts(já importada) das definições dos sites suportados. """
-    sitelist = []
+    modulelist = []
     for filepath in glob.glob(os.path.join(settings.APPDIR, "generators", "*.py")):
         name = util.base.get_filename(filepath, False)
         if not name.startswith("_"):
-            filemod = __import__(Universal.__module__, {}, {}, [name])
-            sitelist.append(getattr(filemod, name))
-    return sitelist
+            package = __import__(Universal.__module__, {}, {}, [name])
+            modulelist.append(getattr(package, name))
+    return map(get_classref, modulelist)
     
 def register_site(basename, site):
     if site.controller["video_control"] is None:
@@ -182,7 +178,8 @@ def register_site(basename, site):
         
     Universal.add_site(basename, **site.controller)
 
-for site in map(get_classref_inmodule, find_all_sites()):
+for site in find_all_sites():
+    ## print "Site: %s"%site
     default = manager.UrlBase.getBaseName(site.controller["url"])
     basename = site.controller.get("basenames", default)    
     
