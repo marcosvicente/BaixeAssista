@@ -26,7 +26,6 @@ class ConnectionProcessor(object):
     def __init__(self):
         self.cookiejar = cookielib.CookieJar()
         self.cookieProcessor = urllib2.HTTPCookieProcessor(cookiejar = self.cookiejar)
-        self.opener = urllib2.build_opener(self.cookieProcessor)
         self.logged = False
         
     def login(self, opener=None, timeout=0):
@@ -83,7 +82,7 @@ class ConnectionProcessor(object):
         """ conecta a url data e retorna o objeto criado """
         if request is None: request = self.get_request(url, headers, data)
         
-        self.opener.add_handler(urllib2.ProxyHandler(proxies))
+        self.opener = urllib2.build_opener(self.cookieProcessor, urllib2.ProxyHandler(proxies))
         
         # faz o login se necessário
         if not self.logged or login:
@@ -220,21 +219,20 @@ class SiteBase(ConnectionProcessor):
     def get_size(self, proxies={}, timeout=60):
         """ retorna o tamanho do arquivo de vídeo, através do cabeçalho de resposta """
         link = self.getLink()
-        linkseek = sites.get_with_seek(link, 0)
-        headers = {"Range": "bytes=0-"}
-        headers.update( self.headers )
         try:
-            req = self.get_request(linkseek, headers)
-            fd = self.connect(request = req, proxies=proxies, timeout=timeout)
+            fd = self.connect(sites.get_with_seek(link, 0), 
+                              headers = {"Range": "bytes=0-"},
+                              proxies=proxies, timeout=timeout)
             fd.close()
+            length = long(fd.headers.get("Content-Length", 0))
+            assert (length and (fd.code == 200 or fd.code == 206))
         except:
             link = link.rsplit("&",1)[0]
-            fd = self.connect(url=link, timeout=timeout)
-            fd.close()
-        length = fd.headers.get("Content-Length", None)
-        assert (length and (fd.code == 200 or fd.code == 206))
-        return long(length)
-
+            fd = self.connect(url=link, timeout=timeout); fd.close()
+            length = long(fd.headers.get("Content-Length", 0))
+            assert (length and (fd.code == 200 or fd.code == 206))
+        return length
+        
     def getStreamSize(self):
         """ retorna o tamanho compleot do arquivo de video """
         return self.streamSize

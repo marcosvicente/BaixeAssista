@@ -9,7 +9,7 @@ class Userporn( videobb_com.Videobb ):
     controller = {
         "url": "http://www.userporn.com/video/%s", 
         "patterns": re.compile("(?P<inner_url>(?:http://)?(?:www\.)?userporn\.com/(?:video/|watch_video\.php\?v=)(?P<id>\w+))"), 
-        "control": "SM_SEEK",
+        "control": "SM_RANGE",
         "video_control": None
     }
     
