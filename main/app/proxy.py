@@ -167,6 +167,9 @@ class TesteIP( threading.Thread ):
 				# valida o cabeçalho de resposta
 				isValid = self.videoManager.check_response(len(header), seekpos, 
 														   streamSize, streamSocket.headers)
+				#print "isValid: %s"%isValid
+				#print "header: %s"%repr(header)
+				#print "streamSize: %s"%streamSize
 				
 				if isValid and (streamSocket.code == 200 or streamSocket.code == 206):
 					before = time.time(); stream = streamSocket.read(block_size)

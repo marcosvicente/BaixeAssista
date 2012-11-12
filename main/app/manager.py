@@ -1698,7 +1698,8 @@ class StreamManager_( StreamManager ):
         while nfalhas < self.params.get("reconexao",1):
             try:
                 sleep_for = self.params.get("waittime",2)
-
+                timeout = self.params.get("timeout", 25)
+                
                 self.info.set(self.ident, "state", _("Conectando"))
                 data = self.videoManager.get_init_page( self.proxies) # pagina incial
                 link = self.videoManager.get_file_link( data) # link de download
@@ -1709,10 +1710,10 @@ class StreamManager_( StreamManager ):
                     time.sleep(1)
                 
                 self.info.set(self.ident, "state", _("Conectando"))
-                link = sites.get_with_seek(link, seekpos)
                 
-                self.streamSocket = self.videoManager.connect(link, proxies = self.proxies, 
-                                      headers={"Range":"bytes=%s-%s"%(seekpos, streamsize)})
+                self.streamSocket = self.videoManager.connect(sites.get_with_seek(link, seekpos),
+                                          headers={"Range":"bytes=%s-%s"%(seekpos, streamsize)},
+                                          proxies = self.proxies, timeout = timeout)
                 
                 stream = self.streamSocket.read( cache_size )
                 stream, header = self.videoManager.get_stream_header(stream, seekpos)
