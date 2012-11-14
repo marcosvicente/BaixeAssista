@@ -15,6 +15,7 @@ if not pardir in sys.path: sys.path.append( pardir )
 if not curdir in sys.path: sys.path.append( curdir )
 
 import browser, detail, noteBook, manager
+import wEmbed
 ########################################################################
 
 class BarraControles( noteBook.NoteBookImage ):
@@ -66,8 +67,8 @@ class BarraControles( noteBook.NoteBookImage ):
 		self.playerMenu.AppendRadioItem(self.popupID1, "JWPlayer")
 		self.playerMenu.AppendRadioItem(self.popupID2, "FlowPlayer")
 		
-		self.Bind(wx.EVT_MENU, self.loadEmbedPlayer, id=self.popupID1)
-		self.Bind(wx.EVT_MENU, self.loadEmbedPlayer, id=self.popupID2)
+		self.Bind(wx.EVT_MENU, self.updateEmbedPlayer, id=self.popupID1)
+		self.Bind(wx.EVT_MENU, self.updateEmbedPlayer, id=self.popupID2)
 		
 		checkopts = {"JWPlayer": self.popupID1, "FlowPlayer": self.popupID2}
 		moduleName = self.mainWin.configs["PlayerWin"]["moduleName"]
@@ -92,6 +93,10 @@ class BarraControles( noteBook.NoteBookImage ):
 		# marca a última skin usada
 		self.menuSkins.Check(checked, True)
 		
+		popup_id = idIntValue +index +1
+		self.playerMenu.AppendCheckItem(popup_id, "Popup player")
+		self.Bind(wx.EVT_MENU, self.popupEmbedPlayer, id=popup_id)
+		
 		# Popup the menu.  If an item is selected then its handler
 		# will be called before PopupMenu returns.
 		evtMenuOn.PopupMenu( self.playerMenu )
@@ -105,27 +110,54 @@ class BarraControles( noteBook.NoteBookImage ):
 		self.mainWin.playerWin["skinName"] = skinName
 		
 		# atualiza o player(automaticamente),quando ativado no menu.
-		if self.mainWin.cfg_menu.as_bool('playerEmbutido'):
+		if self.mainWin.cfg_menu.as_bool("playerEmbutido"):
 			self.mainWin.reloadPlayer()
 			
-	def loadEmbedPlayer(self, evt):
+	def updateEmbedPlayer(self, evt):
 		""" carrega o player embutido escolhido no menu """
-		moduleName = self.playerMenu.GetLabelText(evt.GetId())
-		self.mainWin.configs["PlayerWin"]["moduleName"] = moduleName
-		playerPanel = self.mainWin.playerWin.GetParent()
-		playerPanel.Freeze()
+		module = self.playerMenu.GetLabelText(evt.GetId())
+		self.mainWin.configs["PlayerWin"]["moduleName"] = module
 		
-		panelSizer = playerPanel.GetSizer()
-		panelSizer.Remove( self.mainWin.playerWin )
+		self.loadEmbedPlayer( self.mainWin.playerWin.GetParent() )
+	
+	def loadEmbedPlayer(self, newparent):
+		""" carrega o player embutido escolhido no menu """
+		self.oldparent = self.mainWin.playerWin.GetParent()
+		self.oldparent.Freeze()
+		
+		sizer = self.oldparent.GetSizer()
+		sizer.Remove( self.mainWin.playerWin )
 		# removendo o player atual
 		self.mainWin.playerWin.Destroy()
 		
-		# criando um novo player e atribuindo ao panel da pagina
-		newPlayer = self.createPlayerWin( playerPanel )
-		panelSizer.Add(newPlayer, 1, wx.EXPAND)
-		playerPanel.Layout()
-		playerPanel.Thaw()
+		newpsizer = newparent.GetSizer()
+		newparent.Freeze()
 		
+		newplayer = self.createPlayerWin( newparent )
+		newpsizer.Add(newplayer, 1, wx.EXPAND)
+		
+		newparent.Layout()
+		newparent.Thaw()
+		
+		self.oldparent.Layout()
+		self.oldparent.Thaw()
+		
+	def restoreEmbedPlayer(self, evt):
+		self.wplayer.dettach( self.mainWin.playerWin )
+		evtobj = evt.GetEventObject()
+		
+		self.loadEmbedPlayer( self.oldparent )
+		
+		self.wplayer = None
+		evtobj.Destroy()
+		
+	def popupEmbedPlayer(self, evt):
+		if not getattr(self, "wplayer", None):
+			self.wplayer = wEmbed.wEmbedPlayer( self.mainWin)
+			self.wplayer.Bind(wx.EVT_CLOSE, self.restoreEmbedPlayer)
+			
+			self.loadEmbedPlayer( self.wplayer )
+			
 	def createPlayerWin(self, parent):
 		""" carrega o flash player """
 		configs = getattr(self.mainWin,"configs",None)
@@ -137,7 +169,7 @@ class BarraControles( noteBook.NoteBookImage ):
 				
 			# as configurações sempre devem existir
 			pwconfig = configs["PlayerWin"]
-			pwconfig["moduleName"] = pwconfig.get("moduleName", "flowPlayer")
+			pwconfig["moduleName"] = pwconfig.get("moduleName", "FlowPlayer")
 			pwconfig["skinName"] = pwconfig.get("skinName", None)
 			modulename  = str(pwconfig["moduleName"]) # string only
 			
@@ -151,8 +183,8 @@ class BarraControles( noteBook.NoteBookImage ):
 				hostName = manager.Server.HOST,
 				skinName = pwconfig["skinName"]
 			)
-			self.mainWin.playerWin = playerWin = player.Player(parent, **params)
-			pwconfig["skinName"] = playerWin["skinName"]
+			self.mainWin.playerWin = player.Player(parent, **params)
+			pwconfig["skinName"] = self.mainWin.playerWin["skinName"]
 		else:
 			# evita que o programa trave caso algo dê errado
 			self.mainWin.playerWin = wx.Panel()
