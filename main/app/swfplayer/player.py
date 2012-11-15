@@ -6,7 +6,8 @@ import string
 import random
 import wx.html2 as Webview
 from main import settings
-from django.template import Context, Template, loader
+from django.template import Context, Template, loader,
+from main.app.util.sites import get_random_text 
 import json
 ########################################################################
 
@@ -88,11 +89,6 @@ class Player(wx.Panel):
     
     def hasSkinName(self, name):
         return self.skins.has_key(name)
-        
-    def getStreamName(self, size=25):
-        letras = [char for char in string.ascii_letters]
-        filename = "".join( [random.choice( letras) for i in range(size)] )
-        return filename
     
     def __setitem__(self, name, value):
         assert self.params.has_key( name ), 'set:option "%s" not found!'%name
@@ -104,7 +100,7 @@ class Player(wx.Panel):
     
     def pause(self):
         """ pausa a execução do video """
-        self.webview.RunScript("BA_GLOBAL_PLAYER.pause();")
+        self.webview.RunScript("BA_GLOBAL_PLAYER.stop();")
     
     def get_json(self, name, default=None):
         return self.json_data.get(name, default)
@@ -116,7 +112,7 @@ class Player(wx.Panel):
     
     def getParams(self):
         previmage = self.params.get("previewImage", "")
-        streamname = self.params.get("streamName", self.getStreamName(5))
+        streamname = self.params.get("streamName", get_random_text(5))
         
         hostname = self.params.get("hostName", "localhost")
         portnumber = self.params.get("portNumber", 8002)
