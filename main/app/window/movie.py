@@ -35,6 +35,7 @@ import wx.dataview as dv
 class MovieModel(dv.PyDataViewIndexListModel):
 	def __init__(self, data):
 		dv.PyDataViewIndexListModel.__init__(self, len(data))
+		self.colourCols = []
 		self.data = data
 
 	# All of our columns are strings.  If the model or the renderers
@@ -60,13 +61,16 @@ class MovieModel(dv.PyDataViewIndexListModel):
 		""" Report the number of rows in the model """
 		#self.log.write('GetCount')
 		return len(self.data)
-
+	
+	def setColourCol(self, col):
+		self.colourCols.append(col)
+		
 	def GetAttrByRow(self, row, col, attr):
 		""" Called to check if non-standard attributes should be used in the
 		 cell at (row, col)
 		"""
 		##self.log.write('GetAttrByRow: (%d, %d)' % (row, col))
-		if col == 3:
+		if col in self.colourCols:
 			attr.SetColour('blue')
 			attr.SetBold(True)
 			return True
@@ -142,15 +146,32 @@ class MovieView(wx.Panel):
 		# fetch the data from.  This means that you can have views
 		# using the same model that show different columns of data, or
 		# that they can be in a different order than in the model.
-		self.dvc.AppendTextColumn(_(u"Título"),  0, width=450, mode=dv.DATAVIEW_CELL_EDITABLE)
-		colExt = self.dvc.AppendTextColumn(_(u"Ext"),  1, width=100)
+		column_id = 0
+		colID = self.dvc.AppendTextColumn(_(u"ID"),  column_id, width=50)
+		colID.Renderer.Alignment = wx.ALIGN_RIGHT
 		
-		# The DataViewColumn object is returned from the Append and
-		# Prepend methods, and we can modify some of it's properties
-		# like this.
-		colExt.Alignment = wx.ALIGN_RIGHT
+		column_id += 1
+		self.dvc.AppendTextColumn(_(u"Título"),  column_id, width=350, mode=dv.DATAVIEW_CELL_EDITABLE)
+		
+	 	column_id += 1
+		colExt = self.dvc.AppendTextColumn(_(u"Ext"),  column_id, width=100)
 		colExt.Renderer.Alignment = wx.ALIGN_RIGHT
-		colExt.MinWidth = 40
+		
+		column_id += 1
+		colQuality = self.dvc.AppendTextColumn(_(u"Qualidade"), column_id, width=100)
+		colQuality.Renderer.Alignment = wx.ALIGN_RIGHT
+		
+		column_id += 1
+		self.dvc.AppendTextColumn(_(u"Tamanho"), column_id, width=100)
+		self.model.setColourCol( column_id )
+		
+		column_id += 1
+		self.dvc.AppendTextColumn(_(u"Baixado"), column_id, width=100)
+		self.model.setColourCol( column_id )
+		
+		column_id += 1
+		self.dvc.AppendTextColumn(_(u"Estado"), column_id, width=150)
+		self.model.setColourCol( column_id )
 		
 		# Through the magic of Python we can also access the columns
 		# as a list via the Columns property.  Here we'll mark them
@@ -158,7 +179,7 @@ class MovieView(wx.Panel):
 		for c in self.dvc.Columns:
 			c.Sortable = True
 			c.Reorderable = True
-
+			
 		# set the Sizer property (same as SetSizer)
 		self.Sizer = wx.BoxSizer(wx.VERTICAL) 
 		self.Sizer.Add(self.dvc, 1, wx.EXPAND)
@@ -172,8 +193,7 @@ class MovieManager(wx.MiniFrame):
 
 		wx.MiniFrame.__init__(self, mainWin, -1, title, pos, size, style)
 		self.SetFont(wx.Font(12, wx.SWISS, wx.NORMAL, wx.NORMAL))
-		self.SetMinSize((450, 200))
-		self.SetMaxSize((720, 300))
+		self.SetMinSize((640, 350))
 		
 		# ponteiro para a janela principal
 		self.mainWin = mainWin
@@ -192,7 +212,7 @@ class MovieManager(wx.MiniFrame):
 		# não existe um download sendo feito no momento em que ele for necessário.
 		if self.fileManager is None: self.fileManager = manager.FileManager()
 		if self.urlManager is None: self.urlManager = manager.UrlManager()
-
+		
 		if hasattr(mainWin, "configs"):
 			locais = mainWin.configs["Locais"]
 			self.playerPath = locais["playerPath"]
@@ -202,8 +222,16 @@ class MovieManager(wx.MiniFrame):
 		self.painelControles.SetSizer( self.painelSizer)
 
 		# controlador de videos -------------------------------------------
-		data = [[str(i), title] for i, title in enumerate(self.urlManager.getTitleList())]
-		
+		data = []
+		self.titleColID = 1
+		condition = {True: _("completo"), False: _("incompleto")}
+		for query in manager.ResumeInfo().objects.all():
+			data.append([query.pk, 
+						 query.title, query.videoExt, query.videoQuality, 
+						 manager.StreamManager.format_bytes(query.videoSize),
+						 manager.StreamManager.format_bytes(query.cacheBytesCount),
+						 condition[query.isCompleteDown]
+						])
 		self.movieView = MovieView(self.painelControles, data = data)
 		
 		# Bind some events so we can see what the DVC sends us
@@ -288,7 +316,7 @@ class MovieManager(wx.MiniFrame):
 				
 			if objModalID == wx.ID_YES or objEventID != self.btnDeleteExitID:
 				for row in rows:
-					filename = self.movieView.model.GetValueByRow(row, 0)
+					filename = self.movieView.model.GetValueByRow(row, self.titleColID)
 					
 					if objEventID == self.btnDeleteExitID:
 						self.deleteFileName( filename )
@@ -356,7 +384,7 @@ class MovieManager(wx.MiniFrame):
 			rows = [self.movieView.model.GetRow(item) for item in items]
 			
 			for row in rows:
-				filename = self.movieView.model.GetValueByRow(row, 0)
+				filename = self.movieView.model.GetValueByRow(row, self.titleColID)
 				filepath = self.fileManager.getFilePath( filename )
 				flvplayer = manager.FlvPlayer(self.playerPath, filepath = filepath)
 				flvplayer.start()
