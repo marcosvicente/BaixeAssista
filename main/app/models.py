@@ -45,7 +45,11 @@ class Resume( models.Model ):
 	@pending.setter
 	def pending(self, data):
 		self._pending = cPickle.dumps(data)
-		
+	
+	@property
+	def isCompleteDown(self):
+		return (self.cacheBytesCount >= (self.videoSize-50))
+	
 	def __unicode__(self):
 		return self.title
 	
