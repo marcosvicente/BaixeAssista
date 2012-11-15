@@ -67,17 +67,21 @@ class BarraControles( noteBook.NoteBookImage ):
 		
 		# make a menu
 		self.playerMenu = wx.Menu()
-		# item.SetBitmap(bmp)
-		self.playerMenu.AppendRadioItem(self.popupID1, "JWPlayer")
-		self.playerMenu.AppendRadioItem(self.popupID2, "FlowPlayer")
 		
+		wplayerSection = self.mainWin.configs["PlayerWin"]
+		moduleName = wplayerSection["moduleName"]
+		
+		player_opts = (
+			{"id": self.popupID1, "name": "JWPlayer"},
+			{"id": self.popupID2, "name": "FlowPlayer"}
+		)
+		for opts in player_opts:
+			self.playerMenu.AppendRadioItem(opts["id"], opts["name"])
+			if opts["name"] == moduleName: # ultmo player escolhido
+				self.playerMenu.Check(opts["id"],True)
+			
 		self.Bind(wx.EVT_MENU, self.updateEmbedPlayer, id=self.popupID1)
 		self.Bind(wx.EVT_MENU, self.updateEmbedPlayer, id=self.popupID2)
-		
-		checkopts = {"JWPlayer": self.popupID1, "FlowPlayer": self.popupID2}
-		moduleName = self.mainWin.configs["PlayerWin"]["moduleName"]
-		self.playerMenu.Check(checkopts[ moduleName ], True)
-		
 		self.playerMenu.AppendSeparator()
 		
 		# sub-menu skins
@@ -86,7 +90,7 @@ class BarraControles( noteBook.NoteBookImage ):
 		
 		skin_id = self.popupID3+1
 		checked = skin_opt_id = skin_id # usado como item padrão
-		skinName = self.mainWin.configs["PlayerWin"]["skinName"]
+		skinName = self.mainWin.configs["PlayerWin"][moduleName]["skinName"]
 		
 		for index, skin in enumerate(self.mainWin.playerWin.getSkinsNames()):
 			skin_opt_id = skin_id + index
@@ -98,18 +102,34 @@ class BarraControles( noteBook.NoteBookImage ):
 		self.menuSkins.Check(checked, True)
 		
 		popup_id = skin_opt_id +index +1
-		self.playerMenu.AppendCheckItem(popup_id, "Popup player")
+		self.playerMenu.Append(popup_id, _("Abra em uma janela"))
 		self.Bind(wx.EVT_MENU, self.popupEmbedPlayer, id=popup_id)
+		
+		popup_autohide_id = popup_id +1
+		self.playerMenu.AppendCheckItem(popup_autohide_id, _("Oculte automaticamente"))
+		self.Bind(wx.EVT_MENU, self.updateAutoHide, id=popup_autohide_id)
+		self.playerMenu.Check(popup_autohide_id, wplayerSection.as_bool("autoHide"))
+		# o menu interage diretamente com a janela, quando esta estiver ativada.
+		self.playerMenu.Enable(popup_autohide_id, bool(getattr(self,"wplayer",None)))
 		
 		# Popup the menu.  If an item is selected then its handler
 		# will be called before PopupMenu returns.
 		evtMenuOn.PopupMenu( self.playerMenu )
 		self.playerMenu.Destroy()
+	
+	def updateAutoHide(self, evt):
+		checked = self.playerMenu.IsChecked( evt.GetId() )
+		wplayerSection = self.mainWin.configs["PlayerWin"]
+		wplayerSection["autoHide"] = checked
 		
 	def changeEmbedPlayerSkin(self, evt):
 		""" adiciona a skin selecionada para player embutido """
 		skinName = self.menuSkins.GetLabelText(evt.GetId())
-		self.mainWin.configs["PlayerWin"]["skinName"] = skinName
+		
+		moduleName = self.mainWin.configs["PlayerWin"]["moduleName"]
+		playerSection = self.mainWin.configs["PlayerWin"][moduleName]
+		playerSection["skinName"] = skinName
+		
 		# Player params
 		self.mainWin.playerWin["skinName"] = skinName
 		
@@ -120,7 +140,9 @@ class BarraControles( noteBook.NoteBookImage ):
 	def updateEmbedPlayer(self, evt):
 		""" carrega o player embutido escolhido no menu """
 		module = self.playerMenu.GetLabelText(evt.GetId())
-		self.mainWin.configs["PlayerWin"]["moduleName"] = module
+		
+		playerSection = self.mainWin.configs["PlayerWin"]
+		playerSection["moduleName"] = module
 		
 		self.loadEmbedPlayer(self.mainWin.playerWin.GetParent())
 	
@@ -161,7 +183,6 @@ class BarraControles( noteBook.NoteBookImage ):
 		if not getattr(self, "wplayer", None):
 			self.wplayer = wEmbed.wEmbedPlayer( self.mainWin)
 			self.wplayer.Bind(wx.EVT_CLOSE, self.restoreEmbedPlayer)
-			
 			self.loadEmbedPlayer( self.wplayer )
 			
 	def createPlayerWin(self, parent):
@@ -169,37 +190,28 @@ class BarraControles( noteBook.NoteBookImage ):
 		configs = getattr(self.mainWin,"configs",None)
 		
 		if configs:
-			# seção de dados muito importante
-			if not configs.has_key("PlayerWin"):
-				configs["PlayerWin"] = {}
-				
-			# as configurações sempre devem existir
-			pwconfig = configs["PlayerWin"]
-			pwconfig["moduleName"] = pwconfig.get("moduleName", "FlowPlayer")
-			pwconfig["skinName"] = pwconfig.get("skinName", None)
-			modulename  = str(pwconfig["moduleName"]) # string only
+			moduleName = str(self.mainWin.configs["PlayerWin"]["moduleName"])
+			playerSection = self.mainWin.configs["PlayerWin"][moduleName]
 			
 			# importa o player escolhido pelo usuário
-			swplayer = __import__("main.app.swfplayer", {}, {}, [modulename])
-			player = getattr(swplayer, modulename)
-			
+			swplayer = __import__("main.app.swfplayer", {}, {}, [moduleName])
+			player = getattr(swplayer, moduleName)
 			params = dict(
 				autostart = self.mainWin.isLoading(),
 				portNumber = manager.Server.PORT,
 				hostName = manager.Server.HOST,
-				skinName = pwconfig["skinName"]
+				skinName = playerSection["skinName"]
 			)
 			self.mainWin.playerWin = player.Player(parent, **params)
-			pwconfig["skinName"] = self.mainWin.playerWin["skinName"]
+			playerSection["skinName"] = self.mainWin.playerWin["skinName"]
 		else:
 			# evita que o programa trave caso algo dê errado
 			self.mainWin.playerWin = wx.Panel()
 		return self.mainWin.playerWin
 		
 	def createBrowserWin(self, parent):
-		iewindow = browser.Browser(parent, self.mainWin)
-		self.mainWin.iewindow = iewindow
-		return iewindow
+		self.mainWin.iewindow = browser.Browser(parent, self.mainWin)
+		return self.mainWin.iewindow
 
 	def createConnetionWin(self, parent):
 		topPanel = wx.Panel(parent, -1)
