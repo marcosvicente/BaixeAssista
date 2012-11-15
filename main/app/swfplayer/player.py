@@ -6,7 +6,7 @@ import string
 import random
 import wx.html2 as Webview
 from main import settings
-from django.template import Context, Template, loader,
+from django.template import Context, Template, loader
 from main.app.util.sites import get_random_text 
 import json
 ########################################################################
