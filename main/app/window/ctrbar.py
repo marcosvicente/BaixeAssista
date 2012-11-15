@@ -26,23 +26,27 @@ class BarraControles( noteBook.NoteBookImage ):
 	def __init__(self, parent, id):
 		noteBook.NoteBookImage.__init__(self, parent)
 		self.mainWin = parent
-
+		
+		newpage = self.createPage(
+			os.path.join(settings.IMAGES_DIR, "apps-display-icon.png"),
+			pageTootip = _("Assistir"), callback = self.OnContextMenu
+			)
+		self.addPage(newpage, self.createPlayerWin( newpage ))
+		self.buttonDisplayPanel = newpage # referencia para 'panel' raiz
+		
 		attrs = [
-			(os.path.join(settings.IMAGES_DIR, "apps-display-icon.png"), 
-			 _("Assistir"), self.createPlayerWin, self.OnContextMenu),
-
 			(os.path.join(settings.IMAGES_DIR, "settings-tool.png"), 
-			 _(u"Configuração"), self.createConnetionWin, None),
-
+			 _(u"Configuração"), self.createConnetionWin),
+			
 			(os.path.join(settings.IMAGES_DIR, "search-computer.png"), 
-			 _("Pesquisar"), self.createBrowserWin, None),
+			 _("Pesquisar"), self.createBrowserWin),
 		]
 		# carrega as páginas
-		for imgPath, txt, winBuilder, callback in attrs:
-			newpage = self.createPage(imgPath, "", txt, 32, 32, callback=callback)
+		for imgPath, txt, winBuilder in attrs:
+			newpage = self.createPage(imgPath, "", txt)
 			self.addPage(newpage, winBuilder(newpage))
 			
-		self.setWidget(self.mainWin, "FullScreen", _("Tela cheia"), 32, 32)
+		self.setWidget(self.mainWin, "FullScreen", _("Tela cheia"))
 		
 	def __del__(self):
 		del self.mainWin
@@ -118,14 +122,14 @@ class BarraControles( noteBook.NoteBookImage ):
 		module = self.playerMenu.GetLabelText(evt.GetId())
 		self.mainWin.configs["PlayerWin"]["moduleName"] = module
 		
-		self.loadEmbedPlayer( self.mainWin.playerWin.GetParent() )
+		self.loadEmbedPlayer(self.mainWin.playerWin.GetParent())
 	
 	def loadEmbedPlayer(self, newparent):
 		""" carrega o player embutido escolhido no menu """
-		self.oldparent = self.mainWin.playerWin.GetParent()
-		self.oldparent.Freeze()
+		oldparent = self.mainWin.playerWin.GetParent()
+		oldparent.Freeze()
 		
-		sizer = self.oldparent.GetSizer()
+		sizer = oldparent.GetSizer()
 		sizer.Remove( self.mainWin.playerWin )
 		# removendo o player atual
 		self.mainWin.playerWin.Destroy()
@@ -139,17 +143,17 @@ class BarraControles( noteBook.NoteBookImage ):
 		newparent.Layout()
 		newparent.Thaw()
 		
-		self.oldparent.Layout()
-		self.oldparent.Thaw()
+		oldparent.Layout()
+		oldparent.Thaw()
 		
 	def restoreEmbedPlayer(self, evt):
-		self.wplayer.dettach( self.mainWin.playerWin )
 		evtobj = evt.GetEventObject()
 		
-		self.loadEmbedPlayer( self.oldparent )
+		# restaura para o painel padrão(button page panel)
+		self.loadEmbedPlayer( self.buttonDisplayPanel )
 		
+		wx.CallAfter( evtobj.Destroy)
 		self.wplayer = None
-		evtobj.Destroy()
 		
 	def popupEmbedPlayer(self, evt):
 		if not getattr(self, "wplayer", None):
