@@ -110,7 +110,7 @@ class BarraControles( noteBook.NoteBookImage ):
 		self.Bind(wx.EVT_MENU, self.updateAutoHide, id=popup_autohide_id)
 		self.playerMenu.Check(popup_autohide_id, wplayerSection.as_bool("autoHide"))
 		# o menu interage diretamente com a janela, quando esta estiver ativada.
-		self.playerMenu.Enable(popup_autohide_id, bool(getattr(self,"wplayer",None)))
+		self.playerMenu.Enable(popup_autohide_id, self.isModePopupWin)
 		
 		# Popup the menu.  If an item is selected then its handler
 		# will be called before PopupMenu returns.
@@ -121,6 +121,24 @@ class BarraControles( noteBook.NoteBookImage ):
 		checked = self.playerMenu.IsChecked( evt.GetId() )
 		wplayerSection = self.mainWin.configs["PlayerWin"]
 		wplayerSection["autoHide"] = checked
+	
+	@property
+	def isPopupHidden(self):
+		return self.mainWin.configs["PlayerWin"]["autoHide"]
+	
+	@property
+	def isModePopupWin(self):
+		return bool(getattr(self,"wplayer",None))
+	
+	@property
+	def haveHideWin(self):
+		return (self.isModePopupWin and
+				self.isPopupHidden)
+		
+	def showEmbedPlayer(self, boolflag=True):
+		""" mostra/oculta a janela do player, completamente de acordo com o 'flag'"""
+		wplayer = self.mainWin.playerWin.GetParent()
+		wplayer.Show( boolflag )
 		
 	def changeEmbedPlayerSkin(self, evt):
 		""" adiciona a skin selecionada para player embutido """

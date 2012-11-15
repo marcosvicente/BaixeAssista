@@ -616,6 +616,10 @@ class BaixeAssistaWin( wx.Frame ):
 			self.playerWin["portNumber"] = manager.Server.PORT
 			self.playerWin["autostart"] = self.streamLoading
 			self.playerWin.reload()
+			
+			# se teve que ocultar, então agora mostra
+			if self.barraControles.haveHideWin:
+				self.barraControles.showEmbedPlayer()
 		else:
 			self.stopExternalPlayer()
 			self.startExternalPlayer()
@@ -818,7 +822,7 @@ class BaixeAssistaWin( wx.Frame ):
 			maxsplit = self.barraControles.numDivStreamControl.GetValue()
 			try:
 				# inicia o objeto princial: main_obj
-				self.manage = manager.Manage( url, tempfile = tempfile, videoQuality = (vquality+1), #0+1=1
+				self.manage = manager.Manage(url, tempfile = tempfile, videoQuality = (vquality+1), #0+1=1
 								              maxsplit = maxsplit)
 			except Exception as err:
 				self.btnStartStopHandle()
@@ -876,8 +880,11 @@ class BaixeAssistaWin( wx.Frame ):
 			self.stopExternalPlayer()
 			
 			if self.cfg_menu.as_bool('playerEmbutido'):
+				if self.barraControles.haveHideWin:
+					self.barraControles.showEmbedPlayer(False)
+					
 				self.playerWin.pause()
-			
+				
 			# parando todas as conexões criadas
 			self.manage.ctrConnection.stopAllConnections()
 			self.detailControl.removaTodosItens()
