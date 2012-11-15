@@ -84,20 +84,20 @@ class BarraControles( noteBook.NoteBookImage ):
 		self.menuSkins = wx.Menu()
 		self.playerMenu.AppendMenu(self.popupID3, _("Mudar skin"), self.menuSkins)
 		
-		idIntValue = self.popupID3+1
-		checked = idIntValue # usado como item padrão
+		skin_id = self.popupID3+1
+		checked = skin_opt_id = skin_id # usado como item padrão
 		skinName = self.mainWin.configs["PlayerWin"]["skinName"]
 		
 		for index, skin in enumerate(self.mainWin.playerWin.getSkinsNames()):
-			menuItemId = idIntValue + index
-			self.menuSkins.AppendRadioItem(menuItemId, skin)
-			self.Bind(wx.EVT_MENU, self.skinChangeHandle, id=menuItemId)
-			if skinName == skin: checked = menuItemId
+			skin_opt_id = skin_id + index
+			self.menuSkins.AppendRadioItem(skin_opt_id, skin)
+			self.Bind(wx.EVT_MENU, self.changeEmbedPlayerSkin, id=skin_opt_id)
+			if skinName == skin: checked = skin_opt_id
 			
 		# marca a última skin usada
 		self.menuSkins.Check(checked, True)
 		
-		popup_id = idIntValue +index +1
+		popup_id = skin_opt_id +index +1
 		self.playerMenu.AppendCheckItem(popup_id, "Popup player")
 		self.Bind(wx.EVT_MENU, self.popupEmbedPlayer, id=popup_id)
 		
@@ -106,7 +106,7 @@ class BarraControles( noteBook.NoteBookImage ):
 		evtMenuOn.PopupMenu( self.playerMenu )
 		self.playerMenu.Destroy()
 		
-	def skinChangeHandle(self, evt):
+	def changeEmbedPlayerSkin(self, evt):
 		""" adiciona a skin selecionada para player embutido """
 		skinName = self.menuSkins.GetLabelText(evt.GetId())
 		self.mainWin.configs["PlayerWin"]["skinName"] = skinName
@@ -141,9 +141,11 @@ class BarraControles( noteBook.NoteBookImage ):
 		newpsizer.Add(newplayer, 1, wx.EXPAND)
 		
 		newparent.Layout()
+		newparent.Refresh()
 		newparent.Thaw()
 		
 		oldparent.Layout()
+		oldparent.Refresh()
 		oldparent.Thaw()
 		
 	def restoreEmbedPlayer(self, evt):

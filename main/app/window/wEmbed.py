@@ -8,6 +8,7 @@ class wEmbedPlayer( wx.MiniFrame):
         
         self.mainSizer = wx.BoxSizer()
         self.SetSizer( self.mainSizer )
+        self.SetAutoLayout(True)
         
         self.CenterOnParent()
         self.Show(True)
