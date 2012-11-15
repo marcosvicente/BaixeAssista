@@ -50,9 +50,8 @@ class MovieModel(dv.PyDataViewIndexListModel):
 
 	# This method is called when the user edits a data item in the view.
 	def SetValueByRow(self, value, row, col):
-		print "SetValue: (%d,%d) %s\n" % (row, col, value)
 		self.data[row][col] = value
-
+	
 	def GetColumnCount(self):
 		""" Report how many columns this model provides data for. """
 		return len(self.data[0])
@@ -188,11 +187,11 @@ class MovieView(wx.Panel):
 class MovieManager(wx.MiniFrame):
 	logger = logging.getLogger("main.app.window.movie")
 
-	def __init__( self, mainWin, title, pos=wx.DefaultPosition, 
-				  size=wx.DefaultSize, style=wx.DEFAULT_FRAME_STYLE ):
-
+	def __init__(self, mainWin, title, pos=wx.DefaultPosition, 
+				 size=wx.DefaultSize, style=wx.DEFAULT_FRAME_STYLE ):
+		
 		wx.MiniFrame.__init__(self, mainWin, -1, title, pos, size, style)
-		self.SetFont(wx.Font(12, wx.SWISS, wx.NORMAL, wx.NORMAL))
+		self.SetFont(wx.Font(10, wx.SWISS, wx.NORMAL, wx.NORMAL))
 		self.SetMinSize((640, 350))
 		
 		# ponteiro para a janela principal
@@ -378,12 +377,10 @@ class MovieManager(wx.MiniFrame):
 		# o usário não escolheu um caminho para o player ainda.
 		if hasattr(self.mainWin, "setPlayerPath") and not self.playerPath:
 			self.playerPath = self.mainWin.setPlayerPath()
-
+			
 		if self.playerPath:
 			items = self.movieView.dvc.GetSelections()
-			rows = [self.movieView.model.GetRow(item) for item in items]
-			
-			for row in rows:
+			for row in [self.movieView.model.GetRow(item) for item in items]:
 				filename = self.movieView.model.GetValueByRow(row, self.titleColID)
 				filepath = self.fileManager.getFilePath( filename )
 				flvplayer = manager.FlvPlayer(self.playerPath, filepath = filepath)
