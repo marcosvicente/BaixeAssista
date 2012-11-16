@@ -176,9 +176,8 @@ class MovieView(wx.Panel):
 		# as a list via the Columns property.  Here we'll mark them
 		# all as sortable and reorderable.
 		for c in self.dvc.Columns:
-			c.Sortable = True
-			c.Reorderable = True
-			
+			c.Sortable = c.Reorderable = True
+		
 		# set the Sizer property (same as SetSizer)
 		self.Sizer = wx.BoxSizer(wx.VERTICAL) 
 		self.Sizer.Add(self.dvc, 1, wx.EXPAND)
@@ -236,6 +235,7 @@ class MovieManager(wx.MiniFrame):
 		# Bind some events so we can see what the DVC sends us
 		self.movieView.dvc.Bind(dv.EVT_DATAVIEW_ITEM_EDITING_DONE, self.OnEditingDone)
 		self.movieView.dvc.Bind(dv.EVT_DATAVIEW_ITEM_VALUE_CHANGED, self.OnValueChanged)
+		self.movieView.dvc.Bind(wx.EVT_LEFT_DCLICK, self.fileOpen)
 		
 		##################################################################################
 		# remover e sair
@@ -334,12 +334,17 @@ class MovieManager(wx.MiniFrame):
 		if objEventID == self.btnDeleteExitID:
 			if objModalID == wx.ID_YES:
 				self.Close(True)
+	
+	def showSafeInfoDialog(self, *args, **kwargs):
+		dlg = GMD.GenericMessageDialog(self, 
+			_(u"Esta função ainda não foi impletada.\nLogo ela estará disponível."),
+			_(u"Não implementado"), wx.ICON_INFORMATION|wx.YES)
+		dlg.ShowModal(); dlg.Destroy()
 		
 	def OnEditingDone(self, evt):
-		print "OnEditingDone\n"
-
-	def OnValueChanged(self, evt):
-		print "OnValueChanged\n"
+		wx.CallAfter( self.showSafeInfoDialog )
+	
+	def OnValueChanged(self, evt): pass
 		
 	def saveDataBase(self, filename):
 		self.fileManager.resumeInfo.remove( filename )

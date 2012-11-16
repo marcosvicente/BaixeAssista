@@ -201,6 +201,7 @@ class BarraControles( noteBook.NoteBookImage ):
 		if not getattr(self, "wplayer", None):
 			self.wplayer = wEmbed.wEmbedPlayer( self.mainWin)
 			self.wplayer.Bind(wx.EVT_CLOSE, self.restoreEmbedPlayer)
+			self.wplayer.CenterOnParent(wx.BOTH)
 			self.loadEmbedPlayer( self.wplayer )
 			
 	def createPlayerWin(self, parent):

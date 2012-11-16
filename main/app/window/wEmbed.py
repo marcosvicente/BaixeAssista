@@ -10,7 +10,6 @@ class wEmbedPlayer( wx.MiniFrame):
         self.SetSizer( self.mainSizer )
         self.SetAutoLayout(True)
         
-        self.CenterOnParent()
         self.Show(True)
         
     def attach(self, win):
