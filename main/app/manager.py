@@ -391,16 +391,18 @@ class FM_runLocked(object):
 class FileManager(object):
     def __init__(self, **params):
         """ params: {}
-        - tempfile(default=False) -> indica o uso de um arquivo temporário para armazenamento.
-        - videoExt(default=flv) -> extensão do arquivo sendo processando.
+         -  filePath(default=DEFAULT_VIDEOS_DIR) -> local onde o arquivo de video será salvo.
+         - tempfile(default=False) -> indica o uso de um arquivo temporário para armazenamento.
+         - videoExt(default=flv) -> extensão do arquivo sendo processando.
         """
         self.params = params
-        self.filePath = settings.DEFAULT_VIDEOS_DIR
         self.resumeInfo = ResumeInfo()
+        self.filePath = (params.get("videoPath","") or settings.DEFAULT_VIDEOS_DIR)
         
     def __del__(self):
         try: self.file.close()
         except: pass
+        del self.resumeInfo
         del self.filePath
         del self.params
 
@@ -410,19 +412,22 @@ class FileManager(object):
     def getFilePath(self, filename):
         """ retorna o caminho completo para o local do arquivo """
         if self.resumeInfo.has( filename ):
-            videoExt = self.resumeInfo.get( filename ).videoExt
+            resumeInfo = self.resumeInfo.get( filename )
+            videoPath = resumeInfo.videoPath
+            videoExt = resumeInfo.videoExt
         else:
             videoExt = self.params.get("videoExt","")
-        
+            videoPath = self.filePath
+            
         videoExt = videoExt or "flv"
         
         try: filename = unicodedata.normalize("NFKD", unicode(filename,"UTF-8"))
         except: filename = unicodedata.normalize("NFKD", filename)
+        
         filename = filename.encode("ASCII","ignore")
         filename = "%s.%s"%(filename, videoExt)
-
-        filepath = os.path.join(self.filePath, filename)
-        return filepath
+        
+        return os.path.join(videoPath, filename)
 
     def pathExist(self, filename):
         """avalia se o arquivo já existe na pasta vídeos."""
@@ -892,9 +897,8 @@ class ManageMiddleware(object):
         request.manage = settings.MANAGE_OBJECT
         
 # GRUPO GLOBAL DE VARIAVEIS COMPARTILHADAS
-class Manage( object ):
-    
-    def __init__(self, URL = "", **params):
+class Manage(object):
+    def __init__(self, URL="", **params):
         """ params: {}
         - tempfile: define se o vídeo será gravado em um arquivo temporário
         - videoQuality: qualidade desejada para o vídeo(1 = baixa; 2 = média; 3 = alta).
@@ -946,22 +950,27 @@ class Manage( object ):
         self.velocidadeGlobal = 0  # velocidade global da conexão
         self.tempoDownload = ""    # tempo total de download
         self.cacheBytesCount = 0
-        self.fileManager = FileManager(tempfile = self.params.get('tempfile', False))
         
+        tempfile = self.params.get("tempfile", False)
+        videoPath = self.params.get("videoPath", "")
+        
+        self.fileManager = FileManager(tempfile = tempfile, videoPath = videoPath)
         # avalia se o arquivo pode ser resumido
         self.resuming = self.fileManager.resume( self.videoTitle )
         
         if self.resuming:
             self.cacheBytesCount = self.fileManager.resumeInfo["cacheBytesCount"]
             self.cacheBytesTotal = self.fileManager.resumeInfo["cacheBytesTotal"]
-            
             self.videoSize = self.fileManager.resumeInfo["videoSize"]
+            
             seekpos = self.fileManager.resumeInfo["seekPos"]
             intervs = self.fileManager.resumeInfo["pending"]
             
             # Sem o parâmetro qualidade do resumo, o usuário poderia 
             # corromper o arquivo de video, dando uma qualidade diferente
             self.params["videoQuality"] = self.fileManager.resumeInfo["videoQuality"]
+            self.params["videoPath"] = self.fileManager.resumeInfo["videoPath"]
+            
             self.videoExt = self.fileManager.resumeInfo["videoExt"]
             
             self.interval = Interval(maxsize = self.videoSize,
@@ -1158,7 +1167,8 @@ class Manage( object ):
             videoSize = self.videoSize, seekPos = self.interval.seekpos, 
             cacheBytesTotal = self.cacheBytesTotal, 
             cacheBytesCount = self.cacheBytesCount, 
-            videoQuality = self.params.get("videoQuality",2)
+            videoQuality = self.params.get("videoQuality",2),
+            videoPath = self.params.get("videoPath", settings.DEFAULT_VIDEOS_DIR)
         )
         
     def porcentagem(self):

@@ -161,6 +161,9 @@ class MovieView(wx.Panel):
 		colQuality.Renderer.Alignment = wx.ALIGN_RIGHT
 		
 		column_id += 1
+		colQuality = self.dvc.AppendTextColumn(_(u"Localização"), column_id, width=100)
+		
+		column_id += 1
 		self.dvc.AppendTextColumn(_(u"Tamanho"), column_id, width=100)
 		self.model.setColourCol( column_id )
 		
@@ -223,9 +226,9 @@ class MovieManager(wx.MiniFrame):
 		data = []
 		self.titleColID = 1
 		condition = {True: _("completo"), False: _("incompleto")}
-		for query in manager.ResumeInfo().objects.all():
+		for query in self.fileManager.resumeInfo.objects.all():
 			data.append([query.pk, 
-						 query.title, query.videoExt, query.videoQuality, 
+						 query.title, query.videoExt, query.videoQuality, query.videoPath,
 						 manager.StreamManager.format_bytes(query.videoSize),
 						 manager.StreamManager.format_bytes(query.cacheBytesCount),
 						 condition[query.isCompleteDown]

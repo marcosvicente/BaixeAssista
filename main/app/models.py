@@ -37,6 +37,7 @@ class Resume( models.Model ):
 	videoQuality = models.PositiveIntegerField("Video quality")
 	cacheBytesTotal = models.PositiveIntegerField("Stream downloaded bytes")
 	cacheBytesCount = models.PositiveIntegerField("Stream size")
+	videoPath = models.TextField("Video location")
 	
 	@property
 	def pending(self):

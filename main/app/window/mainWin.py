@@ -11,7 +11,7 @@ from wx.lib.wordwrap import wordwrap
 import wx.lib.agw.hyperlink as hyperlink
 import wx.lib.agw.genericmessagedialog as GMD
 
-from main import settings
+from django.conf import settings
 
 curdir = os.path.dirname(os.path.abspath(__file__))
 pardir = os.path.split( curdir )[0]
@@ -152,8 +152,8 @@ class BaixeAssistaWin( wx.Frame ):
 		mainVSizer.Add(self.barraControles, 1, wx.EXPAND)
 
 		# aplicando as configurações
-		self.apliqueConfigs()
-
+		self.restore_conf()
+		
 		self.Show()
 
 	def getMovieIcon(self):
@@ -188,13 +188,15 @@ class BaixeAssistaWin( wx.Frame ):
 
 	def baixeAssistaFinish(self, evt=None):
 		""" Termina salvando as configurações e fechando o servidor """
+		# atualiza as settings de todos os controles
+		self.barraControles.update_conf()
+		
 		# caso um arquivo esteja sendo baixado e for pressionado
 		if self.streamLoading: self.btnStartStopHandle()
-
+		
 		# Menu: atualização automática
-		isChecked = self.menuUpdate.IsChecked(500)
-		self.cfg_controles["autoUpdateSearch"] = isChecked
-
+		self.cfg_controles["autoUpdateSearch"] = self.menuUpdate.IsChecked(500)
+		
 		# Win configs
 		if not self.IsMaximized():
 			win_configs = self.configs["BaixeAssistaWin"]
@@ -205,12 +207,12 @@ class BaixeAssistaWin( wx.Frame ):
 			win_configs["winWidth"] = winSize[0]
 			win_configs["winHeight"] = winSize[1]
 
-		self.salveConfigs() # salva as configurações
-
+		self.save_conf() # salva as configurações
+		
 		# destrói a janela completamente
 		self.Destroy()
 
-	def apliqueConfigs(self):
+	def restore_conf(self):
 		""" restaura a interface para o último estado de configuração """
 		self.cfg_controles = self.configs["Controles"]
 		self.cfg_locais = self.configs['Locais']
@@ -231,7 +233,10 @@ class BaixeAssistaWin( wx.Frame ):
 		# qualidade do arquivo de video
 		vquality = self.cfg_controles.as_int("videoQualityControlValue")
 		self.barraControles.videoQualityControl.SetSelection( vquality )
-
+		
+		videoDir = self.cfg_controles.get("ctrVideoDir", settings.DEFAULT_VIDEOS_DIR)
+		self.barraControles.ctrVideoDir.SetValue( videoDir )
+		
 		# número inicial de divisões do arquivo de video
 		value = self.cfg_controles.as_int("numDivStreamControlValue") 
 		self.barraControles.numDivStreamControl.SetValue( value)
@@ -291,7 +296,7 @@ class BaixeAssistaWin( wx.Frame ):
 			wh = win_configs.as_int("winHeight")
 			self.SetSize((ww, wh))
 
-	def salveConfigs(self):
+	def save_conf(self):
 		if not base.security_save(self.configPath, _configobj=self.configs):
 			print "Erro[MainWin] salvando arquivo de configuração!!!"
 
@@ -818,12 +823,15 @@ class BaixeAssistaWin( wx.Frame ):
 			tempfile = self.barraControles.tempFileControl.GetValue()
 			# opção de qualidade do vídeo
 			vquality = self.barraControles.videoQualityControl.GetSelection()
+			# diretório onde serão salvos os arquivos de vídeos.
+			videoPath = self.barraControles.ctrVideoDir.GetValue()
 			# opção para o número de divisões iniciais da stream de vídeo
 			maxsplit = self.barraControles.numDivStreamControl.GetValue()
 			try:
 				# inicia o objeto princial: main_obj
-				self.manage = manager.Manage(url, tempfile = tempfile, videoQuality = (vquality+1), #0+1=1
-								              maxsplit = maxsplit)
+				self.manage = manager.Manage(url, 
+								tempfile = tempfile, videoQuality = (vquality+1), #0+1=1
+								videoPath = videoPath, maxsplit = maxsplit)
 			except Exception as err:
 				self.btnStartStopHandle()
 				
@@ -832,7 +840,7 @@ class BaixeAssistaWin( wx.Frame ):
 								               _("Erro iniciando download."), wx.ICON_ERROR|wx.OK)
 				dlg.ShowModal(); dlg.Destroy()
 				return
-
+			
 			self.startDown = StartDown(self)
 			self.startDown.start()
 
