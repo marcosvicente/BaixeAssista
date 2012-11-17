@@ -99,9 +99,9 @@ class SiteBase(ConnectionProcessor):
     #----------------------------------------------------------------------
     def __init__(self, **params):
         ConnectionProcessor.__init__(self)
+        self.streamSize = params.get("streamSize",0)
         self.url = self.basename = self.message = ""
         self.params = params
-        self.streamSize = 0
         self.configs = {}
         self.headers = {}
         
@@ -119,6 +119,9 @@ class SiteBase(ConnectionProcessor):
         
     def __getitem__(self, name):
         return self.configs[name]
+    
+    def __setitem__(self, name, value):
+        self.configs[name] = value
         
     def get_message(self): return self.message
     def suportaSeekBar(self): return False
@@ -140,7 +143,7 @@ class SiteBase(ConnectionProcessor):
     def get_init_page(self, proxies={}, timeout=30):    
         assert self.getVideoInfo(proxies=proxies, timeout=timeout)
 
-    def getVideoInfo(self, ntry=3, proxies={}, timeout=30):
+    def getVideoInfo(self, ntry=3, proxies={}, timeout=60):
         # extrai o titulo e o link do video, se já não tiverem sido extraidos
         if not self.configs:
             nfalhas = 0
@@ -148,18 +151,19 @@ class SiteBase(ConnectionProcessor):
                 try:
                     self.start_extraction(proxies=proxies, timeout=timeout)
                     # extrai e guarda o tanho do arquivo
-                    if not self.streamSize: self.streamSize = self.get_size(proxies=proxies, timeout=timeout)
-                    
-                    if not self.has_link() or not self.has_title() or not self.streamSize:
-                        self.configs = {}; nfalhas += 1
-                        continue # falhou em obter o link ou titulo
-                    
-                    else: break # sucesso!
-                except Exception as err:
-                    pass
-                nfalhas += 1
-        return self.has_link() and self.has_title() and self.streamSize
-
+                    if not self.streamSize:
+                        self.streamSize = self.get_size(proxies=proxies, timeout=timeout)    
+                except Exception as e: pass
+                if not self.has_conf():
+                    self.configs = {}; nfalhas += 1
+                else:
+                    break # sucesso!
+        return self.has_conf()
+        
+    def has_conf(self):
+        return (self.has_link() and self.has_title() and 
+                bool(self.streamSize))
+    
     def has_link(self):
         try: haslink = bool(self.getLink())
         except: haslink = False

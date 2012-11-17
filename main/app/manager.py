@@ -985,7 +985,8 @@ class Manage(object):
     
     def createVideoManager(self):
         """ controla a obtenção de links, tamanho do arquivo, title, etc """
-        return self.clsVideoManager(self.streamUrl, qualidade=self.params.get("videoQuality",2))
+        return self.clsVideoManager(self.streamUrl, streamSize = self.videoSize, 
+                                    qualidade=self.params.get("videoQuality",2))
         
     def get_streamer(self):
         """ streamer controla a leitura dos bytes enviados ao player """

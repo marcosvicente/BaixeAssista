@@ -782,6 +782,9 @@ class BaixeAssistaWin( wx.Frame ):
 				if not smanager.wasStopped(): # conexões paradas serão ignoradas
 					rowIndex = self.detailControl.getRowIndex( smanager.ident )
 					
+					##duration = self.playerWin.get_json("duration",None)
+					##smanager.videoManager["duration"] = duration
+					
 					for colIndex, infokey in enumerate( manager.StreamManager.listInfo ):
 						infoValue = smanager.info.get( smanager.ident, infokey )
 						list_ctr.SetStringItem( rowIndex, colIndex, u"%s"%infoValue )
