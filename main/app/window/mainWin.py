@@ -234,8 +234,9 @@ class BaixeAssistaWin( wx.Frame ):
 		vquality = self.cfg_controles.as_int("videoQualityControlValue")
 		self.barraControles.videoQualityControl.SetSelection( vquality )
 		
-		videoDir = self.cfg_controles.get("ctrVideoDir", settings.DEFAULT_VIDEOS_DIR)
-		self.barraControles.ctrVideoDir.SetValue( videoDir )
+		videopath = self.cfg_controles["ctrVideoDir"]
+		videopath = videopath if os.path.exists(videopath) else settings.DEFAULT_VIDEOS_DIR
+		self.barraControles.ctrVideoDir.SetValue( videopath )
 		
 		# número inicial de divisões do arquivo de video
 		value = self.cfg_controles.as_int("numDivStreamControlValue") 

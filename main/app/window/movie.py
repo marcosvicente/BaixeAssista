@@ -150,7 +150,7 @@ class MovieView(wx.Panel):
 		colID.Renderer.Alignment = wx.ALIGN_RIGHT
 		
 		column_id += 1
-		self.dvc.AppendTextColumn(_(u"Título"),  column_id, width=350, mode=dv.DATAVIEW_CELL_EDITABLE)
+		self.dvc.AppendTextColumn(_(u"Título"),  column_id, width=250, mode=dv.DATAVIEW_CELL_EDITABLE)
 		
 	 	column_id += 1
 		colExt = self.dvc.AppendTextColumn(_(u"Ext"),  column_id, width=100)
@@ -161,7 +161,7 @@ class MovieView(wx.Panel):
 		colQuality.Renderer.Alignment = wx.ALIGN_RIGHT
 		
 		column_id += 1
-		colQuality = self.dvc.AppendTextColumn(_(u"Localização"), column_id, width=100)
+		colQuality = self.dvc.AppendTextColumn(_(u"Localização"), column_id, width=250)
 		
 		column_id += 1
 		self.dvc.AppendTextColumn(_(u"Tamanho"), column_id, width=100)

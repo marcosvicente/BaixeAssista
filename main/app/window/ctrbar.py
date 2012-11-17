@@ -305,48 +305,48 @@ class BarraControles( noteBook.NoteBookImage ):
 		# ------------------------------------------------------------
 
 		# controla o número de conexões ativas
-		help_text = wx.StaticText(conteiner, -1, _(u"Conexões ativas: "))
+		ctrStaticInfo = wx.StaticText(conteiner, -1, _(u"Conexões ativas: "))
 		self.nConnectionControl = wx.SpinCtrl(conteiner, -1, "2")
-		helpText = _(u"Inicia novas conexões ou pára conexões existentes.")
-		self.nConnectionControl.SetToolTip(wx.ToolTip( helpText ))
+		help_text = _(u"Inicia novas conexões ou pára conexões existentes.")
+		self.nConnectionControl.SetToolTip(wx.ToolTip( help_text ))
 		self.nConnectionControl.SetRange(1, 30)
 
 		# event handler
 		self.nConnectionControl.Bind(wx.EVT_TEXT_ENTER, connectionsHandle)
 		self.Bind(wx.EVT_SPINCTRL, connectionsHandle, self.nConnectionControl)
 
-		groupFlexSizer_1.AddMany([(help_text, 1, wx.EXPAND),
+		groupFlexSizer_1.AddMany([(ctrStaticInfo, 1, wx.EXPAND),
 				                  (self.nConnectionControl, 1, wx.EXPAND)])
 		# ------------------------------------------------------------
 
 		# Controla o limite de velocidade de sub-conexões
-		help_text = wx.StaticText(conteiner, -1, _("Limite de velocidade: "))
+		ctrStaticInfo = wx.StaticText(conteiner, -1, _("Limite de velocidade: "))
 		self.rateLimitControl = wx.SpinCtrl(conteiner, -1, "35840")
 		
 		self.Bind(wx.EVT_SPINCTRL, connectionsHandle, self.rateLimitControl)
 
-		helpText = _(u"Limita o download de sub-conexões criadas para o número de bytes")
-		self.rateLimitControl.SetToolTip(wx.ToolTip( helpText ))
+		help_text = _(u"Limita o download de sub-conexões criadas para o número de bytes")
+		self.rateLimitControl.SetToolTip(wx.ToolTip( help_text ))
 		self.rateLimitControl.SetRange(0, sys.maxint)
 
-		groupFlexSizer_1.AddMany([(help_text, 1, wx.EXPAND),
+		groupFlexSizer_1.AddMany([(ctrStaticInfo, 1, wx.EXPAND),
 				                  (self.rateLimitControl, 1, wx.EXPAND)])
 		# ------------------------------------------------------------
 
 		# Controla o limite de velocidade de sub-conexões
-		help_text = wx.StaticText(conteiner, -1, _("Tempo de espera: "))
+		ctrStaticInfo = wx.StaticText(conteiner, -1, _("Tempo de espera: "))
 		self.timeoutControl = wx.SpinCtrl(conteiner, -1, "25")
 		
 		self.Bind(wx.EVT_SPINCTRL, connectionsHandle, self.timeoutControl)
 
-		text = u"".join([
+		help_text = u"".join([
 		    _(u"Tempo máximo de espera por uma resposta\n"),
 			_(u"do servidor de stream(timeout em segundos)")
 		])
-		self.timeoutControl.SetToolTip(wx.ToolTip( text ))
+		self.timeoutControl.SetToolTip(wx.ToolTip( help_text ))
 		self.timeoutControl.SetRange(5, 60*5)
 		
-		groupFlexSizer_1.AddMany([(help_text, 1, wx.EXPAND),
+		groupFlexSizer_1.AddMany([(ctrStaticInfo, 1, wx.EXPAND),
 				                  (self.timeoutControl, 1, wx.EXPAND)])
 		# ------------------------------------------------------------
 
@@ -355,58 +355,52 @@ class BarraControles( noteBook.NoteBookImage ):
 		gradeConjunto.Add( groupFlexSizer_2, 1, wx.EXPAND)
 
 		# *** Controla o número de reconexões
-		info = wx.StaticText(conteiner, -1, _(u"Número de reconexões: "))
+		ctrStaticInfo = wx.StaticText(conteiner, -1, _(u"Número de reconexões: "))
 		self.reconexoesControl = wx.SpinCtrl(conteiner, -1, "3")
 		
 		self.Bind(wx.EVT_SPINCTRL, connectionsHandle, self.reconexoesControl)
-		text = u"".join([
+		help_text = u"".join([
 		    _(u"Define o número de tentativas, \n"),
 			_("antes de dar por encerrado o uso do ip atual.")
 		])
-		self.reconexoesControl.SetToolTip(wx.ToolTip( text ))
+		self.reconexoesControl.SetToolTip(wx.ToolTip( help_text ))
 		self.reconexoesControl.SetRange(1,100)
-
-		groupFlexSizer_2.AddMany([(info, 1, wx.EXPAND),
+		
+		groupFlexSizer_2.AddMany([(ctrStaticInfo, 1, wx.EXPAND),
 				                  (self.reconexoesControl, 1, wx.EXPAND)])
 		# ------------------------------------------------------------
 		
 		# *** Controla o tempo de espera, entre as reconexões
-		info = wx.StaticText(conteiner, -1, _(u"Espera entre reconexões: "))
+		ctrStaticInfo = wx.StaticText(conteiner, -1, _(u"Espera entre reconexões: "))
 		self.waitTimeControl = wx.SpinCtrl(conteiner, -1, "2")
 		
 		self.Bind(wx.EVT_SPINCTRL, connectionsHandle, self.waitTimeControl)
-		helpText = _(u"Tempo de espera entre as tentativas de conexão(segundos).")
-		self.waitTimeControl.SetToolTip(wx.ToolTip( helpText ))
+		help_text = _(u"Tempo de espera entre as tentativas de conexão(segundos).")
+		self.waitTimeControl.SetToolTip(wx.ToolTip( help_text ))
 		self.waitTimeControl.SetRange(1,60*5)
 		
-		groupFlexSizer_2.AddMany([(info, 1, wx.EXPAND),
+		groupFlexSizer_2.AddMany([(ctrStaticInfo, 1, wx.EXPAND),
 				                  (self.waitTimeControl, 1, wx.EXPAND)])
 		# ------------------------------------------------------------
 		
 		# controla o número de conexões ativas
-		self.changeTypeControl = wx.CheckBox(
-		    conteiner, -1, _(u"Habilitar mudança de tipo"), style=wx.ALIGN_LEFT
-		)
-		text = u"".join([
+		self.changeTypeControl = wx.CheckBox(conteiner, -1, _(u"Habilitar mudança de tipo"), 
+											 style=wx.ALIGN_LEFT)
+		help_text = u"".join([
 		    _(u"Mudar o tipo de conexão.\n"),
 			_(u"Muda da conexão padrão para um servidor proxie ou vice-versa.")
 		])
-		self.changeTypeControl.SetToolTip(wx.ToolTip( text ))
-		
+		self.changeTypeControl.SetToolTip(wx.ToolTip( help_text ))
 		self.Bind(wx.EVT_CHECKBOX, connectionsHandle, self.changeTypeControl)
-		
 		groupFlexSizer_2.Add(self.changeTypeControl, 1, wx.EXPAND)
 		# ------------------------------------------------------------
 		
 		# controla o número de conexões ativas
-		self.proxyDisable = wx.CheckBox(
-		    conteiner, -1, _(u"Desabilitar proxy"), style=wx.ALIGN_LEFT
-		)
-		text = _(u"Desabilita o uso de conexões com servidores proxies(não recomendado).")
-		self.proxyDisable.SetToolTip(wx.ToolTip( text ))
-		
+		self.proxyDisable = wx.CheckBox(conteiner, -1, _(u"Desabilitar proxy"), 
+									    style=wx.ALIGN_LEFT)
+		help_text = _(u"Desabilita o uso de conexões com servidores proxies(não recomendado).")
+		self.proxyDisable.SetToolTip(wx.ToolTip( help_text ))
 		self.Bind(wx.EVT_CHECKBOX, connectionsHandle, self.proxyDisable)
-		
 		groupFlexSizer_2.Add(self.proxyDisable, 1, wx.EXPAND)
 		
 		return panel
@@ -425,22 +419,22 @@ class BarraControles( noteBook.NoteBookImage ):
 		sizerGroups = wx.FlexGridSizer(2, 2, 5, 5)
 		
 		# Controle para escolha da qualidade do vídeo baixado
-		help_text = wx.StaticText(conteiner, -1, _(u"Qualidade do vídeo: "))
+		ctrStaticInfo = wx.StaticText(conteiner, -1, _(u"Qualidade do vídeo: "))
 		self.videoQualityControl = wx.Choice(conteiner, -1, choices = [_("Baixa"), _(u"Média"), _("Alta")])
-		helpText = [
+		help_text = [
 		    _(u"Qualidade do vídeo que será baixado e reproduzido.\n"),
 			_(u"Note que nem todos servidores suportam essa opção.")
 		]
-		self.videoQualityControl.SetToolTip(wx.ToolTip( "".join(helpText) ))
+		self.videoQualityControl.SetToolTip(wx.ToolTip( "".join(help_text) ))
 		self.videoQualityControl.SetSelection(0)
 		
-		sizerGroups.AddMany([(help_text, 1, wx.EXPAND|wx.TOP, 10),
-				                  (self.videoQualityControl, 1, wx.EXPAND|wx.ALIGN_LEFT|wx.TOP, 10)])
+		sizerGroups.AddMany([(ctrStaticInfo, 1, wx.EXPAND|wx.TOP, 10),
+				             (self.videoQualityControl, 1, wx.EXPAND|wx.ALIGN_LEFT|wx.TOP, 10)])
 		
 		# --------------------------------------------------------------------------------------------------
-		help_text = wx.StaticText(conteiner, wx.ID_ANY, _(u"Diretório de vídeos: "))
+		ctrStaticInfo = wx.StaticText(conteiner, wx.ID_ANY, _(u"Diretório de vídeos: "))
 		self.ctrVideoDir = wx.TextCtrl(conteiner, wx.ID_ANY, settings.DEFAULT_VIDEOS_DIR)
-		sizerGroups.AddMany([(help_text, 1, wx.EXPAND|wx.TOP, 10),
+		sizerGroups.AddMany([(ctrStaticInfo, 1, wx.EXPAND|wx.TOP, 10),
 			                 (self.ctrVideoDir, 1, wx.EXPAND|wx.ALIGN_LEFT|wx.TOP, 10)])
 		self.ctrVideoDir.Bind(wx.EVT_LEFT_DOWN, self.OnShowDialog)
 		self.ctrVideoDir.Bind(wx.EVT_ENTER_WINDOW, self.updateHelpTextDir)
@@ -449,15 +443,15 @@ class BarraControles( noteBook.NoteBookImage ):
 		return panel
 	
 	def updateHelpTextDir(self, evt):
-		helpText = [
-			_(u"Diretório, dentro do qual, serão quardados os arquivos de vídeos."),
+		help_text = [
+			_(u"Diretório, dentro do qual, serão quardados os arquivos de vídeo."),
 			_(u"Diretório atual: ")+('"%s"'% self.ctrVideoDir.GetValue())
 		]
-		self.ctrVideoDir.SetToolTip(wx.ToolTip(u"\n".join(helpText)))
+		self.ctrVideoDir.SetToolTip(wx.ToolTip(u"\n".join(help_text)))
 		
 	def OnShowDialog(self, event):
 		dlg = wx.DirDialog(self, _(u"Diretório de vídeos"),
-				  defaultPath = settings.DEFAULT_VIDEOS_DIR,
+				  defaultPath = self.ctrVideoDir.GetValue(),
 				  style=wx.DD_DEFAULT_STYLE
 				   #| wx.DD_DIR_MUST_EXIST
 				   #| wx.DD_CHANGE_DIR
@@ -486,15 +480,18 @@ class BarraControles( noteBook.NoteBookImage ):
 
 		# Controla o uso de arquivos temporários
 		self.tempFileControl = wx.CheckBox(conteiner, -1, _(u"Use arquivo temporário"), style=wx.ALIGN_LEFT)
-		helpText = _(u"Indica se o arquivo de vídeo será removido, \napós parar o download.")
-		self.tempFileControl.SetToolTip(wx.ToolTip( helpText ))
+		help_text = _(u"Indica se o arquivo de vídeo será removido, \napós parar o download.")
+		self.tempFileControl.SetToolTip(wx.ToolTip( help_text ))
+		
+		self.Bind(wx.EVT_CHECKBOX, lambda evt: self.tempFileOptControl.Enable(evt.GetEventObject().GetValue()), 
+				self.tempFileControl)
 		
 		groupFlexSizer_1.Add(self.tempFileControl, 0, wx.EXPAND)
-
+		
 		# Opções para o arquivo temporário
 		self.tempFileOptControl = wx.Choice(conteiner, -1, choices = [_("Apenas remova"), _("Pergunte o que fazer")])
-		helpText = _(u"O que fazer, ao usar um arquivo temporário ?")
-		self.tempFileOptControl.SetToolTip(wx.ToolTip( helpText ))
+		help_text = _(u"O que fazer, ao usar um arquivo temporário ?")
+		self.tempFileOptControl.SetToolTip(wx.ToolTip( help_text ))
 		
 		self.tempFileOptControl.Enable(False)
 		self.tempFileOptControl.SetSelection(0)
@@ -502,15 +499,15 @@ class BarraControles( noteBook.NoteBookImage ):
 		groupFlexSizer_1.Add(self.tempFileOptControl, 0, wx.EXPAND|wx.LEFT, 10)
 
 		# Controla o número de divisões do arquivo de vídeo
-		help_text = wx.StaticText(conteiner, -1, _(u"Número de divisões: "))
+		ctrStaticInfo = wx.StaticText(conteiner, -1, _(u"Número de divisões: "))
 		self.numDivStreamControl = wx.SpinCtrl(conteiner, -1, "2")
 		
-		helpText = _(u"Indica o número de partes, que a stream\n de vídeo será divida inicialmente")
-		self.numDivStreamControl.SetToolTip(wx.ToolTip( helpText ))
+		help_text = _(u"Indica o número de partes, que a stream\n de vídeo será divida inicialmente")
+		self.numDivStreamControl.SetToolTip(wx.ToolTip( help_text ))
 		self.numDivStreamControl.SetRange(2, 25)
 
 		hSizer = wx.BoxSizer(wx.HORIZONTAL)
-		hSizer.Add(help_text, 0, wx.EXPAND)
+		hSizer.Add(ctrStaticInfo, 0, wx.EXPAND)
 		hSizer.Add(self.numDivStreamControl, 0, wx.ALIGN_TOP)
 
 		groupFlexSizer_1.Add(hSizer, 0, wx.EXPAND|wx.LEFT, 5)
@@ -578,7 +575,6 @@ class BarraControles( noteBook.NoteBookImage ):
 		
 		# setting: controle de arquivos temporáros
 		control_conf["tempFileControlValue"] = self.tempFileControl.GetValue()
-		## self.tempFileOptControl.Enable( self.tempFileControl.GetValue() )
 		
 		# setting: opções de arquivos temporários
 		control_conf["tempFileOptControlValue"] = self.tempFileOptControl.GetSelection()

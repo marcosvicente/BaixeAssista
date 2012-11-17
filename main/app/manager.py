@@ -397,7 +397,12 @@ class FileManager(object):
         """
         self.params = params
         self.resumeInfo = ResumeInfo()
-        self.filePath = (params.get("videoPath","") or settings.DEFAULT_VIDEOS_DIR)
+        videopath = params.get("videoPath","")
+        # verificando se o diretório é valido para a máquina atual.
+        self.filePath = videopath if os.path.exists(videopath) else settings.DEFAULT_VIDEOS_DIR
+        
+        # diretório padrão de arquivos temporários.
+        self.tempFilePath = os.path.join(settings.DEFAULT_VIDEOS_DIR, settings.VIDEOS_DIR_TEMP_NAME)
         
     def __del__(self):
         try: self.file.close()
@@ -531,9 +536,8 @@ class FileManager(object):
             filepath = self.getFilePath( filename )
             self.file = open(filepath, "w+b")
         else:
-            filepath = os.path.join(self.filePath, "temp")
-            self.file = tempfile.TemporaryFile(dir = filepath)
-
+            self.file = tempfile.TemporaryFile(dir = self.tempFilePath)
+            
     @FM_runLocked()
     def write(self, pos, data):
         """ Escreve os dados na posição dada """
