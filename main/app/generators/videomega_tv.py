@@ -15,8 +15,7 @@ class Videomega( SiteBase ):
         SiteBase.__init__(self, **params)
         self.url = url
         
-    def suportaSeekBar(self):
-        return True
+    def suportaSeekBar(self): return True
     
     def start_extraction(self, proxies={}, timeout=25):
         fd = self.connect(self.url, proxies=proxies, timeout=timeout)    
@@ -31,4 +30,4 @@ class Videomega( SiteBase ):
         try: title = re.search("<title>(.+)</title>", webpage).group(1)
         except: title = sites.get_random_text()
         
-        self.configs = {"url": url+"&start=", "title": title}
+        self.configs = {"url": url, "title": title} #+"&start="

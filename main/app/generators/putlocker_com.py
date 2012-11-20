@@ -25,14 +25,13 @@ class PutLocker( SiteBase ):
         self.basename = "putlocker.com"
         self.url = url
 
-    def suportaSeekBar(self):
-        return True
+    def suportaSeekBar(self): return True
     
-    def getMessage(self, webpage):
-        ## <div class='message t_0'>This file doesn't exist, or has been removed.</div>
+    def get_site_message(self, webpage):
         try:
-            matchobj = re.search("<div class='message t_\d+'>(.*?)</div>", webpage)
-            msg = "%s informa: %s"%(self.basename, unicode(matchobj.group(1),"utf-8"))
+            try: msg = re.search("<div class='message t_\d+'>(?P<msg>.+?)</div>", webpage).group("msg")
+            except: msg = re.search("<div class='error_message'>(?P<msg>.+?)</div>", webpage).group("msg")
+            msg = "%s informa: %s"%(self.basename, msg.decode("utf-8","ignore"))
         except: msg = ""
         return msg
 
@@ -51,7 +50,7 @@ class PutLocker( SiteBase ):
         webpage = fd.read(); fd.close()
 
         # messagem de erro. se houver alguma
-        self.message = self.getMessage( webpage )
+        self.message = self.get_site_message( webpage )
 
         # padrão captua de dados
         matchobj = self.patternForm.search( webpage )
@@ -62,7 +61,9 @@ class PutLocker( SiteBase ):
         data = urllib.urlencode({hashname: hashvalue, "confirm": confirmvalue})
         fd = self.connect(url, proxies=proxies, timeout=timeout, data=data)
         webpage = fd.read(); fd.close()
-
+        
+        self.message = self.get_site_message( webpage )
+        
         # extraindo o titulo.
         try: title = re.search("<title>(.*?)</title>", webpage).group(1)
         except: title = sites.get_random_text()
@@ -87,4 +88,4 @@ class PutLocker( SiteBase ):
         try: ext = re.search("type=\"video/([\w-]+)", rssData).group(1)
         except: pass # usa a extensão padrão.
         
-        self.configs = {"url": url+"&start=", "title":title, "ext": ext}
+        self.configs = {"url": url, "title":title, "ext": ext} #+"&start="

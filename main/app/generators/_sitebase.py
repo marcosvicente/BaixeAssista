@@ -52,10 +52,10 @@ class ConnectionProcessor(object):
         
         if contentType is None: return False
         is_video = bool(re.match("(video/.*$|application/octet.*$)", contentType))
-
+        
         if not is_video or contentLength is None: return False
         contentLength = long(contentLength)
-
+        
         # video.mixturecloud: bug de 1bytes
         is_valid = (seekpos != 0 and seekmax == (seekpos +contentLength +1))
         

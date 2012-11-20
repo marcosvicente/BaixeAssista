@@ -1334,11 +1334,11 @@ class StreamManager(threading.Thread):
         if bytes == 0.0:
             exponent = 0
         else:
-            exponent = long(math.log(bytes, 1024.0))
+            exponent = long(math.log(float(bytes), 1024.0))
         suffix = 'bkMGTPEZY'[exponent]
         converted = float(bytes) / float(1024**exponent)
         return '%.2f%s' % (converted, suffix)
-
+    
     @staticmethod
     def calc_speed(start, now, bytes):
         dif = now - start
@@ -1726,7 +1726,7 @@ class StreamManager_( StreamManager ):
                 
                 self.info.set(self.ident, "state", _("Conectando"))
                 
-                self.streamSocket = self.videoManager.connect(sites.get_with_seek(link, seekpos),
+                self.streamSocket = self.videoManager.connect(link,
                                           headers={"Range":"bytes=%s-%s"%(seekpos, streamsize)},
                                           proxies = self.proxies, timeout = timeout)
                 
