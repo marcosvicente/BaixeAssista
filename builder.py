@@ -8,7 +8,7 @@ import packer
 from main import settings 
 from main.app import manager
 
-EXE_NAME = 'BaixeAssista_v%s' % manager.PROGRAM_VERSION
+EXE_NAME = 'BaixeAssista_v%s' % settings.PROGRAM_VERSION
 BUILD_DIR = os.path.join(os.environ["USERPROFILE"], "BaixeAssistaRelease") # build exe
 DIST_DIR = os.path.join(BUILD_DIR, "dist")
 EXE_DIR = os.path.join(BUILD_DIR, EXE_NAME)

@@ -20,7 +20,7 @@ import xml.etree.ElementTree
 from main.app.generators import Universal
 from main.app import manager
 from main.app.util import sites
-        
+
 class ConnectionProcessor(object):
     """ Processa conexões guardando 'cookies' e dados por ips """
     def __init__(self):

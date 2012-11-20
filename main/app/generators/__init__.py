@@ -161,7 +161,12 @@ def get_classref(filemod):
 def find_all_sites():
     """ retorna toda a lista de scripts(já importada) das definições dos sites suportados. """
     modulelist = []
-    for filepath in glob.glob(os.path.join(settings.APPDIR, "generators", "*.py")):
+    pylist = glob.glob(os.path.join(settings.APPDIR, "generators", "*.py"))
+    pyclist = glob.glob(os.path.join(settings.APPDIR, "generators", "*.pyc"))
+    
+    listfiles = pylist if bool(len(pylist)) else pyclist
+    
+    for filepath in listfiles:
         name = util.base.get_filename(filepath, False)
         if not name.startswith("_"):
             package = __import__(Universal.__module__, {}, {}, [name])
