@@ -12,11 +12,11 @@ import base64
 import locale
 import urllib2
 import urlparse
-import decrypter
 import datetime
 import cookielib
 import HTMLParser
 import xml.etree.ElementTree
+from main.app import decrypter
 from main.app.generators import Universal
 from main.app import manager
 from main.app.util import sites
