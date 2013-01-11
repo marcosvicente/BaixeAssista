@@ -8,14 +8,12 @@ import wx.lib.agw.genericmessagedialog as GMD
 import wx.lib.agw.multidirdialog as MDD
 from main import settings
 
-curdir = os.path.dirname(os.path.abspath(__file__))
-pardir = os.path.split( curdir )[0]
+# configurando o ambiente para a execução do script.
+import main.environ
+main.environ.setup((__name__ == "__main__"))
 
-# necessário para o importe de manager
-if not pardir in sys.path: sys.path.append( pardir )
-if not curdir in sys.path: sys.path.append( curdir )
-
-import browser, detail, noteBook, manager
+import detail, noteBook
+from main.app import manager, browser
 import wEmbed
 ########################################################################
 
@@ -602,9 +600,6 @@ class BarraControles( noteBook.NoteBookImage ):
 
 ########################################################################
 if __name__ == "__main__":
-	# muda para o diretório pai por depender dos recursos dele.
-	os.chdir( pardir )
-	
 	from main.app.util import base
 	base.trans_install() # instala as traduções.
 	
