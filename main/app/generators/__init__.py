@@ -150,7 +150,20 @@ class Universal(object):
             assert bool(cls.sites[sitename].get("control", None)), u"Controlador não definido para %s"%sitename
         elif obj == "video_control":
             assert bool(cls.sites[sitename].get("video_control", None)), u"Controlador de video não definido para %s"%sitename
-
+    
+    @classmethod
+    def has_site(cls, url):
+        """ avalia se a url é de um site registrado """
+        try: has = (manager.UrlManager.getBaseName(url) in cls.get_sites())
+        except: has = False
+        return has
+        
+    @classmethod
+    def get_inner_url(cls, url):
+        matchobj = cls.patternMatch(manager.UrlManager.getBaseName(url), url)
+        if matchobj: url = matchobj.group("inner_url")
+        return url
+        
 # -----------------------------------------------------------------------------
 def get_classref(filemod):
     """ retorna apenas, sites com a variável de controle(controller) """

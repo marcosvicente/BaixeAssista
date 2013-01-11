@@ -14,7 +14,6 @@ import wx.lib.agw.flatnotebook as FNB
 import main.environ
 main.environ.setup((__name__ == "__main__"))
 
-import manager
 from main.app import generators
 from main import settings
 from main.app import models
@@ -27,31 +26,6 @@ with open(os.path.join(settings.STATIC_PATH,"js","ml.js"), "r") as js_file:
 with open(os.path.join(settings.STATIC_PATH,"js","el.js"), "r") as js_file:
 	JS_LINK_EXTRACTOR = js_file.read()
 	
-######################################################################################
-
-class FiltroUrl(object):
-	def __init__(self ):
-		self.allsites = generators.Universal.get_sites()
-		self.url, self.is_embed = "", False
-		
-	def isEmbed(self): return self.is_embed
-	def getUrl(self): return self.url
-	
-	def isValid(self, url):
-		""" Cada site carregado pelo IE, terá sua url analizada com as regex dos sites suportados """
-		try: basename = manager.UrlManager.getBaseName(url)
-		except: basename = "" # nem toda url terá uma base correta
-		if basename and (basename in self.allsites):
-			matchobj = generators.Universal.patternMatch(basename, url)
-			if matchobj: # retorna só o grupo da url completa
-				self.url = matchobj.group("inner_url")
-				self.is_embed = generators.Universal.isEmbed(url)
-				return True
-		# anula as variaveis, para evitar pegar dados incorretos
-		self.url, self.is_embed = "", False
-		# quando a url analizada não for válida
-		return False
-
 ##############################################################################
 class HistoryUrl(object):
 	""" Classe criada com o objetivo de corrigir o problema de histórico 
@@ -301,8 +275,6 @@ class Browser(wx.Panel):
 		for index in range(self.progressAni.GetFrameCount()):
 			img = self.progressAni.GetFrame( index )
 			self._ImageList.Add( img.ConvertToBitmap() )
-			
-		self.filtroUrl = FiltroUrl()
 
 		self.objects = models.Browser.objects # queryset
 		self.historySites = [] # preenchido ao abrir um novo site
@@ -611,6 +583,8 @@ class Browser(wx.Panel):
 		
 	def OnWebViewNavigating(self, event):
 		""" Controla o começo do carregamento de um recurço """
+		url = event.GetURL()
+		
 		webview = event.GetEventObject()
 		webviewUrl = webview.GetCurrentURL()
 		embed = self.toolBar.getInputEmbed()
@@ -643,24 +617,22 @@ class Browser(wx.Panel):
 			webview.RunScript( JS_LINK_EXTRACTOR )
 			webview.JS_SCRIPT_RUN = True
 			
-		url = event.GetURL()
-		
-		if self.filtroUrl.isValid( url ) and hasattr(self.mainWin, "controladorUrl"):
-			url = self.filtroUrl.getUrl() # só quando for válida.
-			isEmbed = self.filtroUrl.isEmbed() # é do tipo embutido, player
+		if generators.Universal.has_site(url) and hasattr(self.mainWin, "controladorUrl"):
+			is_embed = generators.Universal.isEmbed(url)
+			url = generators.Universal.get_inner_url(url)
 			
-			if not isEmbed:
+			if not is_embed:
 				self.mainWin.controladorUrl.SetValue( url )
 				self.setNavStopLoading( webview )
-				# This is how you can cancel loading a page.
-				event.Veto()
+				event.Veto() # cancela o carregamento.
 			else:
-				embed.SetLabel( url )
-				embed.Append( url )
+				embed.SetLabel( url ); embed.Append( url )
 				self.controleFluxoUrlsEmbutidas()
 
 	def OnWebViewNewWindow(self, event):
 		""" Controla a abertura de novas janelas """
+		url = event.GetURL()
+		
 		prev_title = self.webview.GetCurrentTitle()
 		self.webview.RunScript("document.title = clickedLink;")
 		clickedLink = self.webview.GetCurrentTitle()
@@ -669,21 +641,21 @@ class Browser(wx.Panel):
 		except: clickedLink = clickedLink.encode("utf-8")
 		
 		self.webview.RunScript("document.title = '%s';" % prev_title)
-		url = event.GetURL(); isValid = self.filtroUrl.isValid( url )
+		isValid = generators.Universal.has_site(url)
 		
 		if isValid and hasattr(self.mainWin, "controladorUrl"):
-			url = self.filtroUrl.getUrl() # só quando for válida.
-			isEmbed = self.filtroUrl.isEmbed() # é do tipo embutido, player
+			is_embed = generators.Universal.isEmbed(url)
+			url = generators.Universal.get_inner_url(url)
 
-			if not isEmbed:
+			if not is_embed:
 				self.mainWin.controladorUrl.SetValue( url )
 			else:
 				embed = self.toolBar.getInputEmbed()
-				embed.SetLabel( url )
-				embed.Append( url )
+				embed.SetLabel( url ); embed.Append( url )
 				self.controleFluxoUrlsEmbutidas()
 				
-		if url == clickedLink and not self.pageExist(url) and not isValid and self.abasControl.GetPageCount() < 10:
+		if url == clickedLink and not self.pageExist(url) and not \
+			isValid and self.abasControl.GetPageCount() < 10:
 			# geralmente a url vem duplacada, sendo a segunda a url
 			# válida. Por isso sempre a segunda será usada na nova tabela.
 			self.addNewTab( url)
