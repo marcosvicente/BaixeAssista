@@ -130,7 +130,170 @@ class HistoryUrl(object):
 
 		self.current = url
 		self.index = index
+		
+##############################################################################
+class TooBarGET(object):
+	def getInputLocation(self):
+		return self.location
+	
+	def getInputEmbed(self):
+		return self.embed
+	
+	def getBtnGoPrevious(self):
+		return self.btnGoPrevious
+	
+	def getBtnGoNext(self):
+		return self.btnGoNext
+	
+	def getBtnSearch(self):
+		return self.btnSearch
+	
+	def getBtnRefresh(self):
+		return self.btnRefresh
+	
+	def getBtnStop(self):
+		return self.btnStop
+	
+	def getBtnAddUrl(self):
+		return self.btnAddUrl
+	
+	def getBtnDelUrl(self):
+		return self.btnDelUrl
+	
+	def getSpinZoomPage(self):
+		return self.spinZoomPage
+	
+##############################################################################
+class ToolBar(wx.Panel, TooBarGET):
+	def __init__(self, parent=None, Id=-1):
+		super(ToolBar, self).__init__(parent, Id, style=wx.RAISED_BORDER)
+		self.parent = parent
+		
+		self.mainSizer = wx.BoxSizer(wx.HORIZONTAL)
+		self.mainSizer.Add(self._setupView(), 1, wx.EXPAND|wx.ALL, 2)
+		
+		self.SetSizer(self.mainSizer)
+		self.SetAutoLayout(True)
+		
+	def _createButtons(self):
+		btnFlexGridSizer = wx.FlexGridSizer(1, 8, 0, 5)
+		## hSizer = wx.BoxSizer(wx.HORIZONTAL)
+		
+		# botão go_back
+		imgpath = os.path.join(settings.IMAGES_DIR, "go-previous24x24.png")
+		
+		bmp = wx.Image(imgpath, wx.BITMAP_TYPE_PNG)
+		self.btnGoPrevious = wx.BitmapButton(self, -1, bmp.ConvertToBitmap())
+		
+		self.btnGoPrevious.SetToolTipString("Go Back")		
+		btnFlexGridSizer.Add(self.btnGoPrevious, 0, wx.LEFT, 2)
+		# ---------------------------------------------------------------------------------
+		
+		# botão go_forward
+		imgpath = os.path.join(settings.IMAGES_DIR, "go-next24x24.png")
+		
+		bmp = wx.Image(imgpath, wx.BITMAP_TYPE_PNG)
+		self.btnGoNext = wx.BitmapButton(self, -1, bmp.ConvertToBitmap())
+		
+		self.btnGoNext.SetToolTipString("Go Forward")		
+		btnFlexGridSizer.Add(self.btnGoNext)
+		# ---------------------------------------------------------------------------------
+		
+		# botão search
+		imgpath = os.path.join(settings.IMAGES_DIR, "search-computer24x24.png")
+		
+		bmp = wx.Image(imgpath, wx.BITMAP_TYPE_PNG)
+		self.btnSearch = wx.BitmapButton(self, -1, bmp.ConvertToBitmap())
+		
+		self.btnSearch.SetToolTipString("Google Search")
+		btnFlexGridSizer.Add(self.btnSearch)
+		# ---------------------------------------------------------------------------------
+		
+		# botão reflesh
+		imgpath = os.path.join(settings.IMAGES_DIR, "view-refresh24x24.png")
+		
+		bmp = wx.Image(imgpath, wx.BITMAP_TYPE_PNG)
+		self.btnRefresh = wx.BitmapButton(self, -1, bmp.ConvertToBitmap())
+		
+		self.btnRefresh.SetToolTipString("Reflesh")
+		btnFlexGridSizer.Add(self.btnRefresh)
+		# ---------------------------------------------------------------------------------
+		
+		# botão Stop loading
+		imgpath = os.path.join(settings.IMAGES_DIR, "process-stop24x24.png")
+		
+		bmp = wx.Image(imgpath, wx.BITMAP_TYPE_PNG)
+		self.btnStop = wx.BitmapButton(self, -1, bmp.ConvertToBitmap())
+		
+		self.btnStop.SetToolTipString("Stop")
+		btnFlexGridSizer.Add(self.btnStop)
+		# ---------------------------------------------------------------------------------
+		
+		# botão adicionar um novo site
+		imgpath = os.path.join(settings.IMAGES_DIR, "list-add24x24.png")
+		
+		bmp = wx.Image(imgpath, wx.BITMAP_TYPE_PNG)
+		self.btnAddUrl = wx.BitmapButton(self, -1, bmp.ConvertToBitmap())
+		
+		self.btnAddUrl.SetToolTipString(_(u"Permite adicionar um novo site de filmes\nà lista de sites favoritos"))
+		btnFlexGridSizer.Add(self.btnAddUrl)
+		# ---------------------------------------------------------------------------------
+		
+		# botão remover site
+		imgpath = os.path.join(settings.IMAGES_DIR, "list-remove24x24.png")
+		
+		bmp = wx.Image(imgpath, wx.BITMAP_TYPE_PNG)
+		self.btnDelUrl = wx.BitmapButton(self, -1, bmp.ConvertToBitmap())
+		
+		self.btnDelUrl.SetToolTipString(_(u"Use para remover sites, da lista de sites favoritos."))
+		btnFlexGridSizer.Add(self.btnDelUrl)
+		# ---------------------------------------------------------------------------------
 
+		self.spinZoomPage = wx.SpinButton(self, -1, style=wx.SP_VERTICAL)
+		self.spinZoomPage.SetMinSize((-1, self.btnDelUrl.GetSize().y))
+		self.spinZoomPage.SetToolTip(wx.ToolTip("Zoom"))
+		
+		self.spinZoomPage.SetValue( Webview.WEB_VIEW_ZOOM_MEDIUM )
+		self.spinZoomPage.SetRange( Webview.WEB_VIEW_ZOOM_TINY, Webview.WEB_VIEW_ZOOM_LARGEST)
+		
+		btnFlexGridSizer.Add(self.spinZoomPage)
+		return btnFlexGridSizer
+	
+	def _setupView(self):
+		hsizer = wx.BoxSizer(wx.HORIZONTAL)
+		
+		hsizer.Add(self._inputLocationUrl(), 1, wx.EXPAND)
+		hsizer.Add(self._createButtons(), 0, wx.LEFT|wx.RIGHT, 20)
+		hsizer.Add(self._inputEmbedUrls(), 1, wx.EXPAND)
+		
+		return hsizer
+	
+	def _inputLocationUrl(self):
+		hSizer = wx.BoxSizer(wx.HORIZONTAL)
+		
+		locationInfo = wx.StaticText(self, -1, _("Local:"))
+		hSizer.Add(locationInfo, 0, wx.ALIGN_CENTER|wx.RIGHT|wx.LEFT, 5)
+		
+		# controle usado para entrada de urls
+		self.location = wx.ComboBox(self, -1, style=wx.CB_DROPDOWN|wx.PROCESS_ENTER)
+		self.location.SetFont(wx.Font(12, wx.SWISS, wx.NORMAL, wx.NORMAL, faceName='Arial'))
+		
+		hSizer.Add(self.location, 1, wx.EXPAND)
+		return hSizer
+		
+	def _inputEmbedUrls(self):
+		hSizer = wx.BoxSizer(wx.HORIZONTAL)
+		
+		embendInfo = wx.StaticText(self, -1, "Embed:")
+		hSizer.Add(embendInfo, 0, wx.ALIGN_CENTER|wx.RIGHT|wx.LEFT, 5)
+		
+		# controle usado para entrada de urls embutidas
+		self.embed = wx.ComboBox(self, -1, style=wx.CB_DROPDOWN|wx.PROCESS_ENTER)
+		self.embed.SetFont( wx.Font(12, wx.SWISS, wx.NORMAL, wx.NORMAL, faceName='Arial'))
+				
+		hSizer.Add(self.embed, 1, wx.EXPAND|wx.RIGHT, 2)
+		return hSizer
+	
 ##############################################################################
 class Browser(wx.Panel):
 	def __init__(self, parent, mainWindow=None):
@@ -138,10 +301,7 @@ class Browser(wx.Panel):
 		self.mainWin = mainWindow
 
 		# sizer principal do painel
-		mainBoxSizer = wx.BoxSizer(wx.VERTICAL)
-
-		if mainWindow:
-			self.titleBase = mainWindow.GetTitle()
+		self.mainSizer = wx.BoxSizer(wx.VERTICAL)
 		
 		self.progressAni = wx.animate.Animation(os.path.join(settings.IMAGES_DIR,"progress.gif"))
 		self._ImageList = wx.ImageList(*self.progressAni.GetSize())
@@ -172,24 +332,54 @@ class Browser(wx.Panel):
 		self.abasControl.SetImageList( self._ImageList )
 		
 		# construção da barra de ferramentas
-		toolBarSizer = self.createToolBar()
-
+		self.toolBar = ToolBar(self)
+		
 		# aba padrão - sempre criada
 		self.addNewTab(self.current, True)
-		self.location.SetLabel(self.current)
 
 		# abas secundárias
 		for site in self.getHistorySites():
 			if not site == self.current:
 				self.addNewTab(site)
-
-		mainBoxSizer.Add(toolBarSizer, 0, wx.EXPAND)
-		mainBoxSizer.Add(self.abasControl, 1, wx.EXPAND)
-
-		mainBoxSizer.Layout()
-		self.SetSizer( mainBoxSizer )
+		
+		self.setupToolBar()
+		
+		self.mainSizer.Add(self.toolBar, 0, wx.EXPAND|wx.ALL, 2)
+		self.mainSizer.Add(self.abasControl, 1, wx.EXPAND)
+		
+		self.SetSizer(self.mainSizer)
 		self.SetAutoLayout(True)
-	
+		
+	def setupToolBar(self):
+		location = self.toolBar.getInputLocation()
+		for site in self.getSites(): location.Append(site)
+		
+		location.SetLabel(self.current)
+		
+		self.Bind(wx.EVT_COMBOBOX, self.OnLocationSelect, location)
+		self.Bind(wx.EVT_TEXT_ENTER, self.OnLocationEnter, location)
+		## Embed
+		self.Bind(wx.EVT_COMBOBOX, self.embedHandle, self.toolBar.getInputEmbed())
+		self.Bind(wx.EVT_TEXT_ENTER, self.embedHandle, self.toolBar.getInputEmbed())		
+		## Previous
+		self.Bind(wx.EVT_BUTTON, self.OnPrevPageButton, self.toolBar.getBtnGoPrevious())
+		self.Bind(wx.EVT_UPDATE_UI, self.OnCheckCanGoBack, self.toolBar.getBtnGoPrevious())
+		## Next
+		self.Bind(wx.EVT_BUTTON, self.OnNextPageButton, self.toolBar.getBtnGoNext())
+		self.Bind(wx.EVT_UPDATE_UI, self.OnCheckCanGoForward, self.toolBar.getBtnGoNext())
+		## Search
+		self.Bind(wx.EVT_BUTTON, self.OnSearchPageButton, self.toolBar.getBtnSearch())
+		## Reflesh
+		self.Bind(wx.EVT_BUTTON, self.OnRefreshPageButton, self.toolBar.getBtnRefresh())
+		## Stop
+		self.Bind(wx.EVT_BUTTON, self.OnStopButton, self.toolBar.getBtnStop())
+		## Add
+		self.Bind(wx.EVT_BUTTON, self.addNewMovieSite, self.toolBar.getBtnAddUrl())
+		## Del
+		self.Bind(wx.EVT_BUTTON, self.removeMovieSite, self.toolBar.getBtnDelUrl())
+		## Zoom
+		self.Bind(wx.EVT_SPIN, self.setPageZoom, self.toolBar.getSpinZoomPage())
+		
 	def closeCurrentPage(self, evt):
 		""" Fecha a página pelo menu """
 		self.abasControl.DeletePage(self.abasControl.GetSelection())
@@ -264,7 +454,7 @@ class Browser(wx.Panel):
 		self.abasControl.AddPage(webview, "Loading...", select = defaut)
 		webview.LoadURL(url)
 
-		self.location.SetToolTip(wx.ToolTip(url))
+		self.toolBar.getInputLocation().SetToolTip(wx.ToolTip(url))
 
 		# guarda com o objetivo de gera uma lista de histórico
 		self.historySites.append(url)
@@ -293,12 +483,12 @@ class Browser(wx.Panel):
 
 	def setTabFocus(self, evt):
 		""" Troca o controlador de navegação """
-		win = evt.GetEventObject()
+		location = self.toolBar.getInputLocation()
 		self.webview = self.abasControl.GetCurrentPage()
-		self.location.SetValue( self.webview.GetCurrentURL())
-		self.location.SetToolTip(wx.ToolTip(self.webview.GetCurrentURL()))
+		location.SetValue( self.webview.GetCurrentURL())
+		location.SetToolTip(wx.ToolTip(self.webview.GetCurrentURL()))
 		evt.Skip()
-
+		
 	def progressAnimate(self):
 		""" atualiza a animação de carregamento de todas a páginas ainda não carregadas """
 		num_of_pages = self.abasControl.GetPageCount()
@@ -344,137 +534,12 @@ class Browser(wx.Panel):
 			except: pass
 		else: # veta o fechamento da primeira tabela(indice 1).
 			evt.Veto()
-			
-	def createToolBar( self):
-		hBoxSizer = wx.BoxSizer( wx.HORIZONTAL )
-
-		flexGridSizerGroup = wx.FlexGridSizer(1, 8, 0, 2)
-		hBoxSizer.Add( flexGridSizerGroup)
-		width = height = 25
-		# ---------------------------------------------------------------------------------
-
-		# botão go_back
-		imgpath = os.path.join(settings.IMAGES_DIR, "go-previous24x24.png")
-		bmp = wx.Image(imgpath, wx.BITMAP_TYPE_PNG)
-		#bmp.Rescale(width, height)
-
-		btn = wx.BitmapButton(self, -1, bmp.ConvertToBitmap())
-		btn.SetToolTipString("Go Back")
-		self.Bind(wx.EVT_BUTTON, self.OnPrevPageButton, btn)
-		flexGridSizerGroup.Add(btn, 0, wx.LEFT, 2)
-		self.Bind(wx.EVT_UPDATE_UI, self.OnCheckCanGoBack, btn)
-		# ---------------------------------------------------------------------------------
-
-		# botão go_forward
-		imgpath = os.path.join(settings.IMAGES_DIR, "go-next24x24.png")
-		bmp = wx.Image(imgpath, wx.BITMAP_TYPE_PNG)
-
-		btn = wx.BitmapButton(self, -1, bmp.ConvertToBitmap())
-		btn.SetToolTipString("Go Forward")
-		self.Bind(wx.EVT_BUTTON, self.OnNextPageButton, btn)
-		flexGridSizerGroup.Add(btn)
-		self.Bind(wx.EVT_UPDATE_UI, self.OnCheckCanGoForward, btn)
-		# ---------------------------------------------------------------------------------
-
-		# botão search
-		imgpath = os.path.join(settings.IMAGES_DIR, "search-computer24x24.png")
-		bmp = wx.Image(imgpath, wx.BITMAP_TYPE_PNG)
-
-		btn = wx.BitmapButton(self, -1, bmp.ConvertToBitmap())
-		btn.SetToolTipString("Google Search")
-		self.Bind(wx.EVT_BUTTON, self.OnSearchPageButton, btn)
-		flexGridSizerGroup.Add(btn)	
-		# ---------------------------------------------------------------------------------
-
-		# botão reflesh
-		imgpath = os.path.join(settings.IMAGES_DIR, "view-refresh24x24.png")
-		bmp = wx.Image(imgpath, wx.BITMAP_TYPE_PNG)
-
-		btn = wx.BitmapButton(self, -1, bmp.ConvertToBitmap())
-		btn.SetToolTipString("Reflesh")
-		self.Bind(wx.EVT_BUTTON, self.OnRefreshPageButton, btn)
-		flexGridSizerGroup.Add(btn)
-		# ---------------------------------------------------------------------------------
-
-		# botão Stop loading
-		imgpath = os.path.join(settings.IMAGES_DIR, "process-stop24x24.png")
-		bmp = wx.Image(imgpath, wx.BITMAP_TYPE_PNG)
-
-		btn = wx.BitmapButton(self, -1, bmp.ConvertToBitmap())
-		btn.SetToolTipString("Stop")
-		self.Bind(wx.EVT_BUTTON, self.OnStopButton, btn)
-		flexGridSizerGroup.Add(btn)
-		# ---------------------------------------------------------------------------------
-
-		# botão adicionar um novo site
-		imgpath = os.path.join(settings.IMAGES_DIR, "list-add24x24.png")
-		bmp = wx.Image(imgpath, wx.BITMAP_TYPE_PNG)
-
-		btn = wx.BitmapButton(self, -1, bmp.ConvertToBitmap())
-		btn.SetToolTipString( _(u"Permite adicionar um novo site de filmes\nà lista de sites favoritos") )
-		self.Bind(wx.EVT_BUTTON, self.addNewMovieSite, btn)
-		flexGridSizerGroup.Add(btn)
-		# ---------------------------------------------------------------------------------
-		# botão remover site
-		imgpath = os.path.join(settings.IMAGES_DIR, "list-remove24x24.png")
-		bmp = wx.Image(imgpath, wx.BITMAP_TYPE_PNG)
-
-		btn = wx.BitmapButton(self, -1, bmp.ConvertToBitmap())
-		btn.SetToolTipString( _(u"Use para remover sites, da lista de sites favoritos.") )
-		self.Bind(wx.EVT_BUTTON, self.removeMovieSite, btn)
-		flexGridSizerGroup.Add(btn)
-		# ---------------------------------------------------------------------------------
-
-		self.zoomControl = wx.SpinButton(self, -1, style=wx.SP_VERTICAL)
-		self.zoomControl.SetMinSize( (-1, btn.GetSize().y) )
-
-		self.zoomControl.SetToolTip( wx.ToolTip("Zoom") )
-		self.zoomControl.SetValue( Webview.WEB_VIEW_ZOOM_MEDIUM )
-		self.zoomControl.SetRange( Webview.WEB_VIEW_ZOOM_TINY, Webview.WEB_VIEW_ZOOM_LARGEST)
-		self.zoomControl.Bind(wx.EVT_SPIN, self.setPageZoom)
-
-		flexGridSizerGroup.Add(self.zoomControl)
-		# ---------------------------------------------------------------------------------
-		gridSizer = wx.GridSizer(1,2)
-		hBoxSizer.Add(gridSizer, 1, wx.EXPAND)
-
-		hSizer = wx.BoxSizer(wx.HORIZONTAL)
-		gridSizer.Add(hSizer, 0, wx.EXPAND)
-
-		info = wx.StaticText(self, -1, _("Local:"))
-		hSizer.Add(info, 0, wx.ALIGN_CENTER|wx.RIGHT|wx.LEFT, 5)
-
-		# controle usado para entrada de urls
-		self.location = wx.ComboBox(self, -1, self.current, style=wx.CB_DROPDOWN|wx.PROCESS_ENTER)
-		self.location.SetFont( wx.Font(12, wx.SWISS, wx.NORMAL, wx.NORMAL, faceName='Arial'))
-
-		for site in self.getSites(): self.location.Append(site)
-
-		self.Bind(wx.EVT_COMBOBOX, self.OnLocationSelect, self.location)
-		self.location.Bind(wx.EVT_TEXT_ENTER, self.OnLocationEnter)
-		hSizer.Add(self.location, 1, wx.EXPAND)
-		# ---------------------------------------------------------------------------------
-		hSizer = wx.BoxSizer(wx.HORIZONTAL)
-		gridSizer.Add( hSizer, 1, wx.EXPAND)
-
-		info = wx.StaticText(self, -1, "Embed:")
-		hSizer.Add(info, 0, wx.ALIGN_CENTER|wx.RIGHT|wx.LEFT, 5)
-
-		# controle usado para entrada de urls embutidas
-		self.controlEmbedUrls = wx.ComboBox(self, -1, "", style=wx.CB_DROPDOWN|wx.PROCESS_ENTER)
-		self.controlEmbedUrls.SetFont( wx.Font(12, wx.SWISS, wx.NORMAL, wx.NORMAL, faceName='Arial'))
-
-		self.Bind(wx.EVT_COMBOBOX, self.embedHandle, self.controlEmbedUrls)
-		self.controlEmbedUrls.Bind(wx.EVT_TEXT_ENTER, self.embedHandle)
-		hSizer.Add(self.controlEmbedUrls, 1, wx.EXPAND|wx.RIGHT, 2)
-
-		return hBoxSizer
-
+	
 	def setPageZoom(self, evt=None):
 		""" configura o nível de zoom do layout página com o foco """
-		try: self.webview.SetZoom( self.zoomControl.GetValue() )
+		try: self.webview.SetZoom(self.toolBar.getSpinZoomPage().GetValue())
 		except: pass # erro ao tentar configurar o mesmo nível de zoom
-
+	
 	def addNewMovieSite(self, event):
 		dlg = wx.TextEntryDialog(self,
 			 _("Entre com a url completa do site"), 
@@ -500,7 +565,7 @@ class Browser(wx.Panel):
 				self.addSite( local )
 				
 				if not self.hasUrl( local ):
-					self.location.Append( local)
+					self.toolBar.getInputLocation().Append( local)
 		dlg.Destroy()
 		
 	def removeMovieSite(self, evt):
@@ -521,7 +586,7 @@ class Browser(wx.Panel):
 		self.webview.LoadURL( SEARCH_ENGINE )
 		# limpa o controle de url embutidas
 		# porque uma nova página está sendo carregada.
-		self.controlEmbedUrls.Clear()
+		self.toolBar.getInputEmbed().Clear()
 
 	def ShutdownDemo(self):
 		# put the frame title back
@@ -530,10 +595,10 @@ class Browser(wx.Panel):
 	def embedHandle(self, event):
 		""" atribui a url do controle de url embutidas para
 		o controle de transferência de arquivos """
-		url = self.controlEmbedUrls.GetStringSelection()
+		url = self.toolBar.getInputEmbed().GetStringSelection()
 		if url: self.mainWin.controladorUrl.SetValue( url[4:] )
 		self.webview.SetFocus() # passa o foco para o navegador
-
+		
 	def custom_enumerate(self, args):
 		""" retorna a seguencia de strings com sua posição, na lista, concatenada ['[1] abc','[2] def']"""
 		newargs = []; index_str = "[%s] "
@@ -543,18 +608,20 @@ class Browser(wx.Panel):
 		return newargs
 
 	def controleFluxoUrlsEmbutidas(self):
-		items = self.controlEmbedUrls.GetItems()
+		embed = self.toolBar.getInputEmbed()
+		items = embed.GetItems()
 		if len(items) > 8:
-			self.controlEmbedUrls.Set( self.custom_enumerate(items[2:]) )
+			embed.Set( self.custom_enumerate(items[2:]) )
 		else:
 			urlsIndexadas = self.custom_enumerate(items)
-			self.controlEmbedUrls.Set( urlsIndexadas )
-		self.controlEmbedUrls.SetSelection(self.controlEmbedUrls.GetCount()-1)
-
+			embed.Set( urlsIndexadas )
+		embed.SetSelection(embed.GetCount()-1)
+		
 	def OnWebViewNavigating(self, event):
 		""" Controla o começo do carregamento de um recurço """
 		webview = event.GetEventObject()
 		webviewUrl = webview.GetCurrentURL()
+		embed = self.toolBar.getInputEmbed()
 		
 		# configura os dados para a animação da progress animate
 		webview.loading, webview.isNullBitmap = True, False
@@ -564,8 +631,8 @@ class Browser(wx.Panel):
 				webview.historyUrl.append( webviewUrl )
 
 			webview.JS_SCRIPT_RUN = False
-			self.controlEmbedUrls.Clear()
-
+			embed.Clear()
+			
 			webview.historyUrl.setBrowsing(False)
 
 			self.historySites.remove( webview.Url )
@@ -573,9 +640,10 @@ class Browser(wx.Panel):
 			webview.Url = webviewUrl
 
 			if webview == self.webview:
-				self.location.SetLabel( webviewUrl )
-				self.location.SetToolTip(wx.ToolTip( webviewUrl ))
-
+				location = self.toolBar.getInputLocation()
+				location.SetLabel( webviewUrl )
+				location.SetToolTip(wx.ToolTip( webviewUrl ))
+				
 			self.current = webviewUrl
 		
 		if not webview.JS_SCRIPT_RUN and webviewUrl.startswith("http"):
@@ -595,8 +663,8 @@ class Browser(wx.Panel):
 				# This is how you can cancel loading a page.
 				event.Veto()
 			else:
-				self.controlEmbedUrls.SetLabel( url )
-				self.controlEmbedUrls.Append( url )
+				embed.SetLabel( url )
+				embed.Append( url )
 				self.controleFluxoUrlsEmbutidas()
 
 	def OnWebViewNewWindow(self, event):
@@ -618,8 +686,9 @@ class Browser(wx.Panel):
 			if not isEmbed:
 				self.mainWin.controladorUrl.SetValue( url )
 			else:
-				self.controlEmbedUrls.SetLabel( url )
-				self.controlEmbedUrls.Append( url )
+				embed = self.toolBar.getInputEmbed()
+				embed.SetLabel( url )
+				embed.Append( url )
 				self.controleFluxoUrlsEmbutidas()
 				
 		if url == clickedLink and not self.pageExist(url) and not isValid and self.abasControl.GetPageCount() < 10:
@@ -632,7 +701,7 @@ class Browser(wx.Panel):
 	def hasUrl(self, url):
 		""" verifica se a url já foi inserida no controlador de urls """
 		if hasattr(self.mainWin, "urlManager"):
-			for urlPlusTitle in self.location.GetStrings():
+			for urlPlusTitle in self.toolBar.getInputLocation().GetStrings():
 				if self.mainWin.urlManager.splitUrlDesc(urlPlusTitle)[0] == url:
 					return True
 		return False
@@ -645,16 +714,17 @@ class Browser(wx.Panel):
 	# Control bar events
 	def OnLocationSelect(self, event):
 		""" controla a seleção de uma url, carrega a url selecionada """
-		url = self.location.GetStringSelection()
+		url = self.toolBar.getInputLocation().GetStringSelection()
 		self.webview.LoadURL(url)
 		# passa o foco para o navegador
 		self.webview.SetFocus()
 
 	def OnLocationEnter(self, event):
-		url = self.location.GetValue()
+		location = self.toolBar.getInputLocation()
+		url = location.GetValue()
 		
 		if not self.hasUrl(url):
-			self.location.Append(url)
+			location.Append(url)
 			
 		self.webview.LoadURL(url)
 
@@ -684,16 +754,17 @@ class Browser(wx.Panel):
 
 	def OnRefreshPageButton(self, event):
 		self.webview.Reload()
-		self.controlEmbedUrls.Clear()
+		self.toolBar.getInputEmbed().Clear()
 		self.webview.JS_SCRIPT_RUN = False
-
-
+		
+## -------------------------------------------------------------------------------
 if __name__=='__main__':
 	from main.app.util import base
 	base.trans_install() # instala as traduções.
 	
 	app = wx.App( 0 )
 	frame = wx.Frame(None, -1, "IEKA", size = (800, 500))
+	frame.Fit()
 	iewindow = Browser( frame)
 	frame.Show()
 	app.MainLoop()

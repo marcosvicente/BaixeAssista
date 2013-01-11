@@ -7,6 +7,7 @@ class Hostingbulk( SiteBase ):
     ## http://hostingbulk.com/jp33tfqh8835.html
     ## http://hostingbulk.com/embed-jp33tfqh8835-600x480.html
     ## http://hostingbulk.com/d74oyrowf9p6.html
+    ## http://hostingbulk.com/xmpxw53emp7x.html
     controller = {
         "url": "http://hostingbulk.com/%s.html", 
         "patterns": (
@@ -77,3 +78,8 @@ class Hostingbulk( SiteBase ):
         except: title = sites.get_random_text()
         
         self.configs = {"url": url+"?start=", "title": title, "duration": duration}
+        
+        
+        
+        
+        

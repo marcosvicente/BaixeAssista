@@ -316,7 +316,7 @@ class NoteBookImage( wx.Panel ):
 		
 	def addPage(self, page, win):
 		page.GetSizer().Add(win, 1, wx.EXPAND)
-		page.GetSizer().Layout()
+		#page.GetSizer().Layout()
 		
 ## ------------------------------------------------------------------------
 if __name__ == "__main__":
