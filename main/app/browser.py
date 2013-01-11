@@ -1,6 +1,7 @@
 # -*- coding: ISO-8859-1 -*-
 
-import os, sys
+import os
+import sys
 import wx
 import time
 import wx.aui
@@ -9,18 +10,9 @@ import wx.html2 as Webview
 import wx.lib.agw.genericmessagedialog as GMD
 import wx.lib.agw.flatnotebook as FNB
 
-if __name__ == "__main__":
-	os.environ['DJANGO_SETTINGS_MODULE'] = "main.settings"
-	scriptPath = os.path.dirname(os.path.abspath(__file__))
-	
-	parentDir = os.path.dirname(scriptPath)
-	mainDir = os.path.dirname(parentDir)
-	
-	if not mainDir in sys.path: sys.path.append(mainDir)
-	if not parentDir in sys.path: sys.path.append(parentDir)
-	if not scriptPath in sys.path: sys.path.append(scriptPath)
-	
-	os.chdir( mainDir )
+# configurando o ambiente para a execução do script.
+import main.environ
+main.environ.setup((__name__ == "__main__"))
 
 import manager
 from main.app import generators
