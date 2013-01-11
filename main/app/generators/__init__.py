@@ -154,7 +154,10 @@ class Universal(object):
     @classmethod
     def has_site(cls, url):
         """ avalia se a url é de um site registrado """
-        try: has = (manager.UrlManager.getBaseName(url) in cls.get_sites())
+        try:
+            basename = manager.UrlManager.getBaseName(url)
+            matchobj = cls.patternMatch(basename, url)
+            has = matchobj and (basename in cls.get_sites())
         except: has = False
         return has
         
