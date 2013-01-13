@@ -45,7 +45,7 @@ LOGS_DIR = os.path.join(APPDIR, "logs")
 
 # pasta(diretório) padrão de vídeos
 VIDEOS_DIR_TEMP_NAME = "temp"
-VIDEOS_DIR_NAME = "STREAM-VIDEOS"
+VIDEOS_DIR_NAME = "videos"
 DEFAULT_VIDEOS_DIR = os.path.join(ROOT_DIR, VIDEOS_DIR_NAME)
 
 if not ROOT_DIR in sys.path: # import do projeto
