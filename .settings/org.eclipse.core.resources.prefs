@@ -1,6 +1,5 @@
 eclipse.preferences.version=1
 encoding//main/app/browser.py=ISO-8859-1
-encoding//main/app/bugs.py=ISO-8859-1
 encoding//main/app/decrypter.py=ISO-8859-1
 encoding//main/app/generators/__init__.py=utf-8
 encoding//main/app/generators/_sitebase.py=utf-8
