@@ -136,34 +136,13 @@ class ToolBar(wx.Panel, TooBarGET):
 		self.parent = parent
 		
 		self.mainSizer = wx.BoxSizer(wx.HORIZONTAL)
-		self.mainSizer.Add(self._setupView(), 1, wx.EXPAND|wx.ALL, 2)
+		self.mainSizer.Add(self._setupView(), 1, wx.EXPAND|wx.ALL)
 		
 		self.SetSizer(self.mainSizer)
 		self.SetAutoLayout(True)
 		
 	def _createButtons(self):
-		btnFlexGridSizer = wx.FlexGridSizer(1, 8, 0, 5)
-		## hSizer = wx.BoxSizer(wx.HORIZONTAL)
-		
-		# botão go_back
-		imgpath = os.path.join(settings.IMAGES_DIR, "go-previous24x24.png")
-		
-		bmp = wx.Image(imgpath, wx.BITMAP_TYPE_PNG)
-		self.btnGoPrevious = wx.BitmapButton(self, -1, bmp.ConvertToBitmap())
-		
-		self.btnGoPrevious.SetToolTipString("Go Back")		
-		btnFlexGridSizer.Add(self.btnGoPrevious, 0, wx.LEFT, 2)
-		# ---------------------------------------------------------------------------------
-		
-		# botão go_forward
-		imgpath = os.path.join(settings.IMAGES_DIR, "go-next24x24.png")
-		
-		bmp = wx.Image(imgpath, wx.BITMAP_TYPE_PNG)
-		self.btnGoNext = wx.BitmapButton(self, -1, bmp.ConvertToBitmap())
-		
-		self.btnGoNext.SetToolTipString("Go Forward")		
-		btnFlexGridSizer.Add(self.btnGoNext)
-		# ---------------------------------------------------------------------------------
+		btnFlexGridSizer = wx.FlexGridSizer(1, 6, 0, 2)
 		
 		# botão search
 		imgpath = os.path.join(settings.IMAGES_DIR, "search-computer24x24.png")
@@ -225,11 +204,39 @@ class ToolBar(wx.Panel, TooBarGET):
 		btnFlexGridSizer.Add(self.spinZoomPage)
 		return btnFlexGridSizer
 	
+	def _createNavigationButtons(self):
+		navPanel = wx.Panel(self, -1)
+		
+		hsizer = wx.BoxSizer(wx.HORIZONTAL)
+		navPanel.SetSizer(hsizer)
+		
+		# botão go_back
+		imgpath = os.path.join(settings.IMAGES_DIR, "go-previous24x24.png")
+		
+		bmp = wx.Image(imgpath, wx.BITMAP_TYPE_PNG)
+		self.btnGoPrevious = wx.BitmapButton(navPanel, -1, bmp.ConvertToBitmap())
+		
+		self.btnGoPrevious.SetToolTipString("Go Back")		
+		hsizer.Add(self.btnGoPrevious, 0, wx.RIGHT, 2)
+		# ---------------------------------------------------------------------------------
+		
+		# botão go_forward
+		imgpath = os.path.join(settings.IMAGES_DIR, "go-next24x24.png")
+		
+		bmp = wx.Image(imgpath, wx.BITMAP_TYPE_PNG)
+		self.btnGoNext = wx.BitmapButton(navPanel, -1, bmp.ConvertToBitmap())
+		
+		self.btnGoNext.SetToolTipString("Go Forward")
+		hsizer.Add(self.btnGoNext, 0, wx.LEFT, 2)
+		
+		return navPanel
+	
 	def _setupView(self):
 		hsizer = wx.BoxSizer(wx.HORIZONTAL)
 		
+		hsizer.Add(self._createNavigationButtons(), 0, wx.RIGHT, 5)
 		hsizer.Add(self._inputLocationUrl(), 1, wx.EXPAND)
-		hsizer.Add(self._createButtons(), 0, wx.LEFT|wx.RIGHT, 20)
+		hsizer.Add(self._createButtons(), 0, wx.LEFT|wx.RIGHT, 5)
 		hsizer.Add(self._inputEmbedUrls(), 1, wx.EXPAND)
 		
 		return hsizer
@@ -237,8 +244,8 @@ class ToolBar(wx.Panel, TooBarGET):
 	def _inputLocationUrl(self):
 		hSizer = wx.BoxSizer(wx.HORIZONTAL)
 		
-		locationInfo = wx.StaticText(self, -1, _("Local:"))
-		hSizer.Add(locationInfo, 0, wx.ALIGN_CENTER|wx.RIGHT|wx.LEFT, 5)
+		#locationInfo = wx.StaticText(self, -1, _("Local:"))
+		#hSizer.Add(locationInfo, 0, wx.ALIGN_CENTER|wx.RIGHT|wx.LEFT, 5)
 		
 		# controle usado para entrada de urls
 		self.location = wx.ComboBox(self, -1, style=wx.CB_DROPDOWN|wx.PROCESS_ENTER)
@@ -251,12 +258,12 @@ class ToolBar(wx.Panel, TooBarGET):
 		hSizer = wx.BoxSizer(wx.HORIZONTAL)
 		
 		embendInfo = wx.StaticText(self, -1, "Embed:")
-		hSizer.Add(embendInfo, 0, wx.ALIGN_CENTER|wx.RIGHT|wx.LEFT, 5)
+		hSizer.Add(embendInfo, 0, wx.ALIGN_CENTER|wx.RIGHT, 5)
 		
 		# controle usado para entrada de urls embutidas
 		self.embed = wx.ComboBox(self, -1, style=wx.CB_DROPDOWN|wx.PROCESS_ENTER)
 		self.embed.SetFont( wx.Font(12, wx.SWISS, wx.NORMAL, wx.NORMAL, faceName='Arial'))
-				
+		
 		hSizer.Add(self.embed, 1, wx.EXPAND|wx.RIGHT, 2)
 		return hSizer
 	
