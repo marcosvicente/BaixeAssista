@@ -1,8 +1,12 @@
 # coding: utf-8
-import sys
+import sys, os
 from PySide import QtCore
 from PySide import QtGui
 from PySide import QtWebKit
+from main import settings
+import main.environ
+main.environ.setup((__name__ == "__main__"))
+
 
 class Browser (QtGui.QWidget):
     
@@ -40,28 +44,32 @@ class Browser (QtGui.QWidget):
         
         ## Back button
         btnBack = QtGui.QPushButton(self)
-        btnBack.setIcon(QtGui.QIcon("btnback-blue.png"))
+        path = os.path.join(settings.IMAGES_DIR, "btnback-blue.png")
+        btnBack.setIcon(QtGui.QIcon(path))
         btnBack.setToolTip("<b>voltar</b>")
         btnBack.clicked.connect( self.webView.back )
         btnBack.show()
         
         ## Foward button
         btnForward = QtGui.QPushButton(self)
-        btnForward.setIcon(QtGui.QIcon("btnforward-blue.png"))
+        path = os.path.join(settings.IMAGES_DIR, "btnforward-blue.png")
+        btnForward.setIcon(QtGui.QIcon(path))
         btnForward.setToolTip("<b>avançar</b>")
         btnForward.clicked.connect( self.webView.forward )
         btnForward.show()
         
         ## Refresh button
         btnRefresh = QtGui.QPushButton(self)
-        btnRefresh.setIcon(QtGui.QIcon("btnrefresh-blue.png"))
+        path = os.path.join(settings.IMAGES_DIR, "btnrefresh-blue.png")
+        btnRefresh.setIcon(QtGui.QIcon(path))
         btnRefresh.setToolTip("<b>recarregar</b>")
         btnRefresh.clicked.connect( self.webView.reload )
         btnRefresh.show()
         
         ## Refresh button
         btnGo = QtGui.QPushButton(self)
-        btnGo.setIcon(QtGui.QIcon("btnsearch-blue.png"))
+        path = os.path.join(settings.IMAGES_DIR, "btnsearch-blue.png")
+        btnGo.setIcon(QtGui.QIcon(path))
         btnGo.setToolTip("<b>carregar</b>")
         btnGo.clicked.connect( self.loadPage )
         btnGo.show()
