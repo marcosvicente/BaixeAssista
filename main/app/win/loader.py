@@ -5,10 +5,10 @@ import mainLayout
 import browser
 
 ## --------------------------------------------------------------------------
-class MainWindow(QtGui.QMainWindow):
+class Loader(QtGui.QMainWindow):
     
     def __init__(self):
-        super(MainWindow, self).__init__()
+        super(Loader, self).__init__()
         
         self.uiMainWindow = mainLayout.Ui_MainWindow()
         self.uiMainWindow.setupUi(self)
@@ -39,13 +39,16 @@ class MainWindow(QtGui.QMainWindow):
     
 ## --------------------------------------------------------------------------
 
-app = QtGui.QApplication(sys.argv)
+if __name__ == "__main__":
+    app = QtGui.QApplication(sys.argv)
+    
+    translator = QtCore.QTranslator()
+    translator.load('mainLayout_pt')
+    app.installTranslator(translator)
+    
+    mw = Loader()
+    mw.show()
 
-translator = QtCore.QTranslator()
-translator.load('mainLayout_pt')
-app.installTranslator(translator)
-
-mw = MainWindow()
-mw.show()
-
-sys.exit(app.exec_())
+    sys.exit(app.exec_())
+    
+    
