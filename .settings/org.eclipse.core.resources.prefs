@@ -1,6 +1,7 @@
 eclipse.preferences.version=1
 encoding//main/app/browser.py=ISO-8859-1
 encoding//main/app/bugs.py=ISO-8859-1
+encoding//main/app/win/browser.py=utf-8
 encoding//main/environ.py=utf-8
 encoding//main/settings.py=UTF-8
 encoding/BaixeAssista.py=ISO-8859-1
