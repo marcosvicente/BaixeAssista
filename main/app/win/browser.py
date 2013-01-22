@@ -40,7 +40,9 @@ class Browser (QtGui.QWidget):
         self.webView = None
         
         self.tabPagePanel = QtGui.QTabWidget(self)
+        self.tabPagePanel.setTabsClosable(True)
         self.tabPagePanel.currentChanged.connect( self.updateWebView )
+        self.tabPagePanel.tabCloseRequested.connect( self.handleTabCloseRequest )
         vBox.addLayout( self._createToolbar() )
         
         self.setupPage("http://www.youtube.com/")
@@ -82,14 +84,19 @@ class Browser (QtGui.QWidget):
         self.tabPagePanel.addTab(tabPage, self.tr("Loading..."))
         webView.load(QtCore.QUrl(url))
         webView.show()
-        
+    
+    def handleTabCloseRequest(self, index):
+        # garante que pelo menos um tabela exista(tabela padrão).
+        if self.tabPagePanel.count() > 1:
+            self.tabPagePanel.removeTab( index )
+            
     def updateHistoryButton(self, *args):
         while True:
             try:
                 self.btnBack.setEnabled(self.webView.history().canGoBack())
                 self.btnForward.setEnabled(self.webView.history().canGoForward())
                 time.sleep(0.5)
-            except: pass
+            except: break
             
     def updateWebView(self, index):
         tabPage = self.tabPagePanel.widget( index )
@@ -104,7 +111,7 @@ class Browser (QtGui.QWidget):
             self.btnStopRefresh.setRefreshState()
         else:
             self.btnStopRefresh.setStopState()
-        
+            
     def onLinkClicked(self, url):
         self.webView.load( url )
         
