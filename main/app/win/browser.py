@@ -4,11 +4,33 @@ from PySide import QtCore
 from PySide import QtGui
 from PySide import QtWebKit
 from main import settings
+import time, thread
 
 import main.environ
 main.environ.setup((__name__ == "__main__"))
+from main.app.util import base
 
-
+class StopRefreshButton(QtGui.QPushButton):
+    def __init__(self, *arg):
+        super(StopRefreshButton, self).__init__()
+        self.btnState = {}
+        self.setRefreshState()
+        
+    def setRefreshState(self):
+        path = os.path.join(settings.IMAGES_DIR, "btnrefresh-blue.png")
+        self.setIcon(QtGui.QIcon(path))
+        self.btnState["state"] = "refresh"
+        self.setToolTip("<b>recarregar</b>")
+        
+    def setStopState(self):
+        qicon = QtGui.QIcon(os.path.join(settings.IMAGES_DIR, "btnstop-blue.png"))
+        self.setIcon( qicon )
+        self.btnState["state"] = "stop"
+        self.setToolTip("<b>parar</b>")
+        
+    def __getitem__(self, key):
+        return self.btnState[key]
+        
 class Browser (QtGui.QWidget):
     searchEngine = "http://www.google.com/"
     
@@ -16,26 +38,35 @@ class Browser (QtGui.QWidget):
         super(Browser, self).__init__(*arg)
         vBox = QtGui.QVBoxLayout()
         
+        self.current ="http://www.youtube.com/"
         self.webView = QtWebKit.QWebView(self)
         
         self.webView.settings().setAttribute(QtWebKit.QWebSettings.PluginsEnabled, True)
         self.webView.page().setLinkDelegationPolicy(QtWebKit.QWebPage.DelegateAllLinks)
         
-        self.current ="http://www.youtube.com/"
-        self.webView.load( QtCore.QUrl(self.current) )
-        
         self.webView.linkClicked.connect( self.onLinkClicked )
         self.webView.loadStarted.connect( self.onPageLoad )
+        self.webView.loadFinished.connect( self.onPageFinished )
         self.webView.urlChanged.connect( self.onChangeUrl )
-        
         self.webView.show()
         
         vBox.addLayout( self._createToolbar() )
         vBox.addWidget(self.webView)
         
+        # carregando a página padrão.
+        self.webView.load( QtCore.QUrl(self.current) )
+        self.onPageLoad()
+        
         self.setLayout( vBox )
         self.show()
-        
+    
+    base.just_try()
+    def updateHistoryButton(self, *args):
+        while True:
+            self.btnBack.setEnabled(self.webView.history().canGoBack())
+            self.btnForward.setEnabled(self.webView.history().canGoForward())
+            time.sleep(0.5)
+            
     def onLinkClicked(self, url):
         self.webView.load( url )
         
@@ -43,12 +74,22 @@ class Browser (QtGui.QWidget):
         self.webView.load( QtCore.QUrl(self.location.currentText()) )
         
     def onPageLoad(self):
-        url = self.webView.url().toString()
-    
+        self.btnStopRefresh.setStopState()
+        
+    def onPageFinished(self):
+        self.btnStopRefresh.setRefreshState()
+        
     def onChangeUrl(self, url):
         self.current = url.toString()
         self.location.setEditText( self.current )
         self.location.setToolTip(self.current)
+    
+    def handleStopRefresh(self):
+        if self.btnStopRefresh["state"] == "refresh":
+            self.webView.reload()
+            
+        elif self.btnStopRefresh["state"] == "stop":
+            self.webView.stop()
         
     def _createToolbar(self):
         self.location = QtGui.QComboBox(self)
@@ -58,28 +99,24 @@ class Browser (QtGui.QWidget):
         self.location.show()
         
         ## Back button
-        btnBack = QtGui.QPushButton(self)
+        self.btnBack = QtGui.QPushButton(self)
         path = os.path.join(settings.IMAGES_DIR, "btnback-blue.png")
-        btnBack.setIcon(QtGui.QIcon(path))
-        btnBack.setToolTip("<b>voltar</b>")
-        btnBack.clicked.connect( self.webView.back )
-        btnBack.show()
+        self.btnBack.setIcon(QtGui.QIcon(path))
+        self.btnBack.setToolTip("<b>voltar</b>")
+        self.btnBack.clicked.connect( self.webView.back )
+        self.btnBack.show()
         
         ## Foward button
-        btnForward = QtGui.QPushButton(self)
+        self.btnForward = QtGui.QPushButton(self)
         path = os.path.join(settings.IMAGES_DIR, "btnforward-blue.png")
-        btnForward.setIcon(QtGui.QIcon(path))
-        btnForward.setToolTip("<b>avançar</b>")
-        btnForward.clicked.connect( self.webView.forward )
-        btnForward.show()
+        self.btnForward.setIcon(QtGui.QIcon(path))
+        self.btnForward.setToolTip("<b>avançar</b>")
+        self.btnForward.clicked.connect( self.webView.forward )
+        self.btnForward.show()
         
         ## Refresh button
-        btnRefresh = QtGui.QPushButton(self)
-        path = os.path.join(settings.IMAGES_DIR, "btnrefresh-blue.png")
-        btnRefresh.setIcon(QtGui.QIcon(path))
-        btnRefresh.setToolTip("<b>recarregar</b>")
-        btnRefresh.clicked.connect( self.webView.reload )
-        btnRefresh.show()
+        self.btnStopRefresh = StopRefreshButton(self)
+        self.btnStopRefresh.clicked.connect( self.handleStopRefresh )
         
         ## Refresh button
         btnSearch = QtGui.QPushButton(self)
@@ -106,14 +143,17 @@ class Browser (QtGui.QWidget):
         btnDelUrl.show()
         
         hBoxLayout = QtGui.QHBoxLayout()
-        hBoxLayout.addWidget(btnBack)
-        hBoxLayout.addWidget(btnForward)
-        hBoxLayout.addWidget(btnRefresh)
+        hBoxLayout.addWidget(self.btnBack)
+        hBoxLayout.addWidget(self.btnForward)
+        hBoxLayout.addWidget(self.btnStopRefresh)
         
         hBoxLayout.addWidget(self.location, 1)
         hBoxLayout.addWidget( btnSearch )
         hBoxLayout.addWidget( btnNewUrl )
         hBoxLayout.addWidget( btnDelUrl )
+        
+        # atualiza o estado dos botões de navegação.
+        thread.start_new_thread(self.updateHistoryButton, tuple())
         return hBoxLayout
         
 
