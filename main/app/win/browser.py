@@ -10,6 +10,9 @@ import main.environ
 main.environ.setup((__name__ == "__main__"))
 from main.app.util import base
 
+from main.app import generators
+from main.app import models
+
 class StopRefreshButton(QtGui.QPushButton):
     def __init__(self, *arg):
         super(StopRefreshButton, self).__init__()
@@ -37,7 +40,9 @@ class Browser (QtGui.QWidget):
     def __init__(self, *arg):
         super(Browser, self).__init__(*arg)
         vBox = QtGui.QVBoxLayout()
+        
         self.webView = None
+        self.objects = models.Browser.objects # queryset
         
         self.tabPagePanel = QtGui.QTabWidget(self)
         self.tabPagePanel.setTabsClosable(True)
@@ -45,10 +50,11 @@ class Browser (QtGui.QWidget):
         self.tabPagePanel.tabCloseRequested.connect( self.handleTabCloseRequest )
         vBox.addLayout( self._createToolbar() )
         
-        self.setupPage("http://www.youtube.com/")
-        self.setupPage("http://www.python.org/")
-        self.setupPage("http://www.itau.com.br/")
-        self.setupPage("http://code.google.com/p/gerenciador-de-videos-online/downloads/list")
+        # página inicial padrão
+        lastSite = (self.getLastSite() or self.searchEngine)
+        
+        for site in self.getHistorySites():
+            self.setupPage(site, (site==lastSite))
         
         vBox.addWidget( self.tabPagePanel )
         
@@ -57,15 +63,9 @@ class Browser (QtGui.QWidget):
         thread.start_new_thread(self.updateHistoryButton, tuple())
         self.show()
     
-    def setupPage(self, url):
-        tabPage = QtGui.QWidget()
-        vBox = QtGui.QVBoxLayout()
-        tabPage.setLayout( vBox )
+    def setupPage(self, url, isDefaulf=False):
+        webView = QtWebKit.QWebView(self.tabPagePanel)
         
-        webView = QtWebKit.QWebView(tabPage)
-        vBox.addWidget( webView )
-        
-        tabPage.webView = webView
         webView.MOVIE_LOADING = QtGui.QMovie(os.path.join(settings.IMAGES_DIR, "spin-progress.gif"))
         webView.MOVIE_LOADING.start()
         webView.PAGE_LOADING = True
@@ -80,11 +80,51 @@ class Browser (QtGui.QWidget):
         webView.loadProgress.connect( self.onProgress )
         webView.urlChanged.connect( self.onChangeUrl )
         webView.titleChanged.connect( self.onTitleChange )
-        
-        self.tabPagePanel.addTab(tabPage, self.tr("Loading..."))
         webView.load(QtCore.QUrl(url))
         webView.show()
+        
+        self.tabPagePanel.addTab(webView, self.tr("Loading..."))
+        if isDefaulf: self.tabPagePanel.setCurrentWidget( webView )
+        
+    def getLastSite(self):
+        try: query = self.objects.get(site=None, historysite=None)
+        except: query = models.Browser(lastsite="")
+        return query.lastsite
     
+    def addLastSite(self, site):
+        try: query = self.objects.get(site=None, historysite=None)
+        except: query = models.Browser()
+        query.lastsite = site
+        query.save()
+    
+    def getHistorySites(self):
+        queries = self.objects.filter(site=None, lastsite=None)
+        return map(lambda q: q.historysite, queries)
+    
+    def addHistorySites(self, sites):
+        """ guarda o histórico de urls """
+        self.objects.filter(site=None, lastsite=None).delete()
+        for site in sites:
+            models.Browser(historysite=site).save()
+            
+    def addSite(self, site):
+        models.Browser(site=site).save()
+    
+    def getSites(self):
+        """ retorna uma lista com todos os sites adicionados """
+        queries = self.objects.filter(lastsite=None, historysite=None)
+        return map(lambda q: q.site, queries)
+
+    def closeEvent(self, event):
+        # salva os dados de navegação
+        historyUrl = []
+        for index in range(self.tabPagePanel.count()):
+            webView = self.tabPagePanel.widget( index )
+            historyUrl.append( webView.PAGE_URL )
+            
+        self.addHistorySites( historyUrl )
+        self.addLastSite( self.webView.PAGE_URL )
+        
     def handleTabCloseRequest(self, index):
         # garante que pelo menos um tabela exista(tabela padrão).
         if self.tabPagePanel.count() > 1:
@@ -99,15 +139,14 @@ class Browser (QtGui.QWidget):
             except: break
             
     def updateWebView(self, index):
-        tabPage = self.tabPagePanel.widget( index )
+        webView = self.tabPagePanel.widget( index )
         
-        if tabPage == self.tabPagePanel.currentWidget():
-            self.webView = tabPage.webView
+        if webView == self.tabPagePanel.currentWidget():
+            self.location.setEditText(webView.PAGE_URL)
+            self.location.setToolTip(webView.PAGE_URL)
+            self.webView = webView
             
-            self.location.setEditText(self.webView.PAGE_URL)
-            self.location.setToolTip(self.webView.PAGE_URL)
-        
-        if not tabPage.webView.PAGE_LOADING:
+        if not webView.PAGE_LOADING:
             self.btnStopRefresh.setRefreshState()
         else:
             self.btnStopRefresh.setStopState()
@@ -130,19 +169,19 @@ class Browser (QtGui.QWidget):
         webView.PAGE_LOADING = False
         webView.MOVIE_LOADING.stop()
         
-        index = self.tabPagePanel.indexOf( webView.parent() )
+        index = self.tabPagePanel.indexOf( webView )
         self.tabPagePanel.setTabIcon(index, webView.icon())
         
         self.btnStopRefresh.setRefreshState()
         
     def onProgress(self, porcent):
         webView = self.sender()
-        index = self.tabPagePanel.indexOf( webView.parent() )
+        index = self.tabPagePanel.indexOf( webView )
         self.tabPagePanel.setTabIcon(index, QtGui.QIcon(webView.MOVIE_LOADING.currentPixmap()))
     
     def onTitleChange(self, title):
         webView = self.sender()
-        index = self.tabPagePanel.indexOf( webView.parent() )
+        index = self.tabPagePanel.indexOf( webView )
         self.tabPagePanel.setTabText(index, title if len(title) < 20 else (title[:20]+"..."))
         self.tabPagePanel.setTabToolTip(index, title)
         
@@ -162,7 +201,8 @@ class Browser (QtGui.QWidget):
         
     def _createToolbar(self):
         self.location = QtGui.QComboBox(self)
-        ##self.location.addItem( self.current )
+        # adicionando a lista de site favoritos.
+        self.location.addItems( self.getSites() )
         self.location.activated.connect(self.loadPage)
         self.location.setEditable(True)
         self.location.show()
