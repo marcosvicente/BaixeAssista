@@ -19,7 +19,6 @@ class Loader(QtGui.QMainWindow):
     def setupUI(self):
         self.setupTab()
         
-    
     def setupTab(self):
         vBox = QtGui.QVBoxLayout()
         self.uiMainWindow.tabBrowser.setLayout( vBox )
@@ -27,12 +26,12 @@ class Loader(QtGui.QMainWindow):
         brw = browser.Browser( self.uiMainWindow.tabBrowser )
         vBox.addWidget(brw)
         
-        
     def setupAction(self):
         self.uiMainWindow.actionExit.triggered.connect(self.close)
         
-        self.uiMainWindow.actionEnglish.triggered.connect(self.changeTranslation)
-        self.uiMainWindow.actionPortuguse.triggered.connect(self.changeTranslation)
+        self.langActionGroup = QtGui.QActionGroup(self)
+        self.langActionGroup.addAction(self.uiMainWindow.actionPortuguse)
+        self.langActionGroup.addAction(self.uiMainWindow.actionEnglish)
         
     def changeTranslation(self):
         action = self.sender()

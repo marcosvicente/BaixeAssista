@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'mainLayout.ui'
 #
-# Created: Mon Jan 21 21:08:15 2013
+# Created: Mon Jan 21 22:09:25 2013
 #      by: pyside-uic 0.2.14 running on PySide 1.1.2
 #
 # WARNING! All changes made in this file will be lost!
@@ -45,8 +45,8 @@ class Ui_MainWindow(object):
         self.menubar.setObjectName("menubar")
         self.menuEdit = QtGui.QMenu(self.menubar)
         self.menuEdit.setObjectName("menuEdit")
-        self.menuLing = QtGui.QMenu(self.menubar)
-        self.menuLing.setObjectName("menuLing")
+        self.menuLang = QtGui.QMenu(self.menubar)
+        self.menuLang.setObjectName("menuLang")
         MainWindow.setMenuBar(self.menubar)
         self.statusbar = QtGui.QStatusBar(MainWindow)
         self.statusbar.setObjectName("statusbar")
@@ -67,10 +67,11 @@ class Ui_MainWindow(object):
         self.actionPortuguse.setChecked(False)
         self.actionPortuguse.setObjectName("actionPortuguse")
         self.menuEdit.addAction(self.actionExit)
-        self.menuLing.addAction(self.actionEnglish)
-        self.menuLing.addAction(self.actionPortuguse)
+        self.menuLang.addAction(self.actionEnglish)
+        self.menuLang.addAction(self.actionPortuguse)
+        self.menuLang.addSeparator()
         self.menubar.addAction(self.menuEdit.menuAction())
-        self.menubar.addAction(self.menuLing.menuAction())
+        self.menubar.addAction(self.menuLang.menuAction())
 
         self.retranslateUi(MainWindow)
         self.tabPanel.setCurrentIndex(0)
@@ -82,7 +83,7 @@ class Ui_MainWindow(object):
         self.tabPanel.setTabText(self.tabPanel.indexOf(self.tabConfig), QtGui.QApplication.translate("MainWindow", "Configuration", None, QtGui.QApplication.UnicodeUTF8))
         self.tabPanel.setTabText(self.tabPanel.indexOf(self.tabBrowser), QtGui.QApplication.translate("MainWindow", "Browser", None, QtGui.QApplication.UnicodeUTF8))
         self.menuEdit.setTitle(QtGui.QApplication.translate("MainWindow", "Edit", None, QtGui.QApplication.UnicodeUTF8))
-        self.menuLing.setTitle(QtGui.QApplication.translate("MainWindow", "Lang", None, QtGui.QApplication.UnicodeUTF8))
+        self.menuLang.setTitle(QtGui.QApplication.translate("MainWindow", "Lang", None, QtGui.QApplication.UnicodeUTF8))
         self.actionExit.setText(QtGui.QApplication.translate("MainWindow", "Exit", None, QtGui.QApplication.UnicodeUTF8))
         self.actionEnglish.setText(QtGui.QApplication.translate("MainWindow", "English", None, QtGui.QApplication.UnicodeUTF8))
         self.actionPortuguse.setText(QtGui.QApplication.translate("MainWindow", "Portuguese", None, QtGui.QApplication.UnicodeUTF8))

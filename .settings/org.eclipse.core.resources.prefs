@@ -3,6 +3,7 @@ encoding//main/app/browser.py=ISO-8859-1
 encoding//main/app/bugs.py=ISO-8859-1
 encoding//main/app/win/browser.py=utf-8
 encoding//main/app/win/loader.py=utf-8
+encoding//main/app/win/mainLayout.py=utf-8
 encoding//main/app/window/ctrbar.py=ISO-8859-1
 encoding//main/environ.py=utf-8
 encoding//main/settings.py=UTF-8

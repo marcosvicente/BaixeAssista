@@ -75,15 +75,16 @@
     </property>
     <addaction name="actionExit"/>
    </widget>
-   <widget class="QMenu" name="menuLing">
+   <widget class="QMenu" name="menuLang">
     <property name="title">
      <string>Lang</string>
     </property>
     <addaction name="actionEnglish"/>
     <addaction name="actionPortuguse"/>
+    <addaction name="separator"/>
    </widget>
    <addaction name="menuEdit"/>
-   <addaction name="menuLing"/>
+   <addaction name="menuLang"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionExit">
