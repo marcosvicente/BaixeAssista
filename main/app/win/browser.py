@@ -64,10 +64,10 @@ class Browser (QtGui.QWidget):
         vBox.addWidget( webView )
         
         tabPage.webView = webView
+        webView.MOVIE_LOADING = QtGui.QMovie(os.path.join(settings.IMAGES_DIR, "spin-progress.gif"))
+        webView.MOVIE_LOADING.start()
         webView.PAGE_LOADING = True
         webView.PAGE_URL = url
-        webView.MOVIE = QtGui.QMovie(os.path.join(settings.IMAGES_DIR, "spin-progress.gif"))
-        webView.MOVIE.start()
         
         webView.settings().setAttribute(QtWebKit.QWebSettings.PluginsEnabled, True)
         webView.page().setLinkDelegationPolicy(QtWebKit.QWebPage.DelegateAllLinks)
@@ -77,8 +77,9 @@ class Browser (QtGui.QWidget):
         webView.loadFinished.connect( self.onPageFinished )
         webView.loadProgress.connect( self.onProgress )
         webView.urlChanged.connect( self.onChangeUrl )
+        webView.titleChanged.connect( self.onTitleChange )
         
-        self.tabPagePanel.addTab(tabPage, "Loading...")
+        self.tabPagePanel.addTab(tabPage, self.tr("Loading..."))
         webView.load(QtCore.QUrl(url))
         webView.show()
         
@@ -113,20 +114,30 @@ class Browser (QtGui.QWidget):
     def onPageLoad(self):
         webView = self.sender()
         webView.PAGE_LOADING = True
-        webView.MOVIE.start()
+        webView.MOVIE_LOADING.start()
         
         self.btnStopRefresh.setStopState()
         
     def onPageFinished(self):
         webView = self.sender()
         webView.PAGE_LOADING = False
-        webView.MOVIE.stop()
+        webView.MOVIE_LOADING.stop()
+        
+        index = self.tabPagePanel.indexOf( webView.parent() )
+        self.tabPagePanel.setTabIcon(index, webView.icon())
+        
         self.btnStopRefresh.setRefreshState()
         
     def onProgress(self, porcent):
         webView = self.sender()
         index = self.tabPagePanel.indexOf( webView.parent() )
-        self.tabPagePanel.setTabIcon(index, QtGui.QIcon(webView.MOVIE.currentPixmap()))
+        self.tabPagePanel.setTabIcon(index, QtGui.QIcon(webView.MOVIE_LOADING.currentPixmap()))
+    
+    def onTitleChange(self, title):
+        webView = self.sender()
+        index = self.tabPagePanel.indexOf( webView.parent() )
+        self.tabPagePanel.setTabText(index, title if len(title) < 20 else (title[:20]+"..."))
+        self.tabPagePanel.setTabToolTip(index, title)
         
     def onChangeUrl(self, url):
         webView = self.sender()
