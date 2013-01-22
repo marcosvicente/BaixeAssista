@@ -37,36 +37,73 @@ class Browser (QtGui.QWidget):
     def __init__(self, *arg):
         super(Browser, self).__init__(*arg)
         vBox = QtGui.QVBoxLayout()
+        self.webView = None
         
-        self.current ="http://www.youtube.com/"
-        self.webView = QtWebKit.QWebView(self)
-        
-        self.webView.settings().setAttribute(QtWebKit.QWebSettings.PluginsEnabled, True)
-        self.webView.page().setLinkDelegationPolicy(QtWebKit.QWebPage.DelegateAllLinks)
-        
-        self.webView.linkClicked.connect( self.onLinkClicked )
-        self.webView.loadStarted.connect( self.onPageLoad )
-        self.webView.loadFinished.connect( self.onPageFinished )
-        self.webView.urlChanged.connect( self.onChangeUrl )
-        self.webView.show()
-        
+        self.tabPagePanel = QtGui.QTabWidget(self)
+        self.tabPagePanel.currentChanged.connect( self.updateWebView )
         vBox.addLayout( self._createToolbar() )
-        vBox.addWidget(self.webView)
         
-        # carregando a página padrão.
-        self.webView.load( QtCore.QUrl(self.current) )
-        self.onPageLoad()
+        self.setupPage("http://www.youtube.com/")
+        self.setupPage("http://www.python.org/")
+        self.setupPage("http://www.itau.com.br/")
+        self.setupPage("http://code.google.com/p/gerenciador-de-videos-online/downloads/list")
+        
+        vBox.addWidget( self.tabPagePanel )
         
         self.setLayout( vBox )
+        # atualiza o estado dos botões de navegação.
+        thread.start_new_thread(self.updateHistoryButton, tuple())
         self.show()
     
-    base.just_try()
+    def setupPage(self, url):
+        tabPage = QtGui.QWidget()
+        vBox = QtGui.QVBoxLayout()
+        tabPage.setLayout( vBox )
+        
+        webView = QtWebKit.QWebView(tabPage)
+        vBox.addWidget( webView )
+        
+        tabPage.webView = webView
+        webView.PAGE_LOADING = True
+        webView.PAGE_URL = url
+        webView.MOVIE = QtGui.QMovie(os.path.join(settings.IMAGES_DIR, "spin-progress.gif"))
+        webView.MOVIE.start()
+        
+        webView.settings().setAttribute(QtWebKit.QWebSettings.PluginsEnabled, True)
+        webView.page().setLinkDelegationPolicy(QtWebKit.QWebPage.DelegateAllLinks)
+        
+        webView.linkClicked.connect( self.onLinkClicked )
+        webView.loadStarted.connect( self.onPageLoad )
+        webView.loadFinished.connect( self.onPageFinished )
+        webView.loadProgress.connect( self.onProgress )
+        webView.urlChanged.connect( self.onChangeUrl )
+        
+        self.tabPagePanel.addTab(tabPage, "Loading...")
+        webView.load(QtCore.QUrl(url))
+        webView.show()
+        
     def updateHistoryButton(self, *args):
         while True:
-            self.btnBack.setEnabled(self.webView.history().canGoBack())
-            self.btnForward.setEnabled(self.webView.history().canGoForward())
-            time.sleep(0.5)
+            try:
+                self.btnBack.setEnabled(self.webView.history().canGoBack())
+                self.btnForward.setEnabled(self.webView.history().canGoForward())
+                time.sleep(0.5)
+            except: pass
             
+    def updateWebView(self, index):
+        tabPage = self.tabPagePanel.widget( index )
+        
+        if tabPage == self.tabPagePanel.currentWidget():
+            self.webView = tabPage.webView
+            
+            self.location.setEditText(self.webView.PAGE_URL)
+            self.location.setToolTip(self.webView.PAGE_URL)
+        
+        if not tabPage.webView.PAGE_LOADING:
+            self.btnStopRefresh.setRefreshState()
+        else:
+            self.btnStopRefresh.setStopState()
+        
     def onLinkClicked(self, url):
         self.webView.load( url )
         
@@ -74,16 +111,30 @@ class Browser (QtGui.QWidget):
         self.webView.load( QtCore.QUrl(self.location.currentText()) )
         
     def onPageLoad(self):
+        webView = self.sender()
+        webView.PAGE_LOADING = True
+        webView.MOVIE.start()
+        
         self.btnStopRefresh.setStopState()
         
     def onPageFinished(self):
+        webView = self.sender()
+        webView.PAGE_LOADING = False
+        webView.MOVIE.stop()
         self.btnStopRefresh.setRefreshState()
         
+    def onProgress(self, porcent):
+        webView = self.sender()
+        index = self.tabPagePanel.indexOf( webView.parent() )
+        self.tabPagePanel.setTabIcon(index, QtGui.QIcon(webView.MOVIE.currentPixmap()))
+        
     def onChangeUrl(self, url):
-        self.current = url.toString()
-        self.location.setEditText( self.current )
-        self.location.setToolTip(self.current)
-    
+        webView = self.sender()
+        webView.PAGE_URL = url.toString()
+        if self.webView == webView:
+            self.location.setEditText(webView.PAGE_URL)
+            self.location.setToolTip(webView.PAGE_URL)
+            
     def handleStopRefresh(self):
         if self.btnStopRefresh["state"] == "refresh":
             self.webView.reload()
@@ -93,7 +144,7 @@ class Browser (QtGui.QWidget):
         
     def _createToolbar(self):
         self.location = QtGui.QComboBox(self)
-        self.location.addItem( self.current )
+        ##self.location.addItem( self.current )
         self.location.activated.connect(self.loadPage)
         self.location.setEditable(True)
         self.location.show()
@@ -103,7 +154,7 @@ class Browser (QtGui.QWidget):
         path = os.path.join(settings.IMAGES_DIR, "btnback-blue.png")
         self.btnBack.setIcon(QtGui.QIcon(path))
         self.btnBack.setToolTip("<b>voltar</b>")
-        self.btnBack.clicked.connect( self.webView.back )
+        self.btnBack.clicked.connect(lambda: self.webView.back())
         self.btnBack.show()
         
         ## Foward button
@@ -111,7 +162,7 @@ class Browser (QtGui.QWidget):
         path = os.path.join(settings.IMAGES_DIR, "btnforward-blue.png")
         self.btnForward.setIcon(QtGui.QIcon(path))
         self.btnForward.setToolTip("<b>avançar</b>")
-        self.btnForward.clicked.connect( self.webView.forward )
+        self.btnForward.clicked.connect(lambda: self.webView.forward())
         self.btnForward.show()
         
         ## Refresh button
@@ -151,9 +202,6 @@ class Browser (QtGui.QWidget):
         hBoxLayout.addWidget( btnSearch )
         hBoxLayout.addWidget( btnNewUrl )
         hBoxLayout.addWidget( btnDelUrl )
-        
-        # atualiza o estado dos botões de navegação.
-        thread.start_new_thread(self.updateHistoryButton, tuple())
         return hBoxLayout
         
 
