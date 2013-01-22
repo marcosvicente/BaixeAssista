@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1123</width>
+    <width>1082</width>
     <height>780</height>
    </rect>
   </property>
@@ -36,7 +36,7 @@
        <item>
         <widget class="QTabWidget" name="tabPanel">
          <property name="currentIndex">
-          <number>0</number>
+          <number>2</number>
          </property>
          <widget class="QWidget" name="tabPlayer">
           <attribute name="title">
@@ -65,7 +65,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1123</width>
+     <width>1082</width>
      <height>26</height>
     </rect>
    </property>
@@ -81,10 +81,16 @@
     </property>
     <addaction name="actionEnglish"/>
     <addaction name="actionPortuguse"/>
-    <addaction name="separator"/>
+   </widget>
+   <widget class="QMenu" name="menuAbout">
+    <property name="title">
+     <string>Help</string>
+    </property>
+    <addaction name="actionAbout"/>
    </widget>
    <addaction name="menuEdit"/>
    <addaction name="menuLang"/>
+   <addaction name="menuAbout"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionExit">
@@ -108,7 +114,7 @@
     <bool>true</bool>
    </property>
    <property name="checked">
-    <bool>false</bool>
+    <bool>true</bool>
    </property>
    <property name="text">
     <string>English</string>
@@ -119,10 +125,15 @@
     <bool>true</bool>
    </property>
    <property name="checked">
-    <bool>false</bool>
+    <bool>true</bool>
    </property>
    <property name="text">
     <string>Portuguese</string>
+   </property>
+  </action>
+  <action name="actionAbout">
+   <property name="text">
+    <string>About</string>
    </property>
   </action>
  </widget>
