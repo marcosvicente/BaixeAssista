@@ -47,6 +47,7 @@ class Browser (QtGui.QWidget):
         
         self.tabPagePanel = QtGui.QTabWidget(self)
         self.tabPagePanel.setTabsClosable(True)
+        ##self.tabPagePanel.setTabShape(QtGui.QTabWidget.Triangular)
         self.tabPagePanel.currentChanged.connect( self.updateWebView )
         self.tabPagePanel.tabCloseRequested.connect( self.handleTabCloseRequest )
         vBox.addLayout( self._createToolbar() )
@@ -128,7 +129,9 @@ class Browser (QtGui.QWidget):
     def handleTabCloseRequest(self, index):
         # garante que pelo menos um tabela exista(tabela padrão).
         if self.tabPagePanel.count() > 1:
+            webView = self.tabPagePanel.widget( index )
             self.tabPagePanel.removeTab( index )
+            webView.reload(); webView.close()
             
     def updateHistoryButton(self, *args):
         while True:
@@ -231,6 +234,14 @@ class Browser (QtGui.QWidget):
         self.btnStopRefresh = StopRefreshButton(self)
         self.btnStopRefresh.clicked.connect( self.handleStopRefresh )
         
+        ## New page button
+        self.btnNewPage = QtGui.QPushButton(self)
+        path = os.path.join(settings.IMAGES_DIR, "btnpage-blue.png")
+        self.btnNewPage.setIcon(QtGui.QIcon(path))
+        self.btnNewPage.setToolTip("<b>nova página</b>")
+        self.btnNewPage.clicked.connect(lambda: self.setupPage(self.searchEngine, True))
+        self.btnNewPage.show()
+        
         ## Favorite button
         self.btnFavorite = QtGui.QPushButton(self)
         path = os.path.join(settings.IMAGES_DIR, "btnstart-blue.png")
@@ -265,7 +276,7 @@ class Browser (QtGui.QWidget):
         hBoxLayout.addWidget(self.btnBack)
         hBoxLayout.addWidget(self.btnForward)
         hBoxLayout.addWidget(self.btnStopRefresh)
-        
+        hBoxLayout.addWidget(self.btnNewPage)
         
         hBoxLayout.addWidget(self.location, 1)
         hBoxLayout.addWidget(self.btnFavorite)
