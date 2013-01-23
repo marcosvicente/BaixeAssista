@@ -203,9 +203,69 @@ class Browser (QtGui.QWidget):
         elif self.btnStopRefresh["state"] == "stop":
             self.webView.stop()
     
-    def handleNewFavoriteSite(self):
-        print self.sender()
+    def handleFavoriteSite(self):
+        text, ok = QtGui.QInputDialog.getText(self, self.tr("Add url as favorite."),
+                          self.tr("Enter the url below."), text = self.location.currentText())
+        text = text.strip()
+        if text:
+            # tornando automaticamente a url válida.
+            text = "http://"+text if not text.startswith("http://") else text
+            text = text+ "/" if not text.endswith("/") else text
+            
+            # adicionando ao controle de url e ao banco de dados
+            if self.objects.filter(site=text).count() == 0:
+                if self.location.findText( text ) < 0:
+                    self.location.addItem( text )
+                    
+                self.addSite( text )
+                
+                # atualiza o índice, com a nova url
+                self.location.setCurrentIndex(self.location.findText( text ))
+            else:
+                reply = QtGui.QMessageBox.question(self, self.tr("Without panic :)"), 
+                                    self.tr("Url already in the list. Want to add another ?"),
+                                    QtGui.QMessageBox.Yes | QtGui.QMessageBox.No)
+                
+                # tentando adicionar dados novamente.
+                if reply == QtGui.QMessageBox.Yes:
+                    self.handleFavoriteSite()
+        elif ok:
+            warningBoxEmpty = QtGui.QMessageBox(QtGui.QMessageBox.Warning, 
+                        self.tr("Empty ?"), self.tr("Enter a url first."), 
+                        QtGui.QMessageBox.NoButton, self)
+            
+            warningBoxEmpty.addButton("Retry", QtGui.QMessageBox.AcceptRole)
+            warningBoxEmpty.addButton("Cancel", QtGui.QMessageBox.RejectRole)
+            
+            # tentando adicionar dados novamente.
+            if warningBoxEmpty.exec_() == QtGui.QMessageBox.AcceptRole:
+                self.handleFavoriteSite()
+                
+    def handleUnFavoriteSite(self):
+        url = self.location.currentText()
+        url = "http://"+url if not url.startswith("http://") else url
+        url = url+ "/" if not url.endswith("/") else url
         
+        index = self.location.findText( url )
+        
+        if index > -1:
+            # ação que leva a remoção de uma url do banco de dados e do controle de urls.
+            reply = QtGui.QMessageBox.question(self, self.tr("Requires confirmation"), 
+                       self.tr("The url below will be removed.\n") + url, 
+                       QtGui.QMessageBox.Yes | QtGui.QMessageBox.No)
+            
+            if reply == QtGui.QMessageBox.Yes:
+                self.location.removeItem(index)
+                
+                # removendo do bando de dados
+                query = self.objects.get(site = url)
+                query.delete()
+                
+                self.webView.load(self.location.currentText())
+        else:
+            QtGui.QMessageBox.information(self, self.tr("Not found"), 
+                self.tr("The url can not be found in the current list."))
+                
     def _createToolbar(self):
         self.location = QtGui.QComboBox(self)
         # adicionando a lista de site favoritos.
@@ -251,13 +311,13 @@ class Browser (QtGui.QWidget):
         
         path = os.path.join(settings.IMAGES_DIR, "btnplus-blue.png")
         self.addUrlAction = QtGui.QAction(self.tr("&favorite"), self, 
-                                    triggered=self.handleNewFavoriteSite,
+                                    triggered=self.handleFavoriteSite,
                                     icon = QtGui.QIcon(path))
         menu.addAction( self.addUrlAction )
         ###
         path = os.path.join(settings.IMAGES_DIR, "btnminus-blue.png")
         self.removeUrlAction = QtGui.QAction(self.tr("&remove"), self, 
-                                    triggered=self.handleNewFavoriteSite,
+                                    triggered=self.handleUnFavoriteSite,
                                     icon = QtGui.QIcon(path))
         menu.addAction( self.removeUrlAction )
         
