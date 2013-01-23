@@ -67,7 +67,6 @@ class Browser (QtGui.QWidget):
         webView = QtWebKit.QWebView(self.tabPagePanel)
         
         webView.MOVIE_LOADING = QtGui.QMovie(os.path.join(settings.IMAGES_DIR, "spin-progress.gif"))
-        webView.MOVIE_LOADING.start()
         webView.PAGE_LOADING = True
         webView.PAGE_URL = url
         
@@ -176,9 +175,10 @@ class Browser (QtGui.QWidget):
         
     def onProgress(self, porcent):
         webView = self.sender()
-        index = self.tabPagePanel.indexOf( webView )
-        self.tabPagePanel.setTabIcon(index, QtGui.QIcon(webView.MOVIE_LOADING.currentPixmap()))
-    
+        self.tabPagePanel.setTabIcon(self.tabPagePanel.indexOf(webView), 
+                                     QtGui.QIcon(webView.MOVIE_LOADING.currentPixmap()))
+        webView.MOVIE_LOADING.jumpToNextFrame()
+        
     def onTitleChange(self, title):
         webView = self.sender()
         index = self.tabPagePanel.indexOf( webView )
