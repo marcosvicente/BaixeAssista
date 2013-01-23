@@ -3,15 +3,16 @@ import sys, os
 from PySide import QtCore
 from PySide import QtGui
 from PySide import QtWebKit
-from main import settings
-import time, thread
 
+import time, thread
 import main.environ
 main.environ.setup((__name__ == "__main__"))
-from main.app.util import base
 
+from main.app.util import base
 from main.app import generators
 from main.app import models
+from main import settings
+
 
 class StopRefreshButton(QtGui.QPushButton):
     def __init__(self, *arg):
@@ -198,6 +199,9 @@ class Browser (QtGui.QWidget):
             
         elif self.btnStopRefresh["state"] == "stop":
             self.webView.stop()
+    
+    def handleNewFavoriteSite(self):
+        print self.sender()
         
     def _createToolbar(self):
         self.location = QtGui.QComboBox(self)
@@ -227,39 +231,45 @@ class Browser (QtGui.QWidget):
         self.btnStopRefresh = StopRefreshButton(self)
         self.btnStopRefresh.clicked.connect( self.handleStopRefresh )
         
+        ## Favorite button
+        self.btnFavorite = QtGui.QPushButton(self)
+        path = os.path.join(settings.IMAGES_DIR, "btnstart-blue.png")
+        self.btnFavorite.setIcon(QtGui.QIcon(path))
+        
+        menu = QtGui.QMenu(self)
+        
+        path = os.path.join(settings.IMAGES_DIR, "btnplus-blue.png")
+        self.addUrlAction = QtGui.QAction(self.tr("&favorite"), self, 
+                                    triggered=self.handleNewFavoriteSite,
+                                    icon = QtGui.QIcon(path))
+        menu.addAction( self.addUrlAction )
+        ###
+        path = os.path.join(settings.IMAGES_DIR, "btnminus-blue.png")
+        self.removeUrlAction = QtGui.QAction(self.tr("&remove"), self, 
+                                    triggered=self.handleNewFavoriteSite,
+                                    icon = QtGui.QIcon(path))
+        menu.addAction( self.removeUrlAction )
+        
+        self.btnFavorite.setMenu( menu )
+        
         ## Refresh button
         btnSearch = QtGui.QPushButton(self)
         path = os.path.join(settings.IMAGES_DIR, "btnsearch-blue.png")
         btnSearch.setIcon(QtGui.QIcon(path))
-        btnSearch.setToolTip("<b>pesquisar</b>")
+        btnSearch.setToolTip("<b>search</b>")
         btnSearch.clicked.connect(lambda: self.webView.load(self.searchEngine))
         btnSearch.show()
         
-        ## Add url button
-        btnNewUrl = QtGui.QPushButton(self)
-        path = os.path.join(settings.IMAGES_DIR, "btnplus-blue.png")
-        btnNewUrl.setIcon(QtGui.QIcon(path))
-        btnNewUrl.setToolTip("<b>adicionar nova url</b>")
-        #btnNewUrl.clicked.connect()
-        btnNewUrl.show()
-        
-        ## Add url button
-        btnDelUrl = QtGui.QPushButton(self)
-        path = os.path.join(settings.IMAGES_DIR, "btnminus-blue.png")
-        btnDelUrl.setIcon(QtGui.QIcon(path))
-        btnDelUrl.setToolTip("<b>remover url existente</b>")
-        #btnDelUrl.clicked.connect()
-        btnDelUrl.show()
-        
         hBoxLayout = QtGui.QHBoxLayout()
+        
         hBoxLayout.addWidget(self.btnBack)
         hBoxLayout.addWidget(self.btnForward)
         hBoxLayout.addWidget(self.btnStopRefresh)
         
+        
         hBoxLayout.addWidget(self.location, 1)
+        hBoxLayout.addWidget(self.btnFavorite)
         hBoxLayout.addWidget( btnSearch )
-        hBoxLayout.addWidget( btnNewUrl )
-        hBoxLayout.addWidget( btnDelUrl )
         return hBoxLayout
         
 

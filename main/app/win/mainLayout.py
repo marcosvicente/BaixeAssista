@@ -18,7 +18,7 @@ class Ui_MainWindow(object):
         self.horizontalLayout = QtGui.QHBoxLayout(self.centralwidget)
         self.horizontalLayout.setObjectName("horizontalLayout")
         self.centralFrame = QtGui.QFrame(self.centralwidget)
-        self.centralFrame.setStyleSheet("background-color: rgb(255, 255, 255);")
+        ##self.centralFrame.setStyleSheet("background-color: rgb(255, 255, 255);")
         self.centralFrame.setFrameShape(QtGui.QFrame.StyledPanel)
         self.centralFrame.setFrameShadow(QtGui.QFrame.Raised)
         self.centralFrame.setObjectName("centralFrame")
