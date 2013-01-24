@@ -22,8 +22,7 @@ class Loader(QtGui.QMainWindow):
     def setupTab(self):
         vBox = QtGui.QVBoxLayout()
         self.uiMainWindow.tabBrowser.setLayout( vBox )
-        
-        brw = browser.Browser( self.uiMainWindow.tabBrowser )
+        brw = browser.Browser(self)
         vBox.addWidget(brw)
         
     def setupAction(self):
@@ -32,6 +31,15 @@ class Loader(QtGui.QMainWindow):
         self.langActionGroup = QtGui.QActionGroup(self)
         self.langActionGroup.addAction(self.uiMainWindow.actionPortuguse)
         self.langActionGroup.addAction(self.uiMainWindow.actionEnglish)
+        self.langActionGroup.addAction(self.uiMainWindow.actionSpanish)
+        
+        self.playerActionGroup = QtGui.QActionGroup(self)
+        self.playerActionGroup.addAction(self.uiMainWindow.actionEmbedPlayer)
+        self.playerActionGroup.addAction(self.uiMainWindow.actionExternalPlayer)
+        
+        self.playerLoadActionGroup = QtGui.QActionGroup(self)
+        self.playerLoadActionGroup.addAction(self.uiMainWindow.actionLoadExternalPlayer)
+        self.playerLoadActionGroup.addAction(self.uiMainWindow.actionReloadPlayer)
         
     def changeTranslation(self):
         action = self.sender()

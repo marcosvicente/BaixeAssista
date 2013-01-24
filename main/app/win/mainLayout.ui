@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1082</width>
-    <height>780</height>
+    <width>1024</width>
+    <height>768</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,14 +17,17 @@
    <layout class="QHBoxLayout" name="horizontalLayout">
     <item>
      <widget class="QFrame" name="centralFrame">
-      <property name="styleSheet">
-       <string notr="true">background-color: rgb(255, 255, 255);</string>
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+        <horstretch>1</horstretch>
+        <verstretch>1</verstretch>
+       </sizepolicy>
       </property>
       <property name="frameShape">
        <enum>QFrame::StyledPanel</enum>
       </property>
       <property name="frameShadow">
-       <enum>QFrame::Raised</enum>
+       <enum>QFrame::Plain</enum>
       </property>
       <layout class="QHBoxLayout" name="horizontalLayout_2">
        <property name="spacing">
@@ -34,26 +37,63 @@
         <number>2</number>
        </property>
        <item>
-        <widget class="QTabWidget" name="tabPanel">
-         <property name="currentIndex">
-          <number>2</number>
-         </property>
-         <widget class="QWidget" name="tabPlayer">
-          <attribute name="title">
-           <string>Player</string>
-          </attribute>
-         </widget>
-         <widget class="QWidget" name="tabConfig">
-          <attribute name="title">
-           <string>Configuration</string>
-          </attribute>
-         </widget>
-         <widget class="QWidget" name="tabBrowser">
-          <attribute name="title">
-           <string>Browser</string>
-          </attribute>
-         </widget>
-        </widget>
+        <layout class="QVBoxLayout" name="verticalLayout">
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_3">
+           <item>
+            <widget class="QComboBox" name="locationMainUrl">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+               <horstretch>1</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="editable">
+              <bool>true</bool>
+             </property>
+             <property name="modelColumn">
+              <number>0</number>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="btnStartDl">
+             <property name="text">
+              <string>Download</string>
+             </property>
+             <property name="checkable">
+              <bool>true</bool>
+             </property>
+             <property name="flat">
+              <bool>false</bool>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item>
+          <widget class="QTabWidget" name="tabPanel">
+           <property name="currentIndex">
+            <number>2</number>
+           </property>
+           <widget class="QWidget" name="tabPlayer">
+            <attribute name="title">
+             <string>Player</string>
+            </attribute>
+           </widget>
+           <widget class="QWidget" name="tabBrowser">
+            <attribute name="title">
+             <string>Browser</string>
+            </attribute>
+           </widget>
+           <widget class="QWidget" name="tabConfig">
+            <attribute name="title">
+             <string>Configuration</string>
+            </attribute>
+           </widget>
+          </widget>
+         </item>
+        </layout>
        </item>
       </layout>
      </widget>
@@ -65,14 +105,25 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1082</width>
+     <width>1024</width>
      <height>26</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuEdit">
+    <property name="font">
+     <font>
+      <pointsize>10</pointsize>
+     </font>
+    </property>
     <property name="title">
      <string>Edit</string>
     </property>
+    <addaction name="actionEmbedPlayer"/>
+    <addaction name="actionExternalPlayer"/>
+    <addaction name="separator"/>
+    <addaction name="actionLoadExternalPlayer"/>
+    <addaction name="actionReloadPlayer"/>
+    <addaction name="separator"/>
     <addaction name="actionExit"/>
    </widget>
    <widget class="QMenu" name="menuLang">
@@ -81,11 +132,26 @@
     </property>
     <addaction name="actionEnglish"/>
     <addaction name="actionPortuguse"/>
+    <addaction name="actionSpanish"/>
    </widget>
    <widget class="QMenu" name="menuAbout">
     <property name="title">
      <string>Help</string>
     </property>
+    <widget class="QMenu" name="menuUpdate">
+     <property name="font">
+      <font>
+       <pointsize>12</pointsize>
+      </font>
+     </property>
+     <property name="title">
+      <string>Update</string>
+     </property>
+     <addaction name="actionAutomaticSearch"/>
+     <addaction name="actionCheckNow"/>
+    </widget>
+    <addaction name="actionError_reporting"/>
+    <addaction name="menuUpdate"/>
     <addaction name="actionAbout"/>
    </widget>
    <addaction name="menuEdit"/>
@@ -119,8 +185,73 @@
    <property name="text">
     <string>English</string>
    </property>
+   <property name="font">
+    <font>
+     <pointsize>10</pointsize>
+    </font>
+   </property>
   </action>
   <action name="actionPortuguse">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Portuguese</string>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>10</pointsize>
+    </font>
+   </property>
+  </action>
+  <action name="actionAbout">
+   <property name="text">
+    <string>About</string>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>10</pointsize>
+    </font>
+   </property>
+  </action>
+  <action name="actionSpanish">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Spanish</string>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>10</pointsize>
+    </font>
+   </property>
+  </action>
+  <action name="actionReloadPlayer">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Reload player</string>
+   </property>
+  </action>
+  <action name="actionLoadExternalPlayer">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Choose external player</string>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>10</pointsize>
+    </font>
+   </property>
+  </action>
+  <action name="actionEmbedPlayer">
    <property name="checkable">
     <bool>true</bool>
    </property>
@@ -128,18 +259,64 @@
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>Portuguese</string>
+    <string>Use embedded player</string>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>10</pointsize>
+    </font>
    </property>
   </action>
-  <action name="actionAbout">
+  <action name="actionExternalPlayer">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="text">
-    <string>About</string>
+    <string>Use external player</string>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>10</pointsize>
+    </font>
+   </property>
+  </action>
+  <action name="actionError_reporting">
+   <property name="text">
+    <string>Error reporting</string>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>10</pointsize>
+    </font>
+   </property>
+  </action>
+  <action name="actionAutomaticSearch">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Automatic search</string>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>10</pointsize>
+    </font>
+   </property>
+  </action>
+  <action name="actionCheckNow">
+   <property name="text">
+    <string>Check now</string>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>10</pointsize>
+    </font>
    </property>
   </action>
  </widget>
- <tabstops>
-  <tabstop>tabPanel</tabstop>
- </tabstops>
  <resources/>
  <connections/>
 </ui>

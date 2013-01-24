@@ -336,10 +336,10 @@ class Browser (QtGui.QWidget):
         hBoxLayout.addWidget(self.btnBack)
         hBoxLayout.addWidget(self.btnForward)
         hBoxLayout.addWidget(self.btnStopRefresh)
-        hBoxLayout.addWidget(self.btnNewPage)
         
         hBoxLayout.addWidget(self.location, 1)
         hBoxLayout.addWidget(self.btnFavorite)
+        hBoxLayout.addWidget(self.btnNewPage)
         hBoxLayout.addWidget( btnSearch )
         return hBoxLayout
         
