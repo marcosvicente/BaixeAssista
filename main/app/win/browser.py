@@ -24,13 +24,13 @@ class StopRefreshButton(QtGui.QPushButton):
         path = os.path.join(settings.IMAGES_DIR, "btnrefresh-blue.png")
         self.setIcon(QtGui.QIcon(path))
         self.btnState["state"] = "refresh"
-        self.setToolTip("<b>recarregar</b>")
+        self.setToolTip("<b>reload</b>")
         
     def setStopState(self):
         qicon = QtGui.QIcon(os.path.join(settings.IMAGES_DIR, "btnstop-blue.png"))
         self.setIcon( qicon )
         self.btnState["state"] = "stop"
-        self.setToolTip("<b>parar</b>")
+        self.setToolTip("<b>stop</b>")
         
     def __getitem__(self, key):
         return self.btnState[key]
@@ -220,7 +220,7 @@ class Browser (QtGui.QWidget):
             self.webView.stop()
     
     def handleFavoriteSite(self):
-        text, ok = QtGui.QInputDialog.getText(self, self.tr("Add url as favorite."),
+        text, ok = QtGui.QInputDialog.getText(self, self.tr("Add url as favorite"),
                           self.tr("Enter the url below."), text = self.location.currentText())
         text = text.strip()
         if text:
@@ -294,7 +294,7 @@ class Browser (QtGui.QWidget):
         self.btnBack = QtGui.QPushButton(self)
         path = os.path.join(settings.IMAGES_DIR, "btnback-blue.png")
         self.btnBack.setIcon(QtGui.QIcon(path))
-        self.btnBack.setToolTip("<b>voltar</b>")
+        self.btnBack.setToolTip("<b>back</b>")
         self.btnBack.clicked.connect(lambda: self.webView.back())
         self.btnBack.show()
         
@@ -302,7 +302,7 @@ class Browser (QtGui.QWidget):
         self.btnForward = QtGui.QPushButton(self)
         path = os.path.join(settings.IMAGES_DIR, "btnforward-blue.png")
         self.btnForward.setIcon(QtGui.QIcon(path))
-        self.btnForward.setToolTip("<b>avançar</b>")
+        self.btnForward.setToolTip("<b>forward</b>")
         self.btnForward.clicked.connect(lambda: self.webView.forward())
         self.btnForward.show()
         
@@ -314,13 +314,14 @@ class Browser (QtGui.QWidget):
         self.btnNewPage = QtGui.QPushButton(self)
         path = os.path.join(settings.IMAGES_DIR, "btnpage-blue.png")
         self.btnNewPage.setIcon(QtGui.QIcon(path))
-        self.btnNewPage.setToolTip("<b>nova página</b>")
+        self.btnNewPage.setToolTip("<b>new page</b>")
         self.btnNewPage.clicked.connect(lambda: self.setupPage(self.searchEngine, True))
         self.btnNewPage.show()
         
         ## Favorite button
         self.btnFavorite = QtGui.QPushButton(self)
         path = os.path.join(settings.IMAGES_DIR, "btnstart-blue.png")
+        self.btnFavorite.setToolTip("<b>favorite</b>")
         self.btnFavorite.setIcon(QtGui.QIcon(path))
         
         menu = QtGui.QMenu(self)
