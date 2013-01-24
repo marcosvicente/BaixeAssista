@@ -46,6 +46,10 @@ class Browser (QtGui.QWidget):
         self.mainWin = parent
         self.objects = models.Browser.objects # queryset
         
+        self.starEnableIcon = QtGui.QIcon(os.path.join(settings.IMAGES_DIR, "btnstart-blue.png"))
+        self.starDisableIcon = self.starEnableIcon.pixmap(QtCore.QSize(22, 22),
+                                                           QtGui.QIcon.Disabled, QtGui.QIcon.Off)
+        
         self.tabPagePanel = QtGui.QTabWidget(self)
         self.tabPagePanel.setTabsClosable(True)
         ##self.tabPagePanel.setTabShape(QtGui.QTabWidget.Triangular)
@@ -117,6 +121,13 @@ class Browser (QtGui.QWidget):
         queries = self.objects.filter(lastsite=None, historysite=None)
         return map(lambda q: q.site, queries)
     
+    @staticmethod
+    def formatUrl(url):
+        """ tornando automaticamente a url válida """
+        url = "http://"+url if not url.startswith("http://") else url
+        url = url+ "/" if not url.endswith("/") else url
+        return url
+    
     def saveSettings(self):
         # salva os dados de navegação
         historyUrl = []
@@ -174,14 +185,18 @@ class Browser (QtGui.QWidget):
             self.webView.load( url )
             
     def loadPage(self):
-        self.webView.load( QtCore.QUrl(self.location.currentText()) )
+        url = self.location.currentText()
+        self.webView.load(QtCore.QUrl(url))
+        self.updateFavoriteIcon()
         
     def onPageLoad(self):
         webView = self.sender()
+        
         webView.PAGE_LOADING = True
         webView.MOVIE_LOADING.start()
         
         self.btnStopRefresh.setStopState()
+        self.updateFavoriteIcon()
         
     def onPageFinished(self):
         webView = self.sender()
@@ -208,10 +223,11 @@ class Browser (QtGui.QWidget):
     def onChangeUrl(self, url):
         webView = self.sender()
         webView.PAGE_URL = url.toString()
+        
         if self.webView == webView:
             self.location.setEditText(webView.PAGE_URL)
             self.location.setToolTip(webView.PAGE_URL)
-            
+        
     def handleStopRefresh(self):
         if self.btnStopRefresh["state"] == "refresh":
             self.webView.reload()
@@ -224,9 +240,7 @@ class Browser (QtGui.QWidget):
                           self.tr("Enter the url below."), text = self.location.currentText())
         text = text.strip()
         if text:
-            # tornando automaticamente a url válida.
-            text = "http://"+text if not text.startswith("http://") else text
-            text = text+ "/" if not text.endswith("/") else text
+            text = self.formatUrl( text )
             
             # adicionando ao controle de url e ao banco de dados
             if self.objects.filter(site=text).count() == 0:
@@ -237,6 +251,9 @@ class Browser (QtGui.QWidget):
                 
                 # atualiza o índice, com a nova url
                 self.location.setCurrentIndex(self.location.findText( text ))
+                
+                # atualizando a 'start' com ativa
+                self.updateFavoriteIcon()
             else:
                 reply = QtGui.QMessageBox.question(self, self.tr("Without panic :)"), 
                                     self.tr("Url already in the list. Want to add another ?"),
@@ -258,9 +275,7 @@ class Browser (QtGui.QWidget):
                 self.handleFavoriteSite()
                 
     def handleUnFavoriteSite(self):
-        url = self.location.currentText()
-        url = "http://"+url if not url.startswith("http://") else url
-        url = url+ "/" if not url.endswith("/") else url
+        url = self.formatUrl( self.location.currentText() )
         
         index = self.location.findText( url )
         
@@ -281,12 +296,30 @@ class Browser (QtGui.QWidget):
         else:
             QtGui.QMessageBox.information(self, self.tr("Not found"), 
                 self.tr("The url can not be found in the current list."))
-                
+        
+    def updateFavoriteIcon(self, url=None):
+        if url is None: url = self.formatUrl(self.location.currentText())
+        
+        if self.objects.filter(site=url).count() > 0:
+            self.btnFavorite.setIcon(self.starEnableIcon)
+        else:
+            self.btnFavorite.setIcon(self.starDisableIcon)
+            
+    def handleUrlAction(self):
+        url = self.formatUrl( self.location.currentText() )
+        
+        if self.objects.filter(site=url).count() == 0:
+            self.handleFavoriteSite()
+        else:
+            self.handleUnFavoriteSite()
+            
     def _createToolbar(self):
         self.location = QtGui.QComboBox(self)
         # adicionando a lista de site favoritos.
         self.location.addItems( self.getSites() )
         self.location.activated.connect(self.loadPage)
+        # fazendo eventos de edição atualizarem a 'start' de favoritos.
+        self.location.editTextChanged.connect(self.updateFavoriteIcon)
         self.location.setEditable(True)
         self.location.show()
         
@@ -320,25 +353,12 @@ class Browser (QtGui.QWidget):
         
         ## Favorite button
         self.btnFavorite = QtGui.QPushButton(self)
-        path = os.path.join(settings.IMAGES_DIR, "btnstart-blue.png")
         self.btnFavorite.setToolTip("<b>favorite</b>")
-        self.btnFavorite.setIcon(QtGui.QIcon(path))
+        self.btnFavorite.setIcon(self.starEnableIcon)
+        self.btnFavorite.clicked.connect( self.handleUrlAction)
         
-        menu = QtGui.QMenu(self)
-        
-        path = os.path.join(settings.IMAGES_DIR, "btnplus-blue.png")
-        self.addUrlAction = QtGui.QAction(self.tr("&favorite"), self, 
-                                    triggered=self.handleFavoriteSite,
-                                    icon = QtGui.QIcon(path))
-        menu.addAction( self.addUrlAction )
-        ###
-        path = os.path.join(settings.IMAGES_DIR, "btnminus-blue.png")
-        self.removeUrlAction = QtGui.QAction(self.tr("&remove"), self, 
-                                    triggered=self.handleUnFavoriteSite,
-                                    icon = QtGui.QIcon(path))
-        menu.addAction( self.removeUrlAction )
-        
-        self.btnFavorite.setMenu( menu )
+        ##path = os.path.join(settings.IMAGES_DIR, "btnplus-blue.png")
+        ##path = os.path.join(settings.IMAGES_DIR, "btnminus-blue.png")
         
         ## Refresh button
         btnSearch = QtGui.QPushButton(self)
