@@ -24,6 +24,9 @@ class Loader(QtGui.QMainWindow):
         self.uiMainWindow.tabBrowser.setLayout( vBox )
         brw = browser.Browser(self)
         vBox.addWidget(brw)
+    
+    def getLocationMainUrl(self):
+        return self.uiMainWindow.locationMainUrl
         
     def setupAction(self):
         self.uiMainWindow.actionExit.triggered.connect(self.close)

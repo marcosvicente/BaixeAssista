@@ -38,11 +38,12 @@ class StopRefreshButton(QtGui.QPushButton):
 class Browser (QtGui.QWidget):
     searchEngine = "http://www.google.com/"
     
-    def __init__(self, *arg):
-        super(Browser, self).__init__(*arg)
+    def __init__(self, parent=None):
+        super(Browser, self).__init__(parent)
         vBox = QtGui.QVBoxLayout()
         
         self.webView = None
+        self.mainWin = parent
         self.objects = models.Browser.objects # queryset
         
         self.tabPagePanel = QtGui.QTabWidget(self)
@@ -155,8 +156,20 @@ class Browser (QtGui.QWidget):
             self.btnStopRefresh.setStopState()
             
     def onLinkClicked(self, url):
-        self.webView.load( url )
+        urlString = url.toString()
         
+        if generators.Universal.has_site(urlString) and hasattr(self.mainWin, "getLocationMainUrl"):
+            locationMainUrl = self.mainWin.getLocationMainUrl()
+            
+            isEmbedUrl = generators.Universal.isEmbed(urlString)
+            url = generators.Universal.get_inner_url(urlString)
+            
+            if not isEmbedUrl:
+                locationMainUrl.setEditText( urlString )
+            else: pass
+        else:
+            self.webView.load( url )
+            
     def loadPage(self):
         self.webView.load( QtCore.QUrl(self.location.currentText()) )
         
