@@ -116,8 +116,8 @@ class Browser (QtGui.QWidget):
         """ retorna uma lista com todos os sites adicionados """
         queries = self.objects.filter(lastsite=None, historysite=None)
         return map(lambda q: q.site, queries)
-
-    def closeEvent(self, event):
+    
+    def saveSettings(self):
         # salva os dados de navegação
         historyUrl = []
         for index in range(self.tabPagePanel.count()):
@@ -126,6 +126,9 @@ class Browser (QtGui.QWidget):
             
         self.addHistorySites( historyUrl )
         self.addLastSite( self.webView.PAGE_URL )
+        
+    def closeEvent(self, event):
+        self.saveSettings()
         
     def handleTabCloseRequest(self, index):
         # garante que pelo menos um tabela exista(tabela padrão).

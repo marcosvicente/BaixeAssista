@@ -22,14 +22,14 @@ class Loader(QtGui.QMainWindow):
     def setupTab(self):
         vBox = QtGui.QVBoxLayout()
         self.uiMainWindow.tabBrowser.setLayout( vBox )
-        brw = browser.Browser(self)
-        vBox.addWidget(brw)
-        ###
-        
+        self.browser = browser.Browser(self)
+        vBox.addWidget( self.browser )
+        # --------------------------------------------------------
+                
         vBox = QtGui.QVBoxLayout()
         self.uiMainWindow.tabPlayer.setLayout( vBox )
-        brw = FlowPlayer.Player(self)
-        vBox.addWidget(brw)
+        self.player = FlowPlayer.Player(self)
+        vBox.addWidget(self.player)
         
     def getLocationMainUrl(self):
         return self.uiMainWindow.locationMainUrl
@@ -53,6 +53,10 @@ class Loader(QtGui.QMainWindow):
     def changeTranslation(self):
         action = self.sender()
     
+    def closeEvent(self, event):
+        # salvando as configurações do navegador no banco de dados
+        self.browser.saveSettings()
+        
 ## --------------------------------------------------------------------------
 
 if __name__ == "__main__":
