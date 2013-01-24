@@ -48,7 +48,7 @@ class Browser (QtGui.QWidget):
         
         self.starEnableIcon = QtGui.QIcon(os.path.join(settings.IMAGES_DIR, "btnstart-blue.png"))
         self.starDisableIcon = self.starEnableIcon.pixmap(QtCore.QSize(22, 22),
-                                                           QtGui.QIcon.Disabled, QtGui.QIcon.Off)
+                                                          QtGui.QIcon.Disabled, QtGui.QIcon.Off)
         
         self.tabPagePanel = QtGui.QTabWidget(self)
         self.tabPagePanel.setTabsClosable(True)
@@ -184,10 +184,9 @@ class Browser (QtGui.QWidget):
         else:
             self.webView.load( url )
             
-    def loadPage(self):
+    def handleLocationPageLoad(self):
         url = self.location.currentText()
         self.webView.load(QtCore.QUrl(url))
-        self.updateFavoriteIcon()
         
     def onPageLoad(self):
         webView = self.sender()
@@ -196,7 +195,7 @@ class Browser (QtGui.QWidget):
         webView.MOVIE_LOADING.start()
         
         self.btnStopRefresh.setStopState()
-        self.updateFavoriteIcon()
+        self.updateFavoriteStarIcon()
         
     def onPageFinished(self):
         webView = self.sender()
@@ -253,7 +252,7 @@ class Browser (QtGui.QWidget):
                 self.location.setCurrentIndex(self.location.findText( text ))
                 
                 # atualizando a 'start' com ativa
-                self.updateFavoriteIcon()
+                self.updateFavoriteStarIcon()
             else:
                 reply = QtGui.QMessageBox.question(self, self.tr("Without panic :)"), 
                                     self.tr("Url already in the list. Want to add another ?"),
@@ -297,8 +296,8 @@ class Browser (QtGui.QWidget):
             QtGui.QMessageBox.information(self, self.tr("Not found"), 
                 self.tr("The url can not be found in the current list."))
         
-    def updateFavoriteIcon(self, url=None):
-        if url is None: url = self.formatUrl(self.location.currentText())
+    def updateFavoriteStarIcon(self, url=""):
+        url = self.formatUrl(url if url else self.location.currentText())
         
         if self.objects.filter(site=url).count() > 0:
             self.btnFavorite.setIcon(self.starEnableIcon)
@@ -317,9 +316,9 @@ class Browser (QtGui.QWidget):
         self.location = QtGui.QComboBox(self)
         # adicionando a lista de site favoritos.
         self.location.addItems( self.getSites() )
-        self.location.activated.connect(self.loadPage)
+        self.location.activated.connect(self.handleLocationPageLoad)
         # fazendo eventos de edição atualizarem a 'start' de favoritos.
-        self.location.editTextChanged.connect(self.updateFavoriteIcon)
+        self.location.editTextChanged.connect(self.updateFavoriteStarIcon)
         self.location.setEditable(True)
         self.location.show()
         
