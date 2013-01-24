@@ -1,8 +1,7 @@
 # -*- coding: ISO-8859-1 -*-
 
 import os, json
-from PySide import QtGui, QtWebKit
-
+from PySide import QtCore, QtGui, QtWebKit
 from main import settings
 from django.template import Context, Template, loader
 from main.app.util.sites import get_random_text
@@ -59,6 +58,7 @@ class Player(QtGui.QWidget):
             
         
         self.webview = QtWebKit.QWebView(self)
+        self.webview.settings().setAttribute(QtWebKit.QWebSettings.PluginsEnabled, True)
         
         vBox = QtGui.QVBoxLayout()
         vBox.addWidget( self.webview )
@@ -107,7 +107,7 @@ class Player(QtGui.QWidget):
         portnumber = self.params.get("portNumber", 8002)
         
         domain = "http://%s:%s"%(hostname, portnumber)
-        static = domain + settings.STATIC_URL.rstrip("/")
+        static = (domain + settings.STATIC_URL).strip("/")
         
         jqueryscript = "/".join([static, "js", "jquery-1.8.2.min.js"])
         jsonscript = "/".join([static, "js", "json2.js"])
@@ -118,7 +118,7 @@ class Player(QtGui.QWidget):
         
         swfplayer = "/".join([static, self.filesdirname, self.swf_players[0]])
         autostart = str(self.params["autostart"]).lower()
-        streamfile = domain + "/stream/" + streamname
+        streamfile = "stream/" + streamname
         
         self.swf_players.reverse()
         
@@ -143,8 +143,8 @@ class Player(QtGui.QWidget):
     def reload(self):
         """ recarrega a página atualizando os parâmetros do player """
         params = self.getParams()
-        fullpage = self.getPlayerPage( params )
-        self.webview.setHtml(fullpage, params["file"])
+        html = self.getPlayerPage( params )
+        self.webview.setHtml(html)
         self.webview.reload()
         
 ########################################################################################

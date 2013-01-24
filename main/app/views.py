@@ -3,6 +3,9 @@ from django.http import HttpResponse
 
 # --------------------------------------------------------------------------------------
 def streamLoader( request ):
+	if not request.manage:
+		return HttpResponse("waiting...")
+	
 	manage = request.manage
 	videoManager = manage.videoManager
 	querystr = request.GET
