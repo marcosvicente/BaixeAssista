@@ -1,8 +1,8 @@
 # coding: utf-8
 import sys, os
 from PySide import QtCore, QtGui
-import mainLayout
-import browser
+from swfplayer import FlowPlayer, JWPlayer
+import browser, mainLayout
 
 ## --------------------------------------------------------------------------
 class Loader(QtGui.QMainWindow):
@@ -24,7 +24,13 @@ class Loader(QtGui.QMainWindow):
         self.uiMainWindow.tabBrowser.setLayout( vBox )
         brw = browser.Browser(self)
         vBox.addWidget(brw)
-    
+        ###
+        
+        vBox = QtGui.QVBoxLayout()
+        self.uiMainWindow.tabPlayer.setLayout( vBox )
+        brw = FlowPlayer.Player(self)
+        vBox.addWidget(brw)
+        
     def getLocationMainUrl(self):
         return self.uiMainWindow.locationMainUrl
         
