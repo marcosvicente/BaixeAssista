@@ -70,7 +70,37 @@ class VideoLoad(threading.Thread):
             self.manage.update()
             self.events.responseUpdateUi.emit()
             time.sleep(0.01)
+## --------------------------------------------------------------------------
+
+class TableRow(object):
+    ROW_INDEX = 0
+    
+    def __init__(self, table):
+        self._index = TableRow.ROW_INDEX
+        self.table = table
+        self.items = []
+        
+    def create(self):
+        for index in range( self.table.columnCount() ):
+            item = QtGui.QTableWidgetItem("Item Row: %d, Col: %d"%(TableRow.ROW_INDEX, index))
+            self.table.setItem(TableRow.ROW_INDEX, index, item)
+            self.items.append(item)
             
+        # indice para uma nova TableRow.
+        TableRow.ROW_INDEX += 1
+        
+    def update(self, col=None, value='', *values):
+        """ atualiza o texto de todas as colunas, ou apenas uma coluna individual """
+        if col is None:
+            for index, value in enumerate(values):
+                self.items[index].setText(str(value))
+        else:
+            self.items[col].setText(str(value))
+            
+    @property
+    def index(self):
+        return self._index
+    
 ## --------------------------------------------------------------------------
 class Loader(QtGui.QMainWindow):
     def __init__(self):
@@ -89,6 +119,16 @@ class Loader(QtGui.QMainWindow):
         self.setupTab()
         self.setupLocation()
         
+        self.uiMainWindow.connectionInfo.setRowCount(3)
+        
+        tbr = self.addTableRow()
+        tbr.update(1, "Valor manual alterado")
+        
+        self.addTableRow()
+        tbr = self.addTableRow()
+        
+        tbr.update(3, "opss, alterei de novo!")
+        
     def setupLocation(self):
         self.urlManager = manager.UrlManager()
         url, title = self.urlManager.getLastUrl()
@@ -101,7 +141,7 @@ class Loader(QtGui.QMainWindow):
             map(lambda d: self.urlManager.joinUrlDesc(d[0], d[1]), 
                 self.urlManager.getUrlTitleList())
         )
-            
+        
     def setupTab(self):
         vBox = QtGui.QVBoxLayout()
         self.uiMainWindow.tabBrowser.setLayout( vBox )
@@ -113,7 +153,12 @@ class Loader(QtGui.QMainWindow):
         self.uiMainWindow.tabPlayer.setLayout( vBox )
         self.player = FlowPlayer.Player(self)
         vBox.addWidget(self.player)
-        
+    
+    def addTableRow(self):
+        tableRow = TableRow(self.uiMainWindow.connectionInfo)
+        tableRow.create()
+        return tableRow
+    
     def getLocation(self):
         return self.uiMainWindow.location
     

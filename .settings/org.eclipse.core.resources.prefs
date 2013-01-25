@@ -13,6 +13,7 @@ encoding//main/app/win/swfplayer/JWPlayer.py=ISO-8859-1
 encoding//main/app/win/swfplayer/player.py=ISO-8859-1
 encoding//main/app/win/uiDialogDl.py=utf-8
 encoding//main/app/window/ctrbar.py=ISO-8859-1
+encoding//main/app/window/detail.py=ISO-8859-1
 encoding//main/app/window/mainWin.py=ISO-8859-1
 encoding//main/environ.py=utf-8
 encoding//main/settings.py=UTF-8
