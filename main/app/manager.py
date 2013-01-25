@@ -912,7 +912,6 @@ class Manage(object):
         self.params = params
         self.cacheBytesTotal = 0
         self.posInicialLeitura = 0
-        self.updateRunning = False
         self.usingTempfile = params.get("tempfile", False)
         self.streamerList = []
         
@@ -1014,7 +1013,6 @@ class Manage(object):
         if not self.usingTempfile and not self.params.get("tempfile",False):
             self.salveInfoResumo()
             
-        self.updateRunning = False
         # -------------------------------------------------------------------
         del self.streamerList
         del self.ctrConnection
@@ -1026,16 +1024,17 @@ class Manage(object):
         del self.params
         # -------------------------------------------------------------------
 
-    def start(self, ntry=3, proxy={}, recall=None):
+    def start(self, ctry, ntry, proxy={}, callback=None):
         """ Começa a coleta de informações. Depende da internet, por isso pode demorar para reponder. """
         if not self.videoSize or not self.videoTitle:
-            if not self.getInfo(ntry, proxy, recall):
+            if not self.getInfo(ctry, ntry, proxy, callback):
                 return False
             
             # salvando o link e o título
             if not self.usingTempfile and not self.params.get("tempfile",False):
                 if not self.urlManager.exist( self.streamUrl ): # é importante não adcionar duas vezes
                     self.urlManager.add(self.streamUrl, self.videoTitle)
+                    
                 # pega o título já com um índice
                 title = self.urlManager.getUrlTitle(self.streamUrl)
                 self.videoTitle = title or self.videoTitle
@@ -1048,51 +1047,33 @@ class Manage(object):
             self.interval = Interval(maxsize = self.videoSize, 
                                      seekpos = self.params.get("seekpos", 0),
                                      maxsplit = self.params.get("maxsplit", 2))
-
-        if not self.updateRunning:
-            self.updateRunning = True
-            #atualiza os dados resumo e leitura
-            thread.start_new(self.updateVideoInfo, ())
-
+            
         # tempo inicial da velocidade global
         self.tempoInicialGlobal = time.time()
-        return True # agora a transferência pode começar com sucesso.
+        self.autoSaveTime = time.time()
+        # informa que a transferêcia pode começar
+        return True
 
-    def getInfo(self, retry, proxy, recall):
-        vManager = self.videoManager
-        nfalhas = 0
-        while nfalhas < retry:
-            downStartMsg = u"\n".join([
-                _(u"Coletando informações necessárias"),
-                  u"IP: %s" % proxy.get("http", _(u"Conexão padrão")),
-                _(u"Tentativa %d/%d\n") % ((nfalhas+1), retry)
-                ])
-            # função de atualização externa
-            recall(downStartMsg, "")
+    def getInfo(self, ctry, ntry, proxy, callback):
+        message = u"\n".join([
+            _(u"Coletando informações necessárias"),
+              u"IP: %s" % proxy.get("http", _(u"Conexão padrão")),
+            _(u"Tentativa %d/%d\n") % (ctry, ntry)
+        ])
+        
+        callback(message, "")
+        
+        if self.videoManager.getVideoInfo(ntry=1, proxies=proxy):
+            # tamanho do arquivo de vídeo
+            self.videoSize = self.videoManager.getStreamSize()
+            # título do arquivo de video
+            self.videoTitle = self.videoManager.getTitle()
+            # extensão do arquivo de video
+            self.videoExt = self.videoManager.getVideoExt()
             
-            if vManager.getVideoInfo(ntry=1, proxies=proxy):
-                # tamanho do arquivo de vídeo
-                self.videoSize = vManager.getStreamSize()
-                # título do arquivo de video
-                self.videoTitle = vManager.getTitle()
-                # extensão do arquivo de video
-                self.videoExt = vManager.getVideoExt()
-                break # dados obtidos com sucesso
-                
-            # função de atualização externa
-            recall(downStartMsg, vManager.get_message())
-            logger.debug("FailedGetInfo: %s Try: %s"%(vManager.get_basename(), nfalhas))
-            nfalhas += 1
-            
-            # downlad cancelado pelo usuário. 
-            if self._canceledl: return False
-            
-            # quando a conexão padrão falha em obter os dados
-            # é viável tentar com um ip de um servidro-proxy
-            proxy = self.proxyManager.get_formated()
-        infoStatus = (self.videoSize and self.videoTitle)
-        if infoStatus: logger.debug("SucessGetInfo: %s try: %s"%(vManager.get_basename(), nfalhas))
-        return infoStatus
+        # função de atualização externa
+        callback(message, self.videoManager.get_message())
+        return (self.videoSize and self.videoTitle)
         
     @FM_runLocked()
     def recoverTempFile(self):
@@ -1219,34 +1200,29 @@ class Manage(object):
             elif smanager.isWaiting:
                 smanager.stopWait()
     
-    def updateVideoInfo(self, args=None):
-        """ Atualiza as variáveis de transferência do vídeo. """
-        startTime = time.time() # temporizador
+    def update(self):
+        """ atualiza dados de transferência do arquivo de vídeo atual """
+        try: # como self.interval acaba sendo deletado, a ocorrencia de erro é provável
+            startInterv = self.interval.get_first_start()
+            self.interval.send_info["sending"] = startInterv
+            nbytes = self.interval.send_info["nbytes"].get(startInterv, 0)
+            
+            if startInterv >= 0:
+                startabs = startInterv - self.interval.get_offset()
+                self.cacheBytesCount = startabs + nbytes
+                
+            elif self.isComplete(): # isComplete: tira a necessidade de uma igualdade absoluta
+                self.cacheBytesCount = self.getVideoSize()
 
-        while self.updateRunning:
-            try: # como self.interval acaba sendo deletado, a ocorrencia de erro é provável
-                intervstart = self.interval.get_first_start()
-                self.interval.send_info["sending"] = intervstart
-                nbytes = self.interval.send_info["nbytes"].get(intervstart, 0)
-
-                if intervstart >= 0:
-                    startabs = intervstart - self.interval.get_offset()
-                    self.cacheBytesCount = startabs + nbytes
-
-                elif self.isComplete(): # isComplete: tira a necessidade de uma igualdade absoluta
-                    self.cacheBytesCount = self.getVideoSize()
-
-                if not self.usingTempfile and not self.params.get("tempfile",False):
-                    # salva os dados de resumo no interval de tempo 300s=5min
-                    if time.time() - startTime > 300: 
-                        startTime = time.time()
-                        self.salveInfoResumo()
-                        
-                # reinicia a atividade das conexões
-                self.notifiqueConexoes(False)
-            except: time.sleep(3) # tempo de recuperação
-
-            time.sleep(0.1)
+            if not self.usingTempfile and not self.params.get("tempfile",False):
+                # salva os dados de resumo no interval de tempo 300s=5min
+                if time.time() - self.autoSaveTime > 300: 
+                    self.autoSaveTime = time.time()
+                    self.salveInfoResumo()
+                    
+            # reinicia a atividade das conexões
+            self.notifiqueConexoes(False)
+        except: pass
 
 ################################# STREAMANAGER ################################
 # CONNECTION MANANGER: GERENCIA O PROCESSO DE CONEXÃO
