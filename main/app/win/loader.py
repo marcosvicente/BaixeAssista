@@ -55,7 +55,7 @@ class VideoLoad(threading.Thread):
 class Loader(QtGui.QMainWindow):
     def __init__(self):
         super(Loader, self).__init__()
-        self.videoLoading = False
+        self.LOADING = False
         
         self.uiMainWindow = mainLayout.Ui_MainWindow()
         self.uiMainWindow.setupUi(self)
@@ -78,8 +78,12 @@ class Loader(QtGui.QMainWindow):
         self.player = FlowPlayer.Player(self)
         vBox.addWidget(self.player)
         
-    def getLocationMainUrl(self):
-        return self.uiMainWindow.locationMainUrl
+    def getLocation(self):
+        return self.uiMainWindow.location
+    
+    def closeEvent(self, event):
+        # salvando as configurações do navegador no banco de dados
+        self.browser.saveSettings()
         
     def setupAction(self):
         self.uiMainWindow.btnStartDl.clicked.connect(self.startVideoDl)
@@ -94,24 +98,23 @@ class Loader(QtGui.QMainWindow):
         self.playerActionGroup.addAction(self.uiMainWindow.actionEmbedPlayer)
         self.playerActionGroup.addAction(self.uiMainWindow.actionExternalPlayer)
         
-        #self.playerLoadActionGroup = QtGui.QActionGroup(self)
-        #self.playerLoadActionGroup.addAction(self.uiMainWindow.actionLoadExternalPlayer)
-        #self.playerLoadActionGroup.addAction(self.uiMainWindow.actionReloadPlayer)
+        self.uiMainWindow.actionReloadPlayer.triggered.connect(self.playerReload)
+        self.uiMainWindow.actionChooseExternalPlayer.triggered.connect(self.choosePlayerDir)
         
-        self.uiMainWindow.actionReloadPlayer.triggered.connect(self.reloadEmbedPlayer)
-    
-    def reloadEmbedPlayer(self):
-        self.player["autostart"] = self.videoLoading
+    def playerReload(self):
+        self.player["autostart"] = self.LOADING
         self.player.reload()
-        
-    def closeEvent(self, event):
-        # salvando as configurações do navegador no banco de dados
-        self.browser.saveSettings()
     
+    def choosePlayerDir(self):
+        fileName, filtr = QtGui.QFileDialog.getOpenFileName(self,
+                        self.tr("Choose the location of the external player"), "", 
+                        self.tr("All Files (*);;Exe Files (*.exe)"))
+        print fileName
+        
     def startVideoDl(self):
-        if not self.videoLoading:
+        if not self.LOADING:
             
-            url = self.uiMainWindow.locationMainUrl.currentText()
+            url = self.getLocation().currentText()
             
             # opção para uso de arquivo temporário
             tempfile = self.uiMainWindow.tempFiles.isChecked()
@@ -136,35 +139,35 @@ class Loader(QtGui.QMainWindow):
                                 "\n\n%s"%err))
                 return
             # -----------------------------------------------------------
-            self.dialogDl = DialogDl(self.tr("Please wait"), self)
-            self.dialogDl.show()
+            self.DIALOG = DialogDl(self.tr("Please wait"), self)
+            self.DIALOG.show()
             
-            videoLoad = VideoLoad( self.manage)
+            videoLoad = VideoLoad(self.manage)
             
-            videoLoad.events.responseChanged.connect( self.dialogDl.handleUpdate )
+            videoLoad.events.responseChanged.connect( self.DIALOG.handleUpdate )
             videoLoad.events.responseFinish.connect( self.onStartVideoDl )
             videoLoad.events.responseError.connect( self.onStartVideoDlError )
             
-            self.dialogDl.rejected.connect( self.manage.canceledl )
+            self.DIALOG.rejected.connect( self.manage.canceledl )
             videoLoad.start()
             
     def onStartVideoDl(self, reponse):
-        self.videoLoading = reponse
+        self.LOADING = reponse
         
-        if self.videoLoading:
+        if self.LOADING:
             self.handleStartupConnection( reponse )
-            self.player.reload()
-            self.dialogDl.close()
+            self.playerReload()
+            self.DIALOG.close()
         else:
-            self.dialogDl.setWindowTitle(self.tr("Download Faleid"))
+            self.DIALOG.setWindowTitle(self.tr("Download Faleid"))
             
     def onStartVideoDlError(self, err):
-        self.dialogDl.close()
+        self.DIALOG.close()
         print err
         
     def handleStartupConnection(self, default=False):
         """ controla o fluxo de criação e remoção de conexões """
-        if self.videoLoading and not self.manage.isComplete():
+        if self.LOADING and not self.manage.isComplete():
             connection = self.manage.ctrConnection
             
             nActiveConn = connection.getnActiveConnection()
