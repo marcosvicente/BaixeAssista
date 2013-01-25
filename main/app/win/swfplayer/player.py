@@ -118,7 +118,7 @@ class Player(QtGui.QWidget):
         
         swfplayer = "/".join([static, self.filesdirname, self.swf_players[0]])
         autostart = str(self.params["autostart"]).lower()
-        streamfile = "stream/" + streamname
+        streamfile = "/".join([domain, "stream", streamname])
         
         self.swf_players.reverse()
         
