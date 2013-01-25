@@ -172,14 +172,14 @@ class Browser (QtGui.QWidget):
     def onLinkClicked(self, url):
         urlString = url.toString()
         
-        if generators.Universal.has_site(urlString) and hasattr(self.mainWin, "getLocationMainUrl"):
-            locationMainUrl = self.mainWin.getLocationMainUrl()
+        if generators.Universal.has_site(urlString) and hasattr(self.mainWin,"getLocation"):
+            location = self.mainWin.getLocation()
             
             isEmbedUrl = generators.Universal.isEmbed(urlString)
             url = generators.Universal.get_inner_url(urlString)
             
             if not isEmbedUrl:
-                locationMainUrl.setEditText( urlString )
+                location.setEditText( urlString )
             else: pass
         else:
             self.webView.load( url )
