@@ -1127,7 +1127,7 @@ class Manage(object):
     def getVideoSize(self): return self.videoSize
     def getVideoExt(self): return self.videoExt
     def nowSending(self): return self.interval.send_info['sending']
-    def get_cache_size(self): return self.cacheBytesCount
+    def getCacheSize(self): return self.cacheBytesCount
     
     @FM_runLocked()
     def salveInfoResumo(self):
