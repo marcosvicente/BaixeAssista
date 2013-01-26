@@ -31,14 +31,23 @@ def trans_install(configs = None):
     
 #################################### JUST_TRY ##################################
 class just_try(object):
-    """ executa o méthodo dentro de um try:except """
+    """ executa o méthodo dentro de um try:except. loga exceções """
     def __call__(self, method):
         def wrap(*args, **kwargs): # magic!
             try: method(*args, **kwargs)
             except Exception as err:
                 logger.error("%s: %s"%(self.__class__.__name__, err))
         return wrap
-        
+
+class protected(object):
+    """ executa o méthodo dentro de um try:except. ignora errors """
+    def __call__(self, method):
+        def wrap(*args, **kwargs): # magic!
+            try: method(*args, **kwargs)
+            except Exception as err:
+                print "warnning::protected: %s"%err
+        return wrap
+    
 def get_filename(filepath, fullname=True):
     """
     fullname: True  -> C:\\filedir\\file.txt -> file.txt
