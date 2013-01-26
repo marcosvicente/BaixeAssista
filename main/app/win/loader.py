@@ -32,7 +32,8 @@ class DialogDl(QtGui.QDialog):
         
 ## --------------------------------------------------------------------------
 class VLSignal(QtCore.QObject):
-    responseUpdateUi = QtCore.Signal()
+    responseUpdateUi     = QtCore.Signal()
+    responseUpdateUiExit = QtCore.Signal()
     responseChanged  = QtCore.Signal(str, str)
     responseFinish   = QtCore.Signal(bool)
     responseError    = QtCore.Signal(str)
@@ -71,7 +72,9 @@ class VideoLoad(threading.Thread):
             self.manage.update()
             self.events.responseUpdateUi.emit()
             time.sleep(0.01)
-            
+        # informa que o evento de atualização parou de correr.
+        self.events.responseUpdateUiExit.emit()
+        
 ## --------------------------------------------------------------------------
 class Loader(QtGui.QMainWindow):
     def __init__(self):
@@ -94,7 +97,11 @@ class Loader(QtGui.QMainWindow):
     def updateUI(self):
         if self.LOADING:
             self.updateTable()
-            
+    
+    def updateUIExit(self):
+        if not self.LOADING:
+            self.updateTableExit()
+        
     def setupUI(self):
         self.setupTab()
         self.setupLocation()
@@ -143,7 +150,7 @@ class Loader(QtGui.QMainWindow):
     
     @base.protected()
     def updateTable(self):
-        ## TABLE: Info
+        """ atualizando apenas as tabelas apresentadas na 'MainWindow' """
         for sm in self.manage.ctrConnection.getConnections():
             if not sm.wasStopped():
                 values = map(lambda key: sm.info.get(sm.ident, key), 
@@ -161,6 +168,10 @@ class Loader(QtGui.QMainWindow):
         
         self.uiMainWindow.downloadedFromInfo.setText(manager.StreamManager.format_bytes(self.manage.getCacheSize()))
         self.uiMainWindow.downloadedToInfo.setText( videoSizeFormated )
+    
+    def updateTableExit(self):
+        """ atualização de saída das tabelas. desativando todos os controles """
+        self.uiMainWindow.progressBarInfo.setValue(0.0)
         
     def getLocation(self):
         return self.uiMainWindow.location
@@ -247,6 +258,7 @@ class Loader(QtGui.QMainWindow):
             videoLoad.events.responseFinish.connect( self.onStartVideoDl )
             videoLoad.events.responseError.connect( self.onStartVideoDlError )
             videoLoad.events.responseUpdateUi.connect( self.updateUI )
+            videoLoad.events.responseUpdateUiExit.connect( self.updateUIExit )
             
             self.DIALOG.rejected.connect( self.onStartVideoDlCancel )
             videoLoad.start()
