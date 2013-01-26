@@ -3,7 +3,6 @@
 import os
 from main import settings
 import player
-import wx
 
 # -----------------------------------------------------------------------------
 class Player( player.Player ):
@@ -30,11 +29,3 @@ class Player( player.Player ):
         params = super(Player, self).getParams()
         params["provider"] = "http"
         return params
-    
-# -----------------------------------------------------------------------------
-if __name__ == '__main__':
-    app = wx.App( 0 )
-    frame = wx.Frame(None, -1, "Player", size = (700, 480))
-    iewindow = Player( frame)
-    frame.Show()
-    app.MainLoop()

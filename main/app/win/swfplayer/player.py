@@ -147,10 +147,3 @@ class Player(QtGui.QWidget):
         self.webview.setHtml(html)
         self.webview.reload()
         
-########################################################################################
-if __name__=='__main__':
-    app = wx.App( 0 )
-    frame = wx.Frame(None, -1, "Player", size = (700, 480))
-    iewindow = Player( frame)
-    frame.Show()
-    app.MainLoop()
