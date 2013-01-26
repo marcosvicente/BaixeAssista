@@ -143,12 +143,25 @@ class Loader(QtGui.QMainWindow):
     
     @base.protected()
     def updateTable(self):
+        ## TABLE: Info
         for sm in self.manage.ctrConnection.getConnections():
             if not sm.wasStopped():
                 values = map(lambda key: sm.info.get(sm.ident, key), 
                              manager.StreamManager.listInfo)
                 self.tableRows[ sm.ident ].update(values = values)
-                
+        
+        videoSizeFormated = manager.StreamManager.format_bytes(self.manage.getVideoSize())
+        videoPercent = base.calc_percent(self.manage.getCacheSize(), self.manage.getVideoSize())
+        
+        self.uiMainWindow.videoTileInfo.setText(self.manage.getVideoTitle())
+        self.uiMainWindow.videoSizeInfo.setText( videoSizeFormated )
+        self.uiMainWindow.videoExtInfo.setText(self.manage.getVideoExt())
+        
+        self.uiMainWindow.progressBarInfo.setValue( videoPercent )
+        
+        self.uiMainWindow.downloadedFromInfo.setText(manager.StreamManager.format_bytes(self.manage.getCacheSize()))
+        self.uiMainWindow.downloadedToInfo.setText( videoSizeFormated )
+        
     def getLocation(self):
         return self.uiMainWindow.location
         
