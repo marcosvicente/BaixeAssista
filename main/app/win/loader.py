@@ -8,8 +8,8 @@ import mainLayout, uiDialogDl
 import browser
 
 from main.app import manager
-
 from main.app.util import base
+
 base.trans_install() # instala as traduções.
 
 class DialogDl(QtGui.QDialog):
@@ -80,6 +80,9 @@ class TableRow(object):
         self.table = table
         self.items = []
         
+        # criando uma 'row' na tabela
+        table.setRowCount(self.index+1)
+        
     def create(self):
         for index in range( self.table.columnCount() ):
             item = QtGui.QTableWidgetItem("Item Row: %d, Col: %d"%(TableRow.ROW_INDEX, index))
@@ -89,7 +92,7 @@ class TableRow(object):
         # indice para uma nova TableRow.
         TableRow.ROW_INDEX += 1
         
-    def update(self, col=None, value='', *values):
+    def update(self, col=None, value='', values=()):
         """ atualiza o texto de todas as colunas, ou apenas uma coluna individual """
         if col is None:
             for index, value in enumerate(values):
@@ -101,6 +104,11 @@ class TableRow(object):
     def index(self):
         return self._index
     
+    def clear(self):
+        self.table.setRowCount(self.table.rowCount()-1)
+        self.table.removeRow(self.index)
+        TableRow.ROW_INDEX -= 1
+        
 ## --------------------------------------------------------------------------
 class Loader(QtGui.QMainWindow):
     def __init__(self):
@@ -108,26 +116,25 @@ class Loader(QtGui.QMainWindow):
         
         self.LOADING = False
         self.manage = None
+        self.tableRows = {}
         
         self.uiMainWindow = mainLayout.Ui_MainWindow()
         self.uiMainWindow.setupUi(self)
         
         self.setupUI()
         self.setupAction()
+        
+    def closeEvent(self, event):
+        # browser settings
+        self.browser.saveSettings()
     
+    def updateUI(self):
+        if self.LOADING:
+            self.updateTable()
+            
     def setupUI(self):
         self.setupTab()
         self.setupLocation()
-        
-        self.uiMainWindow.connectionInfo.setRowCount(3)
-        
-        tbr = self.addTableRow()
-        tbr.update(1, "Valor manual alterado")
-        
-        self.addTableRow()
-        tbr = self.addTableRow()
-        
-        tbr.update(3, "opss, alterei de novo!")
         
     def setupLocation(self):
         self.urlManager = manager.UrlManager()
@@ -154,17 +161,33 @@ class Loader(QtGui.QMainWindow):
         self.player = FlowPlayer.Player(self)
         vBox.addWidget(self.player)
     
-    def addTableRow(self):
-        tableRow = TableRow(self.uiMainWindow.connectionInfo)
-        tableRow.create()
-        return tableRow
+    def addTableRow(self, _id):
+        """ agrupa items por linha """
+        # relacionando  com o id para facilitar na atualização de dados
+        self.tableRows[_id] = TableRow( self.uiMainWindow.connectionInfo )
+        self.tableRows[_id].create()
+        return self.tableRows[_id]
     
+    def removeTableRow(self, _id):
+        tableRow = self.tableRows.pop(_id)
+        tableRow.clear()
+    
+    def clearTable(self):
+        """ removendo todas as 'rows' e dados relacionandos """
+        for _id in self.tableRows:
+            self.tableRows[_id].clear()
+        self.tableRows.clear()
+    
+    @base.protected()
+    def updateTable(self):
+        for sm in self.manage.ctrConnection.getConnections():
+            if not sm.wasStopped():
+                values = map(lambda key: sm.info.get(sm.ident, key), 
+                             manager.StreamManager.listInfo)
+                self.tableRows[ sm.ident ].update(values = values)
+                
     def getLocation(self):
         return self.uiMainWindow.location
-    
-    def closeEvent(self, event):
-        # salvando as configurações do navegador no banco de dados
-        self.browser.saveSettings()
         
     def setupAction(self):
         self.uiMainWindow.btnStartDl.clicked.connect(self.handleStartStopDl)
@@ -257,6 +280,7 @@ class Loader(QtGui.QMainWindow):
         if self.LOADING:
             # cancela o 'loop' de atualização de dados
             self.videoLoad.setCancelDl(True)
+            self.clearTable()
             
             self.manage.ctrConnection.stopAllConnections()
             self.uiMainWindow.btnStartDl.setText(self.tr("Download"))
@@ -302,9 +326,6 @@ class Loader(QtGui.QMainWindow):
     def onStartVideoDlError(self, err):
         self.DIALOG.close()
         print err
-    
-    def updateUI(self):
-        print "Event UI"
         
     def handleStartupConnection(self, default=False):
         """ controla o fluxo de criação e remoção de conexões """
@@ -333,12 +354,12 @@ class Loader(QtGui.QMainWindow):
                     else:
                         sm_id_list = connection.startConnectionWithProxy(numOfConn, **params)
                         
-                #for sm_id in sm_id_list:
-                #self.detailControl.setInfoItem( sm_id )
-                
+                for sm_id in sm_id_list:
+                    self.addTableRow( sm_id )
+                    
             elif numOfConn < 0: # remove conexões existentes.
                 for sm_id in connection.stopConnections( numOfConn ):
-                    self.detailControl.removaItemConexao( sm_id )
+                    self.removeTableRow( sm_id )
                     
             else: # mudança dinânica dos parametros das conexões.
                 connection.update( **params)
