@@ -14,7 +14,7 @@ class TableRow(object):
         
     def create(self):
         for index in range( self.table.columnCount() ):
-            item = QtGui.QTableWidgetItem("Item Row: %d, Col: %d"%(TableRow.ROW_INDEX, index))
+            item = QtGui.QTableWidgetItem()
             self.table.setItem(TableRow.ROW_INDEX, index, item)
             self.items.append(item)
             
@@ -25,9 +25,9 @@ class TableRow(object):
         """ atualiza o texto de todas as colunas, ou apenas uma coluna individual """
         if col is None:
             for index, value in enumerate(values):
-                self.items[index].setText(str(value))
+                self.items[index].setText(unicode(value))
         else:
-            self.items[col].setText(str(value))
+            self.items[col].setText(unicode(value))
             
     @property
     def index(self):
