@@ -1199,30 +1199,29 @@ class Manage(object):
             if flag: smanager.setWait()
             elif smanager.isWaiting:
                 smanager.stopWait()
-    
+                
+    @base.protected()
     def update(self):
         """ atualiza dados de transferência do arquivo de vídeo atual """
-        try: # como self.interval acaba sendo deletado, a ocorrencia de erro é provável
-            startInterv = self.interval.get_first_start()
-            self.interval.send_info["sending"] = startInterv
-            nbytes = self.interval.send_info["nbytes"].get(startInterv, 0)
+        startInterv = self.interval.get_first_start()
+        self.interval.send_info["sending"] = startInterv
+        nbytes = self.interval.send_info["nbytes"].get(startInterv, 0)
+        
+        if startInterv >= 0:
+            startabs = startInterv - self.interval.get_offset()
+            self.cacheBytesCount = startabs + nbytes
             
-            if startInterv >= 0:
-                startabs = startInterv - self.interval.get_offset()
-                self.cacheBytesCount = startabs + nbytes
-                
-            elif self.isComplete(): # isComplete: tira a necessidade de uma igualdade absoluta
-                self.cacheBytesCount = self.getVideoSize()
+        elif self.isComplete(): # isComplete: tira a necessidade de uma igualdade absoluta
+            self.cacheBytesCount = self.getVideoSize()
 
-            if not self.usingTempfile and not self.params.get("tempfile",False):
-                # salva os dados de resumo no interval de tempo 300s=5min
-                if time.time() - self.autoSaveTime > 300: 
-                    self.autoSaveTime = time.time()
-                    self.salveInfoResumo()
-                    
-            # reinicia a atividade das conexões
-            self.notifiqueConexoes(False)
-        except: pass
+        if not self.usingTempfile and not self.params.get("tempfile",False):
+            # salva os dados de resumo no interval de tempo 300s=5min
+            if time.time() - self.autoSaveTime > 300: 
+                self.autoSaveTime = time.time()
+                self.salveInfoResumo()
+        
+        # reinicia a atividade das conexões
+        self.notifiqueConexoes(False)
 
 ################################# STREAMANAGER ################################
 # CONNECTION MANANGER: GERENCIA O PROCESSO DE CONEXÃO
