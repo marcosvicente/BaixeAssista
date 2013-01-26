@@ -48,6 +48,10 @@ class protected(object):
                 print "warnning:: %s protected: %s"%(method.__name__, err)
         return wrap
     
+def calc_percent(byte_counter, data_len):
+    """ calcula a porcentagem. retorna o resultado sem formatação."""
+    return ((float(byte_counter) / float(data_len)) * 100.0)
+    
 def get_filename(filepath, fullname=True):
     """
     fullname: True  -> C:\\filedir\\file.txt -> file.txt
