@@ -101,7 +101,7 @@ class Player(QtGui.QWidget):
     
     def getParams(self):
         previmage = self.params.get("previewImage", "")
-        streamname = self.params.get("streamName", get_random_text(5))
+        streamname = self.params.get("streamName", get_random_text(5)+".flv")
         
         hostname = self.params.get("hostName", "localhost")
         portnumber = self.params.get("portNumber", 8002)
@@ -144,6 +144,9 @@ class Player(QtGui.QWidget):
         """ recarrega a página atualizando os parâmetros do player """
         params = self.getParams()
         html = self.getPlayerPage( params )
+        
+        #print html
+        
         self.webview.setHtml(html)
         self.webview.reload()
         
