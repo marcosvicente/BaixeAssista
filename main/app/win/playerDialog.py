@@ -26,9 +26,7 @@ class PlayerDialog(QtGui.QDialog):
         self.btnFlowPlayer.setToolTip(self.tr("load FlowPlayer"))
         self.btnJwPlayer.setToolTip(self.tr("load JW Player"))
         
-        ##self.loadFlowPlayer()
-        self.btnJwPlayer.setChecked(True)
-        self.loadJwPlayer()
+        self.loadFlowPlayer()
         
     @property
     def player(self):
