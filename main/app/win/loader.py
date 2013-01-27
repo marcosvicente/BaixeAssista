@@ -32,7 +32,6 @@ class PlayerDialog(QtGui.QDialog):
         super(PlayerDialog, self).__init__(parent)
         self.uiPlayerDialog = Ui_playerDialog()
         self.uiPlayerDialog.setupUi(self)
-        self.setupButton()
         
         self.setWindowTitle( title )
         
@@ -51,11 +50,6 @@ class PlayerDialog(QtGui.QDialog):
         ##self.loadFlowPlayer()
         self.btnJwPlayer.setChecked(True)
         self.loadJwPlayer()
-    
-    def setupButton(self):
-        print " -- ", self.btnFlowPlayer.icon()
-        i = QtGui.QIcon("C:\\file.png")
-        
         
     @property
     def player(self):
@@ -213,7 +207,10 @@ class Loader(QtGui.QMainWindow):
         
         self.playerDialog = PlayerDialog(parent = self)
         self.playerDialog.hide()
-    
+        
+        self.uiMainWindow.videoQuality.addItems([self.tr("Low"), self.tr("Normal"), self.tr("High")])
+        self.uiMainWindow.tempFileAction.addItems([self.tr("Just remove"), self.tr("Before remove, ask")])
+        
     def setupAction(self):
         self.uiMainWindow.btnStartDl.clicked.connect(self.handleStartStopDl)
         self.uiMainWindow.actionExit.triggered.connect(self.close)
@@ -247,10 +244,8 @@ class Loader(QtGui.QMainWindow):
         self.getLocation().setEditText( joinedUrl )
         self.getLocation().setToolTip( title )
         
-        self.getLocation().addItems(
-            map(lambda d: self.urlManager.joinUrlDesc(d[0], d[1]), 
-                self.urlManager.getUrlTitleList())
-        )
+        self.getLocation().addItems(map(lambda d: self.urlManager.joinUrlDesc(d[0], d[1]), 
+                                        self.urlManager.getUrlTitleList()))
         
     def setupTab(self):
         vBox = QtGui.QVBoxLayout()
