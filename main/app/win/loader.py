@@ -1,11 +1,24 @@
 # coding: utf-8
-import sys, os, threading
+import sys, os
+import time, threading
 from PySide import QtCore, QtGui
-import time
+from main import settings
 
-from swfplayer import FlowPlayer, JWPlayer
+OldPixmap = QtGui.QPixmap
+def pixmap(*args, **kwargs):
+    """ hack para correção do caminho do pixmap """
+    args = list(args)
+    if isinstance(args[0],(str, unicode)):
+        fileName = os.path.basename(args[0])
+        args[0] = os.path.join(settings.IMAGES_DIR, fileName)
+    return OldPixmap(*tuple(args), **kwargs)
+QtGui.QPixmap = pixmap
+
+from swfplayer import JWPlayer, FlowPlayer
 import mainLayout, uiDialogDl
 from tableRow import TableRow
+
+from uiPlayerDialog import Ui_playerDialog
 import browser
 
 from main.app import manager
@@ -13,6 +26,98 @@ from main.app.util import base
 
 base.trans_install() # instala as traduções.
 
+## --------------------------------------------------------------------------
+class PlayerDialog(QtGui.QDialog):
+    def __init__(self, title="SWF Player", parent=None):
+        super(PlayerDialog, self).__init__(parent)
+        self.uiPlayerDialog = Ui_playerDialog()
+        self.uiPlayerDialog.setupUi(self)
+        self.setupButton()
+        
+        self.setWindowTitle( title )
+        
+        self.mFlowPlayer = FlowPlayer.Player( self.playerFrame )
+        self.mJWPlayer = JWPlayer.Player( self.playerFrame )
+        
+        self.mFlowPlayer.hide()
+        self.mJWPlayer.hide()
+        
+        self.btnFlowPlayer.clicked.connect( self.changePlayer )
+        self.btnJwPlayer.clicked.connect( self.changePlayer )
+        
+        self.btnFlowPlayer.setToolTip(self.tr("load FlowPlayer"))
+        self.btnJwPlayer.setToolTip(self.tr("load JW Player"))
+        
+        ##self.loadFlowPlayer()
+        self.btnJwPlayer.setChecked(True)
+        self.loadJwPlayer()
+    
+    def setupButton(self):
+        print " -- ", self.btnFlowPlayer.icon()
+        i = QtGui.QIcon("C:\\file.png")
+        
+        
+    @property
+    def player(self):
+        return self.mplayer
+    @property
+    def playerFrame(self):
+        return self.uiPlayerDialog.playerFrame
+    @property
+    def btnReload(self):
+        return self.uiPlayerDialog.btnReload
+    @property
+    def btnFlowPlayer(self):
+        return self.uiPlayerDialog.btnFlowPlayer
+    @property
+    def btnJwPlayer(self):
+        return self.uiPlayerDialog.btnJwPlayer
+    
+    def playerReload(self, autostart=False):
+        self.mplayer["autostart"] = autostart
+        self.mplayer.reload()
+        
+    @base.protected()
+    def removePlayer(self, layout):
+        layout.removeWidget(self.mplayer)
+        self.mplayer.hide()
+        
+    def loadFlowPlayer(self):
+        layout = self.playerFrame.layout()
+        self.removePlayer( layout )
+        
+        self.mplayer = self.mFlowPlayer
+        
+        layout.addWidget( self.mFlowPlayer )
+        self.mFlowPlayer.show()
+        
+    def loadJwPlayer(self):
+        layout = self.playerFrame.layout()
+        self.removePlayer( layout )
+        
+        self.mplayer = self.mJWPlayer
+        
+        layout.addWidget( self.mJWPlayer )
+        self.mJWPlayer.show()
+        
+    def changePlayer(self):
+        if self.sender() == self.btnFlowPlayer:
+            if self.btnFlowPlayer.isChecked():
+                self.loadFlowPlayer()
+                self.btnJwPlayer.setChecked(False)
+            else:
+                self.btnJwPlayer.setChecked(True)
+                self.loadJwPlayer()
+                
+        elif self.sender() == self.btnJwPlayer:
+            if self.btnJwPlayer.isChecked():
+                self.loadJwPlayer()
+                self.btnFlowPlayer.setChecked(False)
+            else:
+                self.btnFlowPlayer.setChecked(True)
+                self.loadFlowPlayer()
+                
+## --------------------------------------------------------------------------
 class DialogDl(QtGui.QDialog):
     
     def __init__(self, title="Dialog", parent=None):
@@ -106,6 +211,34 @@ class Loader(QtGui.QMainWindow):
         self.setupTab()
         self.setupLocation()
         
+        self.playerDialog = PlayerDialog(parent = self)
+        self.playerDialog.hide()
+    
+    def setupAction(self):
+        self.uiMainWindow.btnStartDl.clicked.connect(self.handleStartStopDl)
+        self.uiMainWindow.actionExit.triggered.connect(self.close)
+        
+        self.uiMainWindow.connectionActive.valueChanged.connect( self.handleStartupConnection )
+        self.uiMainWindow.connectionSpeed.valueChanged.connect( self.handleStartupConnection )
+        self.uiMainWindow.connectionTimeout.valueChanged.connect( self.handleStartupConnection )
+        self.uiMainWindow.connectionSleep.valueChanged.connect( self.handleStartupConnection )
+        self.uiMainWindow.connectionAttempts.valueChanged.connect( self.handleStartupConnection )
+        self.uiMainWindow.connectionType.stateChanged.connect( self.handleStartupConnection )
+        
+        self.langActionGroup = QtGui.QActionGroup(self)
+        self.langActionGroup.addAction(self.uiMainWindow.actionPortuguse)
+        self.langActionGroup.addAction(self.uiMainWindow.actionEnglish)
+        self.langActionGroup.addAction(self.uiMainWindow.actionSpanish)
+        
+        self.playerActionGroup = QtGui.QActionGroup(self)
+        self.playerActionGroup.addAction(self.uiMainWindow.actionEmbedPlayer)
+        self.playerActionGroup.addAction(self.uiMainWindow.actionExternalPlayer)
+        
+        self.playerDialog.btnReload.clicked.connect( self.playerReload )
+        self.uiMainWindow.actionReloadPlayer.triggered.connect( self.playerReload )
+        
+        self.uiMainWindow.actionChooseExternalPlayer.triggered.connect(self.choosePlayerDir)
+        
     def setupLocation(self):
         self.urlManager = manager.UrlManager()
         url, title = self.urlManager.getLastUrl()
@@ -125,12 +258,8 @@ class Loader(QtGui.QMainWindow):
         self.browser = browser.Browser(self)
         vBox.addWidget( self.browser )
         # --------------------------------------------------------
-                
-        vBox = QtGui.QVBoxLayout()
-        self.uiMainWindow.tabPlayer.setLayout( vBox )
-        self.player = FlowPlayer.Player(self)
-        vBox.addWidget(self.player)
-    
+        
+        
     def addTableRow(self, _id):
         """ agrupa items por linha """
         # relacionando  com o id para facilitar na atualização de dados
@@ -176,33 +305,8 @@ class Loader(QtGui.QMainWindow):
     def getLocation(self):
         return self.uiMainWindow.location
         
-    def setupAction(self):
-        self.uiMainWindow.btnStartDl.clicked.connect(self.handleStartStopDl)
-        self.uiMainWindow.actionExit.triggered.connect(self.close)
-        
-        ## self.handleStartupConnection
-        self.uiMainWindow.connectionActive.valueChanged.connect( self.handleStartupConnection )
-        self.uiMainWindow.connectionSpeed.valueChanged.connect( self.handleStartupConnection )
-        self.uiMainWindow.connectionTimeout.valueChanged.connect( self.handleStartupConnection )
-        self.uiMainWindow.connectionSleep.valueChanged.connect( self.handleStartupConnection )
-        self.uiMainWindow.connectionAttempts.valueChanged.connect( self.handleStartupConnection )
-        self.uiMainWindow.connectionType.stateChanged.connect( self.handleStartupConnection )
-        
-        self.langActionGroup = QtGui.QActionGroup(self)
-        self.langActionGroup.addAction(self.uiMainWindow.actionPortuguse)
-        self.langActionGroup.addAction(self.uiMainWindow.actionEnglish)
-        self.langActionGroup.addAction(self.uiMainWindow.actionSpanish)
-        
-        self.playerActionGroup = QtGui.QActionGroup(self)
-        self.playerActionGroup.addAction(self.uiMainWindow.actionEmbedPlayer)
-        self.playerActionGroup.addAction(self.uiMainWindow.actionExternalPlayer)
-        
-        self.uiMainWindow.actionReloadPlayer.triggered.connect(self.playerReload)
-        self.uiMainWindow.actionChooseExternalPlayer.triggered.connect(self.choosePlayerDir)
-        
     def playerReload(self):
-        self.player["autostart"] = self.LOADING
-        self.player.reload()
+        self.playerDialog.playerReload( self.LOADING )
     
     def choosePlayerDir(self):
         fileName, filtr = QtGui.QFileDialog.getOpenFileName(self,
@@ -273,7 +377,8 @@ class Loader(QtGui.QMainWindow):
             self.manage.ctrConnection.stopAllConnections()
             self.uiMainWindow.btnStartDl.setText(self.tr("Download"))
             
-            self.player.pause()
+            self.playerDialog.hide()
+            self.playerDialog.player.pause()
             
             self.manage.stop_streamers()
             self.manage.delete_vars()
@@ -297,9 +402,11 @@ class Loader(QtGui.QMainWindow):
             if self.getLocation().findText( joinedUrl ) < 0:
                 self.getLocation().addItem(joinedUrl)
                 
-            self.handleStartupConnection( reponse )
+            self.handleStartupConnection(default = reponse)
             
+            self.playerDialog.show()
             self.playerReload()
+            
             self.DIALOG.close()
         else:
             self.DIALOG.setWindowTitle(self.tr("Download Faleid"))
@@ -315,7 +422,7 @@ class Loader(QtGui.QMainWindow):
         self.DIALOG.close()
         print err
         
-    def handleStartupConnection(self, default=False):
+    def handleStartupConnection(self, value=None, default=False):
         """ controla o fluxo de criação e remoção de conexões """
         if self.LOADING and not self.manage.isComplete():
             connection = self.manage.ctrConnection
