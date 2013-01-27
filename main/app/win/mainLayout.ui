@@ -78,7 +78,7 @@
          <item>
           <widget class="QTabWidget" name="tabPanel">
            <property name="currentIndex">
-            <number>2</number>
+            <number>1</number>
            </property>
            <widget class="QWidget" name="tabBrowser">
             <attribute name="icon">
@@ -404,8 +404,8 @@
                     <rect>
                      <x>0</x>
                      <y>0</y>
-                     <width>246</width>
-                     <height>82</height>
+                     <width>1052</width>
+                     <height>361</height>
                     </rect>
                    </property>
                    <attribute name="icon">
@@ -442,11 +442,14 @@
                           <verstretch>0</verstretch>
                          </sizepolicy>
                         </property>
-                        <property name="editable">
-                         <bool>false</bool>
+                        <property name="toolTip">
+                         <string/>
                         </property>
                         <property name="currentIndex">
                          <number>-1</number>
+                        </property>
+                        <property name="duplicatesEnabled">
+                         <bool>false</bool>
                         </property>
                        </widget>
                       </item>
@@ -513,8 +516,8 @@
                     <rect>
                      <x>0</x>
                      <y>0</y>
-                     <width>280</width>
-                     <height>87</height>
+                     <width>1052</width>
+                     <height>361</height>
                     </rect>
                    </property>
                    <attribute name="icon">

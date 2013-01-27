@@ -224,9 +224,10 @@ class Loader(QtGui.QMainWindow):
     
     def handleStartStopDl(self):
         """ chama o método de acordo com o estado do botão """
-        isChecked = self.uiMainWindow.btnStartDl.isChecked()
-        if isChecked: self.handleStartVideoDl()
-        else: self.handleStopVideoDl()
+        if self.uiMainWindow.btnStartDl.isChecked():
+            self.handleStartVideoDl()
+        else:
+            self.handleStopVideoDl()
         
     def handleStartVideoDl(self):
         """ inicia todo o processo de download e transferênica do video """
@@ -277,13 +278,15 @@ class Loader(QtGui.QMainWindow):
             
     def handleStopVideoDl(self):
         """ termina todas as ações relacionadas ao download do vídeo atual """
+        # cancela o 'loop' de atualização de dados
+        self.videoLoad.setCancelDl(True)
+        self.uiMainWindow.btnStartDl.setText(self.tr("Download"))
+        self.DIALOG.reject()
+        
         if self.LOADING:
-            # cancela o 'loop' de atualização de dados
-            self.videoLoad.setCancelDl(True)
             self.clearTable()
             
             self.manage.ctrConnection.stopAllConnections()
-            self.uiMainWindow.btnStartDl.setText(self.tr("Download"))
             
             self.playerDialog.hide()
             self.playerDialog.player.pause()
