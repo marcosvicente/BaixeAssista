@@ -235,7 +235,7 @@ class Browser (QtGui.QWidget):
             self.webView.stop()
     
     def handleFavoriteSite(self):
-        text, ok = QtGui.QInputDialog.getText(self, self.tr("Add url as favorite"),
+        text, ok = QtGui.QInputDialog.getText(self, self.tr("add url as favorite"),
                           self.tr("Enter the url below."), text = self.location.currentText())
         text = text.strip()
         if text:
@@ -254,7 +254,7 @@ class Browser (QtGui.QWidget):
                 # atualizando a 'start' com ativa
                 self.updateFavoriteStarIcon()
             else:
-                reply = QtGui.QMessageBox.question(self, self.tr("Without panic :)"), 
+                reply = QtGui.QMessageBox.question(self, self.tr("without panic :)"), 
                                     self.tr("Url already in the list. Want to add another ?"),
                                     QtGui.QMessageBox.Yes | QtGui.QMessageBox.No)
                 
@@ -280,7 +280,7 @@ class Browser (QtGui.QWidget):
         
         if index > -1:
             # ação que leva a remoção de uma url do banco de dados e do controle de urls.
-            reply = QtGui.QMessageBox.question(self, self.tr("Requires confirmation"), 
+            reply = QtGui.QMessageBox.question(self, self.tr("requires confirmation"), 
                        self.tr("The url below will be removed.\n") + url, 
                        QtGui.QMessageBox.Yes | QtGui.QMessageBox.No)
             
@@ -291,7 +291,7 @@ class Browser (QtGui.QWidget):
                 query = self.objects.get(site = url)
                 query.delete()
                 
-                self.webView.load(self.location.currentText())
+                self.location.setEditText( url )
         else:
             QtGui.QMessageBox.information(self, self.tr("Not found"), 
                 self.tr("The url can not be found in the current list."))
