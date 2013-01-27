@@ -37,7 +37,7 @@ class DialogDl(QtGui.QDialog):
         
     @property
     def btnCancel(self):
-        self.uiDialog.buttonBox.button(QtGui.QDialogButtonBox.Cancel)
+        return self.uiDialog.buttonBox.button(QtGui.QDialogButtonBox.Cancel)
         
     def handleUpdate(self, message, sitemsg):
         self.uiDialog.infoProgress.setText(message)
@@ -70,18 +70,19 @@ class VideoLoad(threading.Thread):
                 if self.manage.start(index, self.ntry, callback=self.events.responseChanged.emit):
                     if not self.cancel:
                         self.events.responseFinish.emit(True)
-                        break
+                        return True
                 if self.cancel: break
             except Exception as error:
                 self.events.responseError.emit(str(error))
                 break
         else:
             self.events.responseFinish.emit(False)
-            
-    def run(self):
-        self._init()
+        return False
         
-        while not self.cancel:
+    def run(self):
+        started = self._init()
+        
+        while started and not self.cancel:
             self.manage.update()
             self.events.responseUpdateUi.emit()
             time.sleep(0.01)
@@ -281,7 +282,7 @@ class Loader(QtGui.QMainWindow):
         # cancela o 'loop' de atualização de dados
         self.videoLoad.setCancelDl(True)
         self.uiMainWindow.btnStartDl.setText(self.tr("Download"))
-        self.DIALOG.reject()
+        self.DIALOG.close()
         
         if self.LOADING:
             self.clearTable()
