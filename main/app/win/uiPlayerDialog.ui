@@ -6,12 +6,16 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>619</width>
-    <height>329</height>
+    <width>945</width>
+    <height>482</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>SWF Player</string>
+  </property>
+  <property name="windowIcon">
+   <iconset>
+    <normaloff>../images/movies.png</normaloff>../images/movies.png</iconset>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
