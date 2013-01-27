@@ -34,9 +34,10 @@ class DialogDl(QtGui.QDialog):
         self.uiDialog.setupUi(self)
         
         self.setWindowTitle(title)
-    
-    def updateProgressValue(self, current, value):
-        self.uiDialog.progressBar.value((current/value) * 100.0)
+        
+    @property
+    def btnCancel(self):
+        self.uiDialog.buttonBox.button(QtGui.QDialogButtonBox.Cancel)
         
     def handleUpdate(self, message, sitemsg):
         self.uiDialog.infoProgress.setText(message)
@@ -166,7 +167,6 @@ class Loader(QtGui.QMainWindow):
         self.browser = browser.Browser(self)
         vBox.addWidget( self.browser )
         # --------------------------------------------------------
-        
         
     def addTableRow(self, _id):
         """ agrupa items por linha """
@@ -318,7 +318,8 @@ class Loader(QtGui.QMainWindow):
             self.DIALOG.close()
         else:
             self.DIALOG.setWindowTitle(self.tr("Download Faleid"))
-    
+            self.DIALOG.btnCancel.setText(self.tr("Ok"))
+            
     def onStartVideoDlCancel(self):
         if not self.LOADING:
             self.videoLoad.setCancelDl(True)
@@ -345,7 +346,7 @@ class Loader(QtGui.QMainWindow):
                 "timeout": self.uiMainWindow.connectionTimeout.value(),
                 "typechange": self.uiMainWindow.connectionType.isChecked(), 
                 "waittime": self.uiMainWindow.connectionSleep.value(),
-                "reconexao": self.uiMainWindow.connectionAttempts
+                "reconexao": self.uiMainWindow.connectionAttempts.value()
             }
             if numOfConn > 0: # adiciona novas conexões.
                 if proxyDisable:

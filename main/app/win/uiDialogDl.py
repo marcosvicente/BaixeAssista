@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'uiDialogDl.ui'
 #
-# Created: Sat Jan 26 22:25:23 2013
+# Created: Sun Jan 27 01:29:21 2013
 #      by: pyside-uic 0.2.14 running on PySide 1.1.2
 #
 # WARNING! All changes made in this file will be lost!
@@ -29,13 +29,10 @@ class Ui_Dialog(object):
         self.siteResponse = QtGui.QTextEdit(Dialog)
         self.siteResponse.setObjectName("siteResponse")
         self.verticalLayout.addWidget(self.siteResponse)
-        self.progressBar = QtGui.QProgressBar(Dialog)
-        self.progressBar.setProperty("value", 0)
-        self.progressBar.setObjectName("progressBar")
-        self.verticalLayout.addWidget(self.progressBar)
         self.buttonBox = QtGui.QDialogButtonBox(Dialog)
         self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
-        self.buttonBox.setStandardButtons(QtGui.QDialogButtonBox.Cancel|QtGui.QDialogButtonBox.Ok)
+        self.buttonBox.setStandardButtons(QtGui.QDialogButtonBox.Cancel)
+        self.buttonBox.setCenterButtons(True)
         self.buttonBox.setObjectName("buttonBox")
         self.verticalLayout.addWidget(self.buttonBox)
 
