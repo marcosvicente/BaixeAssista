@@ -3,13 +3,12 @@
 {% block title %} JWPlayer {% endblock %}
 
 {% block head %}
-	<script type="text/javascript" src="{{params.playerscript}}"></script>
-
+	<script type="text/javascript" src="{{params.playerscript}}" ></script>
+	
 	<script type="text/javascript">
 		$(document).ready(function() {
 			BA_GLOBAL_PLAYER = jwplayer('mediaplayer')
 			BA_GLOBAL_PLAYER.setup({
-				'flashplayer': '{{params.swfplayer}}',
 				'file': '{{params.file}}',
 				'width': '100%', 'height': '100%',
 				'provider': '{{params.provider}}',
