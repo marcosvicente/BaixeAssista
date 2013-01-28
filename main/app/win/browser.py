@@ -3,6 +3,7 @@ import sys, os
 from PySide import QtCore
 from PySide import QtGui
 from PySide import QtWebKit
+from PySide import QtNetwork
 
 import time, thread
 import main.environ
@@ -13,7 +14,18 @@ from main.app import generators
 from main.app import models
 from main import settings
 
-
+class NetworkAccessManager(QtNetwork.QNetworkAccessManager):
+    requestCreated = QtCore.Signal(str)
+    
+    def createRequest(self, *args,**kwargs):
+        url = args[1].url().toString()
+        
+        if generators.Universal.has_site(url) and generators.Universal.isEmbed(url):
+            url = generators.Universal.get_inner_url( url )
+            self.requestCreated.emit( url )
+            
+        return super(NetworkAccessManager, self).createRequest(*args,**kwargs)
+    
 class StopRefreshButton(QtGui.QPushButton):
     def __init__(self, *arg):
         super(StopRefreshButton, self).__init__()
@@ -45,6 +57,9 @@ class Browser (QtGui.QWidget):
         self.webView = None
         self.mainWin = parent
         self.objects = models.Browser.objects # queryset
+        
+        self.mNetWorkManager = NetworkAccessManager(self)
+        self.mNetWorkManager.requestCreated.connect( self.onRequestCreated )
         
         self.starEnableIcon = QtGui.QIcon(os.path.join(settings.IMAGES_DIR, "btnstart-blue.png"))
         self.starDisableIcon = self.starEnableIcon.pixmap(QtCore.QSize(22, 22),
@@ -79,6 +94,7 @@ class Browser (QtGui.QWidget):
         
         webView.settings().setAttribute(QtWebKit.QWebSettings.PluginsEnabled, True)
         webView.page().setLinkDelegationPolicy(QtWebKit.QWebPage.DelegateAllLinks)
+        webView.page().setNetworkAccessManager( self.mNetWorkManager )
         
         webView.linkClicked.connect( self.onLinkClicked )
         webView.loadStarted.connect( self.onPageLoad )
@@ -168,27 +184,33 @@ class Browser (QtGui.QWidget):
             self.btnStopRefresh.setRefreshState()
         else:
             self.btnStopRefresh.setStopState()
-            
-    def onLinkClicked(self, url):
-        urlString = url.toString()
+    
+    def onRequestCreated(self, url):
+        """ controla o fluxo de links válidos dos players embutidos """
+        self.embed.addItem( url )
         
-        if generators.Universal.has_site(urlString) and hasattr(self.mainWin,"getLocation"):
-            location = self.mainWin.getLocation()
-            
-            isEmbedUrl = generators.Universal.isEmbed(urlString)
-            url = generators.Universal.get_inner_url(urlString)
-            
-            if not isEmbedUrl:
-                location.setEditText( urlString )
-            else: pass
+    def onLinkClicked(self, url):
+        """ controla o fluxo de links reconhecidos como válidos """
+        _url = url.toString()
+        
+        if generators.Universal.has_site(_url) and hasattr(self.mainWin,"getLocation"):
+            _url = generators.Universal.get_inner_url(_url)
+            if not generators.Universal.isEmbed(_url):
+                self.mainWin.getLocation().setEditText(_url)
         else:
             self.webView.load( url )
             
     def handleLocationPageLoad(self):
         url = self.location.currentText()
         self.webView.load(QtCore.QUrl(url))
-        
+    
+    def handleEmbed(self):
+        url = self.embed.currentText()
+        if hasattr(self.mainWin,"getLocation"):
+            self.mainWin.getLocation().setEditText(url)
+            
     def onPageLoad(self):
+        """ chamado ao iniciar o carregamento da página """
         webView = self.sender()
         
         webView.PAGE_LOADING = True
@@ -196,6 +218,8 @@ class Browser (QtGui.QWidget):
         
         self.btnStopRefresh.setStopState()
         self.updateFavoriteStarIcon()
+        
+        self.embed.clear()
         
     def onPageFinished(self):
         webView = self.sender()
@@ -322,6 +346,11 @@ class Browser (QtGui.QWidget):
         self.location.setEditable(True)
         self.location.show()
         
+        ##
+        self.embed = QtGui.QComboBox(self)
+        self.embed.activated.connect(self.handleEmbed)
+        self.embed.show()
+        
         ## Back button
         self.btnBack = QtGui.QPushButton(self)
         path = os.path.join(settings.IMAGES_DIR, "btnback-blue.png")
@@ -376,6 +405,7 @@ class Browser (QtGui.QWidget):
         hBoxLayout.addWidget(self.location, 1)
         hBoxLayout.addWidget(self.btnFavorite)
         hBoxLayout.addWidget(self.btnNewPage)
+        hBoxLayout.addWidget(self.embed, 1)
         hBoxLayout.addWidget( btnSearch )
         return hBoxLayout
         
