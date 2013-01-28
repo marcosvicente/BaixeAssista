@@ -9,6 +9,7 @@ import time, thread
 import main.environ
 main.environ.setup((__name__ == "__main__"))
 
+from stopRefreshButton import StopRefreshButton
 from main.app.util import base
 from main.app import generators
 from main.app import models
@@ -25,27 +26,6 @@ class NetworkAccessManager(QtNetwork.QNetworkAccessManager):
             self.requestCreated.emit( url )
             
         return super(NetworkAccessManager, self).createRequest(*args,**kwargs)
-    
-class StopRefreshButton(QtGui.QPushButton):
-    def __init__(self, *arg):
-        super(StopRefreshButton, self).__init__()
-        self.btnState = {}
-        self.setRefreshState()
-        
-    def setRefreshState(self):
-        path = os.path.join(settings.IMAGES_DIR, "btnrefresh-blue.png")
-        self.setIcon(QtGui.QIcon(path))
-        self.btnState["state"] = "refresh"
-        self.setToolTip("<b>reload</b>")
-        
-    def setStopState(self):
-        qicon = QtGui.QIcon(os.path.join(settings.IMAGES_DIR, "btnstop-blue.png"))
-        self.setIcon( qicon )
-        self.btnState["state"] = "stop"
-        self.setToolTip("<b>stop</b>")
-        
-    def __getitem__(self, key):
-        return self.btnState[key]
         
 class Browser (QtGui.QWidget):
     searchEngine = "http://www.google.com/"
