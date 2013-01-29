@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'mainLayout.ui'
 #
-# Created: Sat Jan 26 22:24:04 2013
+# Created: Mon Jan 28 22:21:20 2013
 #      by: pyside-uic 0.2.14 running on PySide 1.1.2
 #
 # WARNING! All changes made in this file will be lost!
@@ -208,7 +208,7 @@ class Ui_MainWindow(object):
         icon2.addPixmap(QtGui.QPixmap("../images/network-blue.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.toolBoxConfig.addItem(self.configConnection, icon2, "")
         self.configMovie = QtGui.QWidget()
-        self.configMovie.setGeometry(QtCore.QRect(0, 0, 246, 82))
+        self.configMovie.setGeometry(QtCore.QRect(0, 0, 1052, 361))
         self.configMovie.setObjectName("configMovie")
         self.verticalLayout_9 = QtGui.QVBoxLayout(self.configMovie)
         self.verticalLayout_9.setContentsMargins(10, 10, 10, 10)
@@ -226,7 +226,8 @@ class Ui_MainWindow(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.videoQuality.sizePolicy().hasHeightForWidth())
         self.videoQuality.setSizePolicy(sizePolicy)
-        self.videoQuality.setEditable(False)
+        self.videoQuality.setToolTip("")
+        self.videoQuality.setDuplicatesEnabled(False)
         self.videoQuality.setObjectName("videoQuality")
         self.horizontalLayout_10.addWidget(self.videoQuality)
         spacerItem3 = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
@@ -240,9 +241,10 @@ class Ui_MainWindow(object):
         self.label_7 = QtGui.QLabel(self.configMovie)
         self.label_7.setObjectName("label_7")
         self.horizontalLayout_11.addWidget(self.label_7)
-        self.toolButton = QtGui.QToolButton(self.configMovie)
-        self.toolButton.setObjectName("toolButton")
-        self.horizontalLayout_11.addWidget(self.toolButton)
+        self.btnToolDir = QtGui.QToolButton(self.configMovie)
+        self.btnToolDir.setCheckable(False)
+        self.btnToolDir.setObjectName("btnToolDir")
+        self.horizontalLayout_11.addWidget(self.btnToolDir)
         self.videoDir = QtGui.QLineEdit(self.configMovie)
         self.videoDir.setReadOnly(True)
         self.videoDir.setObjectName("videoDir")
@@ -254,7 +256,7 @@ class Ui_MainWindow(object):
         icon3.addPixmap(QtGui.QPixmap("../images/movies-blue.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.toolBoxConfig.addItem(self.configMovie, icon3, "")
         self.configFile = QtGui.QWidget()
-        self.configFile.setGeometry(QtCore.QRect(0, 0, 280, 87))
+        self.configFile.setGeometry(QtCore.QRect(0, 0, 1052, 361))
         self.configFile.setObjectName("configFile")
         self.verticalLayout_6 = QtGui.QVBoxLayout(self.configFile)
         self.verticalLayout_6.setObjectName("verticalLayout_6")
@@ -416,6 +418,15 @@ class Ui_MainWindow(object):
         icon6 = QtGui.QIcon()
         icon6.addPixmap(QtGui.QPixmap("../images/info-blue.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.tabPanel.addTab(self.tabInfo, icon6, "")
+        self.widget = QtGui.QWidget()
+        self.widget.setObjectName("widget")
+        self.verticalLayout_11 = QtGui.QVBoxLayout(self.widget)
+        self.verticalLayout_11.setObjectName("verticalLayout_11")
+        self.videosView = QtGui.QTreeWidget(self.widget)
+        self.videosView.setObjectName("videosView")
+        self.videosView.headerItem().setText(0, "1")
+        self.verticalLayout_11.addWidget(self.videosView)
+        self.tabPanel.addTab(self.widget, icon2, "")
         self.verticalLayout.addWidget(self.tabPanel)
         self.horizontalLayout_2.addLayout(self.verticalLayout)
         self.horizontalLayout.addWidget(self.centralFrame)
@@ -535,8 +546,8 @@ class Ui_MainWindow(object):
         self.menubar.addAction(self.menuAbout.menuAction())
 
         self.retranslateUi(MainWindow)
-        self.tabPanel.setCurrentIndex(2)
-        self.toolBoxConfig.setCurrentIndex(0)
+        self.tabPanel.setCurrentIndex(3)
+        self.toolBoxConfig.setCurrentIndex(1)
         self.videoQuality.setCurrentIndex(-1)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
@@ -556,7 +567,7 @@ class Ui_MainWindow(object):
         self.toolBoxConfig.setItemText(self.toolBoxConfig.indexOf(self.configConnection), QtGui.QApplication.translate("MainWindow", "Connection", None, QtGui.QApplication.UnicodeUTF8))
         self.label_6.setText(QtGui.QApplication.translate("MainWindow", "Video quality", None, QtGui.QApplication.UnicodeUTF8))
         self.label_7.setText(QtGui.QApplication.translate("MainWindow", "Directory videos", None, QtGui.QApplication.UnicodeUTF8))
-        self.toolButton.setText(QtGui.QApplication.translate("MainWindow", "...", None, QtGui.QApplication.UnicodeUTF8))
+        self.btnToolDir.setText(QtGui.QApplication.translate("MainWindow", "...", None, QtGui.QApplication.UnicodeUTF8))
         self.toolBoxConfig.setItemText(self.toolBoxConfig.indexOf(self.configMovie), QtGui.QApplication.translate("MainWindow", "Movies", None, QtGui.QApplication.UnicodeUTF8))
         self.label_8.setText(QtGui.QApplication.translate("MainWindow", "Divide the number of times", None, QtGui.QApplication.UnicodeUTF8))
         self.tempFiles.setText(QtGui.QApplication.translate("MainWindow", "Use temporary file", None, QtGui.QApplication.UnicodeUTF8))
@@ -575,6 +586,7 @@ class Ui_MainWindow(object):
         self.label_13.setText(QtGui.QApplication.translate("MainWindow", "Downloaded", None, QtGui.QApplication.UnicodeUTF8))
         self.label_14.setText(QtGui.QApplication.translate("MainWindow", "To", None, QtGui.QApplication.UnicodeUTF8))
         self.tabPanel.setTabText(self.tabPanel.indexOf(self.tabInfo), QtGui.QApplication.translate("MainWindow", "Info", None, QtGui.QApplication.UnicodeUTF8))
+        self.tabPanel.setTabText(self.tabPanel.indexOf(self.widget), QtGui.QApplication.translate("MainWindow", "Files", None, QtGui.QApplication.UnicodeUTF8))
         self.menuEdit.setTitle(QtGui.QApplication.translate("MainWindow", "Edit", None, QtGui.QApplication.UnicodeUTF8))
         self.menuLang.setTitle(QtGui.QApplication.translate("MainWindow", "Lang", None, QtGui.QApplication.UnicodeUTF8))
         self.menuAbout.setTitle(QtGui.QApplication.translate("MainWindow", "Help", None, QtGui.QApplication.UnicodeUTF8))

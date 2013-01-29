@@ -78,7 +78,7 @@
          <item>
           <widget class="QTabWidget" name="tabPanel">
            <property name="currentIndex">
-            <number>1</number>
+            <number>3</number>
            </property>
            <widget class="QWidget" name="tabBrowser">
             <attribute name="icon">
@@ -116,7 +116,7 @@
                 <item>
                  <widget class="QToolBox" name="toolBoxConfig">
                   <property name="currentIndex">
-                   <number>0</number>
+                   <number>1</number>
                   </property>
                   <widget class="QWidget" name="configConnection">
                    <property name="geometry">
@@ -481,9 +481,12 @@
                        </widget>
                       </item>
                       <item>
-                       <widget class="QToolButton" name="toolButton">
+                       <widget class="QToolButton" name="btnToolDir">
                         <property name="text">
                          <string>...</string>
+                        </property>
+                        <property name="checkable">
+                         <bool>false</bool>
                         </property>
                        </widget>
                       </item>
@@ -801,6 +804,26 @@
                  </widget>
                 </item>
                </layout>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+           <widget class="QWidget" name="">
+            <attribute name="icon">
+             <iconset>
+              <normaloff>../images/network-blue.png</normaloff>../images/network-blue.png</iconset>
+            </attribute>
+            <attribute name="title">
+             <string>Files</string>
+            </attribute>
+            <layout class="QVBoxLayout" name="verticalLayout_11">
+             <item>
+              <widget class="QTreeWidget" name="videosView">
+               <column>
+                <property name="text">
+                 <string notr="true">1</string>
+                </property>
+               </column>
               </widget>
              </item>
             </layout>
