@@ -999,21 +999,19 @@ class Manage(object):
         if streamer in self.streamerList:
             self.streamerList.remove(streamer)
             
-    def stop_streamers(self):
+    def stop(self):
         for streamer in self.streamerList:
             streamer.stop()
         
-    def delete_vars(self):
-        """ deleta todas as variáveis do objeto """
-        self.stop_streamers()
-        
-        Info.delete("manage")
-        settings.MANAGE_OBJECT = None
-        # -------------------------------------------------------------------
         if not self.usingTempfile and not self.params.get("tempfile",False):
             self.salveInfoResumo()
             
-        # -------------------------------------------------------------------
+        self.clear()
+        
+    def clear(self):
+        """ deleta todas as variáveis do objeto """
+        Info.delete("manage")
+        settings.MANAGE_OBJECT = None
         del self.streamerList
         del self.ctrConnection
         del self.videoManager
@@ -1022,8 +1020,7 @@ class Manage(object):
         del self.fileManager
         del self.interval
         del self.params
-        # -------------------------------------------------------------------
-
+        
     def start(self, ctry, ntry, proxy={}, callback=None):
         """ Começa a coleta de informações. Depende da internet, por isso pode demorar para reponder. """
         if not self.videoSize or not self.videoTitle:
