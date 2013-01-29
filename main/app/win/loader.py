@@ -110,6 +110,11 @@ class Loader(QtGui.QMainWindow):
         
         # restaurando configurações da ui
         self.configUI()
+    
+    def onAbout(self):
+        QtGui.QMessageBox.information(self, self.tr("About BaixeAssista"),
+          self.tr("BaixeAssista search uncomplicate viewing videos on the internet.\n"
+                  "Developer: geniofuturo@gmail.com"))
         
     def closeEvent(self, event):
         # browser settings
@@ -147,6 +152,8 @@ class Loader(QtGui.QMainWindow):
         self.uiMainWindow.connectionSleep.valueChanged.connect( self.handleStartupConnection )
         self.uiMainWindow.connectionAttempts.valueChanged.connect( self.handleStartupConnection )
         self.uiMainWindow.connectionType.stateChanged.connect( self.handleStartupConnection )
+        
+        self.uiMainWindow.actionAbout.triggered.connect( self.onAbout )
         
         self.langActionGroup = QtGui.QActionGroup(self)
         self.langActionGroup.addAction(self.uiMainWindow.actionPortuguse)
@@ -382,10 +389,9 @@ class Loader(QtGui.QMainWindow):
             self.clearTable()
             
             self.manage.ctrConnection.stopAllConnections()
-            self.mplayer.stop()
             
-            self.manage.stop_streamers()
-            self.manage.delete_vars()
+            self.mplayer.stop()
+            self.manage.stop()
             
             self.LOADING = False
             self.manage = None
