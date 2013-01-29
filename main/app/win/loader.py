@@ -166,7 +166,7 @@ class Loader(QtGui.QMainWindow):
         self.playerDialog.btnReload.clicked.connect( self.playerReload )
         self.uiMainWindow.actionReloadPlayer.triggered.connect( self.playerReload )
         
-        self.uiMainWindow.actionChooseExternalPlayer.triggered.connect(self.choosePlayerDir)
+        self.uiMainWindow.actionChooseExternalPlayer.triggered.connect(self.choosePlayerPath)
         
     def setupLocation(self):
         self.urlManager = manager.UrlManager()
@@ -276,18 +276,23 @@ class Loader(QtGui.QMainWindow):
     def playerReload(self):
         self.playerDialog.playerReload( self.LOADING )
     
-    def choosePlayerDir(self, value=None):
+    def choosePlayerPath(self, value=None):
         """ guardando o local do player externo nas configuração """
-        filePath, filtr = QtGui.QFileDialog.getOpenFileName(self,
+        filepath, filtr = QtGui.QFileDialog.getOpenFileName(self,
                             self.tr("Choose the location of the external player"), "", 
                             self.tr("All Files (*);;Exe Files (*.exe)"))
-        self.confPath["externalPlayer"] = filePath
-        return filePath
+        if os.path.exists(filepath):
+            self.confPath["externalPlayer"] = filepath
+        else:
+            QtGui.QMessageBox.warning(self, self.tr("choose a valid location!"), 
+                self.tr("Operation canceled or informed way is not in the file system."))
+        return filepath
     
     def handleVideoDir(self, value=None):
-        fileName = QtGui.QFileDialog.getExistingDirectory(self,
+        videoDir = QtGui.QFileDialog.getExistingDirectory(self,
                     self.tr("Choose the directory of videos"), "")
-        self.uiMainWindow.videoDir.setText( fileName )
+        self.uiMainWindow.videoDir.setText(videoDir if os.path.exists(videoDir) else 
+                                           settings.DEFAULT_VIDEOS_DIR)
         
     def handleStartStopDl(self):
         """ chama o método de acordo com o estado do botão """
@@ -464,7 +469,7 @@ class Loader(QtGui.QMainWindow):
         conf["WidgetUi"].setdefault("videoSplitSize", 4)
         
         conf["Path"].setdefault("videoDir", settings.DEFAULT_VIDEOS_DIR)
-        conf["Lang"].setdefault("code", "pt_BR")
+        conf["Lang"].setdefault("code", "en")
         
     def configUI(self, path=None):
         self.config = conf = configobj.ConfigObj((path or self.configPath))
