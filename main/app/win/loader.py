@@ -1,6 +1,6 @@
 # coding: utf-8
 import sys, os
-import time, threading
+import time, threading, configobj
 from PySide import QtCore, QtGui
 from main import settings
 
@@ -91,12 +91,15 @@ class VideoLoad(threading.Thread):
         
 ## --------------------------------------------------------------------------
 class Loader(QtGui.QMainWindow):
+    configPath = os.path.join(settings.CONFIGS_DIR, "configs.cfg")
+    
     def __init__(self):
         super(Loader, self).__init__()
         
         self.LOADING = False
         self.manage = None
         self.tableRows = {}
+        self.config = {}
         
         self.uiMainWindow = mainLayout.Ui_MainWindow()
         self.uiMainWindow.setupUi(self)
@@ -107,7 +110,9 @@ class Loader(QtGui.QMainWindow):
     def closeEvent(self, event):
         # browser settings
         self.browser.saveSettings()
-    
+        # ui settings
+        self.saveConfigUI()
+        
     def updateUI(self):
         if self.LOADING:
             self.updateTable()
@@ -128,6 +133,9 @@ class Loader(QtGui.QMainWindow):
         self.uiMainWindow.tempFileAction.addItems([self.tr("Just remove"), self.tr("Before remove, ask")])
         
         self.setupFilesView()
+        
+        # restaurando configurações.
+        self.configUI()
         
     def setupAction(self):
         self.uiMainWindow.btnStartDl.clicked.connect(self.handleStartStopDl)
@@ -265,11 +273,14 @@ class Loader(QtGui.QMainWindow):
         self.playerDialog.playerReload( self.LOADING )
     
     def choosePlayerDir(self, value=None):
-        fileName, filtr = QtGui.QFileDialog.getOpenFileName(self,
-                        self.tr("Choose the location of the external player"), "", 
-                        self.tr("All Files (*);;Exe Files (*.exe)"))
-        print fileName
+        """ guardando o local do player externo nas configuração """
+        filePath, filtr = QtGui.QFileDialog.getOpenFileName(self,
+                            self.tr("Choose the location of the external player"), "", 
+                            self.tr("All Files (*);;Exe Files (*.exe)"))
         
+        self.config["Dirs"]["externalPlayerPath"] = filePath
+        return filePath
+    
     def handleVideoDir(self, value=None):
         fileName = QtGui.QFileDialog.getExistingDirectory(self,
                     self.tr("Choose the directory of videos"), "")
@@ -425,7 +436,65 @@ class Loader(QtGui.QMainWindow):
                     
             else: # mudança dinânica dos parametros das conexões.
                 connection.update( **params)
-                
+    
+    def setConfigDefaultSection(self, conf):
+        conf.setdefault("Path", {})
+        conf.setdefault("MenuUi", {})
+        conf.setdefault("WidgetUi", {})
+        conf.setdefault("Window", {})
+        conf.setdefault("Lang", {})
+    
+    def setConfigDefaultWidget(self, conf):
+        conf["MenuUi"].setdefault("actionEmbedPlayer", True)
+        conf["MenuUi"].setdefault("actionExternalPlayer", False)
+        
+        conf["WidgetUi"].setdefault("connectionActive", 1)
+        conf["WidgetUi"].setdefault("connectionSpeed", 35840)
+        conf["WidgetUi"].setdefault("connectionTimeout", 60)
+        conf["WidgetUi"].setdefault("connectionAttempts", 2)
+        conf["WidgetUi"].setdefault("connectionSleep", 5)
+        conf["WidgetUi"].setdefault("proxyDisable", True)
+        conf["WidgetUi"].setdefault("connectionType", True)
+        
+        conf["WidgetUi"].setdefault("videoQuality", 1)
+        conf["WidgetUi"].setdefault("tempFiles", True)
+        conf["WidgetUi"].setdefault("tempFileAction", 0)
+        conf["WidgetUi"].setdefault("videoSplitSize", 4)
+        
+        conf["Path"].setdefault("videoDir", settings.DEFAULT_VIDEOS_DIR)
+        conf["Lang"].setdefault("code", "pt_BR")
+        
+    def configUI(self, path=None):
+        self.config = conf = configobj.ConfigObj((path or self.configPath))
+        self.setConfigDefaultSection( conf )
+        self.setConfigDefaultWidget( conf )
+        
+        self.confMenuUi = menuUi = conf["MenuUi"]
+        self.uiMainWindow.actionEmbedPlayer.setChecked(menuUi.as_bool("actionEmbedPlayer"))
+        self.uiMainWindow.actionExternalPlayer.setChecked(menuUi.as_bool("actionExternalPlayer"))
+        
+        self.confWidgetUi = widgetUi = conf["WidgetUi"]
+        self.uiMainWindow.connectionActive.setValue(widgetUi.as_int("connectionActive"))
+        self.uiMainWindow.connectionSpeed.setValue(widgetUi.as_int("connectionSpeed"))
+        self.uiMainWindow.connectionTimeout.setValue(widgetUi.as_int("connectionTimeout"))
+        self.uiMainWindow.connectionAttempts.setValue(widgetUi.as_int("connectionAttempts"))
+        self.uiMainWindow.connectionSleep.setValue(widgetUi.as_int("connectionSleep"))
+        
+        self.uiMainWindow.proxyDisable.setChecked(widgetUi.as_bool("proxyDisable"))
+        self.uiMainWindow.connectionType.setChecked(widgetUi.as_bool("connectionType"))
+        
+        self.uiMainWindow.videoQuality.setCurrentIndex(widgetUi.as_int("videoQuality"))
+        self.uiMainWindow.tempFiles.setChecked(widgetUi.as_bool("tempFiles"))
+        self.uiMainWindow.tempFileAction.setCurrentIndex(widgetUi.as_int("tempFileAction"))
+        self.uiMainWindow.videoSplitSize.setValue(widgetUi.as_int("videoSplitSize"))
+        
+        self.confPath = conf["Path"]
+        self.uiMainWindow.videoDir.setText(self.confDirs["videoDir"])
+        
+    def saveConfigUI(self, path=None):
+        if not base.security_save(self.configPath, _configobj=self.config):
+            print "config save error!"
+            
 ## --------------------------------------------------------------------------
 
 if __name__ == "__main__":
