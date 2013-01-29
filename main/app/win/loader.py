@@ -123,12 +123,17 @@ class Loader(QtGui.QMainWindow):
         self.playerDialog = PlayerDialog(parent = self)
         self.playerDialog.hide()
         
-        self.uiMainWindow.videoQuality.addItems([self.tr("Low"), self.tr("Normal"), self.tr("High")])
+        self.videoQualityList = [self.tr("Low"), self.tr("Normal"), self.tr("High")]
+        self.uiMainWindow.videoQuality.addItems( self.videoQualityList )
         self.uiMainWindow.tempFileAction.addItems([self.tr("Just remove"), self.tr("Before remove, ask")])
+        
+        self.setupFilesView()
         
     def setupAction(self):
         self.uiMainWindow.btnStartDl.clicked.connect(self.handleStartStopDl)
         self.uiMainWindow.actionExit.triggered.connect(self.close)
+        
+        self.uiMainWindow.btnToolDir.clicked.connect( self.handleVideoDir )
         
         self.uiMainWindow.connectionActive.valueChanged.connect( self.handleStartupConnection )
         self.uiMainWindow.connectionSpeed.valueChanged.connect( self.handleStartupConnection )
@@ -162,13 +167,55 @@ class Loader(QtGui.QMainWindow):
         self.getLocation().addItems(map(lambda d: self.urlManager.joinUrlDesc(d[0], d[1]), 
                                         self.urlManager.getUrlTitleList()))
         
+    def setupFilesView(self):
+        videosView = self.uiMainWindow.videosView
+        videosView.setColumnCount(1)
+        videosView.clear()
+        fields = {
+            "videoExt": self.tr("Video extension"),
+            "videoSize": {
+                "title": self.tr("Video size"), 
+                "conversor": manager.StreamManager.format_bytes
+            },
+            "cacheBytesTotal": {
+                "title": self.tr("Downloaded"), 
+                "conversor": manager.StreamManager.format_bytes
+            },
+            "videoQuality": {
+                "title": self.tr("Video quality"),
+                "conversor": lambda v: self.videoQualityList[v]
+            },
+            "videoPath": self.tr("Video path")
+        }        
+        info = manager.ResumeInfo()
+        queryset = info.objects.all()
+        
+        items = [QtGui.QTreeWidgetItem([q.title]) for q in queryset]
+        values = queryset.values(*fields.keys())
+        
+        def children(element):
+            listItems = []
+            for key in element:
+                title, value = fields[key], element[key]
+                if type(title) is dict:
+                    value = title["conversor"](value)
+                    title = title["title"]
+                item = QtGui.QTreeWidgetItem(["{0} ::: {1}".format(title, value)])
+                listItems.append( item )
+            return listItems
+        
+        for index, item in enumerate(items):
+            item.addChildren(children(values[index]))
+            
+        videosView.addTopLevelItems( items )
+        
     def setupTab(self):
         vBox = QtGui.QVBoxLayout()
         self.uiMainWindow.tabBrowser.setLayout( vBox )
         self.browser = browser.Browser(self)
         vBox.addWidget( self.browser )
         # --------------------------------------------------------
-        
+    
     def addTableRow(self, _id):
         """ agrupa items por linha """
         # relacionando  com o id para facilitar na atualização de dados
@@ -217,12 +264,17 @@ class Loader(QtGui.QMainWindow):
     def playerReload(self):
         self.playerDialog.playerReload( self.LOADING )
     
-    def choosePlayerDir(self):
+    def choosePlayerDir(self, value=None):
         fileName, filtr = QtGui.QFileDialog.getOpenFileName(self,
                         self.tr("Choose the location of the external player"), "", 
                         self.tr("All Files (*);;Exe Files (*.exe)"))
         print fileName
-    
+        
+    def handleVideoDir(self, value=None):
+        fileName = QtGui.QFileDialog.getExistingDirectory(self,
+                    self.tr("Choose the directory of videos"), "")
+        self.uiMainWindow.videoDir.setText( fileName )
+        
     def handleStartStopDl(self):
         """ chama o método de acordo com o estado do botão """
         if self.uiMainWindow.btnStartDl.isChecked():
@@ -320,6 +372,8 @@ class Loader(QtGui.QMainWindow):
             self.playerReload()
             
             self.DIALOG.close()
+            
+            ##self.setupFilesView()
         else:
             self.DIALOG.setWindowTitle(self.tr("Download Faleid"))
             self.DIALOG.btnCancel.setText(self.tr("Ok"))
