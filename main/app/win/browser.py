@@ -5,12 +5,10 @@ from PySide import QtGui
 from PySide import QtWebKit
 from PySide import QtNetwork
 
-import time, thread
 import main.environ
 main.environ.setup((__name__ == "__main__"))
 
 from stopRefreshButton import StopRefreshButton
-from main.app.util import base
 from main.app import generators
 from main.app import models
 from main import settings
@@ -18,14 +16,14 @@ from main import settings
 class NetworkAccessManager(QtNetwork.QNetworkAccessManager):
     requestCreated = QtCore.Signal(str)
     
-    def createRequest(self, *args,**kwargs):
-        url = args[1].url().toString()
+    def createRequest(self, operation, request, data):
+        url = request.url().toString()
         
         if generators.Universal.has_site(url) and generators.Universal.isEmbed(url):
             url = generators.Universal.get_inner_url( url )
             self.requestCreated.emit( url )
             
-        return super(NetworkAccessManager, self).createRequest(*args,**kwargs)
+        return super(NetworkAccessManager, self).createRequest(operation, request, data)
         
 class Browser (QtGui.QWidget):
     searchEngine = "http://www.google.com/"
@@ -38,7 +36,7 @@ class Browser (QtGui.QWidget):
         self.mainWin = parent
         self.objects = models.Browser.objects # queryset
         
-        self.mNetWorkManager = NetworkAccessManager(self)
+        self.mNetWorkManager = NetworkAccessManager()
         self.mNetWorkManager.requestCreated.connect( self.onRequestCreated )
         
         self.starEnableIcon = QtGui.QIcon(os.path.join(settings.IMAGES_DIR, "btnstart-blue.png"))
@@ -58,11 +56,14 @@ class Browser (QtGui.QWidget):
         for site in self.getHistorySites():
             self.setupPage(site, (site==lastSite))
         
-        vBox.addWidget( self.tabPagePanel )
+        self.refreshUiTimer = QtCore.QTimer()
+        self.refreshUiTimer.setInterval(500)
+        self.refreshUiTimer.start()
         
+        self.refreshUiTimer.timeout.connect(self.refreshUI)
+        
+        vBox.addWidget( self.tabPagePanel )
         self.setLayout( vBox )
-        # atualiza o estado dos botões de navegação.
-        thread.start_new_thread(self.updateHistoryButton, tuple())
         self.show()
     
     def setupPage(self, url, isDefaulf=False):
@@ -144,14 +145,10 @@ class Browser (QtGui.QWidget):
             self.tabPagePanel.removeTab( index )
             webView.reload(); webView.close()
             
-    def updateHistoryButton(self, *args):
-        while True:
-            try:
-                self.btnBack.setEnabled(self.webView.history().canGoBack())
-                self.btnForward.setEnabled(self.webView.history().canGoForward())
-                time.sleep(0.5)
-            except: break
-            
+    def refreshUI(self, *args):
+        self.btnBack.setEnabled(self.webView.history().canGoBack())
+        self.btnForward.setEnabled(self.webView.history().canGoForward())
+        
     def updateWebView(self, index):
         webView = self.tabPagePanel.widget( index )
         
