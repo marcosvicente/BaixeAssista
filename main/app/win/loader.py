@@ -107,6 +107,9 @@ class Loader(QtGui.QMainWindow):
         self.setupUI()
         self.setupAction()
         
+        # restaurando configurações da ui
+        self.configUI()
+        
     def closeEvent(self, event):
         # browser settings
         self.browser.saveSettings()
@@ -134,9 +137,6 @@ class Loader(QtGui.QMainWindow):
         
         self.setupFilesView()
         
-        # restaurando configurações.
-        self.configUI()
-        
     def setupAction(self):
         self.uiMainWindow.btnStartDl.clicked.connect(self.handleStartStopDl)
         self.uiMainWindow.actionExit.triggered.connect(self.close)
@@ -154,7 +154,11 @@ class Loader(QtGui.QMainWindow):
         self.langActionGroup.addAction(self.uiMainWindow.actionPortuguse)
         self.langActionGroup.addAction(self.uiMainWindow.actionEnglish)
         self.langActionGroup.addAction(self.uiMainWindow.actionSpanish)
-        
+        self.codeLang = {
+            self.uiMainWindow.actionPortuguse: "pt_BR",
+            self.uiMainWindow.actionEnglish: "en",
+            self.uiMainWindow.actionSpanish: "es"
+        }
         self.playerActionGroup = QtGui.QActionGroup(self)
         self.playerActionGroup.addAction(self.uiMainWindow.actionEmbedPlayer)
         self.playerActionGroup.addAction(self.uiMainWindow.actionExternalPlayer)
@@ -277,8 +281,7 @@ class Loader(QtGui.QMainWindow):
         filePath, filtr = QtGui.QFileDialog.getOpenFileName(self,
                             self.tr("Choose the location of the external player"), "", 
                             self.tr("All Files (*);;Exe Files (*.exe)"))
-        
-        self.config["Dirs"]["externalPlayerPath"] = filePath
+        self.confPath["externalPlayer"] = filePath
         return filePath
     
     def handleVideoDir(self, value=None):
@@ -437,14 +440,13 @@ class Loader(QtGui.QMainWindow):
             else: # mudança dinânica dos parametros das conexões.
                 connection.update( **params)
     
-    def setConfigDefaultSection(self, conf):
+    def setConfigDefault(self, conf):
         conf.setdefault("Path", {})
         conf.setdefault("MenuUi", {})
         conf.setdefault("WidgetUi", {})
         conf.setdefault("Window", {})
         conf.setdefault("Lang", {})
-    
-    def setConfigDefaultWidget(self, conf):
+        
         conf["MenuUi"].setdefault("actionEmbedPlayer", True)
         conf["MenuUi"].setdefault("actionExternalPlayer", False)
         
@@ -466,8 +468,7 @@ class Loader(QtGui.QMainWindow):
         
     def configUI(self, path=None):
         self.config = conf = configobj.ConfigObj((path or self.configPath))
-        self.setConfigDefaultSection( conf )
-        self.setConfigDefaultWidget( conf )
+        self.setConfigDefault( conf )
         
         self.confMenuUi = menuUi = conf["MenuUi"]
         self.uiMainWindow.actionEmbedPlayer.setChecked(menuUi.as_bool("actionEmbedPlayer"))
@@ -489,11 +490,40 @@ class Loader(QtGui.QMainWindow):
         self.uiMainWindow.videoSplitSize.setValue(widgetUi.as_int("videoSplitSize"))
         
         self.confPath = conf["Path"]
-        self.uiMainWindow.videoDir.setText(self.confDirs["videoDir"])
+        self.uiMainWindow.videoDir.setText(self.confPath["videoDir"])
+        
+        self.confLang = conf["Lang"]
+        # traduzindo 'code' em uma 'action' da ui.
+        action = [action for action in self.codeLang if self.confLang["code"] == self.codeLang[action]]
+        action[0].setChecked(True)
+        
+    def posSaveConf(self):
+        self.confMenuUi["actionEmbedPlayer"] = self.uiMainWindow.actionEmbedPlayer.isChecked()
+        self.confMenuUi["actionExternalPlayer"] = self.uiMainWindow.actionExternalPlayer.isChecked()
+        
+        self.confWidgetUi["connectionActive"] = self.uiMainWindow.connectionActive.value()
+        self.confWidgetUi["connectionSpeed"] = self.uiMainWindow.connectionSpeed.value()
+        self.confWidgetUi["connectionTimeout"] = self.uiMainWindow.connectionTimeout.value()
+        self.confWidgetUi["connectionAttempts"] = self.uiMainWindow.connectionAttempts.value()
+        self.confWidgetUi["connectionSleep"] = self.uiMainWindow.connectionSleep.value()
+        self.confWidgetUi["proxyDisable"] = self.uiMainWindow.proxyDisable.isChecked()
+        self.confWidgetUi["connectionType"] = self.uiMainWindow.connectionType.isChecked()
+        
+        self.confWidgetUi["videoQuality"] = self.uiMainWindow.videoQuality.currentIndex()
+        self.confWidgetUi["tempFiles"] =  self.uiMainWindow.tempFiles.isChecked()
+        self.confWidgetUi["tempFileAction"] = self.uiMainWindow.tempFileAction.currentIndex()
+        self.confWidgetUi["videoSplitSize"] = self.uiMainWindow.videoSplitSize.value()
+        
+        self.confPath["videoDir"] = self.uiMainWindow.videoDir.text()
+        
+        # traduzindo a 'action' da ui em um código de linguagem.
+        self.confLang["code"] = self.codeLang[self.langActionGroup.checkedAction()]
         
     def saveConfigUI(self, path=None):
-        if not base.security_save(self.configPath, _configobj=self.config):
-            print "config save error!"
+        self.posSaveConf()
+        
+        if not base.security_save((path or self.configPath), _configobj=self.config):
+            print "*** Warnnig: config save error!"
             
 ## --------------------------------------------------------------------------
 
