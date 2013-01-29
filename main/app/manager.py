@@ -67,20 +67,20 @@ class Info(object):
 class FlvPlayer(threading.Thread):
     """ Classe usada no controle de programas externos(players) """
     
-    def __init__(self, cmd="", filename="file", filepath="", host="localhost", port=80):
+    def __init__(self, cmd="", filepath="", url=""):
         threading.Thread.__init__(self)
-        self.cmd, self.process, self.running = cmd, None, False
+        self.cmd = cmd
+        self.url = url if url else '"%s"'%filepath
         
-        if not filepath: self.url = "http://%s:%d/stream/%s" % (host, port, filename)
-        else: self.url = "\"%s\"" % filepath
+        self.process = None
+        self.running = False
         
-        # pára com o processo principal
         self.setDaemon(True)
         
+    @base.protected()
     def stop(self):
-        """ pára a execução do player """
-        try: self.process.terminate()
-        except: pass
+        """ stop player process """
+        self.process.terminate()
     
     def isRunning(self):
         return self.running

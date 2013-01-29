@@ -1,4 +1,4 @@
-from PySide import QtCore, QtGui
+from PySide import QtCore, QtGui, QtWebKit
 
 from swfplayer import JWPlayer, FlowPlayer
 from uiPlayerDialog import Ui_playerDialog
@@ -27,6 +27,16 @@ class PlayerDialog(QtGui.QDialog):
         self.btnJwPlayer.setToolTip(self.tr("load JW Player"))
         
         self.loadFlowPlayer()
+    
+    def start(self):
+        self.show()
+        
+    def stop(self):
+        self.mplayer.webview.setHtml("")
+        self.close()
+        
+    def reload(self, autostart=False):
+        self.playerReload(autostart)
         
     @property
     def player(self):

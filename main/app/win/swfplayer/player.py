@@ -36,14 +36,9 @@ class Player(QtGui.QWidget):
         self.skins = {}
         
         # defaut params
-        if not params.has_key("hostName"):
-            self.params["hostName"] = "localhost"
-            
-        if not params.has_key("portNumber"):
-            self.params["portNumber"] = 8002
-            
-        if not params.has_key("autostart"):
-            self.params["autostart"] = False
+        params.setdefault("hostName", "localhost")
+        params.setdefault("portNumber", 8002)
+        params.setdefault("autostart", False)
         
         try:
             skins = os.listdir( self.skinsdir )
@@ -56,7 +51,6 @@ class Player(QtGui.QWidget):
         if not params.has_key("skinName") or not self.hasSkinName(params["skinName"]):
             self.params["skinName"] = self.defaultskin
             
-        
         self.webview = QtWebKit.QWebView(self)
         self.webview.settings().setAttribute(QtWebKit.QWebSettings.PluginsEnabled, True)
         

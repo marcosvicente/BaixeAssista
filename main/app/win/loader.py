@@ -100,6 +100,7 @@ class Loader(QtGui.QMainWindow):
         self.manage = None
         self.tableRows = {}
         self.config = {}
+        self.mplayer = None
         
         self.uiMainWindow = mainLayout.Ui_MainWindow()
         self.uiMainWindow.setupUi(self)
@@ -127,10 +128,7 @@ class Loader(QtGui.QMainWindow):
     def setupUI(self):
         self.setupTab()
         self.setupLocation()
-        
-        self.playerDialog = PlayerDialog(parent = self)
-        self.playerDialog.hide()
-        
+                
         self.videoQualityList = [self.tr("Low"), self.tr("Normal"), self.tr("High")]
         self.uiMainWindow.videoQuality.addItems( self.videoQualityList )
         self.uiMainWindow.tempFileAction.addItems([self.tr("Just remove"), self.tr("Before remove, ask")])
@@ -163,9 +161,10 @@ class Loader(QtGui.QMainWindow):
         self.playerActionGroup.addAction(self.uiMainWindow.actionEmbedPlayer)
         self.playerActionGroup.addAction(self.uiMainWindow.actionExternalPlayer)
         
-        self.playerDialog.btnReload.clicked.connect( self.playerReload )
-        self.uiMainWindow.actionReloadPlayer.triggered.connect( self.playerReload )
+        self.uiMainWindow.actionEmbedPlayer.triggered.connect( self.onSetupVideoPlayer )
+        self.uiMainWindow.actionExternalPlayer.triggered.connect( self.onSetupVideoPlayer )
         
+        self.uiMainWindow.actionReloadPlayer.triggered.connect( self.playerReload )
         self.uiMainWindow.actionChooseExternalPlayer.triggered.connect(self.choosePlayerPath)
         
     def setupLocation(self):
@@ -274,8 +273,9 @@ class Loader(QtGui.QMainWindow):
         return self.uiMainWindow.location
         
     def playerReload(self):
-        self.playerDialog.playerReload( self.LOADING )
-    
+        try: self.mplayer.reload( self.LOADING )
+        except: self.onSetupVideoPlayer()
+        
     def choosePlayerPath(self, value=None):
         """ guardando o local do player externo nas configuração """
         filepath, filtr = QtGui.QFileDialog.getOpenFileName(self,
@@ -297,6 +297,26 @@ class Loader(QtGui.QMainWindow):
                 currentDir if os.path.exists(currentDir) else settings.DEFAULT_VIDEOS_DIR
                 )
         )
+    
+    def setupVideoPlayer(self):
+        url = "http://{0}:{1}/stream/file.flv"
+        url = url.format(manager.Server.HOST, manager.Server.PORT)
+        
+        actionExternal = self.uiMainWindow.actionExternalPlayer
+        actionEmbed = self.uiMainWindow.actionEmbedPlayer
+        action = self.playerActionGroup.checkedAction()
+        
+        if action == actionEmbed:
+            self.mplayer = PlayerDialog(parent=self)
+            self.mplayer.btnReload.clicked.connect(self.playerReload)
+            
+        elif action == actionExternal:
+            self.mplayer = manager.FlvPlayer(cmd=self.confPath["externalPlayer"], url=url)
+            
+    def onSetupVideoPlayer(self):
+        if self.mplayer: self.mplayer.stop()
+        self.setupVideoPlayer()
+        if self.LOADING: self.mplayer.start()
         
     def handleStartStopDl(self):
         """ chama o método de acordo com o estado do botão """
@@ -337,18 +357,17 @@ class Loader(QtGui.QMainWindow):
                 return
             # -----------------------------------------------------------
             self.uiMainWindow.btnStartDl.setText(self.tr("Stop"))
-            
             self.DIALOG = DialogDl(self.tr("Please wait"), self)
             self.DIALOG.show()
             
-            self.videoLoad = videoLoad = VideoLoad(self.manage)
+            self.setupVideoPlayer()
             
+            self.videoLoad = videoLoad = VideoLoad(self.manage)
             videoLoad.events.responseChanged.connect( self.DIALOG.handleUpdate )
             videoLoad.events.responseFinish.connect( self.onStartVideoDl )
             videoLoad.events.responseError.connect( self.onStartVideoDlError )
             videoLoad.events.responseUpdateUi.connect( self.updateUI )
             videoLoad.events.responseUpdateUiExit.connect( self.updateUIExit )
-            
             self.DIALOG.rejected.connect( self.onStartVideoDlCancel )
             videoLoad.start()
             
@@ -363,9 +382,7 @@ class Loader(QtGui.QMainWindow):
             self.clearTable()
             
             self.manage.ctrConnection.stopAllConnections()
-            
-            self.playerDialog.hide()
-            self.playerDialog.player.pause()
+            self.mplayer.stop()
             
             self.manage.stop_streamers()
             self.manage.delete_vars()
@@ -390,13 +407,8 @@ class Loader(QtGui.QMainWindow):
                 self.getLocation().addItem(joinedUrl)
                 
             self.handleStartupConnection(default = reponse)
-            
-            self.playerDialog.show()
-            self.playerReload()
-            
+            self.mplayer.start()
             self.DIALOG.close()
-            
-            ##self.setupFilesView()
         else:
             self.DIALOG.setWindowTitle(self.tr("Download Faleid"))
             self.DIALOG.btnCancel.setText(self.tr("Ok"))
