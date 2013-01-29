@@ -358,6 +358,7 @@ class Loader(QtGui.QMainWindow):
             # -----------------------------------------------------------
             self.uiMainWindow.btnStartDl.setText(self.tr("Stop"))
             self.DIALOG = DialogDl(self.tr("Please wait"), self)
+            self.DIALOG.rejected.connect( self.onCancelVideoDl )
             self.DIALOG.show()
             
             self.setupVideoPlayer()
@@ -365,10 +366,9 @@ class Loader(QtGui.QMainWindow):
             self.videoLoad = videoLoad = VideoLoad(self.manage)
             videoLoad.events.responseChanged.connect( self.DIALOG.handleUpdate )
             videoLoad.events.responseFinish.connect( self.onStartVideoDl )
-            videoLoad.events.responseError.connect( self.onStartVideoDlError )
+            videoLoad.events.responseError.connect( self.onErrorVideoDl )
             videoLoad.events.responseUpdateUi.connect( self.updateUI )
             videoLoad.events.responseUpdateUiExit.connect( self.updateUIExit )
-            self.DIALOG.rejected.connect( self.onStartVideoDlCancel )
             videoLoad.start()
             
     def handleStopVideoDl(self):
@@ -413,14 +413,14 @@ class Loader(QtGui.QMainWindow):
             self.DIALOG.setWindowTitle(self.tr("Download Faleid"))
             self.DIALOG.btnCancel.setText(self.tr("Ok"))
             
-    def onStartVideoDlCancel(self):
+    def onCancelVideoDl(self):
         if not self.LOADING:
             self.videoLoad.setCancelDl(True)
             
             self.uiMainWindow.btnStartDl.setText(self.tr("Download"))
             self.uiMainWindow.btnStartDl.setChecked(False)
         
-    def onStartVideoDlError(self, err):
+    def onErrorVideoDl(self, err):
         self.DIALOG.close()
         print err
         
