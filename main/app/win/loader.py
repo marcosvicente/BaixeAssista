@@ -289,10 +289,14 @@ class Loader(QtGui.QMainWindow):
         return filepath
     
     def handleVideoDir(self, value=None):
+        currentDir = self.uiMainWindow.videoDir.text()
         videoDir = QtGui.QFileDialog.getExistingDirectory(self,
-                    self.tr("Choose the directory of videos"), "")
-        self.uiMainWindow.videoDir.setText(videoDir if os.path.exists(videoDir) else 
-                                           settings.DEFAULT_VIDEOS_DIR)
+                    self.tr("Choose the directory of videos"), currentDir)
+        self.uiMainWindow.videoDir.setText(
+            videoDir if os.path.exists(videoDir) else (
+                currentDir if os.path.exists(currentDir) else settings.DEFAULT_VIDEOS_DIR
+                )
+        )
         
     def handleStartStopDl(self):
         """ chama o método de acordo com o estado do botão """
