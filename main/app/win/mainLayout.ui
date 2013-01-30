@@ -123,8 +123,8 @@
                     <rect>
                      <x>0</x>
                      <y>0</y>
-                     <width>1052</width>
-                     <height>361</height>
+                     <width>349</width>
+                     <height>321</height>
                     </rect>
                    </property>
                    <attribute name="icon">
@@ -519,8 +519,8 @@
                     <rect>
                      <x>0</x>
                      <y>0</y>
-                     <width>1052</width>
-                     <height>361</height>
+                     <width>280</width>
+                     <height>87</height>
                     </rect>
                    </property>
                    <attribute name="icon">
@@ -808,7 +808,7 @@
              </item>
             </layout>
            </widget>
-           <widget class="QWidget" name="">
+           <widget class="QWidget" name="tabFiles">
             <attribute name="icon">
              <iconset>
               <normaloff>../images/network-blue.png</normaloff>../images/network-blue.png</iconset>
@@ -817,8 +817,48 @@
              <string>Files</string>
             </attribute>
             <layout class="QVBoxLayout" name="verticalLayout_11">
+             <property name="spacing">
+              <number>0</number>
+             </property>
+             <property name="margin">
+              <number>0</number>
+             </property>
+             <item>
+              <layout class="QHBoxLayout" name="horizontalLayout_6">
+               <item>
+                <widget class="QPushButton" name="refreshFiles">
+                 <property name="text">
+                  <string/>
+                 </property>
+                 <property name="icon">
+                  <iconset>
+                   <normaloff>../images/btnrefresh-blue.png</normaloff>../images/btnrefresh-blue.png</iconset>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <spacer name="horizontalSpacer_4">
+                 <property name="orientation">
+                  <enum>Qt::Horizontal</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>40</width>
+                   <height>20</height>
+                  </size>
+                 </property>
+                </spacer>
+               </item>
+              </layout>
+             </item>
              <item>
               <widget class="QTreeWidget" name="videosView">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>2</verstretch>
+                </sizepolicy>
+               </property>
                <column>
                 <property name="text">
                  <string notr="true">1</string>
