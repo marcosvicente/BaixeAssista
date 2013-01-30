@@ -1035,7 +1035,7 @@ class Manage(object):
                 # pega o título já com um índice
                 title = self.urlManager.getUrlTitle(self.streamUrl)
                 self.videoTitle = title or self.videoTitle
-
+                
         if not self.resuming:
             self.fileManager.setFileExt(self.videoExt)
             self.fileManager.cacheFile( self.videoTitle )
@@ -1044,6 +1044,9 @@ class Manage(object):
             self.interval = Interval(maxsize = self.videoSize, 
                                      seekpos = self.params.get("seekpos", 0),
                                      maxsplit = self.params.get("maxsplit", 2))
+            
+            if not self.usingTempfile and not self.params.get("tempfile",False):
+                self.salveInfoResumo()
             
         # tempo inicial da velocidade global
         self.tempoInicialGlobal = time.time()
