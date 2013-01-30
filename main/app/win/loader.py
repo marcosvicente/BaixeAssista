@@ -18,6 +18,7 @@ QtGui.QPixmap = pixmap
 import mainLayout, uiDialogDl
 from tableRow import TableRow
 from playerDialog import PlayerDialog
+from dialogRec import DialogRec
 import browser
 
 from main.app import manager
@@ -433,6 +434,8 @@ class Loader(QtGui.QMainWindow):
         self.DIALOG.close()
         
         if self.LOADING:
+            self.tryRecoverFile()
+            
             self.clearTable()
             
             self.manage.ctrConnection.stopAllConnections()
@@ -478,7 +481,43 @@ class Loader(QtGui.QMainWindow):
     def onErrorVideoDl(self, err):
         self.DIALOG.close()
         print err
+    
+    @manager.FM_runLocked()
+    def tryRecoverFile(self):
+        isTempFile = self.uiMainWindow.tempFiles.isChecked()
+        haveAsk = self.uiMainWindow.tempFileAction.currentIndex()
         
+        if isTempFile and self.manage.isTempFileMode and haveAsk == 1:
+            reply = QtGui.QMessageBox.question(self, self.tr("recovery of the temporary file"),
+                   self.tr("The current video file is saved in a temporary file.\n"
+                           "Want to save permanently ?"), 
+                   QtGui.QMessageBox.Yes|QtGui.QMessageBox.No)
+            
+            if reply == QtGui.QMessageBox.Yes:
+                dialog = DialogRec()
+                dialog.setModal(True)
+                dialog.show()
+                
+                dialog.textProgress.setText(self.tr("Processing..."))
+                
+                for copy in self.manage.recoverTempFile():
+                    if copy.inProgress and not copy.sucess:
+                        dialog.textProgress.setText("Processing %.2f%%"%copy.progress)
+                        dialog.progressBar.setValue(copy.progress)
+                    elif copy.sucess:
+                        dialog.textProgress.setText(
+                            self.tr("The video file was successfully recovered!"))
+                        dialog.progressBar.setValue(100.0)
+                        break
+                    elif copy.error:
+                        dialog.textProgress.setText(copy.get_msg())
+                        dialog.progressBar.setValue(0.0)
+                        break
+                
+                dialog.btnOK.setEnabled(True)
+                dialog.btnCancel.setEnabled(False)
+                dialog.exec_()
+                
     def handleStartupConnection(self, value=None, default=False):
         """ controla o fluxo de criação e remoção de conexões """
         if self.LOADING and not self.manage.isComplete():
