@@ -1,3 +1,4 @@
+#! /usr/bin/python
 # coding: utf-8
 import sys, os
 import time, threading, configobj
@@ -244,6 +245,7 @@ class Loader(QtGui.QMainWindow):
         info.update( os.path.splitext(title)[0] )
         
         path = os.path.join(info["videoPath"], title)
+        print path, os.path.exists(path)
         
         if os.path.exists(path):
             mplayer = manager.FlvPlayer(cmd=self.confPath["externalPlayer"], filepath=path)
@@ -605,7 +607,9 @@ class Loader(QtGui.QMainWindow):
         self.uiMainWindow.videoSplitSize.setValue(widgetUi.as_int("videoSplitSize"))
         
         self.confPath = conf["Path"]
-        self.uiMainWindow.videoDir.setText(self.confPath["videoDir"])
+        self.uiMainWindow.videoDir.setText(self.confPath["videoDir"] 
+                if os.path.exists(self.confPath["videoDir"]) else 
+                    settings.DEFAULT_VIDEOS_DIR)
         
         self.confLang = conf["Lang"]
         # traduzindo 'code' em uma 'action' da ui.
