@@ -218,7 +218,7 @@ class SiteBase(ConnectionProcessor):
         title = sites.DECODE(title) # decodifica o title
         # remove caracteres invalidos
         title = sites.clear_text( title )
-        return sites.limite_text(title)
+        return sites.limite_text(title, endchars="_")
 
     def get_size(self, proxies={}, timeout=60):
         """ retorna o tamanho do arquivo de vídeo, através do cabeçalho de resposta """
