@@ -2,6 +2,7 @@
 import sys, os
 import time, threading, configobj
 from PySide import QtCore, QtGui
+from PySide.phonon import Phonon
 from main import settings
 
 OldPixmap = QtGui.QPixmap
@@ -145,6 +146,7 @@ class Loader(QtGui.QMainWindow):
         self.uiMainWindow.actionExit.triggered.connect(self.close)
         
         self.uiMainWindow.btnToolDir.clicked.connect( self.handleVideoDir )
+        self.uiMainWindow.refreshFiles.clicked.connect( self.setupFilesView )
         
         self.uiMainWindow.connectionActive.valueChanged.connect( self.handleStartupConnection )
         self.uiMainWindow.connectionSpeed.valueChanged.connect( self.handleStartupConnection )
@@ -208,7 +210,7 @@ class Loader(QtGui.QMainWindow):
         info = manager.ResumeInfo()
         queryset = info.objects.all()
         
-        items = [QtGui.QTreeWidgetItem([q.title]) for q in queryset]
+        items = [QtGui.QTreeWidgetItem([q.title+"."+q.videoExt]) for q in queryset]
         values = queryset.values(*fields.keys())
         
         def children(element):
@@ -232,8 +234,53 @@ class Loader(QtGui.QMainWindow):
         self.uiMainWindow.tabBrowser.setLayout( vBox )
         self.browser = browser.Browser(self)
         vBox.addWidget( self.browser )
-        # --------------------------------------------------------
-    
+        
+    def onPlayeView(self):
+        item = self.uiMainWindow.videosView.currentItem()
+        title = item.text(0)
+        
+        info = manager.ResumeInfo()
+        info.update( os.path.splitext(title)[0] )
+        
+        path = os.path.join(info["videoPath"], title)
+        
+        if os.path.exists(path):
+            mplayer = manager.FlvPlayer(cmd=self.confPath["externalPlayer"], filepath=path)
+            mplayer.start()
+            
+    def onVideoRemove(self):
+        item = self.uiMainWindow.videosView.currentItem()
+        title = item.text(0)
+        
+        _title = os.path.splitext(title)[0]
+        
+        info = manager.ResumeInfo()
+        info.update( _title )
+        
+        path = os.path.join(info["videoPath"], title)
+        
+        try: os.remove( path )
+        except os.error as err:
+            print err
+        
+        if not os.path.exists( path ):
+            self.urlManager.remove(_title)
+            info.get(_title).delete()
+            
+            self.setupFilesView()
+            
+    def contextMenuEvent(self, event):
+        actionPreview = QtGui.QAction(self.tr("Preview"), self,
+            statusTip = "", triggered = self.onPlayeView)
+        
+        actionRemove = QtGui.QAction(self.tr("Remove"), self,
+            statusTip = "", triggered = self.onVideoRemove)
+        
+        menu = QtGui.QMenu(self)
+        menu.addAction( actionPreview )
+        menu.addAction( actionRemove )
+        menu.exec_(event.globalPos())
+        
     def addTableRow(self, _id):
         """ agrupa items por linha """
         # relacionando  com o id para facilitar na atualização de dados
@@ -415,6 +462,8 @@ class Loader(QtGui.QMainWindow):
             self.handleStartupConnection(default = reponse)
             self.mplayer.start()
             self.DIALOG.close()
+            
+            self.setupFilesView()
         else:
             self.DIALOG.setWindowTitle(self.tr("Download Faleid"))
             self.DIALOG.btnCancel.setText(self.tr("Ok"))
