@@ -1,4 +1,4 @@
-# -*- coding: UTF-8 -*-
+# coding: utf-8
 import os, sys, re
 import subprocess
 import compileall
@@ -31,7 +31,7 @@ def find_compiler(compilername = "pyinstaller.py"):
 
 # ---------------------------------------------------------------
 def start_build():
-	""" inica a contrução do executável """
+	""" inicia a contrução do executável """
 	COMPILER = 'python "%s"' % find_compiler()
 	COMMANDS = '-w --out="{outdir}" --icon={ico} BaixeAssista.py --name="{exename}"'.format(
 	    outdir = BUILD_DIR, ico="movies.ico", exename=EXE_NAME
@@ -52,7 +52,7 @@ def start_build():
 
 # ---------------------------------------------------------------
 def copy_to_dest(source, destination):
-	""" copia os arquivo do executavel para a pasta de distribuição """
+	""" copia os arquivo do executável para a pasta de distribuição """
 	sourcedir = os.path.dirname( source )
 	
 	for root, dirs, files in os.walk(source):
@@ -75,7 +75,7 @@ def copy_to_dest(source, destination):
 				filedestdir = os.path.join(destdir, filename)
 				
 				if re.match(".+py$", filename):
-					# copiando os arquivos já pré-compliados.
+					# copiando os arquivos já compilados
 					compileall.compile_file(filepath, force=True)
 					src = filepath.replace(".py", ".pyc")
 					dest = filedestdir.replace(".py", ".pyc")
