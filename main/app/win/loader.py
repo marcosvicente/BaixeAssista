@@ -3,7 +3,6 @@
 import sys, os
 import time, threading, configobj
 from PySide import QtCore, QtGui
-from PySide.phonon import Phonon
 from main import settings
 
 OldPixmap = QtGui.QPixmap
@@ -21,10 +20,14 @@ from tableRow import TableRow
 from playerDialog import PlayerDialog
 from dialogRec import DialogRec
 from dialogError import DialogError
+from dialogUpdate import DialogUpdate
+
+import webbrowser
 import browser
 
 from main.app import manager
 from main.app.util import base
+from main.app import updater
 
 base.trans_install() # instala as traduções.
        
@@ -95,8 +98,10 @@ class VideoLoad(threading.Thread):
         
 ## --------------------------------------------------------------------------
 class Loader(QtGui.QMainWindow):
-    configPath = os.path.join(settings.CONFIGS_DIR, "configs.cfg")
     developerEmail = "geniofuturo@gmail.com"
+    
+    releaseSource = "http://code.google.com/p/gerenciador-de-videos-online/downloads/list"
+    configPath = os.path.join(settings.CONFIGS_DIR, "configs.cfg")
     
     def __init__(self):
         super(Loader, self).__init__()
@@ -115,7 +120,11 @@ class Loader(QtGui.QMainWindow):
         
         # restaurando configurações da ui
         self.configUI()
-    
+        
+        # iniciando a procura por atualizações.
+        if self.uiMainWindow.actionAutomaticSearch.isChecked():
+            self.onSearchUpdate( False)
+        
     def onAbout(self):
         QtGui.QMessageBox.information(self, self.tr("About BaixeAssista"),
           self.tr("BaixeAssista search uncomplicate viewing videos on the internet.\n"
@@ -125,7 +134,6 @@ class Loader(QtGui.QMainWindow):
         dialogError = DialogError()
         dialogError.setDeveloperEmail(self.developerEmail)
         dialogError.setModal(True)
-        #dialogError.show()
         dialogError.exec_()
         
     def closeEvent(self, event):
@@ -160,6 +168,7 @@ class Loader(QtGui.QMainWindow):
         self.uiMainWindow.refreshFiles.clicked.connect( self.setupFilesView )
         
         self.uiMainWindow.actionErroReporting.triggered.connect( self.onErroReporting )
+        self.uiMainWindow.actionCheckNow.triggered.connect( self.onSearchUpdate )
         
         self.uiMainWindow.connectionActive.valueChanged.connect( self.handleStartupConnection )
         self.uiMainWindow.connectionSpeed.valueChanged.connect( self.handleStartupConnection )
@@ -582,9 +591,12 @@ class Loader(QtGui.QMainWindow):
         conf.setdefault("WidgetUi", {})
         conf.setdefault("Window", {})
         conf.setdefault("Lang", {})
+        conf.setdefault("Prog", {})
         
         conf["MenuUi"].setdefault("actionEmbedPlayer", True)
         conf["MenuUi"].setdefault("actionExternalPlayer", False)
+        conf["MenuUi"].setdefault("actionExternalPlayer", False)
+        conf["MenuUi"].setdefault("actionAutomaticSearch", True)
         
         conf["WidgetUi"].setdefault("connectionActive", 1)
         conf["WidgetUi"].setdefault("connectionSpeed", 35840)
@@ -602,6 +614,8 @@ class Loader(QtGui.QMainWindow):
         conf["Path"].setdefault("videoDir", settings.DEFAULT_VIDEOS_DIR)
         conf["Lang"].setdefault("code", "en")
         
+        conf["Prog"].setdefault("packetVersion", "0.0.1")
+        
     def configUI(self, path=None):
         self.config = conf = configobj.ConfigObj((path or self.configPath))
         self.setConfigDefault( conf )
@@ -609,6 +623,7 @@ class Loader(QtGui.QMainWindow):
         self.confMenuUi = menuUi = conf["MenuUi"]
         self.uiMainWindow.actionEmbedPlayer.setChecked(menuUi.as_bool("actionEmbedPlayer"))
         self.uiMainWindow.actionExternalPlayer.setChecked(menuUi.as_bool("actionExternalPlayer"))
+        self.uiMainWindow.actionAutomaticSearch.setChecked(menuUi.as_bool("actionAutomaticSearch"))
         
         self.confWidgetUi = widgetUi = conf["WidgetUi"]
         self.uiMainWindow.connectionActive.setValue(widgetUi.as_int("connectionActive"))
@@ -631,13 +646,17 @@ class Loader(QtGui.QMainWindow):
                     settings.DEFAULT_VIDEOS_DIR)
         
         self.confLang = conf["Lang"]
+        
         # traduzindo 'code' em uma 'action' da ui.
         action = [action for action in self.codeLang if self.confLang["code"] == self.codeLang[action]]
         action[0].setChecked(True)
         
+        self.confProg = conf["Prog"]
+        
     def posSaveConf(self):
         self.confMenuUi["actionEmbedPlayer"] = self.uiMainWindow.actionEmbedPlayer.isChecked()
         self.confMenuUi["actionExternalPlayer"] = self.uiMainWindow.actionExternalPlayer.isChecked()
+        self.confMenuUi["actionAutomaticSearch"] = self.uiMainWindow.actionAutomaticSearch.isChecked()
         
         self.confWidgetUi["connectionActive"] = self.uiMainWindow.connectionActive.value()
         self.confWidgetUi["connectionSpeed"] = self.uiMainWindow.connectionSpeed.value()
@@ -662,6 +681,100 @@ class Loader(QtGui.QMainWindow):
         
         if not base.security_save((path or self.configPath), _configobj=self.config):
             print "*** Warnnig: config save error!"
+    
+    def onShowResultInfo(self, title, text):
+        QtGui.QMessageBox.information(self, title, text)
+        
+    def onReleasedFound(self, response):
+        response += _(u"\nPressione OK para ir a página de download.")
+        reply = QtGui.QMessageBox.information(self, _("Novidade!"),
+            response, buttons = QtGui.QMessageBox.Ok | QtGui.QMessageBox.Cancel
+            )
+        if reply == QtGui.QMessageBox.Ok:
+            webbrowser.open_new_tab(self.releaseSource)
+            
+    def showDialogUpdate(self, response, changes, version):
+        automatic = self.uiMainWindow.actionAutomaticSearch.isChecked()
+        self.confProg["packetVersion"] = version
+        
+        title = _(u"Ativada)") if automatic else _(u"Desativada)")
+        title = _(u"Novas atualizações recebidas! (Atualização automática - ") + title
+        
+        dialogUpdate = DialogUpdate(self)
+        dialogUpdate.setWindowTitle(title)
+        
+        dialogUpdate.setTextInfo(response)
+        dialogUpdate.setTextChanges(changes)
+        dialogUpdate.setModal(True)
+        
+        dialogUpdate.exec_()
+        
+    def onSearchUpdate(self, showWin=True):
+        """ inicia a procura por atualizações """
+        if self.sender() == self.uiMainWindow.actionAutomaticSearch:
+            automatic = self.uiMainWindow.actionAutomaticSearch.isChecked()
+            self.confMenuUi["actionAutomaticSearch"] = automatic
+            return
+        
+        search = SearchUpdate(self.confProg["packetVersion"], 
+                              self.confLang["code"], self, showWin)
+        search.updateFound.connect(self.showDialogUpdate)
+        search.releaseFound.connect(self.onReleasedFound)
+        search.resultInfo.connect(self.onShowResultInfo)
+        search.start()
+        
+## --------------------------------------------------------------------------------
+class SearchUpdate(QtCore.QObject, threading.Thread):
+    resultInfo   = QtCore.Signal(str, str)
+    releaseFound = QtCore.Signal(str)
+    updateFound  = QtCore.Signal(str, str)
+    
+    def __init__(self, version, code, parent=None, showWin=False):
+        QtCore.QObject.__init__(self, parent)
+        threading.Thread.__init__(self)
+        self.showWin = showWin
+        self.version = version
+        self.code = code
+        
+    def check_release(self):
+        """ iniciando a procura por uma nova versão do programa """
+        rel = updater.Release()
+        result, response = rel.search()
+        
+        if result: self.releaseFound.emit(response)
+        elif result is False and self.showWin:
+            self.resultInfo.emit(_("Ainda em desenvolvimento..."), response)
+        elif result is None and self.showWin:
+            self.resultInfo.emit(_("Error"), response)
+            
+    def run(self):
+        self.check_release()
+        upd = updater.Updater(packetVersion = self.version)
+        if upd.search():
+            # começa o download da atualização
+            result, response = upd.download()
+            
+            if result:
+                # texto informando as mudanças que a nova atualização fez.
+                changes = upd.getLastChanges( self.code )
+                
+                # aplica a atualização
+                result, response = upd.update()
+                
+                # remove todos os arquivos
+                upd.cleanUpdateDir()
+                
+                if result:
+                    self.updateFound.emit(response,"\n\n".join(changes), upd.getNewVersion())
+                    
+                elif self.showWin:
+                    self.resultInfo.emit(_("Atualizando."), response)
+                    
+            elif self.showWin:
+                self.resultInfo.emit(_("Baixando pacote."), response)
+                
+        elif self.showWin and upd.isOldRelease():
+            self.resultInfo.emit(_("Programa atualizado."), upd.warning)
             
 ## --------------------------------------------------------------------------
 

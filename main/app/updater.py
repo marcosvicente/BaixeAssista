@@ -6,20 +6,9 @@ import urllib2
 import re
 import time
 
-if __name__ == "__main__":
-	os.environ['DJANGO_SETTINGS_MODULE'] = "main.settings"
-	
-	modulePath = os.path.dirname(os.path.abspath(__file__))
-	parentDir = os.path.dirname( modulePath )
-	mainDir = os.path.dirname( parentDir )
-	
-	if not mainDir in sys.path: sys.path.append(mainDir)
-	if not parentDir in sys.path: sys.path.append(parentDir)
-	if not modulePath in sys.path: sys.path.append(modulePath)
-	
-	os.chdir( mainDir )
-	
-	
+from main import environ
+environ.setup((__name__ == "__main__"))
+
 from django.conf import settings
 from manager import StreamManager
 from main.app.util import base
