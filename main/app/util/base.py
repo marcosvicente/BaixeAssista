@@ -45,7 +45,7 @@ class protected(object):
         def wrap(*args, **kwargs):
             try: method(*args, **kwargs)
             except Exception as err:
-                print "warnning:: %s protected: %s"%(method.__name__, err)
+                print "Warnning: '%s' protected: %s"%(method.__name__,err)
         return wrap
     
 def calc_percent(byte_counter, data_len):
