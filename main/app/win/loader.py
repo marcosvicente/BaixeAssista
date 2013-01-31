@@ -20,6 +20,7 @@ import mainLayout, uiDialogDl
 from tableRow import TableRow
 from playerDialog import PlayerDialog
 from dialogRec import DialogRec
+from dialogError import DialogError
 import browser
 
 from main.app import manager
@@ -95,6 +96,7 @@ class VideoLoad(threading.Thread):
 ## --------------------------------------------------------------------------
 class Loader(QtGui.QMainWindow):
     configPath = os.path.join(settings.CONFIGS_DIR, "configs.cfg")
+    developerEmail = "geniofuturo@gmail.com"
     
     def __init__(self):
         super(Loader, self).__init__()
@@ -118,6 +120,13 @@ class Loader(QtGui.QMainWindow):
         QtGui.QMessageBox.information(self, self.tr("About BaixeAssista"),
           self.tr("BaixeAssista search uncomplicate viewing videos on the internet.\n"
                   "Developer: geniofuturo@gmail.com"))
+    
+    def onErroReporting(self):
+        dialogError = DialogError()
+        dialogError.setDeveloperEmail(self.developerEmail)
+        dialogError.setModal(True)
+        #dialogError.show()
+        dialogError.exec_()
         
     def closeEvent(self, event):
         # browser settings
@@ -149,6 +158,8 @@ class Loader(QtGui.QMainWindow):
         
         self.uiMainWindow.btnToolDir.clicked.connect( self.handleVideoDir )
         self.uiMainWindow.refreshFiles.clicked.connect( self.setupFilesView )
+        
+        self.uiMainWindow.actionErroReporting.triggered.connect( self.onErroReporting )
         
         self.uiMainWindow.connectionActive.valueChanged.connect( self.handleStartupConnection )
         self.uiMainWindow.connectionSpeed.valueChanged.connect( self.handleStartupConnection )
