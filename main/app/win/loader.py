@@ -4,6 +4,7 @@ import sys, os
 import time, threading, configobj
 from PySide import QtCore, QtGui
 from main import settings
+from django.conf import settings
 
 OldPixmap = QtGui.QPixmap
 def pixmap(*args, **kwargs):
@@ -103,17 +104,19 @@ class Loader(QtGui.QMainWindow):
     releaseSource = "http://code.google.com/p/gerenciador-de-videos-online/downloads/list"
     configPath = os.path.join(settings.CONFIGS_DIR, "configs.cfg")
     
+    baixeAssista = "BaixeAssista v%s"%settings.PROGRAM_VERSION
+    
     def __init__(self):
         super(Loader, self).__init__()
+        self.uiMainWindow = mainLayout.Ui_MainWindow()
+        self.uiMainWindow.setupUi(self)
+        self.setWindowTitle(self.baixeAssista)
         
         self.LOADING = False
         self.manage = None
         self.tableRows = {}
         self.config = {}
         self.mplayer = None
-        
-        self.uiMainWindow = mainLayout.Ui_MainWindow()
-        self.uiMainWindow.setupUi(self)
         
         self.setupUI()
         self.setupAction()
@@ -123,10 +126,10 @@ class Loader(QtGui.QMainWindow):
         
         # iniciando a procura por atualizações.
         if self.uiMainWindow.actionAutomaticSearch.isChecked():
-            self.onSearchUpdate( False)
+            self.onSearchUpdate(False)
         
     def onAbout(self):
-        QtGui.QMessageBox.information(self, self.tr("About BaixeAssista"),
+        QtGui.QMessageBox.information(self, " - ".join([self.tr("About"), self.baixeAssista]),
           self.tr("BaixeAssista search uncomplicate viewing videos on the internet.\n"
                   "Developer: geniofuturo@gmail.com"))
     
@@ -140,7 +143,7 @@ class Loader(QtGui.QMainWindow):
         # browser settings
         self.browser.saveSettings()
         # ui settings
-        self.saveConfigUI()
+        self.saveSettings()
         
     def updateUI(self):
         if self.LOADING:
@@ -294,17 +297,16 @@ class Loader(QtGui.QMainWindow):
             print path, os.path.exists(path)
             
             self.urlManager.remove(_title)
-            
-            fileManager.remove()
             resumeInfo.remove()
+            fileManager.remove()
             
             self.setupFilesView()
             
     def contextMenuEvent(self, event):
-        actionPreview = QtGui.QAction(self.tr("Preview"), self,
+        actionPreview = QtGui.QAction(self.tr(" - Preview"), self,
             statusTip = "", triggered = self.onPlayeView)
         
-        actionRemove = QtGui.QAction(self.tr("Remove"), self,
+        actionRemove = QtGui.QAction(self.tr(" - Remove"), self,
             statusTip = "", triggered = self.onVideoRemove)
         
         menu = QtGui.QMenu(self)
@@ -435,12 +437,10 @@ class Loader(QtGui.QMainWindow):
                                 videoPath = videoDir, maxsplit = videoSplitSize)
             except Exception as err:
                 QtGui.QMessageBox.information(self, self.tr("Error"), 
-                        self.tr("An error occurred starting the download."
-                                "\n\n%s"%err))
-                
+                        self.tr("An error occurred starting the download.")+"\n\n%s"%err)
                 self.uiMainWindow.btnStartDl.setChecked(False)
                 return
-            # -----------------------------------------------------------
+            # --------------------------------------------------
             self.uiMainWindow.btnStartDl.setText(self.tr("Stop"))
             self.DIALOG = DialogDl(self.tr("Please wait"), self)
             self.DIALOG.rejected.connect( self.onCancelVideoDl )
@@ -676,7 +676,7 @@ class Loader(QtGui.QMainWindow):
         # traduzindo a 'action' da ui em um código de linguagem.
         self.confLang["code"] = self.codeLang[self.langActionGroup.checkedAction()]
         
-    def saveConfigUI(self, path=None):
+    def saveSettings(self, path=None):
         self.posSaveConf()
         
         if not base.security_save((path or self.configPath), _configobj=self.config):
