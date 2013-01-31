@@ -344,38 +344,38 @@ class UrlManager( UrlBase ):
         
 ########################################################################
 class ResumeInfo(object):
-    def __init__(self):
-        self.objects = model.models.Resume.objects
-        self.query = None
+    objects = model.models.Resume.objects
+    
+    def __init__(self, filename):
+        try: self.q = self.objects.get(title=filename)
+        except: self.q = model.models.Resume(title=filename)
         
-    def add(self, title, **kwargs):
+        self.filename = filename
+        
+    def update(self, **kwargs):
         """ kwargs = {}
-         - fields:{videoExt; videoSize; seekPos; pending; 
-                  cacheBytesTotal; cacheBytesCount; 
-                  videoQuality}
+         - videoExt; videoSize; seekPos; pending; cacheBytesTotal; 
+         - cacheBytesCount; videoQuality
         """
-        try: query = self.objects.get(title=title) # get existent
-        except: query = model.models.Resume(title=title) # create new
-        for key in kwargs: setattr(query, key, kwargs[key])
-        query.save() # salvando no banco de dados
-        
-    def get(self, title):
-        try: query = self.objects.get(title=title)
-        except: query = model.models.Resume()
-        return query
-        
-    def update(self, title):
-        self.query = self.get(title)
+        for field in kwargs:
+            setattr(self.q, field, kwargs[field])
+            
+        self.q.save()
         
     def __getitem__(self, name):
-        return getattr(self.query, name)
+        return getattr(self.q, name)
     
-    def has(self, title):
-        return (not self.get(title).pk is None)
-        
-    def remove(self, title):
-        query = self.objects.filter(title=title)
-        if query.count() > 0: query.delete()
+    @property
+    def query(self):
+        return self.q
+    
+    @property
+    def isEmpty(self):
+        return self.q.pk is None
+    
+    @base.protected()
+    def remove(self):
+        self.q.delete()
     
 ################################# FILEMANAGER ##################################
 # FILE MANAGER: TUDO ASSOCIADO A ESCRITA DA STREAM NO DISCO
@@ -389,65 +389,65 @@ class FM_runLocked(object):
         return wrapped_method
 
 class FileManager(object):
+    tempFilePath = os.path.join(settings.DEFAULT_VIDEOS_DIR, settings.VIDEOS_DIR_TEMP_NAME)
+    
     def __init__(self, **params):
         """ params: {}
-         -  filePath(default=DEFAULT_VIDEOS_DIR) -> local onde o arquivo de video será salvo.
-         - tempfile(default=False) -> indica o uso de um arquivo temporário para armazenamento.
-         - videoExt(default=flv) -> extensão do arquivo sendo processando.
+         ** filepath(default=DEFAULT_VIDEOS_DIR) -> local onde o arquivo de video será salvo.
+         ** tempfile(default=False) -> indica o uso de um arquivo temporário para armazenamento.
+         ** fileext(default=flv) -> extensão do arquivo sendo processando.
         """
         self.params = params
-        self.resumeInfo = ResumeInfo()
-        videopath = params.get("videoPath","")
-        # verificando se o diretório é valido para a máquina atual.
-        self.filePath = videopath if os.path.exists(videopath) else settings.DEFAULT_VIDEOS_DIR
+        params.setdefault("filepath", settings.DEFAULT_VIDEOS_DIR)
+        params.setdefault("fileext", "flv")
+        params.setdefault("filename", "")
+        params.setdefault("tempfile", False)
         
-        # diretório padrão de arquivos temporários.
-        self.tempFilePath = os.path.join(settings.DEFAULT_VIDEOS_DIR, settings.VIDEOS_DIR_TEMP_NAME)
+        if not os.path.exists(params["filepath"]):
+            params["filepath"] = settings.DEFAULT_VIDEOS_DIR
         
     def __del__(self):
-        try: self.file.close()
-        except: pass
-        del self.resumeInfo
-        del self.filePath
+        self.closeFile()
         del self.params
-
-    def setFileExt(self, ext):
-        self.params["videoExt"] = ext
         
-    def getFilePath(self, filename):
+    def __setitem__(self, key, value):
+        self.params["key"] = value
+    
+    def __getitem__(self, key):
+        return self.params[key]
+    
+    @base.protected()
+    def closeFile(self):
+        self.file.close()
+    
+    def open(self):
+        self.file = self.fileGetOrCreate()
+    
+    @base.protected()
+    def remove(self):
+        os.remove(self.getFilePath())
+        
+    def getFilePath(self):
         """ retorna o caminho completo para o local do arquivo """
-        if self.resumeInfo.has( filename ):
-            resumeInfo = self.resumeInfo.get( filename )
-            videoPath = resumeInfo.videoPath
-            videoExt = resumeInfo.videoExt
-        else:
-            videoExt = self.params.get("videoExt","")
-            videoPath = self.filePath
-            
-        videoExt = videoExt or "flv"
+        filename = self.params["filename"]
         
         try: filename = unicodedata.normalize("NFKD", unicode(filename,"UTF-8"))
         except: filename = unicodedata.normalize("NFKD", filename)
         
-        filename = filename.encode("ASCII","ignore")
-        filename = "%s.%s"%(filename, videoExt)
+        filename = filename.encode("ASCII", "ignore")
+        filename = "%s.%s"%(filename, self.params["fileext"])
         
-        return os.path.join(videoPath, filename)
-
-    def pathExist(self, filename):
-        """avalia se o arquivo já existe na pasta vídeos."""
-        filepath = self.getFilePath(filename)
-        return os.path.exists(filepath)
-
+        return os.path.join(self.params["filepath"], filename)
+        
     @FM_runLocked()
-    def recover(self, filename, badfile=False):
+    def recover(self, badfile=False):
         """ recupera um arquivo temporário, salvando-o de forma definitiva """
         # pega o tamanho atual do arquivo, movendo o ponteiro para o final dele.
         self.file.seek(0,2); filesize = self.file.tell()
         # retorna para o começo do arquivo de onde começará a leitura.
         self.file.seek(0)
         # local para o novo arquivo.
-        filepath = self.getFilePath( filename )
+        filepath = self.getFilePath()
         
         class sucess(object):
             def __init__(self):
@@ -524,20 +524,15 @@ class FileManager(object):
             except: pass
         yield cp
 
-    def resume(self, filename):
-        """ faz o resumo de 'filename', caso haja as informaçãos necessárias em 'resumeInfo'"""
-        if filename and self.params.get("tempfile",False) is False and self.resumeInfo.has( filename ):
-            self.file = open(self.getFilePath( filename ), "r+b")
-            self.resumeInfo.update( filename ); return True
-        return False # o arquivo não está sendo resumido
-
-    def cacheFile(self, filename):
-        if self.params.get("tempfile", False) is False:
-            filepath = self.getFilePath( filename )
-            self.file = open(filepath, "w+b")
+    def fileGetOrCreate(self):
+        """ cria o arquivo """
+        if self.params["tempfile"]:
+            obj = tempfile.TemporaryFile(dir=self.tempFilePath)
         else:
-            self.file = tempfile.TemporaryFile(dir = self.tempFilePath)
-            
+            filepath = self.getFilePath()
+            obj = open(filepath, ("w+b" if not os.path.exists(filepath) else "r+b"))
+        return obj
+        
     @FM_runLocked()
     def write(self, pos, data):
         """ Escreve os dados na posição dada """
@@ -908,11 +903,17 @@ class Manage(object):
         - videoQuality: qualidade desejada para o vídeo(1 = baixa; 2 = média; 3 = alta).
         """
         assert URL, _("Entre com uma url primeiro!")
-        self.streamUrl = URL # guarda a url do video
         self.params = params
-        self.cacheBytesTotal = 0
+        
+        params.setdefault("tempfile", False)
+        params.setdefault("videoPath", settings.DEFAULT_VIDEOS_DIR)
+        params.setdefault("videoQuality", 2)
+        params.setdefault("maxsplit", 2)
+        
+        self.streamUrl = URL # guarda a url do video
+        self.usingTempfile = params["tempfile"]
         self.posInicialLeitura = 0
-        self.usingTempfile = params.get("tempfile", False)
+        self.cacheBytesTotal = 0
         self.streamerList = []
         
         # manage log
@@ -948,106 +949,80 @@ class Manage(object):
     def inicialize(self, **params):
         """ método chamado para realizar a configuração de leitura aleatória da stream """
         self.params.update( params )
-
-        self._canceledl = False    # cancelar o download?
+        
         self.velocidadeGlobal = 0  # velocidade global da conexão
+        self.cacheBytesCount  = 0
         self.tempoDownload = ""    # tempo total de download
-        self.cacheBytesCount = 0
+        self.resuming = False
         
-        tempfile = self.params.get("tempfile", False)
-        videoPath = self.params.get("videoPath", "")
+        self.params.setdefault("tempfile", False)
+        self.params.setdefault("seekpos", 0)
         
-        self.fileManager = FileManager(tempfile = tempfile, videoPath = videoPath)
-        # avalia se o arquivo pode ser resumido
-        self.resuming = self.fileManager.resume( self.videoTitle )
+        self.resumeInfo = ResumeInfo(filename = self.videoTitle)
         
-        if self.resuming:
-            self.cacheBytesCount = self.fileManager.resumeInfo["cacheBytesCount"]
-            self.cacheBytesTotal = self.fileManager.resumeInfo["cacheBytesTotal"]
-            self.videoSize = self.fileManager.resumeInfo["videoSize"]
+        if not self.params["tempfile"] and not self.resumeInfo.isEmpty:
+            self.fileManager = FileManager(
+                filename = self.videoTitle, 
+                tempfile = self.resumeInfo.isEmpty, 
+                filepath = self.resumeInfo["videoPath"],
+                fileext  = self.resumeInfo["videoExt"]
+            )
+            self.cacheBytesCount = self.resumeInfo["cacheBytesCount"]
+            self.cacheBytesTotal = self.resumeInfo["cacheBytesTotal"]
+            self.videoSize = self.resumeInfo["videoSize"]
             
-            seekpos = self.fileManager.resumeInfo["seekPos"]
-            intervs = self.fileManager.resumeInfo["pending"]
+            seekpos = self.resumeInfo["seekPos"]
+            intervs = self.resumeInfo["pending"]
             
             # Sem o parâmetro qualidade do resumo, o usuário poderia 
             # corromper o arquivo de video, dando uma qualidade diferente
-            self.params["videoQuality"] = self.fileManager.resumeInfo["videoQuality"]
-            self.params["videoPath"] = self.fileManager.resumeInfo["videoPath"]
+            self.params["videoQuality"] = self.resumeInfo["videoQuality"]
+            self.params["videoPath"] = self.resumeInfo["videoPath"]
             
-            self.videoExt = self.fileManager.resumeInfo["videoExt"]
+            self.videoExt = self.resumeInfo["videoExt"]
             
             self.interval = Interval(maxsize = self.videoSize,
-                                     seekpos = seekpos, offset = 0, pending = intervs,
-                                     maxsplit = self.params.get("maxsplit", 2))
+                 seekpos = seekpos, offset = 0,  pending = intervs, 
+                 maxsplit = self.params["maxsplit"])
             
             self.posInicialLeitura = self.cacheBytesTotal
-    
-    def createVideoManager(self):
-        """ controla a obtenção de links, tamanho do arquivo, title, etc """
-        return self.clsVideoManager(self.streamUrl, streamSize = self.videoSize, 
-                                    qualidade=self.params.get("videoQuality",2))
-        
-    def get_streamer(self):
-        """ streamer controla a leitura dos bytes enviados ao player """
-        return Streamer(self)
-    
-    def add_streamer(self, streamer):
-        if not streamer in self.streamerList:
-            self.streamerList.append(streamer)
-            
-    def del_streamer(self, streamer):
-        if streamer in self.streamerList:
-            self.streamerList.remove(streamer)
-            
-    def stop(self):
-        for streamer in self.streamerList:
-            streamer.stop()
-        
-        if not self.usingTempfile and not self.params.get("tempfile",False):
-            self.salveInfoResumo()
-            
-        self.clear()
-        
-    def clear(self):
-        """ deleta todas as variáveis do objeto """
-        Info.delete("manage")
-        settings.MANAGE_OBJECT = None
-        del self.streamerList
-        del self.ctrConnection
-        del self.videoManager
-        del self.proxyManager
-        del self.urlManager
-        del self.fileManager
-        del self.interval
-        del self.params
-        
+            self.resuming = True
+                   
     def start(self, ctry, ntry, proxy={}, callback=None):
         """ Começa a coleta de informações. Depende da internet, por isso pode demorar para reponder. """
         if not self.videoSize or not self.videoTitle:
             if not self.getInfo(ctry, ntry, proxy, callback):
                 return False
             
-            # salvando o link e o título
-            if not self.usingTempfile and not self.params.get("tempfile",False):
-                if not self.urlManager.exist( self.streamUrl ): # é importante não adcionar duas vezes
+            if not self.isTempFileMode:
+                # salvando o link e o título
+                if not self.urlManager.exist( self.streamUrl ):
                     self.urlManager.add(self.streamUrl, self.videoTitle)
                     
                 # pega o título já com um índice
                 title = self.urlManager.getUrlTitle(self.streamUrl)
                 self.videoTitle = title or self.videoTitle
+            else:
+                if not self.urlManager.exist( self.streamUrl ):
+                    self.videoTitle = self.urlManager.setTitleIndex(self.videoTitle)
                 
         if not self.resuming:
-            self.fileManager.setFileExt(self.videoExt)
-            self.fileManager.cacheFile( self.videoTitle )
-
+            self.fileManager = FileManager(
+                filename = self.videoTitle, 
+                tempfile = self.params["tempfile"], 
+                filepath = self.params["videoPath"],
+                fileext  = self.videoExt
+            )
             # intervals serão criados do ponto zero da stream
             self.interval = Interval(maxsize = self.videoSize, 
-                                     seekpos = self.params.get("seekpos", 0),
-                                     maxsplit = self.params.get("maxsplit", 2))
-            
-            if not self.usingTempfile and not self.params.get("tempfile",False):
-                self.salveInfoResumo()
-            
+                    seekpos = self.params["seekpos"],
+                    maxsplit = self.params["maxsplit"])
+                    
+            if not self.isTempFileMode: self.salveInfoResumo()
+        
+        # abre o arquivo. seja criando um novo ou alterando um exitente
+        self.fileManager.open()
+        
         # tempo inicial da velocidade global
         self.tempoInicialGlobal = time.time()
         self.autoSaveTime = time.time()
@@ -1074,33 +1049,59 @@ class Manage(object):
         # função de atualização externa
         callback(message, self.videoManager.get_message())
         return (self.videoSize and self.videoTitle)
+    
+    def createVideoManager(self):
+        """ controla a obtenção de links, tamanho do arquivo, title, etc """
+        return self.clsVideoManager(self.streamUrl, streamSize = self.videoSize, 
+                                    qualidade = self.params["videoQuality"])
+        
+    def get_streamer(self):
+        """ streamer controla a leitura dos bytes enviados ao player """
+        return Streamer(self)
+    
+    def add_streamer(self, streamer):
+        if not streamer in self.streamerList:
+            self.streamerList.append(streamer)
+            
+    def del_streamer(self, streamer):
+        if streamer in self.streamerList:
+            self.streamerList.remove(streamer)
+            
+    def stop(self):
+        for streamer in self.streamerList:
+            streamer.stop()
+        
+        if not self.isTempFileMode: 
+            self.salveInfoResumo()
+            
+        self.clear()
+        
+    def clear(self):
+        """ deleta todas as variáveis do objeto """
+        Info.delete("manage")
+        settings.MANAGE_OBJECT = None
+        del self.streamerList
+        del self.ctrConnection
+        del self.videoManager
+        del self.proxyManager
+        del self.urlManager
+        del self.fileManager
+        del self.interval
+        del self.params
         
     @FM_runLocked()
     def recoverTempFile(self):
         """ tenta fazer a recuperação de um arquivo temporário """
-        is_bad_file = (not self.params.get("tempfile",False) or self.interval.get_offset() != 0)
-        
-        # se o nome do arquivo, com o titulo atual receber um índice, guarda o
-        # o título antigo para adicionar o mesmo índice quando adicionando a url.
-        streamTitle = self.videoTitle
-        
-        # verifica se a url já foi salva
-        if not self.urlManager.exist( self.streamUrl ):
-            # adiciona um indice se título já existir(ex:###1)
-            self.videoTitle = self.urlManager.setTitleIndex( self.videoTitle )
-        else:
-            # como a url já existe, então só atualiza o título
-            self.videoTitle = self.urlManager.getUrlTitle( self.streamUrl )
-
+        badfile = (not self.isTempFileMode or self.interval.get_offset() != 0)
         # começa a recuperação do arquivo temporário.
-        for copy in self.fileManager.recover(self.videoTitle, badfile = is_bad_file):
+        for copy in self.fileManager.recover(badfile=badfile):
             if copy.inProgress and copy.progress == 100.0 and copy.sucess and not copy.error:
                 # salvando os dados de resumo. O arquivo será resumível
                 self.salveInfoResumo()
                 
                 # nunca se deve adcionar a mesma url
                 if not self.urlManager.exist( self.streamUrl ):
-                    self.urlManager.add(self.streamUrl, streamTitle)
+                    self.urlManager.add(self.streamUrl, self.videoTitle)
             yield copy
             
     @classmethod
@@ -1113,15 +1114,19 @@ class Manage(object):
     
     def isComplete(self):
         """ informa se o arquivo já foi completamente baixado """
-        return (self.received_bytes() >= (self.getVideoSize()-25))
+        return (self.cacheBytesTotal >= (self.getVideoSize()-25))
     
     def received_bytes(self):
         """ retorna o numero total de bytes transferidos """
         return self.cacheBytesTotal
-        
+    
+    @property
+    def isTempFileMode(self):
+        """ avalia se o arquivo de video está sendo salva em um arquivo temporário """
+        return (self.usingTempfile or self.params["tempfile"])
+    
     def getInitPos(self): return self.params.get("seekpos",0)
     def isResuming(self): return self.resuming
-    def canceledl(self): self._canceledl = True
     def getVideoTitle(self): return self.videoTitle
     def getUrl(self): return self.streamUrl
     def getVideoSize(self): return self.videoSize
@@ -1134,8 +1139,10 @@ class Manage(object):
         """ salva todos os dados necessários para o resumo do arquivo atual """
         self.ctrConnection.removeStopedConnection()
         pending = [] # coleta geral de informações.
+        
         for smanager in self.ctrConnection.getConnections():
             ident = smanager.ident
+            
             # a conexão deve estar ligada a um interv
             if self.interval.has( ident ):
                 pending.append((
@@ -1145,18 +1152,21 @@ class Manage(object):
                     self.interval.get_end( ident),
                     self.interval.get_block_size( ident)
                 ))
+                
         pending.extend( self.interval.pending )
         pending.sort()
         
-        self.fileManager.resumeInfo.add(self.videoTitle, 
-            videoExt = self.videoExt, pending = pending,
-            videoSize = self.videoSize, seekPos = self.interval.seekpos, 
+        self.resumeInfo.update(title = self.videoTitle,
+            videoQuality = self.params["videoQuality"],
             cacheBytesTotal = self.cacheBytesTotal, 
-            cacheBytesCount = self.cacheBytesCount, 
-            videoQuality = self.params.get("videoQuality",2),
-            videoPath = self.params.get("videoPath", settings.DEFAULT_VIDEOS_DIR)
+            cacheBytesCount = self.cacheBytesCount,
+            videoPath = self.params["videoPath"],
+            seekPos = self.interval.seekpos,
+            videoSize = self.videoSize, 
+            videoExt = self.videoExt, 
+            pending = pending
         )
-        
+    
     def porcentagem(self):
         """ Progresso do download em porcentagem """
         return StreamManager.calc_percent(self.cacheBytesTotal, self.getVideoSize())
@@ -1170,9 +1180,8 @@ class Manage(object):
         """ Configura a leitura da stream para um ponto aleatório dela """
         self.notifiqueConexoes(True)
 
-        if not self.usingTempfile and not self.params.get("tempfile",False):
-            self.salveInfoResumo()
-
+        if not self.isTempFileMode: self.salveInfoResumo()
+        
         self.cacheBytesTotal = self.posInicialLeitura = seekpos
         del self.interval, self.fileManager
 
@@ -1203,23 +1212,21 @@ class Manage(object):
     @base.protected()
     def update(self):
         """ atualiza dados de transferência do arquivo de vídeo atual """
-        startInterv = self.interval.get_first_start()
-        self.interval.send_info["sending"] = startInterv
-        nbytes = self.interval.send_info["nbytes"].get(startInterv, 0)
+        start = self.interval.get_first_start()
+        self.interval.send_info["sending"] = start
+        nbytes = self.interval.send_info["nbytes"].get(start,0)
         
-        if startInterv >= 0:
-            startabs = startInterv - self.interval.get_offset()
+        if start >= 0:
+            startabs = start - self.interval.get_offset()
             self.cacheBytesCount = startabs + nbytes
             
         elif self.isComplete(): # isComplete: tira a necessidade de uma igualdade absoluta
             self.cacheBytesCount = self.getVideoSize()
-
-        if not self.usingTempfile and not self.params.get("tempfile",False):
-            # salva os dados de resumo no interval de tempo 300s=5min
-            if time.time() - self.autoSaveTime > 300: 
-                self.autoSaveTime = time.time()
-                self.salveInfoResumo()
-        
+            
+        if not self.isTempFileMode and (time.time()-self.autoSaveTime) > 300:
+            self.autoSaveTime = time.time()
+            self.salveInfoResumo()
+            
         # reinicia a atividade das conexões
         self.notifiqueConexoes(False)
 
