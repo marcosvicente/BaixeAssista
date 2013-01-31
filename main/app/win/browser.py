@@ -24,7 +24,41 @@ class NetworkAccessManager(QtNetwork.QNetworkAccessManager):
             self.requestCreated.emit( url )
             
         return super(NetworkAccessManager, self).createRequest(operation, request, data)
+
+class mWebView(QtWebKit.QWebView):
+    
+    def __init__(self, parent=None):
+        super(mWebView, self).__init__(parent)
+        self.MOVIE_LOADING = QtGui.QMovie(os.path.join(settings.IMAGES_DIR, "spin-progress.gif"))
         
+        self.settings().setAttribute(QtWebKit.QWebSettings.PluginsEnabled, True)
+        self.page().setLinkDelegationPolicy(QtWebKit.QWebPage.DelegateAllLinks)
+        
+        ##self.loadStarted.connect(self.onPageLoad)
+        self.loadFinished.connect(self.onPageFinished)
+        self.loadProgress.connect(self.onProgress)
+        self.urlChanged.connect(self.onChangeUrl)
+        
+    def onChangeUrl(self, url):
+        self.PAGE_URL = url if isinstance(url, (str,unicode)) else url.toString()
+        
+    def onPageFinished(self):
+        self.PAGE_LOADING = False
+        self.MOVIE_LOADING.stop()
+        
+    def onProgress(self, progress):
+        self.MOVIE_LOADING.jumpToNextFrame()
+        
+    def load(self, url):
+        self.MOVIE_LOADING.start()
+        self.PAGE_URL = url if isinstance(url, (str,unicode)) else url.toString()
+        self.PAGE_LOADING = True
+        
+        return super(mWebView, self).load(url)
+    
+    def createWindow(self, type):
+        return self
+    
 class Browser (QtGui.QWidget):
     searchEngine = "http://www.google.com/"
     
@@ -67,22 +101,16 @@ class Browser (QtGui.QWidget):
         self.show()
     
     def setupPage(self, url, isDefaulf=False):
-        webView = QtWebKit.QWebView(self.tabPagePanel)
+        webView = mWebView( self.tabPagePanel)
         
-        webView.MOVIE_LOADING = QtGui.QMovie(os.path.join(settings.IMAGES_DIR, "spin-progress.gif"))
-        webView.PAGE_LOADING = True
-        webView.PAGE_URL = url
-        
-        webView.settings().setAttribute(QtWebKit.QWebSettings.PluginsEnabled, True)
-        webView.page().setLinkDelegationPolicy(QtWebKit.QWebPage.DelegateAllLinks)
         webView.page().setNetworkAccessManager( self.mNetWorkManager )
-        
         webView.linkClicked.connect( self.onLinkClicked )
         webView.loadStarted.connect( self.onPageLoad )
         webView.loadFinished.connect( self.onPageFinished )
         webView.loadProgress.connect( self.onProgress )
         webView.urlChanged.connect( self.onChangeUrl )
         webView.titleChanged.connect( self.onTitleChange )
+        
         webView.load(QtCore.QUrl(url))
         webView.show()
         
@@ -161,19 +189,19 @@ class Browser (QtGui.QWidget):
             self.btnStopRefresh.setRefreshState()
         else:
             self.btnStopRefresh.setStopState()
-    
+            
     def onRequestCreated(self, url):
         """ controla o fluxo de links válidos dos players embutidos """
         self.embed.addItem( url )
         
     def onLinkClicked(self, url):
         """ controla o fluxo de links reconhecidos como válidos """
-        _url = url.toString()
+        urlText = url.toString()
         
-        if generators.Universal.has_site(_url) and hasattr(self.mainWin,"getLocation"):
-            _url = generators.Universal.get_inner_url(_url)
-            if not generators.Universal.isEmbed(_url):
-                self.mainWin.getLocation().setEditText(_url)
+        if hasattr(self.mainWin,"getLocation") and generators.Universal.has_site(urlText):
+            urlText = generators.Universal.get_inner_url(urlText)
+            if not generators.Universal.isEmbed(urlText):
+                self.mainWin.getLocation().setEditText(urlText)
         else:
             self.webView.load( url )
             
@@ -190,9 +218,6 @@ class Browser (QtGui.QWidget):
         """ chamado ao iniciar o carregamento da página """
         webView = self.sender()
         
-        webView.PAGE_LOADING = True
-        webView.MOVIE_LOADING.start()
-        
         self.btnStopRefresh.setStopState()
         self.updateFavoriteStarIcon()
         
@@ -200,9 +225,7 @@ class Browser (QtGui.QWidget):
         
     def onPageFinished(self):
         webView = self.sender()
-        webView.PAGE_LOADING = False
-        webView.MOVIE_LOADING.stop()
-        
+                
         index = self.tabPagePanel.indexOf( webView )
         self.tabPagePanel.setTabIcon(index, webView.icon())
         
@@ -211,8 +234,7 @@ class Browser (QtGui.QWidget):
     def onProgress(self, porcent):
         webView = self.sender()
         self.tabPagePanel.setTabIcon(self.tabPagePanel.indexOf(webView), 
-                                     QtGui.QIcon(webView.MOVIE_LOADING.currentPixmap()))
-        webView.MOVIE_LOADING.jumpToNextFrame()
+                         QtGui.QIcon(webView.MOVIE_LOADING.currentPixmap()))
         
     def onTitleChange(self, title):
         webView = self.sender()
@@ -222,7 +244,6 @@ class Browser (QtGui.QWidget):
         
     def onChangeUrl(self, url):
         webView = self.sender()
-        webView.PAGE_URL = url.toString()
         
         if self.webView == webView:
             self.location.setEditText(webView.PAGE_URL)
