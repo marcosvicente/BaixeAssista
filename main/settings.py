@@ -5,7 +5,7 @@ DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
 # Definem a versão e o sistema operacional do programa
-PROGRAM_VERSION = "0.2.4"
+PROGRAM_VERSION = "3.0.0"
 PROGRAM_SYSTEM = {"Windows": "oswin", "Linux": "oslinux"}
 
 ADMINS = (
