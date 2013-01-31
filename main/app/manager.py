@@ -298,7 +298,7 @@ class UrlManager( UrlBase ):
             title = title + ("###%d"%(index+1))
         return title
     
-    @base.protected()
+    @base.just_try()
     def remove(self, title):
         """ remove todas as referêcias do banco de dados, com base no título """
         self.objects.get(title=title).delete()
@@ -374,7 +374,7 @@ class ResumeInfo(object):
     def isEmpty(self):
         return self.q.pk is None
     
-    @base.protected()
+    @base.just_try()
     def remove(self):
         self.q.delete()
     
@@ -424,7 +424,7 @@ class FileManager(object):
     def open(self):
         self.file = self.fileGetOrCreate()
     
-    @base.protected()
+    @base.just_try()
     def remove(self):
         os.remove(self.getFilePath())
         
