@@ -11,7 +11,11 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Dialog</string>
+   <string>file recover</string>
+  </property>
+  <property name="windowIcon">
+   <iconset>
+    <normaloff>../images/info-blue.png</normaloff>../images/info-blue.png</iconset>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>

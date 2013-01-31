@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'uiDialogRec.ui'
 #
-# Created: Wed Jan 30 00:18:20 2013
+# Created: Wed Jan 30 20:23:26 2013
 #      by: pyside-uic 0.2.14 running on PySide 1.1.2
 #
 # WARNING! All changes made in this file will be lost!
@@ -13,6 +13,9 @@ class Ui_Dialog(object):
     def setupUi(self, Dialog):
         Dialog.setObjectName("Dialog")
         Dialog.resize(381, 130)
+        icon = QtGui.QIcon()
+        icon.addPixmap(QtGui.QPixmap("../images/info-blue.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        Dialog.setWindowIcon(icon)
         self.verticalLayout = QtGui.QVBoxLayout(Dialog)
         self.verticalLayout.setObjectName("verticalLayout")
         self.textProgress = QtGui.QLabel(Dialog)
@@ -37,6 +40,6 @@ class Ui_Dialog(object):
         QtCore.QMetaObject.connectSlotsByName(Dialog)
 
     def retranslateUi(self, Dialog):
-        Dialog.setWindowTitle(QtGui.QApplication.translate("Dialog", "Dialog", None, QtGui.QApplication.UnicodeUTF8))
+        Dialog.setWindowTitle(QtGui.QApplication.translate("Dialog", "file recover", None, QtGui.QApplication.UnicodeUTF8))
         self.textProgress.setText(QtGui.QApplication.translate("Dialog", "...", None, QtGui.QApplication.UnicodeUTF8))
 

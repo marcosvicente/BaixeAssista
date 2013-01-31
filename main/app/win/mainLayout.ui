@@ -404,8 +404,8 @@
                     <rect>
                      <x>0</x>
                      <y>0</y>
-                     <width>1052</width>
-                     <height>361</height>
+                     <width>246</width>
+                     <height>82</height>
                     </rect>
                    </property>
                    <attribute name="icon">
@@ -905,7 +905,7 @@
      </font>
     </property>
     <property name="title">
-     <string>Edit</string>
+     <string>Players</string>
     </property>
     <addaction name="actionEmbedPlayer"/>
     <addaction name="actionExternalPlayer"/>
@@ -930,7 +930,11 @@
     <widget class="QMenu" name="menuUpdate">
      <property name="font">
       <font>
-       <pointsize>12</pointsize>
+       <family>Arial</family>
+       <pointsize>10</pointsize>
+       <weight>50</weight>
+       <italic>false</italic>
+       <bold>false</bold>
       </font>
      </property>
      <property name="title">
@@ -939,7 +943,7 @@
      <addaction name="actionAutomaticSearch"/>
      <addaction name="actionCheckNow"/>
     </widget>
-    <addaction name="actionError_reporting"/>
+    <addaction name="actionErroReporting"/>
     <addaction name="menuUpdate"/>
     <addaction name="actionAbout"/>
    </widget>
@@ -958,11 +962,6 @@
    <property name="text">
     <string>Exit</string>
    </property>
-   <property name="font">
-    <font>
-     <pointsize>10</pointsize>
-    </font>
-   </property>
   </action>
   <action name="actionEnglish">
    <property name="checkable">
@@ -976,6 +975,7 @@
    </property>
    <property name="font">
     <font>
+     <family>Arial</family>
      <pointsize>10</pointsize>
     </font>
    </property>
@@ -992,6 +992,7 @@
    </property>
    <property name="font">
     <font>
+     <family>Arial</family>
      <pointsize>10</pointsize>
     </font>
    </property>
@@ -1002,6 +1003,7 @@
    </property>
    <property name="font">
     <font>
+     <family>Arial</family>
      <pointsize>10</pointsize>
     </font>
    </property>
@@ -1015,6 +1017,7 @@
    </property>
    <property name="font">
     <font>
+     <family>Arial</family>
      <pointsize>10</pointsize>
     </font>
    </property>
@@ -1038,11 +1041,6 @@
    <property name="text">
     <string>Choose external player</string>
    </property>
-   <property name="font">
-    <font>
-     <pointsize>10</pointsize>
-    </font>
-   </property>
   </action>
   <action name="actionEmbedPlayer">
    <property name="checkable">
@@ -1056,6 +1054,7 @@
    </property>
    <property name="font">
     <font>
+     <family>Arial</family>
      <pointsize>10</pointsize>
     </font>
    </property>
@@ -1069,16 +1068,18 @@
    </property>
    <property name="font">
     <font>
+     <family>Arial</family>
      <pointsize>10</pointsize>
     </font>
    </property>
   </action>
-  <action name="actionError_reporting">
+  <action name="actionErroReporting">
    <property name="text">
     <string>Error reporting</string>
    </property>
    <property name="font">
     <font>
+     <family>Arial</family>
      <pointsize>10</pointsize>
     </font>
    </property>
