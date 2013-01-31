@@ -209,8 +209,7 @@ class Loader(QtGui.QMainWindow):
             },
             "videoPath": self.tr("Video path")
         }        
-        info = manager.ResumeInfo()
-        queryset = info.objects.all()
+        queryset = manager.ResumeInfo.objects.all()
         
         items = [QtGui.QTreeWidgetItem([q.title+"."+q.videoExt]) for q in queryset]
         values = queryset.values(*fields.keys())
@@ -241,15 +240,22 @@ class Loader(QtGui.QMainWindow):
         item = self.uiMainWindow.videosView.currentItem()
         title = item.text(0)
         
-        info = manager.ResumeInfo()
-        info.update( os.path.splitext(title)[0] )
+        _title = os.path.splitext(title)[0]
         
-        path = os.path.join(info["videoPath"], title)
-        print path, os.path.exists(path)
+        resumeInfo = manager.ResumeInfo(filename=_title)
         
-        if os.path.exists(path):
-            mplayer = manager.FlvPlayer(cmd=self.confPath["externalPlayer"], filepath=path)
-            mplayer.start()
+        if not resumeInfo.isEmpty:
+            fileManager = manager.FileManager(filename=_title,
+                          filepath = resumeInfo["videoPath"],
+                          fileext = resumeInfo["videoExt"])
+            
+            path = fileManager.getFilePath()
+            print path, os.path.exists(path)
+            
+            if os.path.exists(path):
+                mplayer = manager.FlvPlayer(cmd=self.confPath["externalPlayer"], 
+                                            filepath=path)
+                mplayer.start()
             
     def onVideoRemove(self):
         item = self.uiMainWindow.videosView.currentItem()
@@ -257,18 +263,20 @@ class Loader(QtGui.QMainWindow):
         
         _title = os.path.splitext(title)[0]
         
-        info = manager.ResumeInfo()
-        info.update( _title )
+        resumeInfo = manager.ResumeInfo(filename=_title)
         
-        path = os.path.join(info["videoPath"], title)
-        
-        try: os.remove( path )
-        except os.error as err:
-            print err
-        
-        if not os.path.exists( path ):
+        if not resumeInfo.isEmpty:
+            fileManager = manager.FileManager(filename=_title,
+                            filepath = resumeInfo["videoPath"],
+                            fileext = resumeInfo["videoExt"])
+            
+            path = fileManager.getFilePath()
+            print path, os.path.exists(path)
+            
             self.urlManager.remove(_title)
-            info.get(_title).delete()
+            
+            fileManager.remove()
+            resumeInfo.remove()
             
             self.setupFilesView()
             
