@@ -17,6 +17,9 @@
    <iconset>
     <normaloff>../images/info-blue.png</normaloff>../images/info-blue.png</iconset>
   </property>
+  <property name="modal">
+   <bool>true</bool>
+  </property>
   <layout class="QVBoxLayout" name="verticalLayout_2">
    <item>
     <widget class="QGroupBox" name="groupBox_2">
@@ -44,7 +47,11 @@
      </property>
      <layout class="QVBoxLayout" name="verticalLayout">
       <item>
-       <widget class="QTextEdit" name="changesUpdate"/>
+       <widget class="QTextEdit" name="changesUpdate">
+        <property name="readOnly">
+         <bool>true</bool>
+        </property>
+       </widget>
       </item>
      </layout>
     </widget>

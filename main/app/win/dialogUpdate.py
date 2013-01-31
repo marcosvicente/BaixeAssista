@@ -9,6 +9,8 @@ class DialogUpdate(QtGui.QDialog):
         self.uiDialog = Ui_Dialog()
         self.uiDialog.setupUi(self)
         
+        self.uiDialog.btnOk.clicked.connect(self.close)
+        
     def setTextInfo(self, text):
         self.uiDialog.infoUpdate.setText(text)
     

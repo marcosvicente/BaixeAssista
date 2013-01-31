@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'uiDialogUpdate.ui'
 #
-# Created: Thu Jan 31 17:46:30 2013
+# Created: Thu Jan 31 20:04:43 2013
 #      by: pyside-uic 0.2.14 running on PySide 1.1.2
 #
 # WARNING! All changes made in this file will be lost!
@@ -16,6 +16,7 @@ class Ui_Dialog(object):
         icon = QtGui.QIcon()
         icon.addPixmap(QtGui.QPixmap("../images/info-blue.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         Dialog.setWindowIcon(icon)
+        Dialog.setModal(True)
         self.verticalLayout_2 = QtGui.QVBoxLayout(Dialog)
         self.verticalLayout_2.setObjectName("verticalLayout_2")
         self.groupBox_2 = QtGui.QGroupBox(Dialog)
@@ -32,6 +33,7 @@ class Ui_Dialog(object):
         self.verticalLayout = QtGui.QVBoxLayout(self.groupBox)
         self.verticalLayout.setObjectName("verticalLayout")
         self.changesUpdate = QtGui.QTextEdit(self.groupBox)
+        self.changesUpdate.setReadOnly(True)
         self.changesUpdate.setObjectName("changesUpdate")
         self.verticalLayout.addWidget(self.changesUpdate)
         self.verticalLayout_2.addWidget(self.groupBox)

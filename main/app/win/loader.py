@@ -702,11 +702,8 @@ class Loader(QtGui.QMainWindow):
         
         dialogUpdate = DialogUpdate(self)
         dialogUpdate.setWindowTitle(title)
-        
         dialogUpdate.setTextInfo(response)
         dialogUpdate.setTextChanges(changes)
-        dialogUpdate.setModal(True)
-        
         dialogUpdate.exec_()
         
     def onSearchUpdate(self, showWin=True):
@@ -727,7 +724,7 @@ class Loader(QtGui.QMainWindow):
 class SearchUpdate(QtCore.QObject, threading.Thread):
     resultInfo   = QtCore.Signal(str, str)
     releaseFound = QtCore.Signal(str)
-    updateFound  = QtCore.Signal(str, str)
+    updateFound  = QtCore.Signal(str, str, str)
     
     def __init__(self, version, code, parent=None, showWin=False):
         QtCore.QObject.__init__(self, parent)
