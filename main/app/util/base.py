@@ -2,6 +2,7 @@
 from django.conf import settings
 import configobj
 import logging
+import gettext
 import os
 
 logger = logging.getLogger("main.app.manager")
@@ -15,19 +16,16 @@ def trans_install(configs = None):
             configs = configobj.ConfigObj( path )
         except:
             configs = {}
-    try: import gettext
-    except ImportError as err:
-        logger.critical("import gettext: %s"%err)
-        raise err
+            
+    configs.setdefault("Lang", {})
+    configs.setdefault("code", "en")
     
-    menus = configs.get("Menus", {})
-    lang = menus.get("language", "en")
+    translator = gettext.translation("ba_trans", 
+                os.path.join(settings.APPDIR, "locale"), 
+                languages=[configs["code"]])
     
-    localepath = os.path.join(settings.APPDIR, "locale")
-    language = gettext.translation("ba_trans", localepath, languages=[lang])
-
     # instala no espaço de nomes embutidos
-    language.install(unicode=True)
+    translator.install(unicode=True)
     
 #################################### JUST_TRY ##################################
 class just_try(object):
