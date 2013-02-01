@@ -254,10 +254,13 @@ class Loader(QtGui.QMainWindow):
         videosView.addTopLevelItems( items )
         
     def setupTab(self):
-        vBox = QtGui.QVBoxLayout()
-        self.uiMainWindow.tabBrowser.setLayout( vBox )
+        boxLayout = QtGui.QVBoxLayout()
+        boxLayout.setContentsMargins(0, 0, 0, 0)
+        boxLayout.setSpacing(0)
+        
+        self.uiMainWindow.tabBrowser.setLayout( boxLayout )
         self.browser = browser.Browser(self)
-        vBox.addWidget( self.browser )
+        boxLayout.addWidget( self.browser )
         
     def onPlayeView(self):
         item = self.uiMainWindow.videosView.currentItem()
@@ -276,10 +279,18 @@ class Loader(QtGui.QMainWindow):
             print path, os.path.exists(path)
             
             if os.path.exists(path):
-                mplayer = manager.FlvPlayer(cmd=self.confPath["externalPlayer"], 
+                mplayer = manager.FlvPlayer(cmd=self.getExternalPlayerPath(), 
                                             filepath=path)
                 mplayer.start()
-            
+                
+    def getExternalPlayerPath(self):
+        if not os.path.exists(self.confPath["externalPlayer"]):
+            path = self.choosePlayerPath()
+        else:
+            path = self.confPath["externalPlayer"]
+        return path
+                
+        
     def onVideoRemove(self):
         item = self.uiMainWindow.videosView.currentItem()
         title = item.text(0)
@@ -303,11 +314,15 @@ class Loader(QtGui.QMainWindow):
             self.setupFilesView()
             
     def contextMenuEvent(self, event):
-        actionPreview = QtGui.QAction(self.tr(" - Preview"), self,
-            statusTip = "", triggered = self.onPlayeView)
+        icon = QtGui.QIcon(os.path.join(settings.IMAGES_DIR,"preview-doc.png"))
+        actionPreview = QtGui.QAction(self.tr("preview"), self,
+            statusTip = "", triggered = self.onPlayeView,
+            icon = icon)
         
-        actionRemove = QtGui.QAction(self.tr(" - Remove"), self,
-            statusTip = "", triggered = self.onVideoRemove)
+        icon = QtGui.QIcon(os.path.join(settings.IMAGES_DIR,"remove-db.png"))
+        actionRemove = QtGui.QAction(self.tr("remove"), self,
+            statusTip = "", triggered = self.onVideoRemove,
+            icon = icon)
         
         menu = QtGui.QMenu(self)
         menu.addAction( actionPreview )
@@ -398,7 +413,7 @@ class Loader(QtGui.QMainWindow):
             self.mplayer.btnReload.clicked.connect(self.playerReload)
             
         elif action == actionExternal:
-            self.mplayer = manager.FlvPlayer(cmd=self.confPath["externalPlayer"], url=url)
+            self.mplayer = manager.FlvPlayer(cmd=self.getExternalPlayerPath(), url=url)
             
     def onSetupVideoPlayer(self):
         if self.mplayer: self.mplayer.stop()
@@ -415,6 +430,8 @@ class Loader(QtGui.QMainWindow):
     def handleStartVideoDl(self):
         """ inicia todo o processo de download e transferênica do video """
         if not self.LOADING:
+            self.setupVideoPlayer()
+            
             url = self.getLocation().currentText()
             url, title = self.urlManager.splitUrlDesc(url)
             
@@ -445,8 +462,6 @@ class Loader(QtGui.QMainWindow):
             self.DIALOG = DialogDl(self.tr("Please wait"), self)
             self.DIALOG.rejected.connect( self.onCancelVideoDl )
             self.DIALOG.show()
-            
-            self.setupVideoPlayer()
             
             self.videoLoad = videoLoad = VideoLoad(self.manage)
             videoLoad.events.responseChanged.connect( self.DIALOG.handleUpdate )
@@ -611,10 +626,13 @@ class Loader(QtGui.QMainWindow):
         conf["WidgetUi"].setdefault("tempFileAction", 0)
         conf["WidgetUi"].setdefault("videoSplitSize", 4)
         
+        conf["Window"].setdefault("position", [0, 0])
+        conf["Window"].setdefault("size", [640, 480])
+        
         conf["Path"].setdefault("videoDir", settings.DEFAULT_VIDEOS_DIR)
         conf["Lang"].setdefault("code", "en")
         
-        conf["Prog"].setdefault("packetVersion", "0.0.1")
+        conf["Prog"].setdefault("packetVersion", "1.6.9")
         
     def configUI(self, path=None):
         self.config = conf = configobj.ConfigObj((path or self.configPath))
@@ -640,20 +658,23 @@ class Loader(QtGui.QMainWindow):
         self.uiMainWindow.tempFileAction.setCurrentIndex(widgetUi.as_int("tempFileAction"))
         self.uiMainWindow.videoSplitSize.setValue(widgetUi.as_int("videoSplitSize"))
         
+        self.confWindow = conf["Window"]
+        self.move(*map(int, self.confWindow.as_list("position")))
+        self.resize(*map(int, self.confWindow.as_list("size")))
+        
         self.confPath = conf["Path"]
         self.uiMainWindow.videoDir.setText(self.confPath["videoDir"] 
                 if os.path.exists(self.confPath["videoDir"]) else 
                     settings.DEFAULT_VIDEOS_DIR)
         
         self.confLang = conf["Lang"]
-        
         # traduzindo 'code' em uma 'action' da ui.
         action = [action for action in self.codeLang if self.confLang["code"] == self.codeLang[action]]
         action[0].setChecked(True)
         
         self.confProg = conf["Prog"]
         
-    def posSaveConf(self):
+    def saveSettings(self, path=None):
         self.confMenuUi["actionEmbedPlayer"] = self.uiMainWindow.actionEmbedPlayer.isChecked()
         self.confMenuUi["actionExternalPlayer"] = self.uiMainWindow.actionExternalPlayer.isChecked()
         self.confMenuUi["actionAutomaticSearch"] = self.uiMainWindow.actionAutomaticSearch.isChecked()
@@ -671,17 +692,19 @@ class Loader(QtGui.QMainWindow):
         self.confWidgetUi["tempFileAction"] = self.uiMainWindow.tempFileAction.currentIndex()
         self.confWidgetUi["videoSplitSize"] = self.uiMainWindow.videoSplitSize.value()
         
+        if not self.isMaximized():
+            self.confWindow["position"] = self.pos().toTuple()
+            self.confWindow["size"] = self.size().toTuple()
+            
         self.confPath["videoDir"] = self.uiMainWindow.videoDir.text()
         
         # traduzindo a 'action' da ui em um código de linguagem.
         self.confLang["code"] = self.codeLang[self.langActionGroup.checkedAction()]
         
-    def saveSettings(self, path=None):
-        self.posSaveConf()
-        
+        # salvando as configurações no arquivo
         if not base.security_save((path or self.configPath), _configobj=self.config):
             print "*** Warnnig: config save error!"
-    
+            
     def onShowResultInfo(self, title, text):
         QtGui.QMessageBox.information(self, title, text)
         
@@ -712,7 +735,6 @@ class Loader(QtGui.QMainWindow):
             automatic = self.uiMainWindow.actionAutomaticSearch.isChecked()
             self.confMenuUi["actionAutomaticSearch"] = automatic
             return
-        
         search = SearchUpdate(self.confProg["packetVersion"], 
                               self.confLang["code"], self, showWin)
         search.updateFound.connect(self.showDialogUpdate)
