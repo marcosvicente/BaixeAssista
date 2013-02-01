@@ -22,7 +22,7 @@ def trans_install(configs = None):
     
     translator = gettext.translation("ba_trans", 
                 os.path.join(settings.APPDIR, "locale"), 
-                languages=[configs["code"]])
+                languages=[configs["Lang"]["code"]])
     
     # instala no espaço de nomes embutidos
     translator.install(unicode=True)
