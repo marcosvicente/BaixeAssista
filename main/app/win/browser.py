@@ -362,7 +362,7 @@ class Browser (QtGui.QWidget):
         self.btnBack = QtGui.QPushButton(self)
         path = os.path.join(settings.IMAGES_DIR, "btnback-blue.png")
         self.btnBack.setIcon(QtGui.QIcon(path))
-        self.btnBack.setToolTip("<b>back</b>")
+        self.btnBack.setToolTip(self.tr("<b>back</b>"))
         self.btnBack.clicked.connect(lambda: self.webView.back())
         self.btnBack.show()
         
@@ -370,7 +370,7 @@ class Browser (QtGui.QWidget):
         self.btnForward = QtGui.QPushButton(self)
         path = os.path.join(settings.IMAGES_DIR, "btnforward-blue.png")
         self.btnForward.setIcon(QtGui.QIcon(path))
-        self.btnForward.setToolTip("<b>forward</b>")
+        self.btnForward.setToolTip(self.tr("<b>forward</b>"))
         self.btnForward.clicked.connect(lambda: self.webView.forward())
         self.btnForward.show()
         
@@ -382,13 +382,13 @@ class Browser (QtGui.QWidget):
         self.btnNewPage = QtGui.QPushButton(self)
         path = os.path.join(settings.IMAGES_DIR, "btnpage-blue.png")
         self.btnNewPage.setIcon(QtGui.QIcon(path))
-        self.btnNewPage.setToolTip("<b>new page</b>")
+        self.btnNewPage.setToolTip(self.tr("<b>new page</b>"))
         self.btnNewPage.clicked.connect(lambda: self.setupPage(self.searchEngine, True))
         self.btnNewPage.show()
         
         ## Favorite button
         self.btnFavorite = QtGui.QPushButton(self)
-        self.btnFavorite.setToolTip("<b>favorite</b>")
+        self.btnFavorite.setToolTip(self.tr("<b>favorite</b>"))
         self.btnFavorite.setIcon(self.starEnableIcon)
         self.btnFavorite.clicked.connect( self.handleUrlAction)
         
@@ -396,7 +396,7 @@ class Browser (QtGui.QWidget):
         btnSearch = QtGui.QPushButton(self)
         path = os.path.join(settings.IMAGES_DIR, "btnsearch-blue.png")
         btnSearch.setIcon(QtGui.QIcon(path))
-        btnSearch.setToolTip("<b>search</b>")
+        btnSearch.setToolTip(self.tr("<b>search</b>"))
         btnSearch.clicked.connect(lambda: self.webView.load(self.searchEngine))
         btnSearch.show()
         
