@@ -159,19 +159,14 @@ class Server( threading.Thread ):
 # PROXY MANAGER: TRABALHA OS IPS DE SERVIDORES PROXY
 class ProxyManager(object):
     lockNewIp = threading.Lock()
+    ratelimit = 10
     
     def __init__(self):
-        self.configPath = os.path.join(settings.APPDIR, "configs")
-        self.filePath = os.path.join(self.configPath, "ipSP.cfg")
-        
-        with open( self.filePath ) as fileIp:
-            self.iplist = [ip[:-1] for ip in fileIp.readlines()]
-        
-        self.generator = self.get_generator()
+        self.configPath = os.path.join(settings.CONFIGS_DIR, "iplist.txt")
+        self.iplist = configobj.ConfigObj( self.configPath )
         
     def __del__(self):
         self.save()
-        del self.generator
         del self.iplist
         
     def get_num(self):
@@ -180,13 +175,16 @@ class ProxyManager(object):
         
     def save(self):
         """ Salva todas as modificações """
-        if not base.security_save(self.filePath, _list=self.iplist):
+        self.free_all()
+        
+        if not base.security_save(self.configPath,  _configobj=self.iplist):
             print "Erro salvando lista de ips!!!"
             
-    def get_generator(self):
-        """ Cria um gerador para iterar sobre a lista de ips """
-        return (ip for ip in self.iplist)
-
+    def free_all(self):
+        """ libera todos o ips do lock """
+        for ip in self.iplist.iterkeys():
+            self.unlock(ip)
+        
     def get_formated(self):
         """Retorna um servidor proxy ja mapeado: {"http": "http://0.0.0.0}"""
         return self.formate( self.get_new() )
@@ -198,24 +196,49 @@ class ProxyManager(object):
     def get_new(self):
         """ retorna um novo ip sem formatação -> 250.180.200.125:8080 """
         with self.lockNewIp:
-            try: newip = self.generator.next()
-            except StopIteration:
-                self.generator = self.get_generator()
-                newip = self.generator.next()
-        return newip
+            iplistkey = self.iplist.keys()
+            bestip = iplistkey[0]
+            
+            for ip in iplistkey:
+                if self.iplist[ip].as_int("rating") > self.ratelimit/2 and \
+                   not self.iplist[ip].as_bool("lock"):
+                    self.iplist[ip]["lock"] = True
+                    return ip
+            # modo mais complidado
+            for ip in iplistkey:
+                rate = self.iplist[ip].as_int("rating")
+                if self.iplist[ip].as_bool("lock"): continue
+                
+                for _ip in iplistkey:
+                    if ip == _ip: continue
+                    if rate > self.iplist[_ip].as_int("rating"):
+                        bestip = ip
+                        
+            # informa que ip já esta em uso
+            self.iplist[bestip]["lock"] = True
+        return bestip
+    
+    def unlock(self, ip):
+        self.iplist[ip]["lock"] = False
+        
+    def unformate(self, ip):
+        """ removendo a formatação do ip """
+        if type(ip) is dict: ip = ip["http"]
+        if ip.startswith("http://"): 
+            ip = ip[len("http://"):]
+        return ip
         
     def set_bad(self, ip):
-        """ reoganiza a lista de ips, colocando os piores para o final """
-        if type(ip) is dict: ip = ip["http"]
+        """ abaixando a taxa de credibilidade do ip """
+        rate = self.iplist[ self.unformate( ip ) ].as_int("rating")
+        self.iplist[ self.unformate( ip ) ]["rating"]  = rate-1 if rate > -self.ratelimit else -self.ratelimit
+        print "Bad ip: %s"%self.unformate( ip )
         
-        # remove a formatação do ip
-        if ip.startswith("http://"):
-            ip = ip[len("http://"):]
-        
-        # remove o bad ip de sua localização atual
-        self.iplist.remove( ip )
-        # desloca o bad ip para o final da lista
-        self.iplist.append( ip )
+    def set_good(self, ip):
+        """ aumentando a credibilidade do ip """
+        rate = self.iplist[ self.unformate( ip ) ].as_int("rating")
+        self.iplist[ self.unformate( ip ) ]["rating"]  = rate+1 if rate < self.ratelimit else self.ratelimit
+        print "Good ip: %s"%self.unformate( ip )
         
 ################################# LINKMANAGER #################################
 # LINK MANAGER: ADICIONA, REMOVE, E OBTÉM INFORMAÇÕES DOS LINKS ADICIONADAS
@@ -383,12 +406,12 @@ class ResumeInfo(object):
 class FM_runLocked(object):
     """ controla o fluxo de escrita e leitura no arquivo de vídeo """
     lock_run = threading.RLock()
-    def __call__(this, method):
-        def wrapped_method(self, *args, **kwargs):
+    def __call__(self, method):
+        def wrapped_method(*args, **kwargs):
             with FM_runLocked.lock_run:
-                return method(self, *args, **kwargs)
+                return method(*args, **kwargs)
         return wrapped_method
-
+    
 class FileManager(object):
     tempFilePath = os.path.join(settings.DEFAULT_VIDEOS_DIR, settings.VIDEOS_DIR_TEMP_NAME)
     
@@ -1419,9 +1442,8 @@ class StreamManager(threading.Thread):
         block_read = 1024; local_time = time.time()
         block_size = self.manage.interval.get_block_size( self.ident )
         interval_start = self.manage.interval.get_start( self.ident)
-
+        
         while not self.wasStopped() and self.numBytesLidos < block_size:
-            if not self.manage.interval.has(self.ident): break
             # bloqueia alterações sobre os dados do intervalo da conexão
             with self.manage.interval.get_lock( self.ident ):
                 try:
@@ -1523,9 +1545,7 @@ class StreamManager(threading.Thread):
         del self.videoManager[ ip ]
         
         if ip != "default" and (errornumber == 1 or (errornumber != 3 and downbytes < min_block)):
-            # tira a prioridade de uso do ip.
             self.manage.proxyManager.set_bad( ip )
-            print "Bad: %s - %s"%(ip, errornumber)
         return downbytes
         
     @base.just_try()
@@ -1583,6 +1603,8 @@ class StreamManager(threading.Thread):
                 
                 if isValid and (code == 200 or code == 206):
                     if stream: self.write(stream, len(stream))
+                    if self.usingProxy:
+                        self.manage.interval.set_good(self.proxies["http"])
                     return True
                 else:
                     self.info.set(self.ident, "state", _(u"Resposta inválida"))
@@ -1721,6 +1743,8 @@ class StreamManager_( StreamManager ):
                 
                 if isValid and (self.streamSocket.code == 200 or self.streamSocket.code == 206):
                     if stream: self.write(stream, len(stream))
+                    if self.usingProxy:
+                        self.manage.interval.set_good(self.proxies["http"])
                     return True
                 else:
                     self.info.set(self.ident, "state", _(u"Resposta inválida"))
