@@ -73,9 +73,11 @@ class VideoLoad(threading.Thread):
         self.cancel = cancelled
         
     def _init(self):
+        proxy = {}
         for index in range(1, self.ntry+1):
             try:
-                if self.manage.start(index, self.ntry, callback=self.events.responseChanged.emit):
+                if self.manage.start(index, self.ntry, proxy=proxy, 
+                                     callback=self.events.responseChanged.emit):
                     if not self.cancel:
                         self.events.responseFinish.emit(True)
                         return True
@@ -83,6 +85,7 @@ class VideoLoad(threading.Thread):
             except Exception as error:
                 self.events.responseError.emit(str(error))
                 break
+            proxy = self.manage.proxyManager.get_formated()
         else:
             self.events.responseFinish.emit(False)
         return False
