@@ -29,7 +29,7 @@ class mWebView(QtWebKit.QWebView):
     
     def __init__(self, parent=None):
         super(mWebView, self).__init__(parent)
-        self.MOVIE_LOADING = QtGui.QMovie(os.path.join(settings.IMAGES_DIR, "spin-progress.gif"))
+        self.movieSpin = QtGui.QMovie(os.path.join(settings.IMAGES_DIR, "spin-progress.gif"))
         
         self.settings().setAttribute(QtWebKit.QWebSettings.PluginsEnabled, True)
         self.page().setLinkDelegationPolicy(QtWebKit.QWebPage.DelegateAllLinks)
@@ -38,21 +38,30 @@ class mWebView(QtWebKit.QWebView):
         self.loadFinished.connect(self.onPageFinished)
         self.loadProgress.connect(self.onProgress)
         self.urlChanged.connect(self.onChangeUrl)
-        
+    
+    def getMovieSpinPixmap(self):
+        return self.movieSpin.currentPixmap()
+    
+    def getCurrentUrl(self):
+        return self.currentUrl
+    
+    def isLoadingPage(self):
+        return self.loadingPage
+    
     def onChangeUrl(self, url):
-        self.PAGE_URL = url if isinstance(url, (str,unicode)) else url.toString()
+        self.currentUrl = url if isinstance(url, (str,unicode)) else url.toString()
         
     def onPageFinished(self):
-        self.PAGE_LOADING = False
-        self.MOVIE_LOADING.stop()
+        self.loadingPage = False
+        self.movieSpin.stop()
         
     def onProgress(self, progress):
-        self.MOVIE_LOADING.jumpToNextFrame()
+        self.movieSpin.jumpToNextFrame()
         
     def load(self, url):
-        self.MOVIE_LOADING.start()
-        self.PAGE_URL = url if isinstance(url, (str,unicode)) else url.toString()
-        self.PAGE_LOADING = True
+        self.movieSpin.start()
+        self.currentUrl = url if isinstance(url, (str,unicode)) else url.toString()
+        self.loadingPage = True
         
         return super(mWebView, self).load(url)
     
@@ -158,10 +167,10 @@ class Browser (QtGui.QWidget):
         historyUrl = []
         for index in range(self.tabPagePanel.count()):
             webView = self.tabPagePanel.widget( index )
-            historyUrl.append( webView.PAGE_URL )
+            historyUrl.append( webView.getCurrentUrl() )
             
         self.addHistorySites( historyUrl )
-        self.addLastSite( self.webView.PAGE_URL )
+        self.addLastSite( self.webView.getCurrentUrl() )
         
     def closeEvent(self, event):
         self.saveSettings()
@@ -171,7 +180,7 @@ class Browser (QtGui.QWidget):
         if self.tabPagePanel.count() > 1:
             webView = self.tabPagePanel.widget( index )
             self.tabPagePanel.removeTab( index )
-            webView.reload(); webView.close()
+            webView.setHtml("")
             
     def refreshUI(self, *args):
         self.btnBack.setEnabled(self.webView.history().canGoBack())
@@ -181,11 +190,11 @@ class Browser (QtGui.QWidget):
         webView = self.tabPagePanel.widget( index )
         
         if webView == self.tabPagePanel.currentWidget():
-            self.location.setEditText(webView.PAGE_URL)
-            self.location.setToolTip(webView.PAGE_URL)
+            self.location.setEditText( webView.getCurrentUrl() )
+            self.location.setToolTip( webView.getCurrentUrl() )
             self.webView = webView
             
-        if not webView.PAGE_LOADING:
+        if not webView.isLoadingPage():
             self.btnStopRefresh.setRefreshState()
         else:
             self.btnStopRefresh.setStopState()
@@ -234,7 +243,7 @@ class Browser (QtGui.QWidget):
     def onProgress(self, porcent):
         webView = self.sender()
         self.tabPagePanel.setTabIcon(self.tabPagePanel.indexOf(webView), 
-                         QtGui.QIcon(webView.MOVIE_LOADING.currentPixmap()))
+                         QtGui.QIcon( webView.getMovieSpinPixmap() ))
         
     def onTitleChange(self, title):
         webView = self.sender()
@@ -246,8 +255,8 @@ class Browser (QtGui.QWidget):
         webView = self.sender()
         
         if self.webView == webView:
-            self.location.setEditText(webView.PAGE_URL)
-            self.location.setToolTip(webView.PAGE_URL)
+            self.location.setEditText(webView.getCurrentUrl())
+            self.location.setToolTip(webView.getCurrentUrl())
         
     def handleStopRefresh(self):
         if self.btnStopRefresh["state"] == "refresh":
@@ -382,9 +391,6 @@ class Browser (QtGui.QWidget):
         self.btnFavorite.setToolTip("<b>favorite</b>")
         self.btnFavorite.setIcon(self.starEnableIcon)
         self.btnFavorite.clicked.connect( self.handleUrlAction)
-        
-        ##path = os.path.join(settings.IMAGES_DIR, "btnplus-blue.png")
-        ##path = os.path.join(settings.IMAGES_DIR, "btnminus-blue.png")
         
         ## Refresh button
         btnSearch = QtGui.QPushButton(self)
