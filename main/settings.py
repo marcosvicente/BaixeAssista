@@ -42,6 +42,7 @@ APPDIR = os.path.join(PROJECTPATH, "app")
 CONFIGS_DIR = os.path.join(APPDIR, "configs")
 IMAGES_DIR = os.path.join(APPDIR, "images")
 LOGS_DIR = os.path.join(APPDIR, "logs")
+INTERFACE_DIR = os.path.join(APPDIR, "win")
 
 # pasta(diretório) padrão de vídeos
 VIDEOS_DIR_TEMP_NAME = "temp"
