@@ -14,13 +14,13 @@ class StopRefreshButton(QtGui.QPushButton):
         path = os.path.join(settings.IMAGES_DIR, "btnrefresh-blue.png")
         self.setIcon(QtGui.QIcon(path))
         self.btnState["state"] = "refresh"
-        self.setToolTip("<b>reload</b>")
+        self.setToolTip(self.tr("<b>reload</b>"))
         
     def setStopState(self):
         qicon = QtGui.QIcon(os.path.join(settings.IMAGES_DIR, "btnstop-blue.png"))
         self.setIcon( qicon )
         self.btnState["state"] = "stop"
-        self.setToolTip("<b>stop</b>")
+        self.setToolTip(self.tr("<b>stop</b>"))
         
     def __getitem__(self, key):
         return self.btnState[key]
