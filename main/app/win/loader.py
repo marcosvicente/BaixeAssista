@@ -4,7 +4,6 @@ import sys, os
 import time, threading, configobj
 from PySide import QtCore, QtGui
 from main import settings
-from django.conf import settings
 
 OldPixmap = QtGui.QPixmap
 def pixmap(*args, **kwargs):
@@ -17,21 +16,33 @@ def pixmap(*args, **kwargs):
 QtGui.QPixmap = pixmap
 
 import mainLayout, uiDialogDl
-from tableRow import TableRow
 from playerDialog import PlayerDialog
-from dialogRec import DialogRec
 from dialogError import DialogError
 from dialogUpdate import DialogUpdate
+from dialogRec import DialogRec
+from tableRow import TableRow
 
 import webbrowser
 import browser
+import glob
 
 from main.app import manager
 from main.app.util import base
 from main.app import updater
 
-base.trans_install() # instala as traduções.
-       
+def transUi_install(code):
+    """ instala as traduções da interface gráfica """
+    translator = QtCore.QTranslator()
+    
+    # pesquisando por todos os arquivo de tradução da ui.
+    transfile = glob.glob(os.path.join(settings.APPDIR, "win", "locale", code, "*.qm"))
+    
+    for filepath in transfile:
+        # carregando os arquivos de tradução.
+        translator.load( filepath )
+        
+    return translator
+
 ## --------------------------------------------------------------------------
 class DialogDl(QtGui.QDialog):
     
@@ -108,18 +119,18 @@ class Loader(QtGui.QMainWindow):
     configPath = os.path.join(settings.CONFIGS_DIR, "configs.cfg")
     
     baixeAssista = "BaixeAssista v%s"%settings.PROGRAM_VERSION
+    config = configobj.ConfigObj( configPath )
     
     def __init__(self):
         super(Loader, self).__init__()
+                
         self.uiMainWindow = mainLayout.Ui_MainWindow()
         self.uiMainWindow.setupUi(self)
         self.setWindowTitle(self.baixeAssista)
         
-        self.LOADING = False
-        self.manage = None
         self.tableRows = {}
-        self.config = {}
-        self.mplayer = None
+        self.LOADING = False
+        self.manage = self.mplayer = None
         
         self.setupUI()
         self.setupAction()
@@ -247,7 +258,7 @@ class Loader(QtGui.QMainWindow):
                 if type(title) is dict:
                     value = title["conversor"](value)
                     title = title["title"]
-                item = QtGui.QTreeWidgetItem(["{0} ::: {1}".format(title, value)])
+                item = QtGui.QTreeWidgetItem([u"{0} ::: {1}".format(title, value)])
                 listItems.append( item )
             return listItems
         
@@ -637,8 +648,8 @@ class Loader(QtGui.QMainWindow):
         
         conf["Prog"].setdefault("packetVersion", "1.6.9")
         
-    def configUI(self, path=None):
-        self.config = conf = configobj.ConfigObj((path or self.configPath))
+    def configUI(self):
+        conf = self.config
         self.setConfigDefault( conf )
         
         self.confMenuUi = menuUi = conf["MenuUi"]
@@ -803,8 +814,14 @@ class SearchUpdate(QtCore.QObject, threading.Thread):
 if __name__ == "__main__":
     app = QtGui.QApplication(sys.argv)
     
+    base.trans_install()
+    
+    # pesquisando por todos os arquivo de tradução da ui.
+    filename = "en_%s-py.qm" % Loader.config["Lang"]["code"]
+    filepath = os.path.join(settings.INTERFACE_DIR, "i18n", filename)
+    
     translator = QtCore.QTranslator()
-    translator.load('mainLayout_pt')
+    print "TL: ", translator.load( filepath )
     app.installTranslator(translator)
     
     mw = Loader()
