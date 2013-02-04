@@ -4,6 +4,7 @@ encoding//main/app/decrypter.py=ISO-8859-1
 encoding//main/app/generators/__init__.py=utf-8
 encoding//main/app/generators/_sitebase.py=utf-8
 encoding//main/app/manager.py=ISO-8859-1
+encoding//main/app/proxy.py=ISO-8859-1
 encoding//main/app/updater.py=UTF-8
 encoding//main/app/util/base.py=utf-8
 encoding//main/app/win/browser.py=utf-8
