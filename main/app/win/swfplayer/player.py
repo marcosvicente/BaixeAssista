@@ -85,6 +85,9 @@ class Player(QtGui.QWidget):
         assert self.params.has_key( name ), 'get:option "%s" not found!'%name
         return self.params[ name ]
     
+    def stop(self):
+        self.webview.setHtml("")
+        
     def pause(self):
         """ pausa a execução do video """
         frame = self.webview.page().mainFrame()
