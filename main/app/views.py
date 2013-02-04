@@ -1,5 +1,10 @@
 # Create your views here.
 from django.http import HttpResponse
+from django.shortcuts import render_to_response
+from main import settings
+import urllib
+import os
+from django.template import Context, Template, loader
 
 # --------------------------------------------------------------------------------------
 def streamLoader( request ):
@@ -23,8 +28,6 @@ def streamLoader( request ):
 		statuscode = 200
 	
 	seekpos = long(seekpos)
-	print statuscode, seekpos, querystr
-	
 	filename = manage.getVideoTitle()
 	filename = filename.encode("utf-8","ignore")
 	videoSize = manage.getVideoSize()
@@ -38,8 +41,11 @@ def streamLoader( request ):
 	response["Accept-Ranges"] = "bytes"
 	return response
 
-
-
+def playerLoader(request):
+	params = request.GET.copy()
+	for key in params: params[key] = urllib.unquote_plus(params[key])
+	return render_to_response(params["template"], {"params": params}, 
+							  mimetype="text/html")
 
 
 

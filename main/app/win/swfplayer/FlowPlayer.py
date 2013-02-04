@@ -27,9 +27,8 @@ class Player( player.Player ):
      
     def getParams(self):
         params = super(Player, self).getParams()
-        params["pluginskin"] = "/".join([params["staticurl"], 
-            self.filesdirname, "plugins/flowplayer.pseudostreaming-3.2.11.swf"
-        ])
+        params["pluginskin"] = "/".join([params["static"], self.filesdirname, 
+                                         "plugins/flowplayer.pseudostreaming-3.2.11.swf"])
         return params
     
     

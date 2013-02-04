@@ -1,11 +1,15 @@
 # -*- coding: ISO-8859-1 -*-
 
-import os, json
+import os
 from PySide import QtCore, QtGui, QtWebKit
-from main import settings
 from django.template import Context, Template, loader
+from django.core.urlresolvers import reverse
 from main.app.util.sites import get_random_text
+from main.app.manager import Server
+from main import settings
+import urllib
 
+## --------------------------------------------------------------------
 
 class Player(QtGui.QWidget):
     # template usando na renderização do player
@@ -23,6 +27,8 @@ class Player(QtGui.QWidget):
     # arquivos swfs
     swf_players = []
     
+    relativeurl = reverse("main.app.views.playerLoader")
+    
     def __init__(self, parent=None, **params):
         """params = {}
         previewImage: local da imagem mostrada no backgroud do player.
@@ -31,13 +37,12 @@ class Player(QtGui.QWidget):
         portNumber:
         """
         super(Player, self).__init__(parent)
-        self.json_data = {}
         self.params = params
         self.skins = {}
         
         # defaut params
-        params.setdefault("hostName", "localhost")
-        params.setdefault("portNumber", 8002)
+        params.setdefault("hostName", Server.HOST)
+        params.setdefault("portNumber", Server.PORT)
         params.setdefault("autostart", False)
         
         try:
@@ -84,24 +89,16 @@ class Player(QtGui.QWidget):
         """ pausa a execução do video """
         frame = self.webview.page().mainFrame()
         frame.evaluateJavaScript("BA_GLOBAL_PLAYER.stop();")
-        
-    def get_json(self, name, default=None):
-        return self.json_data.get(name, default)
-    
-    def InterfaceJson(self, event):
-        data = self.webview.GetCurrentTitle()
-        try: self.json_data.update(json.loads(data))
-        except: pass
     
     def getParams(self):
         previmage = self.params.get("previewImage", "")
         streamname = self.params.get("streamName", get_random_text(5)+".flv")
         
-        hostname = self.params.get("hostName", "localhost")
-        portnumber = self.params.get("portNumber", 8002)
+        hostname = self.params.get("hostName", Server.HOST)
+        portnumber = self.params.get("portNumber", Server.PORT)
         
         domain = "http://%s:%s"%(hostname, portnumber)
-        static = (domain + settings.STATIC_URL).strip("/")
+        static = settings.STATIC_URL.rstrip("/")
         
         jqueryscript = "/".join([static, "js", "jquery-1.8.2.min.js"])
         jsonscript = "/".join([static, "js", "json2.js"])
@@ -112,12 +109,12 @@ class Player(QtGui.QWidget):
         
         swfplayer = "/".join([static, self.filesdirname, self.swf_players[0]])
         autostart = str(self.params["autostart"]).lower()
-        streamfile = "/".join([domain, "stream", streamname])
+        streamfile = "/".join(["/stream", streamname])
         
         self.swf_players.reverse()
         
         params = {
-            "staticurl": static,
+            "static": static,
             "hostdomain": domain,
             "file": streamfile,
             "jqueryscript": jqueryscript,
@@ -137,10 +134,10 @@ class Player(QtGui.QWidget):
     def reload(self):
         """ recarrega a página atualizando os parâmetros do player """
         params = self.getParams()
-        html = self.getPlayerPage( params )
+        params["template"] = self.template
+        fullurl = params["hostdomain"] + self.relativeurl+"?"+urllib.urlencode(params)
+        self.webview.load( fullurl )
         
-        #print html
         
-        self.webview.setHtml(html)
-        self.webview.reload()
+        
         

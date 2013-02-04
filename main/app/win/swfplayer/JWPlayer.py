@@ -6,7 +6,7 @@ import player
 
 # -----------------------------------------------------------------------------
 class Player( player.Player ):
-    defaultskin = "etv"
+    defaultskin = "chelseaskin.swf"
     
     template = "jwplayer.html"
     filesdirname = "jwplayer"
@@ -27,8 +27,6 @@ class Player( player.Player ):
      
     def getParams(self):
         params = super(Player, self).getParams()
+        params["playerscript"] = "/".join([params["static"], self.filesdirname, self.playerapi])
         params["provider"] = "http"
-        
-        apiUrl = "/".join([params["staticurl"], self.filesdirname, self.playerapi])
-        params["playerscript"] = apiUrl
         return params
