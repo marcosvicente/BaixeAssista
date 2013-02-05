@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'uiDialogDl.ui'
 #
-# Created: Sun Jan 27 01:29:21 2013
+# Created: Mon Feb 04 20:17:26 2013
 #      by: pyside-uic 0.2.14 running on PySide 1.1.2
 #
 # WARNING! All changes made in this file will be lost!
@@ -26,9 +26,16 @@ class Ui_Dialog(object):
         self.infoProgress.setSizePolicy(sizePolicy)
         self.infoProgress.setObjectName("infoProgress")
         self.verticalLayout.addWidget(self.infoProgress)
-        self.siteResponse = QtGui.QTextEdit(Dialog)
+        self.groupBox = QtGui.QGroupBox(Dialog)
+        self.groupBox.setObjectName("groupBox")
+        self.verticalLayout_2 = QtGui.QVBoxLayout(self.groupBox)
+        self.verticalLayout_2.setSpacing(5)
+        self.verticalLayout_2.setContentsMargins(5, 5, 5, 5)
+        self.verticalLayout_2.setObjectName("verticalLayout_2")
+        self.siteResponse = QtGui.QTextEdit(self.groupBox)
         self.siteResponse.setObjectName("siteResponse")
-        self.verticalLayout.addWidget(self.siteResponse)
+        self.verticalLayout_2.addWidget(self.siteResponse)
+        self.verticalLayout.addWidget(self.groupBox)
         self.buttonBox = QtGui.QDialogButtonBox(Dialog)
         self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
         self.buttonBox.setStandardButtons(QtGui.QDialogButtonBox.Cancel)
@@ -44,4 +51,5 @@ class Ui_Dialog(object):
     def retranslateUi(self, Dialog):
         Dialog.setWindowTitle(QtGui.QApplication.translate("Dialog", "Dialog", None, QtGui.QApplication.UnicodeUTF8))
         self.infoProgress.setText(QtGui.QApplication.translate("Dialog", "...", None, QtGui.QApplication.UnicodeUTF8))
+        self.groupBox.setTitle(QtGui.QApplication.translate("Dialog", "Site information", None, QtGui.QApplication.UnicodeUTF8))
 
