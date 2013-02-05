@@ -16,7 +16,7 @@ class Player( player.Player ):
     filesdir = os.path.join(settings.STATIC_PATH, filesdirname)
     skinsdir = os.path.join(filesdir, "skins")
     
-    swf_players = ["jwplayer.flash-1.swf", "jwplayer.flash-2.swf"]
+    flashplayer = "player-v5.10.swf"
     
     def __init__(self, parent, **params):
         """ params: {}
@@ -27,6 +27,6 @@ class Player( player.Player ):
      
     def getParams(self):
         params = super(Player, self).getParams()
-        params["playerscript"] = "/".join([params["static"], self.filesdirname, self.playerapi])
+        params["playerscript"] = "/".join([params["static"], self.filesdirname, "js", self.playerapi])
         params["provider"] = "http"
         return params

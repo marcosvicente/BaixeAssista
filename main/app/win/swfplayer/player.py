@@ -25,7 +25,7 @@ class Player(QtGui.QWidget):
     # caminho completo para o diretórios de skin do player
     skinsdir = ""
     # arquivos swfs
-    swf_players = []
+    flashplayer = ""
     
     relativeurl = reverse("main.app.views.playerLoader")
     
@@ -110,11 +110,9 @@ class Player(QtGui.QWidget):
         skinname = self.skins.get(self.params["skinName"], self.defaultskin)
         skin = "/".join([static, self.filesdirname, "skins", skinname])
         
-        swfplayer = "/".join([static, self.filesdirname, self.swf_players[0]])
+        swfplayer = "/".join([static, self.filesdirname, self.flashplayer])
         autostart = str(self.params["autostart"]).lower()
         streamfile = "/".join(["/stream", streamname])
-        
-        self.swf_players.reverse()
         
         params = {
             "static": static,

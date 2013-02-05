@@ -16,7 +16,7 @@ class Player( player.Player ):
     filesdir = os.path.join(settings.STATIC_PATH, filesdirname)
     skinsdir = os.path.join(filesdir, "skins")
     
-    swf_players = ["flowplayer-3.2.15-1.swf", "flowplayer-3.2.15-2.swf"]
+    flashplayer = "player-v3.2.15.swf"
     
     def __init__(self, parent, **params):
         """ params: {}
