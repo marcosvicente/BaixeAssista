@@ -365,10 +365,9 @@ class Loader(QtGui.QMainWindow):
         """ atualizando apenas as tabelas apresentadas na 'MainWindow' """
         for sm in self.manage.ctrConnection.getConnections():
             if not sm.wasStopped():
-                values = map(lambda key: sm.info.get(sm.ident, key), 
-                             manager.StreamManager.listInfo)
+                values = map(lambda key: sm.info.get(sm.ident, key), manager.StreamManager.listInfo)
                 self.tableRows[ sm.ident ].update(values = values)
-        
+                
         videoSizeFormated = manager.StreamManager.format_bytes(self.manage.getVideoSize())
         videoPercent = base.calc_percent(self.manage.getCacheSize(), self.manage.getVideoSize())
         
@@ -380,7 +379,9 @@ class Loader(QtGui.QMainWindow):
         
         self.uiMainWindow.downloadedFromInfo.setText(manager.StreamManager.format_bytes(self.manage.getCacheSize()))
         self.uiMainWindow.downloadedToInfo.setText( videoSizeFormated )
-    
+        self.uiMainWindow.globalSpeedInfo.setText(self.manage.getGlobalSpeed())
+        self.uiMainWindow.globalEtaInfo.setText(self.manage.getGlobalEta())
+        
     def updateTableExit(self):
         """ atualização de saída das tabelas. desativando todos os controles """
         self.uiMainWindow.progressBarInfo.setValue(0.0)

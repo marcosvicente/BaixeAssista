@@ -972,10 +972,9 @@ class Manage(object):
     def _init(self, **params):
         """ método chamado para realizar a configuração de leitura aleatória da stream """
         self.params.update( params )
-        
-        self.velocidadeGlobal = 0  # velocidade global da conexão
-        self.cacheBytesCount  = 0
-        self.tempoDownload = ""    # tempo total de download
+        # velocidade global do download atual
+        self.globalSpeed = self.globalEta = ""
+        self.cacheBytesCount = 0
         self.resuming = False
         
         self.params.setdefault("tempfile", False)
@@ -1148,14 +1147,41 @@ class Manage(object):
         """ avalia se o arquivo de video está sendo salva em um arquivo temporário """
         return (self.usingTempfile or self.params["tempfile"])
     
-    def getInitPos(self): return self.params.get("seekpos",0)
-    def isResuming(self): return self.resuming
-    def getVideoTitle(self): return self.videoTitle
-    def getUrl(self): return self.streamUrl
-    def getVideoSize(self): return self.videoSize
-    def getVideoExt(self): return self.videoExt
-    def nowSending(self): return self.interval.send_info['sending']
-    def getCacheSize(self): return self.cacheBytesCount
+    def getInitPos(self):
+        return self.params.get("seekpos",0)
+    
+    def isResuming(self):
+        return self.resuming
+    
+    def getVideoTitle(self):
+        return self.videoTitle
+    
+    def getUrl(self):
+        return self.streamUrl
+    
+    def getVideoSize(self):
+        return self.videoSize
+    
+    def getVideoExt(self):
+        return self.videoExt
+    
+    def nowSending(self): 
+        return self.interval.send_info['sending']
+    
+    def getCacheSize(self): 
+        return self.cacheBytesCount
+    
+    def getGlobalSpeed(self):
+        return self.globalSpeed
+    
+    def setGlobalSpeed(self, speed):
+        self.globalSpeed = speed
+        
+    def getGlobalEta(self):
+        return self.globalEta
+    
+    def setGlobalEta(self, eta):
+        self.globalEta = eta
     
     @FM_runLocked()
     def salveInfoResumo(self):
@@ -1499,10 +1525,11 @@ class StreamManager(threading.Thread):
                     speed = self.calc_speed(local_time, time.time(), self.numBytesLidos)
                     self.info.set(self.ident, 'local_speed', speed)
                     
-                    # tempo do download
-                    self.manage.tempoDownload = self.calc_eta(start, time.time(), total, current)
+                    # tempo total do download do arquivo
+                    self.manage.setGlobalEta(self.calc_eta(start, time.time(), total, current))
+                    
                     # calcula a velocidade global
-                    self.manage.velocidadeGlobal = self.calc_speed(start, time.time(), current)
+                    self.manage.setGlobalSpeed(self.calc_speed(start, time.time(), current))
                     
                     if self.numBytesLidos >= block_size:
                         if self.manage.interval.canContinue(self.ident) and not self.manage.isComplete():
