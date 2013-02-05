@@ -935,7 +935,7 @@ class Manage(object):
         
         self.streamUrl = URL # guarda a url do video
         self.usingTempfile = params["tempfile"]
-        self.posInicialLeitura = 0
+        self.startCacheSize = 0
         self.cacheBytesTotal = 0
         self.streamerList = []
         
@@ -1007,7 +1007,7 @@ class Manage(object):
                  seekpos = seekpos, offset = 0,  pending = intervs, 
                  maxsplit = self.params["maxsplit"])
             
-            self.posInicialLeitura = self.cacheBytesTotal
+            self.startCacheSize = self.cacheBytesTotal
             self.resuming = True
                    
     def start(self, ctry, ntry, proxy={}, callback=None):
@@ -1046,7 +1046,7 @@ class Manage(object):
         self.fileManager.open()
         
         # tempo inicial da velocidade global
-        self.tempoInicialGlobal = time.time()
+        self.globalStartTime = time.time()
         self.autoSaveTime = time.time()
         # informa que a transferêcia pode começar
         return True
@@ -1136,17 +1136,19 @@ class Manage(object):
     
     def isComplete(self):
         """ informa se o arquivo já foi completamente baixado """
-        return (self.cacheBytesTotal >= (self.getVideoSize()-25))
-    
-    def received_bytes(self):
-        """ retorna o numero total de bytes transferidos """
-        return self.cacheBytesTotal
+        return (self.cacheBytesTotal >= (self.videoSize-25))
     
     @property
     def isTempFileMode(self):
         """ avalia se o arquivo de video está sendo salva em um arquivo temporário """
         return (self.usingTempfile or self.params["tempfile"])
     
+    def getGlobalStartTime(self):
+        return self.globalStartTime
+    
+    def getStartCacheSize(self):
+        return self.startCacheSize
+        
     def getInitPos(self):
         return self.params.get("seekpos",0)
     
@@ -1168,8 +1170,8 @@ class Manage(object):
     def nowSending(self): 
         return self.interval.send_info['sending']
     
-    def getCacheSize(self): 
-        return self.cacheBytesCount
+    def getCacheBytesTotal(self): 
+        return self.cacheBytesTotal
     
     def getGlobalSpeed(self):
         return self.globalSpeed
@@ -1231,7 +1233,7 @@ class Manage(object):
 
         if not self.isTempFileMode: self.salveInfoResumo()
         
-        self.cacheBytesTotal = self.posInicialLeitura = seekpos
+        self.cacheBytesTotal = self.startCacheSize = seekpos
         del self.interval, self.fileManager
 
         self._init(tempfile = True, seekpos = seekpos)
@@ -1243,7 +1245,7 @@ class Manage(object):
         if self.params.get("seeking", False):
             self.notifiqueConexoes(True)
 
-            self.cacheBytesTotal = self.posInicialLeitura = 0
+            self.cacheBytesTotal = self.startCacheSize = 0
             del self.interval, self.fileManager
 
             self._init(tempfile = self.usingTempfile, seekpos = 0)
@@ -1385,10 +1387,12 @@ class StreamManager(threading.Thread):
     @staticmethod
     def calc_speed(start, now, bytes):
         dif = now - start
-        if bytes == 0 or dif < 0.001: # One millisecond
-            return '%10s' % '---b/s'
-        return '%10s' % ('%s/s' % StreamManager.format_bytes(float(bytes) / dif))
-
+        if bytes == 0 or dif < 0.001:
+            result = "---b/s" # One millisecond
+        else:
+            result = "%s/s"% StreamManager.format_bytes(float(bytes) / dif)
+        return result
+        
     @staticmethod
     def calc_percent(byte_counter, data_len):
         if data_len is None:
@@ -1517,9 +1521,10 @@ class StreamManager(threading.Thread):
                     # começa a escrita da stream de video no arquivo local.
                     self.write(streamData, streamLen)
                     
-                    start = self.manage.tempoInicialGlobal
-                    current = self.manage.received_bytes() - self.manage.posInicialLeitura
-                    total = self.manage.getVideoSize() - self.manage.posInicialLeitura
+                    start = self.manage.getGlobalStartTime()
+                    
+                    current = self.manage.getCacheBytesTotal() - self.manage.getStartCacheSize()
+                    total = self.manage.getVideoSize() - self.manage.getStartCacheSize()
                     
                     # calcula a velocidade de transferência da conexão
                     speed = self.calc_speed(local_time, time.time(), self.numBytesLidos)

@@ -369,7 +369,7 @@ class Loader(QtGui.QMainWindow):
                 self.tableRows[ sm.ident ].update(values = values)
                 
         videoSizeFormated = manager.StreamManager.format_bytes(self.manage.getVideoSize())
-        videoPercent = base.calc_percent(self.manage.getCacheSize(), self.manage.getVideoSize())
+        videoPercent = base.calc_percent(self.manage.getCacheBytesTotal(), self.manage.getVideoSize())
         
         self.uiMainWindow.videoTileInfo.setText(self.manage.getVideoTitle())
         self.uiMainWindow.videoSizeInfo.setText( videoSizeFormated )
@@ -377,7 +377,7 @@ class Loader(QtGui.QMainWindow):
         
         self.uiMainWindow.progressBarInfo.setValue( videoPercent )
         
-        self.uiMainWindow.downloadedFromInfo.setText(manager.StreamManager.format_bytes(self.manage.getCacheSize()))
+        self.uiMainWindow.downloadedFromInfo.setText(manager.StreamManager.format_bytes(self.manage.getCacheBytesTotal()))
         self.uiMainWindow.downloadedToInfo.setText( videoSizeFormated )
         self.uiMainWindow.globalSpeedInfo.setText(self.manage.getGlobalSpeed())
         self.uiMainWindow.globalEtaInfo.setText(self.manage.getGlobalEta())
