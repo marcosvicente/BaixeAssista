@@ -709,7 +709,11 @@
                       </widget>
                      </item>
                      <item row="0" column="1">
-                      <widget class="QLineEdit" name="videoTileInfo"/>
+                      <widget class="QLineEdit" name="videoTileInfo">
+                       <property name="readOnly">
+                        <bool>true</bool>
+                       </property>
+                      </widget>
                      </item>
                      <item row="1" column="0">
                       <widget class="QLabel" name="label_10">
@@ -719,7 +723,11 @@
                       </widget>
                      </item>
                      <item row="1" column="1">
-                      <widget class="QLineEdit" name="videoExtInfo"/>
+                      <widget class="QLineEdit" name="videoExtInfo">
+                       <property name="readOnly">
+                        <bool>true</bool>
+                       </property>
+                      </widget>
                      </item>
                      <item row="2" column="0">
                       <widget class="QLabel" name="label_11">
@@ -729,7 +737,11 @@
                       </widget>
                      </item>
                      <item row="2" column="1">
-                      <widget class="QLineEdit" name="videoSizeInfo"/>
+                      <widget class="QLineEdit" name="videoSizeInfo">
+                       <property name="readOnly">
+                        <bool>true</bool>
+                       </property>
+                      </widget>
                      </item>
                      <item row="8" column="0">
                       <widget class="QLabel" name="label_12">
@@ -762,6 +774,9 @@
                            <verstretch>0</verstretch>
                           </sizepolicy>
                          </property>
+                         <property name="readOnly">
+                          <bool>true</bool>
+                         </property>
                         </widget>
                        </item>
                        <item>
@@ -779,6 +794,9 @@
                            <verstretch>0</verstretch>
                           </sizepolicy>
                          </property>
+                         <property name="readOnly">
+                          <bool>true</bool>
+                         </property>
                         </widget>
                        </item>
                       </layout>
@@ -791,7 +809,11 @@
                       </widget>
                      </item>
                      <item row="4" column="1">
-                      <widget class="QLineEdit" name="globalSpeedInfo"/>
+                      <widget class="QLineEdit" name="globalSpeedInfo">
+                       <property name="readOnly">
+                        <bool>true</bool>
+                       </property>
+                      </widget>
                      </item>
                      <item row="5" column="0">
                       <widget class="QLabel" name="label_16">
@@ -801,7 +823,11 @@
                       </widget>
                      </item>
                      <item row="5" column="1">
-                      <widget class="QLineEdit" name="globalEtaInfo"/>
+                      <widget class="QLineEdit" name="globalEtaInfo">
+                       <property name="readOnly">
+                        <bool>true</bool>
+                       </property>
+                      </widget>
                      </item>
                     </layout>
                    </item>

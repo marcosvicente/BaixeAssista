@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'mainLayout.ui'
 #
-# Created: Tue Feb 05 19:57:44 2013
+# Created: Tue Feb 05 20:47:30 2013
 #      by: pyside-uic 0.2.14 running on PySide 1.1.2
 #
 # WARNING! All changes made in this file will be lost!
@@ -363,18 +363,21 @@ class Ui_MainWindow(object):
         self.label_9.setObjectName("label_9")
         self.formLayout.setWidget(0, QtGui.QFormLayout.LabelRole, self.label_9)
         self.videoTileInfo = QtGui.QLineEdit(self.groupBox_3)
+        self.videoTileInfo.setReadOnly(True)
         self.videoTileInfo.setObjectName("videoTileInfo")
         self.formLayout.setWidget(0, QtGui.QFormLayout.FieldRole, self.videoTileInfo)
         self.label_10 = QtGui.QLabel(self.groupBox_3)
         self.label_10.setObjectName("label_10")
         self.formLayout.setWidget(1, QtGui.QFormLayout.LabelRole, self.label_10)
         self.videoExtInfo = QtGui.QLineEdit(self.groupBox_3)
+        self.videoExtInfo.setReadOnly(True)
         self.videoExtInfo.setObjectName("videoExtInfo")
         self.formLayout.setWidget(1, QtGui.QFormLayout.FieldRole, self.videoExtInfo)
         self.label_11 = QtGui.QLabel(self.groupBox_3)
         self.label_11.setObjectName("label_11")
         self.formLayout.setWidget(2, QtGui.QFormLayout.LabelRole, self.label_11)
         self.videoSizeInfo = QtGui.QLineEdit(self.groupBox_3)
+        self.videoSizeInfo.setReadOnly(True)
         self.videoSizeInfo.setObjectName("videoSizeInfo")
         self.formLayout.setWidget(2, QtGui.QFormLayout.FieldRole, self.videoSizeInfo)
         self.label_12 = QtGui.QLabel(self.groupBox_3)
@@ -395,6 +398,7 @@ class Ui_MainWindow(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.downloadedFromInfo.sizePolicy().hasHeightForWidth())
         self.downloadedFromInfo.setSizePolicy(sizePolicy)
+        self.downloadedFromInfo.setReadOnly(True)
         self.downloadedFromInfo.setObjectName("downloadedFromInfo")
         self.horizontalLayout_5.addWidget(self.downloadedFromInfo)
         self.label_14 = QtGui.QLabel(self.groupBox_3)
@@ -406,6 +410,7 @@ class Ui_MainWindow(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.downloadedToInfo.sizePolicy().hasHeightForWidth())
         self.downloadedToInfo.setSizePolicy(sizePolicy)
+        self.downloadedToInfo.setReadOnly(True)
         self.downloadedToInfo.setObjectName("downloadedToInfo")
         self.horizontalLayout_5.addWidget(self.downloadedToInfo)
         self.formLayout.setLayout(3, QtGui.QFormLayout.FieldRole, self.horizontalLayout_5)
@@ -413,12 +418,14 @@ class Ui_MainWindow(object):
         self.label_15.setObjectName("label_15")
         self.formLayout.setWidget(4, QtGui.QFormLayout.LabelRole, self.label_15)
         self.globalSpeedInfo = QtGui.QLineEdit(self.groupBox_3)
+        self.globalSpeedInfo.setReadOnly(True)
         self.globalSpeedInfo.setObjectName("globalSpeedInfo")
         self.formLayout.setWidget(4, QtGui.QFormLayout.FieldRole, self.globalSpeedInfo)
         self.label_16 = QtGui.QLabel(self.groupBox_3)
         self.label_16.setObjectName("label_16")
         self.formLayout.setWidget(5, QtGui.QFormLayout.LabelRole, self.label_16)
         self.globalEtaInfo = QtGui.QLineEdit(self.groupBox_3)
+        self.globalEtaInfo.setReadOnly(True)
         self.globalEtaInfo.setObjectName("globalEtaInfo")
         self.formLayout.setWidget(5, QtGui.QFormLayout.FieldRole, self.globalEtaInfo)
         self.verticalLayout_10.addLayout(self.formLayout)
