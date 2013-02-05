@@ -347,250 +347,254 @@ Deseja salvá-lo permanentemente ?</translation>
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../mainLayout.py" line="578"/>
+        <location filename="../mainLayout.py" line="586"/>
         <source>BaixeAssista</source>
         <translation>BaixeAssista</translation>
     </message>
     <message>
-        <location filename="../mainLayout.py" line="579"/>
+        <location filename="../mainLayout.py" line="587"/>
         <source>Download</source>
         <translation>Baixar</translation>
     </message>
     <message>
-        <location filename="../mainLayout.py" line="580"/>
+        <location filename="../mainLayout.py" line="588"/>
         <source>Browser</source>
         <translation>Navegador</translation>
     </message>
     <message>
-        <location filename="../mainLayout.py" line="581"/>
+        <location filename="../mainLayout.py" line="589"/>
         <source>Control</source>
         <translation>Controle</translation>
     </message>
     <message>
-        <location filename="../mainLayout.py" line="582"/>
+        <location filename="../mainLayout.py" line="590"/>
         <source>Active connections</source>
         <translation>Conexões ativas</translation>
     </message>
     <message>
-        <location filename="../mainLayout.py" line="603"/>
+        <location filename="../mainLayout.py" line="612"/>
         <source>Speed</source>
         <translation>Velocidade</translation>
     </message>
     <message>
-        <location filename="../mainLayout.py" line="584"/>
+        <location filename="../mainLayout.py" line="592"/>
         <source>Timeout</source>
         <translation>Tempo de espera(timeout)</translation>
     </message>
     <message>
-        <location filename="../mainLayout.py" line="585"/>
+        <location filename="../mainLayout.py" line="593"/>
         <source>Behavior</source>
         <translation>Comportamento</translation>
     </message>
     <message>
-        <location filename="../mainLayout.py" line="586"/>
+        <location filename="../mainLayout.py" line="594"/>
         <source>Connection attempts</source>
         <translation>Tentativas de conexão</translation>
     </message>
     <message>
-        <location filename="../mainLayout.py" line="587"/>
+        <location filename="../mainLayout.py" line="595"/>
         <source>Wait between connection attempts</source>
         <translation>Espera entre tentativas de conexão</translation>
     </message>
     <message>
-        <location filename="../mainLayout.py" line="588"/>
+        <location filename="../mainLayout.py" line="598"/>
         <source>Disable proxy</source>
         <translation>Desativar proxy</translation>
     </message>
     <message>
-        <location filename="../mainLayout.py" line="589"/>
+        <location filename="../mainLayout.py" line="597"/>
         <source>Modify connection type</source>
         <translation>Modificar o tipo de conexão</translation>
     </message>
     <message>
-        <location filename="../mainLayout.py" line="590"/>
+        <location filename="../mainLayout.py" line="599"/>
         <source>Connection</source>
         <translation>Conexão</translation>
     </message>
     <message>
-        <location filename="../mainLayout.py" line="591"/>
+        <location filename="../mainLayout.py" line="600"/>
         <source>Video quality</source>
         <translation>Qualidade do vídeo</translation>
     </message>
     <message>
-        <location filename="../mainLayout.py" line="592"/>
+        <location filename="../mainLayout.py" line="601"/>
         <source>Directory videos</source>
         <translation>Diretório de vídeos</translation>
     </message>
     <message>
-        <location filename="../mainLayout.py" line="593"/>
+        <location filename="../mainLayout.py" line="602"/>
         <source>...</source>
         <translation>...</translation>
     </message>
     <message>
-        <location filename="../mainLayout.py" line="594"/>
+        <location filename="../mainLayout.py" line="603"/>
         <source>Movies</source>
         <translation>Filmes</translation>
     </message>
     <message>
-        <location filename="../mainLayout.py" line="595"/>
+        <location filename="../mainLayout.py" line="604"/>
         <source>Divide the number of times</source>
         <translation>Dividir o número de vezes</translation>
     </message>
     <message>
-        <location filename="../mainLayout.py" line="596"/>
+        <location filename="../mainLayout.py" line="605"/>
         <source>Use temporary file</source>
-        <translatorcomment>Salva o vídeo em um arquivo temporário.</translatorcomment>
         <translation>Usar arquivo temporário</translation>
     </message>
     <message>
-        <location filename="../mainLayout.py" line="612"/>
+        <location filename="../mainLayout.py" line="621"/>
         <source>Files</source>
         <translation>Arquivos</translation>
     </message>
     <message>
-        <location filename="../mainLayout.py" line="598"/>
+        <location filename="../mainLayout.py" line="607"/>
         <source>Configuration</source>
         <translation>Configuração</translation>
     </message>
     <message>
-        <location filename="../mainLayout.py" line="599"/>
+        <location filename="../mainLayout.py" line="608"/>
         <source>Proxy</source>
         <translation>Proxy</translation>
     </message>
     <message>
-        <location filename="../mainLayout.py" line="600"/>
+        <location filename="../mainLayout.py" line="609"/>
         <source>State</source>
         <translation>Estado</translation>
     </message>
     <message>
-        <location filename="../mainLayout.py" line="601"/>
+        <location filename="../mainLayout.py" line="610"/>
         <source>Segment</source>
         <translation>Segmentos</translation>
     </message>
     <message>
-        <location filename="../mainLayout.py" line="602"/>
+        <location filename="../mainLayout.py" line="611"/>
         <source>Progress</source>
         <translation>Progresso</translation>
     </message>
     <message>
-        <location filename="../mainLayout.py" line="604"/>
+        <location filename="../mainLayout.py" line="613"/>
         <source>About current video download</source>
         <translation>Sobre o download do arquivo de vídeo atual</translation>
     </message>
     <message>
-        <location filename="../mainLayout.py" line="605"/>
+        <location filename="../mainLayout.py" line="614"/>
         <source>Video title</source>
         <translation>Título do vídeo</translation>
     </message>
     <message>
-        <location filename="../mainLayout.py" line="606"/>
+        <location filename="../mainLayout.py" line="615"/>
         <source>Video ext</source>
         <translation>Extensão do arquivo de vídeo</translation>
     </message>
     <message>
-        <location filename="../mainLayout.py" line="607"/>
+        <location filename="../mainLayout.py" line="616"/>
         <source>Video size</source>
         <translation>Tamanho do arquivo de vídeo</translation>
     </message>
     <message>
-        <location filename="../mainLayout.py" line="608"/>
+        <location filename="../mainLayout.py" line="617"/>
         <source>Global progress</source>
         <translation>Progresso global</translation>
     </message>
     <message>
-        <location filename="../mainLayout.py" line="609"/>
+        <location filename="../mainLayout.py" line="618"/>
         <source>Downloaded</source>
         <translation>Baixado</translation>
     </message>
     <message>
-        <location filename="../mainLayout.py" line="610"/>
+        <location filename="../mainLayout.py" line="619"/>
         <source>To</source>
         <translation>De</translation>
     </message>
     <message>
-        <location filename="../mainLayout.py" line="611"/>
+        <location filename="../mainLayout.py" line="620"/>
         <source>Info</source>
         <translation>Info</translation>
     </message>
     <message>
-        <location filename="../mainLayout.py" line="613"/>
+        <location filename="../mainLayout.py" line="622"/>
         <source>Players</source>
         <translation>Players</translation>
     </message>
     <message>
-        <location filename="../mainLayout.py" line="614"/>
+        <location filename="../mainLayout.py" line="623"/>
         <source>Lang</source>
         <translation>Ling</translation>
     </message>
     <message>
-        <location filename="../mainLayout.py" line="615"/>
+        <location filename="../mainLayout.py" line="624"/>
         <source>Help</source>
         <translation>Ajuda</translation>
     </message>
     <message>
-        <location filename="../mainLayout.py" line="616"/>
+        <location filename="../mainLayout.py" line="625"/>
         <source>Update</source>
         <translation>Atualização</translation>
     </message>
     <message>
-        <location filename="../mainLayout.py" line="617"/>
+        <location filename="../mainLayout.py" line="626"/>
         <source>Exit</source>
         <translation>Sair</translation>
     </message>
     <message>
-        <location filename="../mainLayout.py" line="618"/>
+        <location filename="../mainLayout.py" line="627"/>
         <source>English</source>
         <translation>Inglês</translation>
     </message>
     <message>
-        <location filename="../mainLayout.py" line="619"/>
+        <location filename="../mainLayout.py" line="628"/>
         <source>Portuguese</source>
         <translation>Português</translation>
     </message>
     <message>
-        <location filename="../mainLayout.py" line="620"/>
+        <location filename="../mainLayout.py" line="629"/>
         <source>About</source>
         <translation>Sobre</translation>
     </message>
     <message>
-        <location filename="../mainLayout.py" line="621"/>
+        <location filename="../mainLayout.py" line="630"/>
         <source>Spanish</source>
         <translation>Espanhol</translation>
     </message>
     <message>
-        <location filename="../mainLayout.py" line="622"/>
+        <location filename="../mainLayout.py" line="631"/>
         <source>Reload player</source>
         <translation>Recarregar player</translation>
     </message>
     <message>
-        <location filename="../mainLayout.py" line="623"/>
+        <location filename="../mainLayout.py" line="632"/>
         <source>Choose external player</source>
         <translation>Escolher player externo</translation>
     </message>
     <message>
-        <location filename="../mainLayout.py" line="624"/>
+        <location filename="../mainLayout.py" line="633"/>
         <source>Use embedded player</source>
         <translation>Usar player embutido(Flash player)</translation>
     </message>
     <message>
-        <location filename="../mainLayout.py" line="625"/>
+        <location filename="../mainLayout.py" line="634"/>
         <source>Use external player</source>
         <translation>Usar player externo</translation>
     </message>
     <message>
-        <location filename="../mainLayout.py" line="626"/>
+        <location filename="../mainLayout.py" line="635"/>
         <source>Error reporting</source>
         <translation>Relatório de erros</translation>
     </message>
     <message>
-        <location filename="../mainLayout.py" line="627"/>
+        <location filename="../mainLayout.py" line="636"/>
         <source>Automatic search</source>
         <translation>Procura automática</translation>
     </message>
     <message>
-        <location filename="../mainLayout.py" line="628"/>
+        <location filename="../mainLayout.py" line="637"/>
         <source>Check now</source>
         <translation>Verificar agora</translation>
+    </message>
+    <message>
+        <location filename="../mainLayout.py" line="596"/>
+        <source>Types</source>
+        <translation>Tipos</translation>
     </message>
 </context>
 <context>
