@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'mainLayout.ui'
 #
-# Created: Mon Feb 04 21:05:16 2013
+# Created: Tue Feb 05 19:57:44 2013
 #      by: pyside-uic 0.2.14 running on PySide 1.1.2
 #
 # WARNING! All changes made in this file will be lost!
@@ -379,10 +379,14 @@ class Ui_MainWindow(object):
         self.formLayout.setWidget(2, QtGui.QFormLayout.FieldRole, self.videoSizeInfo)
         self.label_12 = QtGui.QLabel(self.groupBox_3)
         self.label_12.setObjectName("label_12")
-        self.formLayout.setWidget(3, QtGui.QFormLayout.LabelRole, self.label_12)
+        self.formLayout.setWidget(8, QtGui.QFormLayout.LabelRole, self.label_12)
+        self.progressBarInfo = QtGui.QProgressBar(self.groupBox_3)
+        self.progressBarInfo.setProperty("value", 0)
+        self.progressBarInfo.setObjectName("progressBarInfo")
+        self.formLayout.setWidget(8, QtGui.QFormLayout.FieldRole, self.progressBarInfo)
         self.label_13 = QtGui.QLabel(self.groupBox_3)
         self.label_13.setObjectName("label_13")
-        self.formLayout.setWidget(4, QtGui.QFormLayout.LabelRole, self.label_13)
+        self.formLayout.setWidget(3, QtGui.QFormLayout.LabelRole, self.label_13)
         self.horizontalLayout_5 = QtGui.QHBoxLayout()
         self.horizontalLayout_5.setObjectName("horizontalLayout_5")
         self.downloadedFromInfo = QtGui.QLineEdit(self.groupBox_3)
@@ -404,11 +408,19 @@ class Ui_MainWindow(object):
         self.downloadedToInfo.setSizePolicy(sizePolicy)
         self.downloadedToInfo.setObjectName("downloadedToInfo")
         self.horizontalLayout_5.addWidget(self.downloadedToInfo)
-        self.formLayout.setLayout(4, QtGui.QFormLayout.FieldRole, self.horizontalLayout_5)
-        self.progressBarInfo = QtGui.QProgressBar(self.groupBox_3)
-        self.progressBarInfo.setProperty("value", 0)
-        self.progressBarInfo.setObjectName("progressBarInfo")
-        self.formLayout.setWidget(3, QtGui.QFormLayout.FieldRole, self.progressBarInfo)
+        self.formLayout.setLayout(3, QtGui.QFormLayout.FieldRole, self.horizontalLayout_5)
+        self.label_15 = QtGui.QLabel(self.groupBox_3)
+        self.label_15.setObjectName("label_15")
+        self.formLayout.setWidget(4, QtGui.QFormLayout.LabelRole, self.label_15)
+        self.globalSpeedInfo = QtGui.QLineEdit(self.groupBox_3)
+        self.globalSpeedInfo.setObjectName("globalSpeedInfo")
+        self.formLayout.setWidget(4, QtGui.QFormLayout.FieldRole, self.globalSpeedInfo)
+        self.label_16 = QtGui.QLabel(self.groupBox_3)
+        self.label_16.setObjectName("label_16")
+        self.formLayout.setWidget(5, QtGui.QFormLayout.LabelRole, self.label_16)
+        self.globalEtaInfo = QtGui.QLineEdit(self.groupBox_3)
+        self.globalEtaInfo.setObjectName("globalEtaInfo")
+        self.formLayout.setWidget(5, QtGui.QFormLayout.FieldRole, self.globalEtaInfo)
         self.verticalLayout_10.addLayout(self.formLayout)
         self.verticalLayout_8.addWidget(self.groupBox_3)
         self.verticalLayout_7.addWidget(self.frame)
@@ -567,8 +579,8 @@ class Ui_MainWindow(object):
         self.menubar.addAction(self.menuAbout.menuAction())
 
         self.retranslateUi(MainWindow)
-        self.tabPanel.setCurrentIndex(1)
-        self.groupTypes.setCurrentIndex(1)
+        self.tabPanel.setCurrentIndex(2)
+        self.groupTypes.setCurrentIndex(0)
         self.videoQuality.setCurrentIndex(-1)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
@@ -607,6 +619,8 @@ class Ui_MainWindow(object):
         self.label_12.setText(QtGui.QApplication.translate("MainWindow", "Global progress", None, QtGui.QApplication.UnicodeUTF8))
         self.label_13.setText(QtGui.QApplication.translate("MainWindow", "Downloaded", None, QtGui.QApplication.UnicodeUTF8))
         self.label_14.setText(QtGui.QApplication.translate("MainWindow", "To", None, QtGui.QApplication.UnicodeUTF8))
+        self.label_15.setText(QtGui.QApplication.translate("MainWindow", "Global speed", None, QtGui.QApplication.UnicodeUTF8))
+        self.label_16.setText(QtGui.QApplication.translate("MainWindow", "Eta", None, QtGui.QApplication.UnicodeUTF8))
         self.tabPanel.setTabText(self.tabPanel.indexOf(self.tabInfo), QtGui.QApplication.translate("MainWindow", "Info", None, QtGui.QApplication.UnicodeUTF8))
         self.tabPanel.setTabText(self.tabPanel.indexOf(self.tabFiles), QtGui.QApplication.translate("MainWindow", "Files", None, QtGui.QApplication.UnicodeUTF8))
         self.menuEdit.setTitle(QtGui.QApplication.translate("MainWindow", "Players", None, QtGui.QApplication.UnicodeUTF8))

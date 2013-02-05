@@ -78,7 +78,7 @@
          <item>
           <widget class="QTabWidget" name="tabPanel">
            <property name="currentIndex">
-            <number>1</number>
+            <number>2</number>
            </property>
            <widget class="QWidget" name="tabBrowser">
             <attribute name="icon">
@@ -116,7 +116,7 @@
                 <item>
                  <widget class="QToolBox" name="groupTypes">
                   <property name="currentIndex">
-                   <number>1</number>
+                   <number>0</number>
                   </property>
                   <widget class="QWidget" name="configConnection">
                    <property name="geometry">
@@ -731,21 +731,28 @@
                      <item row="2" column="1">
                       <widget class="QLineEdit" name="videoSizeInfo"/>
                      </item>
-                     <item row="3" column="0">
+                     <item row="8" column="0">
                       <widget class="QLabel" name="label_12">
                        <property name="text">
                         <string>Global progress</string>
                        </property>
                       </widget>
                      </item>
-                     <item row="4" column="0">
+                     <item row="8" column="1">
+                      <widget class="QProgressBar" name="progressBarInfo">
+                       <property name="value">
+                        <number>0</number>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="3" column="0">
                       <widget class="QLabel" name="label_13">
                        <property name="text">
                         <string>Downloaded</string>
                        </property>
                       </widget>
                      </item>
-                     <item row="4" column="1">
+                     <item row="3" column="1">
                       <layout class="QHBoxLayout" name="horizontalLayout_5">
                        <item>
                         <widget class="QLineEdit" name="downloadedFromInfo">
@@ -776,12 +783,25 @@
                        </item>
                       </layout>
                      </item>
-                     <item row="3" column="1">
-                      <widget class="QProgressBar" name="progressBarInfo">
-                       <property name="value">
-                        <number>0</number>
+                     <item row="4" column="0">
+                      <widget class="QLabel" name="label_15">
+                       <property name="text">
+                        <string>Global speed</string>
                        </property>
                       </widget>
+                     </item>
+                     <item row="4" column="1">
+                      <widget class="QLineEdit" name="globalSpeedInfo"/>
+                     </item>
+                     <item row="5" column="0">
+                      <widget class="QLabel" name="label_16">
+                       <property name="text">
+                        <string>Eta</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item row="5" column="1">
+                      <widget class="QLineEdit" name="globalEtaInfo"/>
                      </item>
                     </layout>
                    </item>
