@@ -264,83 +264,83 @@ Developer: geniofuturo@gmail.com</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\loader.py" line="398"/>
+        <location filename="..\loader.py" line="399"/>
         <source>Choose the location of the external player</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\loader.py" line="399"/>
+        <location filename="..\loader.py" line="400"/>
         <source>All Files (*);;Exe Files (*.exe)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\loader.py" line="403"/>
+        <location filename="..\loader.py" line="404"/>
         <source>choose a valid location!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\loader.py" line="404"/>
+        <location filename="..\loader.py" line="405"/>
         <source>Operation canceled or informed way is not in the file system.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\loader.py" line="410"/>
+        <location filename="..\loader.py" line="411"/>
         <source>Choose the directory of videos</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\loader.py" line="470"/>
+        <location filename="..\loader.py" line="471"/>
         <source>Error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\loader.py" line="471"/>
+        <location filename="..\loader.py" line="472"/>
         <source>An error occurred starting the download.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\loader.py" line="475"/>
+        <location filename="..\loader.py" line="476"/>
         <source>Stop</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\loader.py" line="476"/>
+        <location filename="..\loader.py" line="477"/>
         <source>Please wait</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\loader.py" line="537"/>
+        <location filename="..\loader.py" line="538"/>
         <source>Download</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\loader.py" line="530"/>
+        <location filename="..\loader.py" line="531"/>
         <source>Download Faleid</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\loader.py" line="531"/>
+        <location filename="..\loader.py" line="532"/>
         <source>Ok</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\loader.py" line="550"/>
+        <location filename="..\loader.py" line="551"/>
         <source>recovery of the temporary file</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\loader.py" line="552"/>
+        <location filename="..\loader.py" line="553"/>
         <source>The current video file is saved in a temporary file.
 Want to save permanently ?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\loader.py" line="560"/>
+        <location filename="..\loader.py" line="561"/>
         <source>Processing...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\loader.py" line="568"/>
+        <location filename="..\loader.py" line="569"/>
         <source>The video file was successfully recovered!</source>
         <translation type="unfinished"></translation>
     </message>
@@ -348,77 +348,77 @@ Want to save permanently ?</source>
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="..\mainLayout.py" line="586"/>
+        <location filename="..\mainLayout.py" line="588"/>
         <source>BaixeAssista</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\mainLayout.py" line="587"/>
+        <location filename="..\mainLayout.py" line="589"/>
         <source>Download</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\mainLayout.py" line="588"/>
+        <location filename="..\mainLayout.py" line="590"/>
         <source>Browser</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\mainLayout.py" line="589"/>
+        <location filename="..\mainLayout.py" line="591"/>
         <source>Control</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\mainLayout.py" line="590"/>
+        <location filename="..\mainLayout.py" line="592"/>
         <source>Active connections</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\mainLayout.py" line="612"/>
+        <location filename="..\mainLayout.py" line="614"/>
         <source>Speed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\mainLayout.py" line="592"/>
+        <location filename="..\mainLayout.py" line="594"/>
         <source>Timeout</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\mainLayout.py" line="593"/>
+        <location filename="..\mainLayout.py" line="595"/>
         <source>Behavior</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\mainLayout.py" line="594"/>
+        <location filename="..\mainLayout.py" line="596"/>
         <source>Connection attempts</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\mainLayout.py" line="595"/>
+        <location filename="..\mainLayout.py" line="597"/>
         <source>Wait between connection attempts</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\mainLayout.py" line="598"/>
+        <location filename="..\mainLayout.py" line="600"/>
         <source>Disable proxy</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\mainLayout.py" line="597"/>
+        <location filename="..\mainLayout.py" line="599"/>
         <source>Modify connection type</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\mainLayout.py" line="599"/>
+        <location filename="..\mainLayout.py" line="601"/>
         <source>Connection</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\mainLayout.py" line="600"/>
+        <location filename="..\mainLayout.py" line="604"/>
         <source>Video quality</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\mainLayout.py" line="601"/>
+        <location filename="..\mainLayout.py" line="603"/>
         <source>Directory videos</source>
         <translation type="unfinished"></translation>
     </message>
@@ -428,173 +428,183 @@ Want to save permanently ?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\mainLayout.py" line="603"/>
+        <location filename="..\mainLayout.py" line="605"/>
         <source>Movies</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\mainLayout.py" line="604"/>
+        <location filename="..\mainLayout.py" line="606"/>
         <source>Divide the number of times</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\mainLayout.py" line="605"/>
+        <location filename="..\mainLayout.py" line="607"/>
         <source>Use temporary file</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\mainLayout.py" line="621"/>
+        <location filename="..\mainLayout.py" line="625"/>
         <source>Files</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\mainLayout.py" line="607"/>
+        <location filename="..\mainLayout.py" line="609"/>
         <source>Configuration</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\mainLayout.py" line="608"/>
+        <location filename="..\mainLayout.py" line="610"/>
         <source>Proxy</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\mainLayout.py" line="609"/>
+        <location filename="..\mainLayout.py" line="611"/>
         <source>State</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\mainLayout.py" line="610"/>
+        <location filename="..\mainLayout.py" line="612"/>
         <source>Segment</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\mainLayout.py" line="611"/>
+        <location filename="..\mainLayout.py" line="613"/>
         <source>Progress</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\mainLayout.py" line="613"/>
+        <location filename="..\mainLayout.py" line="615"/>
         <source>About current video download</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\mainLayout.py" line="614"/>
+        <location filename="..\mainLayout.py" line="616"/>
         <source>Video title</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\mainLayout.py" line="615"/>
+        <location filename="..\mainLayout.py" line="617"/>
         <source>Video ext</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\mainLayout.py" line="616"/>
+        <location filename="..\mainLayout.py" line="618"/>
         <source>Video size</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\mainLayout.py" line="617"/>
+        <location filename="..\mainLayout.py" line="619"/>
         <source>Global progress</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\mainLayout.py" line="618"/>
+        <location filename="..\mainLayout.py" line="620"/>
         <source>Downloaded</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\mainLayout.py" line="619"/>
+        <location filename="..\mainLayout.py" line="621"/>
         <source>To</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\mainLayout.py" line="620"/>
+        <location filename="..\mainLayout.py" line="624"/>
         <source>Info</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\mainLayout.py" line="622"/>
+        <location filename="..\mainLayout.py" line="626"/>
         <source>Players</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\mainLayout.py" line="623"/>
+        <location filename="..\mainLayout.py" line="627"/>
         <source>Lang</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\mainLayout.py" line="624"/>
+        <location filename="..\mainLayout.py" line="628"/>
         <source>Help</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\mainLayout.py" line="625"/>
+        <location filename="..\mainLayout.py" line="629"/>
         <source>Update</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\mainLayout.py" line="626"/>
+        <location filename="..\mainLayout.py" line="630"/>
         <source>Exit</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\mainLayout.py" line="627"/>
+        <location filename="..\mainLayout.py" line="631"/>
         <source>English</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\mainLayout.py" line="628"/>
+        <location filename="..\mainLayout.py" line="632"/>
         <source>Portuguese</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\mainLayout.py" line="629"/>
+        <location filename="..\mainLayout.py" line="633"/>
         <source>About</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\mainLayout.py" line="630"/>
+        <location filename="..\mainLayout.py" line="634"/>
         <source>Spanish</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\mainLayout.py" line="631"/>
+        <location filename="..\mainLayout.py" line="635"/>
         <source>Reload player</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\mainLayout.py" line="632"/>
+        <location filename="..\mainLayout.py" line="636"/>
         <source>Choose external player</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\mainLayout.py" line="633"/>
+        <location filename="..\mainLayout.py" line="637"/>
         <source>Use embedded player</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\mainLayout.py" line="634"/>
+        <location filename="..\mainLayout.py" line="638"/>
         <source>Use external player</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\mainLayout.py" line="635"/>
+        <location filename="..\mainLayout.py" line="639"/>
         <source>Error reporting</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\mainLayout.py" line="636"/>
+        <location filename="..\mainLayout.py" line="640"/>
         <source>Automatic search</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\mainLayout.py" line="637"/>
+        <location filename="..\mainLayout.py" line="641"/>
         <source>Check now</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\mainLayout.py" line="596"/>
+        <location filename="..\mainLayout.py" line="598"/>
         <source>Types</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="..\mainLayout.py" line="622"/>
+        <source>Global speed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="..\mainLayout.py" line="623"/>
+        <source>Eta</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
