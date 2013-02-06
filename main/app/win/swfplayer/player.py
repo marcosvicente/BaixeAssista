@@ -43,19 +43,19 @@ class Player(QtGui.QWidget):
         # defaut params
         params.setdefault("hostName", Server.HOST)
         params.setdefault("portNumber", Server.PORT)
+        params.setdefault("skinName", self.defaultskin)
         params.setdefault("autostart", False)
         
         try:
-            skins = os.listdir( self.skinsdir )
-            for filename in skins:
+            for filename in os.listdir( self.skinsdir ):
                 name = os.path.splitext(filename)[0]
                 self.skins[ name ] = filename
         except: # skin usada no primeiro carregamento.
             self.skins[ self.defaultskin ] = self.defaultskin+".swf"
         
-        if not params.has_key("skinName") or not self.hasSkinName(params["skinName"]):
+        if not self.hasSkinName( params["skinName"] ):
             self.params["skinName"] = self.defaultskin
-            
+        
         self.webview = QtWebKit.QWebView(self)
         self.webview.settings().setAttribute(QtWebKit.QWebSettings.PluginsEnabled, True)
         
@@ -63,7 +63,7 @@ class Player(QtGui.QWidget):
         vBox.addWidget( self.webview )
         
         self.setLayout( vBox )
-        
+    
     @classmethod
     def getPlayerPage(cls, params):
         try: tmpl = loader.get_template(cls.template)

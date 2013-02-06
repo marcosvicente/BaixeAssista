@@ -6,7 +6,7 @@ import player
 
 # -----------------------------------------------------------------------------
 class Player( player.Player ):
-    defaultskin = "chelseaskin.swf"
+    defaultskin = "chelseaskin"
     
     template = "jwplayer.html"
     filesdirname = "jwplayer"
