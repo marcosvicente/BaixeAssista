@@ -1468,7 +1468,7 @@ class StreamManager(threading.Thread):
             with self.manage.interval.getLock( self.ident ):
                 try:
                     # o intervalo da conexão pode sofrer alteração.
-                    seekpos = self.manage.interval.get_start(self.ident)
+                    seekpos = self.manage.interval.getStart(self.ident)
                     block_size = self.manage.interval.getBlockSize(self.ident)
                     block_index = self.manage.interval.getIndex(self.ident)
                     
@@ -1550,7 +1550,7 @@ class StreamManager(threading.Thread):
             self.manage.interval.setPending(
                         self.manage.interval.getIndex(self.ident), 
                         self.numBytesLidos, 
-                        self.manage.interval.get_start(self.ident),
+                        self.manage.interval.getStart(self.ident),
                         self.manage.interval.getEnd(self.ident), 
                         self.manage.interval.getBlockSize(self.ident))
             
@@ -1597,7 +1597,7 @@ class StreamManager(threading.Thread):
             self.link = self.videoManager.getLink()
             
     def connect(self):
-        seekpos = self.manage.interval.get_start(self.ident)
+        seekpos = self.manage.interval.getStart(self.ident)
         start = self.videoManager.get_relative( seekpos )
         link = sites.get_with_seek(self.link, start)
         videoSize = self.manage.getVideoSize()
@@ -1717,7 +1717,7 @@ class StreamManager_( StreamManager ):
         self.info.set(self.ident, "http", self.proxies.get("http", _(u"Conexão Padrão")))
     
     def connect(self):
-        seekpos = self.manage.interval.get_start(self.ident) # posição inicial de leitura
+        seekpos = self.manage.interval.getStart(self.ident) # posição inicial de leitura
         videoSize = self.manage.getVideoSize()
         ctry = 0
         while self.isRunning and ctry < self.params["reconexao"]:
