@@ -622,7 +622,7 @@ Deseja salvá-lo permanentemente ?</translation>
     <message>
         <location filename="../playerDialog.py" line="27"/>
         <source>load JW Player</source>
-        <translation type="unfinished">Carregar JwPlayer</translation>
+        <translation>Carregar JwPlayer</translation>
     </message>
 </context>
 <context>
