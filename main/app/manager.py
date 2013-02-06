@@ -673,7 +673,7 @@ class Interval(object):
     def calcBlockSize(self):
         """ calcula quantos bytes serão lidos por conexão criada """
         size = int(float(self.maxsize) / float(self.maxsplit))
-        return (size if size < self.min_block else self.min_block)
+        return (size if size > self.min_block else self.min_block)
         
     def updateIndex(self):
         """ reorganiza a tabela de indices """
