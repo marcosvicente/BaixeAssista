@@ -583,7 +583,7 @@ class Interval(object):
         """params = {}; 
         seekpos: posição inicial de leitura da stream; 
         index: indice do bloco de bytes; 
-        pending: lista de intervals pendetes(não baixados); 
+        pending: lista de 'blocks' pendetes(não baixados); 
         offset: deslocamento do ponteiro de escrita à esquerda.
         maxsize: tamanho do block que será segmentado.
         min_block: tamanho mínimo(em bytes) para um bloco de bytes
@@ -597,10 +597,10 @@ class Interval(object):
         
         self.maxsize = params["maxsize"]
         self.maxsplit = params.get("maxsplit",2)
-
+        
         self.default_block_size = self.calcBlockSize()
         
-        self.intervals = {}
+        self.blocks = {}
         self.locks = {}
         
         # caso a posição inicial leitura seja maior que zero, offset 
@@ -611,7 +611,7 @@ class Interval(object):
         del self.offset
         del self.seekpos
         del self.send_info
-        del self.intervals
+        del self.blocks
         del self.pending
     
     def canContinue(self, obj_id):
@@ -620,7 +620,7 @@ class Interval(object):
         if self.has(obj_id):
             return (self.getEnd(obj_id) == self.seekpos)
         return False
-    
+        
     def getMinBlock(self):
         return self.min_block
     
@@ -629,44 +629,40 @@ class Interval(object):
         return self.offset
 
     def getIndex(self, obj_id):
-        values = self.intervals.get(obj_id, -1)
-        if values != -1: return values[0]
-        return values
-
+        items = self.blocks.get(obj_id, [])
+        return (-1 if len(items) == 0 else items[0])
+    
     def getStart(self, obj_id):
-        values = self.intervals.get(obj_id, -1)
-        if values != -1: return values[1]
-        return values
-
+        items = self.blocks.get(obj_id, [])
+        return (-1 if len(items) == 0 else items[1])
+    
     def getEnd(self, obj_id):
-        values = self.intervals.get(obj_id, -1)
-        if values != -1: return values[2]
-        return values
-
+        items = self.blocks.get(obj_id, [])
+        return (-1 if len(items) == 0 else items[2])
+    
     def getBlockSize(self, obj_id):
         """ retorna o tamanho do bloco de bytes"""
-        values = self.intervals.get(obj_id, -1)
-        if values != -1: return values[3]
-        return values
-
+        items = self.blocks.get(obj_id, [])
+        return (-1 if len(items) == 0 else items[3])
+    
     def has(self, obj_id):
         """ avalia se o objeto tem um intervalo ligado a ele """
-        return bool(self.intervals.get(obj_id,None))
+        return self.blocks.has_key(obj_id)
     
-    def getFirstStart( self):
-        """ retorna o começo(start) do primeiro intervalo da lista de intervals """
-        intervs = [interval[1] for interval in self.intervals.values()] + \
-                  [interval[2] for interval in self.pending]
-        intervs.sort()
-        try: start = intervs[0]
-        except IndexError: start = -1
-        return start
+    def getFirstStart(self):
+        """ retorna o começo(start) do primeiro intervalo da lista de blocks """
+        blocks = (map(lambda item: item[1], self.blocks.values()) +
+                  map(lambda item: item[2], self.pending))
+        blocks.sort()
+        return (-1 if len(blocks) == 0 else blocks[0])
     
     def remove(self, obj_id):
-        lock = self.locks.pop(obj_id, None)
-        interv = self.intervals.pop(obj_id, None)
-        return interv, lock
+        self.blocks.pop(obj_id, None)
+        self.locks.pop(obj_id, None)
     
+    def getPending(self):
+        return self.pending
+        
     def setPending(self, *args):
         """ index; nbytes; start; end; block_size """
         self.pending.append(args)
@@ -676,21 +672,20 @@ class Interval(object):
     
     def calcBlockSize(self):
         """ calcula quantos bytes serão lidos por conexão criada """
-        blocksize = int(float(self.maxsize) / float(self.maxsplit))
-        if blocksize < self.min_block: # respeita o tamanho mínimo.
-            blocksize = self.min_block
-        return blocksize
+        size = int(float(self.maxsize) / float(self.maxsplit))
+        return (size if size < self.min_block else self.min_block)
         
     def updateIndex(self):
         """ reorganiza a tabela de indices """
-        intervals = self.intervals.items()
+        items = self.blocks.items()
+        
         # organiza por start: (obj_id = 1, (0, start = 1, 2, 3))
-        intervals.sort(key=lambda x: x[1][1])
-        for index, data in enumerate(intervals, 1):
-            obj_id, interval = data
+        items.sort(key=lambda item: item[1][1])
+        
+        for index, data in enumerate(items, 1):
             # aplicando a reorganização dos indices
-            self.intervals[ obj_id ][0] = index
-    
+            self.blocks[ data[0] ][0] = index
+            
     def setNewLock(self, obj_id):
         """ lock usando na sincronização da divisão do intervalo desse objeto """
         self.locks[ obj_id ] = threading.Lock()
@@ -706,7 +701,7 @@ class Interval(object):
         self.send_info["nbytes"].pop(start,0)
         start += blocklen
         
-        self.intervals[obj_id] = [index, start, end, (end-start)]
+        self.blocks[obj_id] = [index, start, end, (end-start)]
         self.send_info["nbytes"][start] = 0
         self.setNewLock( obj_id )
     
@@ -722,15 +717,15 @@ class Interval(object):
             """ verifica se o intervalo é condidato a alteração """
             return (get_average(data) > self.min_block)
         
-        intervals = self.intervals.items()
-        intervals.sort(key=lambda x: x[1][1])
+        items = self.blocks.items()
+        items.sort(key=lambda item: item[1][1])
         
-        for obj_id, data in intervals:
+        for obj_id, data in items:
             if not is_suitable( data ): continue
             
             with self.getLock( obj_id ):
                 # se o objeto alterou seus dados quando chamou o lock
-                data = self.intervals[ obj_id ] # dados atualizados
+                data = self.blocks[ obj_id ] # dados atualizados
                 index, start, end, block_size = data
                 
                 # segunda verificação, quarante que o intervalo ainda é candidato.
@@ -740,14 +735,14 @@ class Interval(object):
                 
                 # recalculando o tamanho do bloco de bytes
                 new_block_size = new_end - start
-                self.intervals[ obj_id ][-2] = new_end
-                self.intervals[ obj_id ][-1] = new_block_size
+                self.blocks[ obj_id ][-2] = new_end
+                self.blocks[ obj_id ][-1] = new_block_size
                 
                 # criando um novo intervalo, derivado do atual
                 start = new_end
                 block_size = end - start
                 
-                self.intervals[ other_obj_id ] = [0, start, end, block_size]
+                self.blocks[ other_obj_id ] = [0, start, end, block_size]
                 self.setNewLock( other_obj_id )
                 
                 self.send_info["nbytes"][start] = 0
@@ -769,7 +764,7 @@ class Interval(object):
             if difer > 0 and difer < self.min_block: end += difer
             block_size = end - start
             
-            self.intervals[obj_id] = [0, start, end, block_size]
+            self.blocks[obj_id] = [0, start, end, block_size]
             self.setNewLock( obj_id )
             
             # associando o início do intervalo ao contador
@@ -1033,7 +1028,7 @@ class Manage(object):
                 filepath = self.params["videoPath"],
                 fileext  = self.videoExt
             )
-            # intervals serão criados do ponto zero da stream
+            # blocks serão criados do ponto zero da stream
             self.interval = Interval(maxsize = self.videoSize, 
                     seekpos = self.params["seekpos"],
                     maxsplit = self.params["maxsplit"])
@@ -1202,7 +1197,7 @@ class Manage(object):
                     self.interval.getBlockSize( ident)
                 ))
                 
-        pending.extend( self.interval.pending )
+        pending.extend( self.interval.getPending() )
         pending.sort()
         
         self.resumeInfo.update(title = self.videoTitle,
