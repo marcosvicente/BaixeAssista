@@ -1211,15 +1211,6 @@ class Manage(object):
             pending = pending
         )
     
-    def porcentagem(self):
-        """ Progresso do download em porcentagem """
-        return StreamManager.calc_percent(self.cacheBytesTotal, self.getVideoSize())
-
-    def progresso(self):
-        """ Progresso do download """
-        return "%s / %s"%(StreamManager.format_bytes( self.cacheBytesTotal ), 
-                          StreamManager.format_bytes( self.getVideoSize() ))
-        
     def setRandomRead(self, seekpos):
         """ Configura a leitura da stream para um ponto aleatório dela """
         self.notifiqueConexoes(True)
