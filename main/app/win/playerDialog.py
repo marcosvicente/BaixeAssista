@@ -32,7 +32,7 @@ class PlayerDialog(QtGui.QDialog):
         self.show()
         
     def stop(self):
-        self.mplayer.webview.setHtml("")
+        self.mplayer.stop()
         self.close()
         
     def reload(self, autostart=False):
@@ -62,6 +62,7 @@ class PlayerDialog(QtGui.QDialog):
     def removePlayer(self, layout):
         layout.removeWidget(self.mplayer)
         self.mplayer.hide()
+        self.playerReload(False)
         
     def loadFlowPlayer(self):
         layout = self.playerFrame.layout()
@@ -70,6 +71,7 @@ class PlayerDialog(QtGui.QDialog):
         self.mplayer = self.mFlowPlayer
         
         layout.addWidget( self.mFlowPlayer )
+        self.playerReload(True)
         self.mFlowPlayer.show()
         
     def loadJwPlayer(self):
@@ -79,6 +81,7 @@ class PlayerDialog(QtGui.QDialog):
         self.mplayer = self.mJWPlayer
         
         layout.addWidget( self.mJWPlayer )
+        self.playerReload(True)
         self.mJWPlayer.show()
         
     def changePlayer(self):
@@ -97,3 +100,16 @@ class PlayerDialog(QtGui.QDialog):
             else:
                 self.btnFlowPlayer.setChecked(True)
                 self.loadFlowPlayer()
+                
+                
+if __name__ == "__main__":
+    import sys
+    app = QtGui.QApplication(sys.argv)
+    
+    p = PlayerDialog()
+    p.show()
+    
+    sys.exit(app.exec_())
+    
+    
+    
