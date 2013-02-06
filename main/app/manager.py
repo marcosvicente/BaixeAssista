@@ -1002,8 +1002,8 @@ class Manage(object):
             
             self.startCacheSize = self.cacheBytesTotal
             self.resuming = True
-                   
-    def start(self, ctry, ntry, proxy={}, callback=None):
+    
+    def start(self, ctry=0, ntry=1, proxy={}, callback=None):
         """ Começa a coleta de informações. Depende da internet, por isso pode demorar para reponder. """
         if not self.videoSize or not self.videoTitle:
             if not self.getInfo(ctry, ntry, proxy, callback):
