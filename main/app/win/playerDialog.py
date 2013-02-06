@@ -27,7 +27,7 @@ class PlayerDialog(QtGui.QDialog):
         self.btnJwPlayer.setToolTip(self.tr("load JW Player"))
         
         self.loadFlowPlayer()
-    
+        
     def start(self):
         self.show()
         
@@ -41,19 +41,48 @@ class PlayerDialog(QtGui.QDialog):
     @property
     def player(self):
         return self.mplayer
+    
     @property
     def playerFrame(self):
         return self.uiPlayerDialog.playerFrame
+    
     @property
     def btnReload(self):
         return self.uiPlayerDialog.btnReload
+    
     @property
     def btnFlowPlayer(self):
         return self.uiPlayerDialog.btnFlowPlayer
+    
     @property
     def btnJwPlayer(self):
         return self.uiPlayerDialog.btnJwPlayer
     
+    @property
+    def btnSkins(self):
+        return self.uiPlayerDialog.btnSkins
+    
+    def setupSkinMenu(self):
+        menu = QtGui.QMenu(self)
+        actionSkinGroup = QtGui.QActionGroup(self)
+        
+        for skinName in self.mplayer.getSkinsNames():
+            actionSkin = QtGui.QAction(skinName, self,
+                triggered = self.onSkinChange)
+            
+            actionSkin.setCheckable(True)
+            
+            if skinName == self.mplayer["skinName"]:
+                actionSkin.setChecked(True)
+                
+            actionSkinGroup.addAction( actionSkin )
+            menu.addAction( actionSkin )
+        return menu
+    
+    def onSkinChange(self):
+        self.mplayer["skinName"] = self.sender().text()
+        self.mplayer.reload()
+        
     def playerReload(self, autostart=False):
         self.mplayer["autostart"] = autostart
         self.mplayer.reload()
@@ -74,6 +103,8 @@ class PlayerDialog(QtGui.QDialog):
         self.playerReload(True)
         self.mFlowPlayer.show()
         
+        self.btnSkins.setMenu( self.setupSkinMenu() )
+        
     def loadJwPlayer(self):
         layout = self.playerFrame.layout()
         self.removePlayer( layout )
@@ -83,6 +114,8 @@ class PlayerDialog(QtGui.QDialog):
         layout.addWidget( self.mJWPlayer )
         self.playerReload(True)
         self.mJWPlayer.show()
+        
+        self.btnSkins.setMenu( self.setupSkinMenu() )
         
     def changePlayer(self):
         if self.sender() == self.btnFlowPlayer:
