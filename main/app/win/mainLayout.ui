@@ -123,8 +123,8 @@
                     <rect>
                      <x>0</x>
                      <y>0</y>
-                     <width>1049</width>
-                     <height>377</height>
+                     <width>349</width>
+                     <height>359</height>
                     </rect>
                    </property>
                    <attribute name="icon">
@@ -415,8 +415,8 @@
                     <rect>
                      <x>0</x>
                      <y>0</y>
-                     <width>1049</width>
-                     <height>377</height>
+                     <width>264</width>
+                     <height>83</height>
                     </rect>
                    </property>
                    <attribute name="icon">
@@ -507,8 +507,8 @@
                     <rect>
                      <x>0</x>
                      <y>0</y>
-                     <width>1049</width>
-                     <height>377</height>
+                     <width>270</width>
+                     <height>87</height>
                     </rect>
                    </property>
                    <attribute name="icon">
@@ -651,7 +651,22 @@
                </column>
                <column>
                 <property name="text">
-                 <string>Progress</string>
+                 <string>Downloaded</string>
+                </property>
+               </column>
+               <column>
+                <property name="text">
+                 <string>Total</string>
+                </property>
+               </column>
+               <column>
+                <property name="text">
+                 <string>Remainder</string>
+                </property>
+               </column>
+               <column>
+                <property name="text">
+                 <string>Percent</string>
                 </property>
                </column>
                <column>

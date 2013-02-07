@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'mainLayout.ui'
 #
-# Created: Tue Feb 05 20:47:30 2013
+# Created: Wed Feb 06 23:39:09 2013
 #      by: pyside-uic 0.2.14 running on PySide 1.1.2
 #
 # WARNING! All changes made in this file will be lost!
@@ -78,7 +78,7 @@ class Ui_MainWindow(object):
         self.groupTypes = QtGui.QToolBox(self.frameTab)
         self.groupTypes.setObjectName("groupTypes")
         self.configConnection = QtGui.QWidget()
-        self.configConnection.setGeometry(QtCore.QRect(0, 0, 1049, 377))
+        self.configConnection.setGeometry(QtCore.QRect(0, 0, 349, 359))
         self.configConnection.setObjectName("configConnection")
         self.verticalLayout_5 = QtGui.QVBoxLayout(self.configConnection)
         self.verticalLayout_5.setSpacing(10)
@@ -215,7 +215,7 @@ class Ui_MainWindow(object):
         icon2.addPixmap(QtGui.QPixmap("../images/network-blue.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.groupTypes.addItem(self.configConnection, icon2, "")
         self.configMovie = QtGui.QWidget()
-        self.configMovie.setGeometry(QtCore.QRect(0, 0, 1049, 377))
+        self.configMovie.setGeometry(QtCore.QRect(0, 0, 264, 83))
         self.configMovie.setObjectName("configMovie")
         self.verticalLayout_9 = QtGui.QVBoxLayout(self.configMovie)
         self.verticalLayout_9.setContentsMargins(10, 10, 10, 10)
@@ -254,7 +254,7 @@ class Ui_MainWindow(object):
         icon3.addPixmap(QtGui.QPixmap("../images/movies-blue.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.groupTypes.addItem(self.configMovie, icon3, "")
         self.configFile = QtGui.QWidget()
-        self.configFile.setGeometry(QtCore.QRect(0, 0, 1049, 377))
+        self.configFile.setGeometry(QtCore.QRect(0, 0, 270, 87))
         self.configFile.setObjectName("configFile")
         self.verticalLayout_6 = QtGui.QVBoxLayout(self.configFile)
         self.verticalLayout_6.setObjectName("verticalLayout_6")
@@ -319,7 +319,7 @@ class Ui_MainWindow(object):
         sizePolicy.setHeightForWidth(self.connectionInfo.sizePolicy().hasHeightForWidth())
         self.connectionInfo.setSizePolicy(sizePolicy)
         self.connectionInfo.setObjectName("connectionInfo")
-        self.connectionInfo.setColumnCount(5)
+        self.connectionInfo.setColumnCount(8)
         self.connectionInfo.setRowCount(0)
         item = QtGui.QTableWidgetItem()
         self.connectionInfo.setHorizontalHeaderItem(0, item)
@@ -331,6 +331,12 @@ class Ui_MainWindow(object):
         self.connectionInfo.setHorizontalHeaderItem(3, item)
         item = QtGui.QTableWidgetItem()
         self.connectionInfo.setHorizontalHeaderItem(4, item)
+        item = QtGui.QTableWidgetItem()
+        self.connectionInfo.setHorizontalHeaderItem(5, item)
+        item = QtGui.QTableWidgetItem()
+        self.connectionInfo.setHorizontalHeaderItem(6, item)
+        item = QtGui.QTableWidgetItem()
+        self.connectionInfo.setHorizontalHeaderItem(7, item)
         self.verticalLayout_7.addWidget(self.connectionInfo)
         self.frame = QtGui.QFrame(self.tabInfo)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Preferred)
@@ -617,8 +623,11 @@ class Ui_MainWindow(object):
         self.connectionInfo.horizontalHeaderItem(0).setText(QtGui.QApplication.translate("MainWindow", "Proxy", None, QtGui.QApplication.UnicodeUTF8))
         self.connectionInfo.horizontalHeaderItem(1).setText(QtGui.QApplication.translate("MainWindow", "State", None, QtGui.QApplication.UnicodeUTF8))
         self.connectionInfo.horizontalHeaderItem(2).setText(QtGui.QApplication.translate("MainWindow", "Segment", None, QtGui.QApplication.UnicodeUTF8))
-        self.connectionInfo.horizontalHeaderItem(3).setText(QtGui.QApplication.translate("MainWindow", "Progress", None, QtGui.QApplication.UnicodeUTF8))
-        self.connectionInfo.horizontalHeaderItem(4).setText(QtGui.QApplication.translate("MainWindow", "Speed", None, QtGui.QApplication.UnicodeUTF8))
+        self.connectionInfo.horizontalHeaderItem(3).setText(QtGui.QApplication.translate("MainWindow", "Downloaded", None, QtGui.QApplication.UnicodeUTF8))
+        self.connectionInfo.horizontalHeaderItem(4).setText(QtGui.QApplication.translate("MainWindow", "Total", None, QtGui.QApplication.UnicodeUTF8))
+        self.connectionInfo.horizontalHeaderItem(5).setText(QtGui.QApplication.translate("MainWindow", "Remainder", None, QtGui.QApplication.UnicodeUTF8))
+        self.connectionInfo.horizontalHeaderItem(6).setText(QtGui.QApplication.translate("MainWindow", "Percent", None, QtGui.QApplication.UnicodeUTF8))
+        self.connectionInfo.horizontalHeaderItem(7).setText(QtGui.QApplication.translate("MainWindow", "Speed", None, QtGui.QApplication.UnicodeUTF8))
         self.groupBox_3.setTitle(QtGui.QApplication.translate("MainWindow", "About current video download", None, QtGui.QApplication.UnicodeUTF8))
         self.label_9.setText(QtGui.QApplication.translate("MainWindow", "Video title", None, QtGui.QApplication.UnicodeUTF8))
         self.label_10.setText(QtGui.QApplication.translate("MainWindow", "Video ext", None, QtGui.QApplication.UnicodeUTF8))

@@ -1258,7 +1258,8 @@ class StreamManager(threading.Thread):
     listStrErro = ["onCuePoint"]
     
     # ordem correta das infos
-    listInfo = ["http", "state", "index", "remainder", "speed"]
+    listInfo = ["http", "state", "index", "downloaded", 
+                "total", "remainder", "percent", "speed"]
     
     # cache de bytes para extração do 'header' do vídeo.
     cacheStartSize = 256
@@ -1485,13 +1486,13 @@ class StreamManager(threading.Thread):
                     current = self.manage.getCacheBytesTotal() - self.manage.getStartCacheSize()
                     total = self.manage.getVideoSize() - self.manage.getStartCacheSize()
                     
-                    remainder = "[%s] [%s]"%(self.format_bytes(self.numBytesLidos), self.format_bytes(block_size))
-                    self.info.set(self.ident, "remainder", remainder)
-                    
+                    self.info.set(self.ident, "downloaded", self.format_bytes(self.numBytesLidos))
+                    self.info.set(self.ident, "total", self.format_bytes(block_size))
+                    self.info.set(self.ident, "remainder", self.format_bytes(block_size - self.numBytesLidos))
+                    self.info.set(self.ident, "percent", self.calc_percent(self.numBytesLidos, block_size))
                     # calcula a velocidade de transferência da conexão
-                    speed = self.calc_speed(local_time, time.time(), self.numBytesLidos)
-                    self.info.set(self.ident, "speed", speed)
-                    
+                    self.info.set(self.ident, "speed", self.calc_speed(local_time, time.time(), 
+                                                                       self.numBytesLidos))
                     # tempo total do download do arquivo
                     self.manage.setGlobalEta(self.calc_eta(start, time.time(), total, current))
                     
