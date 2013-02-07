@@ -363,11 +363,11 @@ class Loader(QtGui.QMainWindow):
     @base.protected()
     def updateTable(self):
         """ atualizando apenas as tabelas apresentadas na 'MainWindow' """
-        for sm in self.manage.ctrConnection.getConnections():
-            if not sm.wasStopped():
-                values = map(lambda key: sm.info.get(sm.ident, key), manager.StreamManager.listInfo)
-                self.tableRows[ sm.ident ].update(values = values)
-                
+        for conn in self.manage.ctrConnection.getConnList():
+            if conn.wasStopped(): continue
+            values = map(lambda name: conn.info.get(conn.ident, name), manager.StreamManager.listInfo)
+            self.tableRows[ conn.ident ].update(values = values)
+            
         videoSizeFormated = manager.StreamManager.format_bytes(self.manage.getVideoSize())
         videoPercent = base.calc_percent(self.manage.getCacheBytesTotal(), self.manage.getVideoSize())
         
@@ -498,7 +498,7 @@ class Loader(QtGui.QMainWindow):
             
             self.clearTable()
             
-            self.manage.ctrConnection.stopAllConnections()
+            self.manage.ctrConnection.stopAll()
             
             self.mplayer.stop()
             self.manage.stop()
@@ -512,7 +512,7 @@ class Loader(QtGui.QMainWindow):
         if self.LOADING:
             # titulo do arquivo de video
             title = self.manage.getVideoTitle()
-            url = self.manage.getUrl()
+            url = self.manage.getVideoUrl()
             
             self.getLocation().setToolTip( title )
             
@@ -583,7 +583,7 @@ class Loader(QtGui.QMainWindow):
         if self.LOADING and not self.manage.isComplete():
             connection = self.manage.ctrConnection
             
-            nActiveConn = connection.getnActiveConnection()
+            nActiveConn = connection.countActive()
             nConnCtr = self.uiMainWindow.connectionActive.value()
             
             proxyDisable = self.uiMainWindow.proxyDisable.isChecked()
@@ -597,19 +597,19 @@ class Loader(QtGui.QMainWindow):
             }
             if numOfConn > 0: # adiciona novas conexões.
                 if proxyDisable:
-                    sm_id_list = connection.startConnectionWithoutProxy(numOfConn, **params)
+                    sm_id_list = connection.startWithoutProxy(numOfConn, **params)
                 else:
                     if default:
-                        sm_id_list =  connection.startConnectionWithoutProxy(1, **params)
-                        sm_id_list += connection.startConnectionWithProxy(numOfConn-1, **params)
+                        sm_id_list =  connection.startWithoutProxy(1, **params)
+                        sm_id_list += connection.startWithProxy(numOfConn-1, **params)
                     else:
-                        sm_id_list = connection.startConnectionWithProxy(numOfConn, **params)
+                        sm_id_list = connection.startWithProxy(numOfConn, **params)
                         
                 for sm_id in sm_id_list:
                     self.addTableRow( sm_id )
                     
             elif numOfConn < 0: # remove conexões existentes.
-                for sm_id in connection.stopConnections( numOfConn ):
+                for sm_id in connection.stop( numOfConn ):
                     self.removeTableRow( sm_id )
                     
             else: # mudança dinânica dos parametros das conexões.

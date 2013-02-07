@@ -810,100 +810,81 @@ class Streamer(object):
         del self.manage
         
 ########################################################################
-class CTRConnection(object):
+class Connection(object):
     """ controla todas as conexões criadas """
     #----------------------------------------------------------------------
     def __init__(self, manage):
         self.manage = manage
         # controla a transferência do arquivo de vídeo.
-        self.streamManager = generators.universal.getStreamManager( manage.streamUrl )
+        self.streamManager = generators.universal.getStreamManager(manage.getVideoUrl())
         # guarda as conexoes criadas
-        self.connList = []
+        self.connlist = []
         
     def __del__(self):
         del self.manage
         del self.streamManager
-        del self.connList
+        del self.connlist
         
     def update(self, **params):
         """ atualiza os parametros de configuração das conexões ativas """
-        for sm in self.connList:
-            if sm.wasStopped(): continue
+        for conn in self.connlist:
+            if conn.wasStopped(): continue
             for key, value in params.items():
-                sm[ key ] = value
-                
-    def startConnections(self, noProxy=False, numOfConn=0, **params):
-        startedList = []
-        for index in range(0, numOfConn):
-            sm = self.startNewConnection(noProxy, **params)
-            startedList.append( sm.ident )
-        return startedList
+                conn[key] = value
+            
+    def start(self, noProxy=False, numOfConn=0, **params):
+        return [self.startNew(noProxy, **params).ident for i in range(numOfConn)]
     
-    def startConnectionWithProxy(self, numOfConn=0, **params):
-        return self.startConnections(False, numOfConn, **params)
+    def startWithProxy(self, numOfConn=0, **params):
+        return self.start(False, numOfConn, **params)
     
-    def startConnectionWithoutProxy(self, numOfConn=0, **params):
-        return self.startConnections(True, numOfConn, **params)
+    def startWithoutProxy(self, numOfConn=0, **params):
+        return self.start(True, numOfConn, **params)
     
-    def stopConnections(self, numOfConn=0):
+    def stop(self, numOfConn=0):
         """ pára groupos de conexões dado por 'numOfConn' """
-        stopedList = []
-        for r_index in range(0, abs(numOfConn)):
-            for s_index in range(len(self.connList)-1, -1, -1):
-                sm = self.connList[ s_index ]
-                if not sm.wasStopped(): # desconsidera conexões inativas
-                    sm.stop(); stopedList.append(sm.ident)
-                    break
-        # remove todas as conexões paradas
-        self.removeStopedConnection()
-        return stopedList
-
-    def startNewConnection(self, noProxy=False, **params):
-        """ inicia uma nova conexão de transferência de vídeo.
-        params: {}
-        - noProxy: se a conexão usará um ip de um servidor proxy.
-        - ratelimit: limita a velocidade de sub-conexões criadas, para o número de bytes.
-        - timeout: tempo de espera por uma resposta do servidor de stream(segundos).
-        - typechange: muda o tipo de conexão.
-        - waittime: tempo de espera entra as reconexões.
-        - reconexao: tenta reconectar o número de vezes informado.
-        """
-        sm = self.streamManager(self.manage, noProxy, **params)
-        sm.start(); self.addConnection( sm)
-        return sm
-
-    def addConnection(self, refer):
-        """ adiciona a referência para uma nova conexão criada """
-        #msgerr = u"referência '%s' inválida" % refer
-        #assert isinstance(refer, (StreamManager, StreamManager_)), msgerr
-        self.connList.append( refer)
-
-    def getnActiveConnection(self):
-        """ retorna o número de conexões criadas e ativas """
-        return len([sm for sm in self.connList if not sm.wasStopped()])
-
-    def getnTotalConnection(self):
-        """ retorna o número de conexões criadas"""
-        return len(self.connList)
-
-    def removeStopedConnection(self):
-        """ remove as conexões que estiverem completamente paradas """
-        searching = True
-        while searching:
-            for sm in self.connList:
-                if not sm.isAlive():
-                    self.connList.remove(sm)
-                    break
-            else:
-                searching = False
+        connlist = []
+        for x in range(0, abs(numOfConn)):
+            for y in range(len(self.connlist)-1, -1, -1):
+                conn = self.connlist[y]
+                # desconsidera conexões inativas
+                if conn.wasStopped(): continue
                 
-    def stopAllConnections(self):
-        """ pára todas as conexões atualmente ativas """
-        for sm in self.connList: sm.stop()
+                connlist.append(conn.ident)
+                conn.stop(); break
+        # remove todas as conexões paradas
+        self.remeveStopped()
+        return connlist
+        
+    def startNew(self, noProxy=False, **params):
+        """ inicia uma nova conexão """
+        conn = self.streamManager(self.manage, noProxy, **params)
+        conn.start(); self.add(conn)
+        return conn
 
-    def getConnections(self):
+    def add(self, refer):
+        """ adiciona a referência para uma nova conexão criada """
+        self.connlist.append(refer)
+        
+    def countActive(self):
+        """ retorna o número de conexões criadas e ativas """
+        return len([conn for conn in self.connlist if not conn.wasStopped()])
+        
+    def count(self):
+        """ retorna o número de conexões criadas"""
+        return len(self.connlist)
+    
+    def remeveStopped(self):
+        """ remove as conexões que estiverem completamente paradas """
+        self.connlist = [conn for conn in self.connlist if conn.isAlive()]
+        
+    def stopAll(self):
+        """ pára todas as conexões atualmente ativas """
+        for conn in self.connlist: conn.stop()
+    
+    def getConnList(self):
         """ retorna a lista com todas as conexões criadas """
-        return self.connList
+        return self.connlist
     
 # ------------------------------------------------------------------------
 class ManageMiddleware(object):
@@ -957,7 +938,7 @@ class Manage(object):
         self.videoManager = self.createVideoManager()
         
         # controle das conexões
-        self.ctrConnection = CTRConnection(self)
+        self.ctrConnection = Connection(self)
         
         # gerencia os endereços dos servidores proxies
         self.proxyManager = ProxyManager()
@@ -1151,7 +1132,7 @@ class Manage(object):
     def getVideoTitle(self):
         return self.videoTitle
     
-    def getUrl(self):
+    def getVideoUrl(self):
         return self.streamUrl
     
     def getVideoSize(self):
@@ -1181,10 +1162,10 @@ class Manage(object):
     @FM_runLocked()
     def salveInfoResumo(self):
         """ salva todos os dados necessários para o resumo do arquivo atual """
-        self.ctrConnection.removeStopedConnection()
+        self.ctrConnection.remeveStopped()
         pending = [] # coleta geral de informações.
         
-        for smanager in self.ctrConnection.getConnections():
+        for smanager in self.ctrConnection.getConnList():
             ident = smanager.ident
             
             # a conexão deve estar ligada a um interv
@@ -1236,14 +1217,14 @@ class Manage(object):
             self.params["seeking"] = False
             self.start()
         return True
-
-    def notifiqueConexoes(self, flag):
+    
+    def notifiqueConexoes(self, condition):
         """ Informa as conexões que um novo ponto da stream está sendo lido """
-        for smanager in self.ctrConnection.getConnections(): # coloca as conexões em estado ocioso
-            if flag: smanager.setWait()
-            elif smanager.isWaiting:
-                smanager.stopWait()
-                
+        for conn in self.ctrConnection.getConnList():
+            if condition: conn.setWait()
+            elif conn.isWaiting:
+                conn.stopWait()
+        
     @base.protected()
     def update(self):
         """ atualiza dados de transferência do arquivo de vídeo atual """
