@@ -32,7 +32,7 @@ class just_try(object):
     """ executa o méthodo dentro de um try:except. loga exceções """
     def __call__(self, method):
         def wrap(*args, **kwargs): # magic!
-            try: method(*args, **kwargs)
+            try: return method(*args, **kwargs)
             except Exception as err:
                 logger.error("%s: %s"%(self.__class__.__name__, err))
         return wrap
@@ -43,7 +43,7 @@ class protected(object):
         def wrap(*args, **kwargs):
             try: method(*args, **kwargs)
             except Exception as err:
-                print "Warnning: '%s' protected: %s"%(method.__name__,err)
+                print "warnning: '%s' protected: %s"%(method.__name__,err)
         return wrap
     
 def calc_percent(byte_counter, data_len):

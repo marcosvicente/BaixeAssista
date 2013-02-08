@@ -121,6 +121,8 @@ class Loader(QtGui.QMainWindow):
     baixeAssista = "BaixeAssista v%s"%settings.PROGRAM_VERSION
     config = configobj.ConfigObj( configPath )
     
+    updateLock = threading.RLock()
+    
     def __init__(self):
         super(Loader, self).__init__()
                 
@@ -160,9 +162,8 @@ class Loader(QtGui.QMainWindow):
         self.saveSettings()
         
     def updateUI(self):
-        if self.LOADING:
-            self.updateTable()
-    
+        if self.LOADING: self.updateTable()
+        
     def updateUIExit(self):
         if not self.LOADING:
             self.updateTableExit()
@@ -363,11 +364,6 @@ class Loader(QtGui.QMainWindow):
     @base.protected()
     def updateTable(self):
         """ atualizando apenas as tabelas apresentadas na 'MainWindow' """
-        for conn in self.manage.ctrConnection.getConnList():
-            if conn.wasStopped(): continue
-            values = map(lambda name: conn.info.get(conn.ident, name), manager.StreamManager.listInfo)
-            self.tableRows[ conn.ident ].update(values = values)
-            
         videoSizeFormated = manager.StreamManager.format_bytes(self.manage.getVideoSize())
         videoPercent = base.calc_percent(self.manage.getCacheBytesTotal(), self.manage.getVideoSize())
         
@@ -381,6 +377,17 @@ class Loader(QtGui.QMainWindow):
         self.uiMainWindow.downloadedToInfo.setText( videoSizeFormated )
         self.uiMainWindow.globalSpeedInfo.setText(self.manage.getGlobalSpeed())
         self.uiMainWindow.globalEtaInfo.setText(self.manage.getGlobalEta())
+        
+    @base.protected()
+    def updateConnectionUi(self, sender, **kwargs):
+        """ interface de atualização das infos da conexão"""
+        # conexão que emitiu o sinal através de 'Info'.
+        sender = self.manage.ctrConnection.getById(sender)
+        
+        for name in kwargs["fields"]:
+            col = manager.StreamManager.listInfo.index(name)
+            value = manager.Info.get(sender.ident, name)
+            self.tableRows[sender.ident].update(col=col, value=value)
         
     def updateTableExit(self):
         """ atualização de saída das tabelas. desativando todos os controles """
@@ -495,10 +502,11 @@ class Loader(QtGui.QMainWindow):
         
         if self.LOADING:
             self.tryRecoverFile()
+            self.manage.ctrConnection.stopAll()
             
             self.clearTable()
-            
-            self.manage.ctrConnection.stopAll()
+            # Eventos gerados por atividade de conexões.
+            manager.Info.update.disconnect(self.updateConnectionUi)
             
             self.mplayer.stop()
             self.manage.stop()
@@ -527,6 +535,9 @@ class Loader(QtGui.QMainWindow):
             self.DIALOG.close()
             
             self.setupFilesView()
+            
+            # Eventos gerados por atividade de conexões.
+            manager.Info.update.connect(self.updateConnectionUi)
         else:
             self.DIALOG.setWindowTitle(self.tr("Download Faleid"))
             self.DIALOG.btnCancel.setText(self.tr("Ok"))
@@ -582,12 +593,12 @@ class Loader(QtGui.QMainWindow):
         """ controla o fluxo de criação e remoção de conexões """
         if self.LOADING and not self.manage.isComplete():
             connection = self.manage.ctrConnection
-            
             nActiveConn = connection.countActive()
-            nConnCtr = self.uiMainWindow.connectionActive.value()
             
+            nConnCtr = self.uiMainWindow.connectionActive.value()
             proxyDisable = self.uiMainWindow.proxyDisable.isChecked()
             numOfConn = nConnCtr - nActiveConn
+            
             params = {
                 "ratelimit": self.uiMainWindow.connectionSpeed.value(), 
                 "timeout": self.uiMainWindow.connectionTimeout.value(),
@@ -607,11 +618,9 @@ class Loader(QtGui.QMainWindow):
                         
                 for sm_id in sm_id_list:
                     self.addTableRow( sm_id )
-                    
             elif numOfConn < 0: # remove conexões existentes.
                 for sm_id in connection.stop( numOfConn ):
                     self.removeTableRow( sm_id )
-                    
             else: # mudança dinânica dos parametros das conexões.
                 connection.update( **params)
     
