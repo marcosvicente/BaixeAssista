@@ -33,7 +33,11 @@ class mWebView(QtWebKit.QWebView):
         self.movieSpin = QtGui.QMovie(os.path.join(settings.IMAGES_DIR, "spin-progress.gif"))
         self.settings().setAttribute(QtWebKit.QWebSettings.PluginsEnabled, True)
         self.page().setLinkDelegationPolicy(QtWebKit.QWebPage.DelegateAllLinks)
-        
+    
+    @staticmethod
+    def setStrUrl(url):
+        return url if isinstance(url, (str,unicode)) else url.toString()
+    
     def getMovieSpinPixmap(self):
         return self.movieSpin.currentPixmap()
     
@@ -44,7 +48,11 @@ class mWebView(QtWebKit.QWebView):
         return self.loadingPage
     
     def onChangeUrl(self, url):
-        self.currentUrl = url if isinstance(url, (str,unicode)) else url.toString()
+        self.currentUrl = self.setStrUrl(url)
+        
+    def onPageLoad(self):
+        self.movieSpin.start()
+        self.loadingPage = True
         
     def onPageFinished(self):
         self.loadingPage = False
@@ -54,11 +62,8 @@ class mWebView(QtWebKit.QWebView):
         self.movieSpin.jumpToNextFrame()
         
     def load(self, url):
-        self.movieSpin.start()
-        self.currentUrl = url if isinstance(url, (str,unicode)) else url.toString()
-        self.loadingPage = True
-        
-        return super(mWebView, self).load(url)
+        self.currentUrl = self.setStrUrl(url)
+        return super(mWebView, self).load( url )
         
 class Browser (QtGui.QWidget):
     searchEngine = "http://www.google.com/"
@@ -214,19 +219,11 @@ class Browser (QtGui.QWidget):
                 self.webView.load(url)
             else:
                 self.setupPage(strUrl)
-            
-    def handleLocationPageLoad(self):
-        url = self.location.currentText()
-        self.webView.load(QtCore.QUrl(url))
     
-    def handleEmbed(self):
-        url = self.embed.currentText()
-        if hasattr(self.mainWin,"getLocation"):
-            self.mainWin.getLocation().setEditText(url)
-            
     def onPageLoad(self):
         """ chamado ao iniciar o carregamento da página """
         webView = self.sender()
+        webView.onPageLoad()
         
         self.btnStopRefresh.setStopState()
         self.updateFavoriteStarIcon()
@@ -262,6 +259,15 @@ class Browser (QtGui.QWidget):
         if self.webView == webView:
             self.location.setEditText(webView.getCurrentUrl())
             self.location.setToolTip(webView.getCurrentUrl())
+            
+    def handleLocationPageLoad(self):
+        url = self.location.currentText()
+        self.webView.load(QtCore.QUrl(url))
+    
+    def handleEmbed(self):
+        url = self.embed.currentText()
+        if hasattr(self.mainWin,"getLocation"):
+            self.mainWin.getLocation().setEditText(url)
         
     def handleStopRefresh(self):
         if self.btnStopRefresh["state"] == "refresh":
