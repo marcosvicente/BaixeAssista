@@ -205,13 +205,15 @@ class Browser (QtGui.QWidget):
             
             if not generators.Universal.isEmbed(strUrl):
                 self.mainWin.getLocation().setEditText(strUrl)
+            else:
+                self.onRequestCreated(strUrl)
         else:
             cUrl = QtCore.QUrl(self.webView.getCurrentUrl())
             
             if url.host() == cUrl.host():
-                self.webView.load( url )
+                self.webView.load(url)
             else:
-                self.setupPage( strUrl )
+                self.setupPage(strUrl)
             
     def handleLocationPageLoad(self):
         url = self.location.currentText()
