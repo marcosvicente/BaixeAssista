@@ -1652,6 +1652,7 @@ class StreamManager(threading.Thread):
                     if stream: self.write(stream, len(stream))
                     if self.usingProxy:
                         self.manage.proxyManager.set_good( self.proxies["http"] )
+                    Info.set(self.ident, "try", "Ok")
                     return True
                 else:
                     Info.set(self.ident, "state", _(u"Resposta inválida"))
@@ -1762,7 +1763,8 @@ class StreamManager_( StreamManager ):
         ctry = 0
         while self.isRunning and ctry < self.params["reconexao"]:
             try:                
-                Info.set(self.ident, "state", "(%d) "%(ctry+1)+_("Conectando"))
+                Info.set(self.ident, "state", _("Conectando"))
+                Info.set(self.ident, "try", str(ctry+1))
                 
                 self.streamSocket = self.videoManager.connect(link,
                                 headers = {"Range": "bytes=%s-%s" %(seekpos, videoSize)},
@@ -1778,6 +1780,7 @@ class StreamManager_( StreamManager ):
                     if stream: self.write(stream, len(stream))
                     if self.usingProxy:
                         self.manage.proxyManager.set_good(self.proxies["http"])
+                    Info.set(self.ident, "try", "Ok")
                     return True
                 else:
                     Info.set(self.ident, "state", _(u"Resposta inválida"))
