@@ -48,8 +48,9 @@ class Info(object):
     """ guarda o estado do objeto adicionado """
     # 'Signal' usado para notificar atualização dos dados de I/O
     update = Signal(providing_args=["fields"])
-    updateSleep = 0.1
+    updateSleep = 0.05
     info = {}
+    infoTimer = {}
     
     class sincronize(object):
         """ sicroniza as alterações sobre 'info' nas diferentes threads """
@@ -61,8 +62,14 @@ class Info(object):
     @classmethod
     @sincronize
     def eventUpdate(cls, *args, **kwargs):
+        field = kwargs["fields"][0]
+        
+        if len(kwargs["fields"]) == 1:
+            if (time.time() - cls.infoTimer[field]) < cls.updateSleep:
+                time.sleep( cls.updateSleep )
+                cls.infoTimer[field] = time.time()
+                
         cls.update.send(*args, **kwargs)
-        time.sleep(cls.updateSleep)
         
     @classmethod
     def sendEvent(cls, *args, **kwargs):
@@ -87,15 +94,16 @@ class Info(object):
     @sincronize
     def set(cls, rootkey, infokey, info):
         cls.info[rootkey][infokey] = info
+        cls.infoTimer.setdefault(infokey, time.time())
         cls.sendEvent(sender=rootkey, fields=(infokey,))
-    
+        
     @classmethod
     @sincronize
-    def clear(cls, rootkey, *keys):
-        keys = (keys or cls.info[rootkey])
-        for infokey in keys: cls.info[rootkey][infokey]=""
+    def clear(cls, rootkey, *keys, **params):
+        keys = [name for name in (keys or cls.info[rootkey]) if not name in params.get("exclude",[])]
+        for infokey in keys: cls.info[rootkey][infokey] = ""
         cls.sendEvent(sender=rootkey, fields=keys)
-    
+        
 ################################## FLVPLAYER ##################################
 class FlvPlayer(threading.Thread):
     """ Classe usada no controle de programas externos(players) """
@@ -1293,9 +1301,9 @@ class StreamManager(threading.Thread):
     listStrErro = ["onCuePoint"]
     
     # ordem correta das infos
-    listInfo = ["http", "state", "index", "downloaded", 
+    listInfo = ["http", "try", "state", "index", "downloaded", 
                 "total", "remainder", "percent", "speed"]
-    
+                
     # cache de bytes para extração do 'header' do vídeo.
     cacheStartSize = 256
     
@@ -1562,7 +1570,7 @@ class StreamManager(threading.Thread):
         
         
     def _finally(self):
-        Info.clear(self.ident, list(self.listInfo).remove("http"))
+        Info.clear(self.ident, *self.listInfo, exclude=("http",))
         
         if self.manage.interval.has(self.ident):
             self.manage.interval.remove(self.ident)
@@ -1628,7 +1636,8 @@ class StreamManager(threading.Thread):
         ctry = 0
         while self.isRunning and ctry < self.params["reconexao"]:
             try:
-                Info.set(self.ident, "state", "(%d) "%(ctry+1)+_("Conectando"))
+                Info.set(self.ident, "state", _("Conectando"))
+                Info.set(self.ident, "try", str(ctry+1))
                 self.streamSocket = self.videoManager.connect(link, proxies = self.proxies, 
                                                               timeout = self.params["timeout"], 
                                                               login = False)
