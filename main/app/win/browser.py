@@ -6,6 +6,7 @@ from PySide import QtWebKit
 from PySide import QtNetwork
 
 import main.environ
+from wx.html2 import WebView
 main.environ.setup((__name__ == "__main__"))
 
 from stopRefreshButton import StopRefreshButton
@@ -30,15 +31,9 @@ class mWebView(QtWebKit.QWebView):
     def __init__(self, parent=None):
         super(mWebView, self).__init__(parent)
         self.movieSpin = QtGui.QMovie(os.path.join(settings.IMAGES_DIR, "spin-progress.gif"))
-        
         self.settings().setAttribute(QtWebKit.QWebSettings.PluginsEnabled, True)
         self.page().setLinkDelegationPolicy(QtWebKit.QWebPage.DelegateAllLinks)
         
-        ##self.loadStarted.connect(self.onPageLoad)
-        self.loadFinished.connect(self.onPageFinished)
-        self.loadProgress.connect(self.onProgress)
-        self.urlChanged.connect(self.onChangeUrl)
-    
     def getMovieSpinPixmap(self):
         return self.movieSpin.currentPixmap()
     
@@ -64,10 +59,7 @@ class mWebView(QtWebKit.QWebView):
         self.loadingPage = True
         
         return super(mWebView, self).load(url)
-    
-    def createWindow(self, type):
-        return self
-    
+        
 class Browser (QtGui.QWidget):
     searchEngine = "http://www.google.com/"
     
@@ -109,8 +101,8 @@ class Browser (QtGui.QWidget):
         self.setLayout( vBox )
         self.show()
     
-    def setupPage(self, url, isDefaulf=False):
-        webView = mWebView( self.tabPagePanel)
+    def setupPage(self, url="", isDefaulf=False):
+        webView = mWebView(self.tabPagePanel)
         
         webView.page().setNetworkAccessManager( self.mNetWorkManager )
         webView.linkClicked.connect( self.onLinkClicked )
@@ -125,7 +117,8 @@ class Browser (QtGui.QWidget):
         
         self.tabPagePanel.addTab(webView, self.tr("Loading..."))
         if isDefaulf: self.tabPagePanel.setCurrentWidget( webView )
-        
+        return webView
+    
     def getLastSite(self):
         try: query = self.objects.get(site=None, historysite=None)
         except: query = models.Browser(lastsite="")
@@ -205,14 +198,20 @@ class Browser (QtGui.QWidget):
         
     def onLinkClicked(self, url):
         """ controla o fluxo de links reconhecidos como válidos """
-        urlText = url.toString()
+        strUrl = url.toString()
         
-        if hasattr(self.mainWin,"getLocation") and generators.Universal.has_site(urlText):
-            urlText = generators.Universal.get_inner_url(urlText)
-            if not generators.Universal.isEmbed(urlText):
-                self.mainWin.getLocation().setEditText(urlText)
+        if hasattr(self.mainWin,"getLocation") and generators.Universal.has_site(strUrl):
+            strUrl = generators.Universal.get_inner_url(strUrl)
+            
+            if not generators.Universal.isEmbed(strUrl):
+                self.mainWin.getLocation().setEditText(strUrl)
         else:
-            self.webView.load( url )
+            cUrl = QtCore.QUrl(self.webView.getCurrentUrl())
+            
+            if url.host() == cUrl.host():
+                self.webView.load( url )
+            else:
+                self.setupPage( strUrl )
             
     def handleLocationPageLoad(self):
         url = self.location.currentText()
@@ -234,7 +233,8 @@ class Browser (QtGui.QWidget):
         
     def onPageFinished(self):
         webView = self.sender()
-                
+        webView.onPageFinished()
+        
         index = self.tabPagePanel.indexOf( webView )
         self.tabPagePanel.setTabIcon(index, webView.icon())
         
@@ -242,6 +242,8 @@ class Browser (QtGui.QWidget):
         
     def onProgress(self, porcent):
         webView = self.sender()
+        webView.onProgress(porcent)
+        
         self.tabPagePanel.setTabIcon(self.tabPagePanel.indexOf(webView), 
                          QtGui.QIcon( webView.getMovieSpinPixmap() ))
         
@@ -253,6 +255,7 @@ class Browser (QtGui.QWidget):
         
     def onChangeUrl(self, url):
         webView = self.sender()
+        webView.onChangeUrl(url)
         
         if self.webView == webView:
             self.location.setEditText(webView.getCurrentUrl())
