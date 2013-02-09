@@ -889,7 +889,7 @@ class Connection(object):
                 connlist.append(conn.ident)
                 conn.stop(); break
         # remove todas as conexões paradas
-        self.remeveStopped()
+        self.removeStopped()
         return connlist
         
     def startNew(self, noProxy=False, **params):
@@ -910,7 +910,7 @@ class Connection(object):
         """ retorna o número de conexões criadas"""
         return len(self.connlist)
     
-    def remeveStopped(self):
+    def removeStopped(self):
         """ remove as conexões que estiverem completamente paradas """
         self.connlist = [conn for conn in self.connlist if conn.isAlive()]
         
@@ -1206,7 +1206,7 @@ class Manage(object):
     @FM_runLocked()
     def salveInfoResumo(self):
         """ salva todos os dados necessários para o resumo do arquivo atual """
-        self.ctrConnection.remeveStopped()
+        self.ctrConnection.removeStopped()
         pending = [] # coleta geral de informações.
         
         for smanager in self.ctrConnection.getConnList():
