@@ -77,6 +77,13 @@ class DialogDonate(QtGui.QDialog):
         return tmpl.render(Context({"params": params}))
     
     @property
+    def isOn(self):
+        return not self.donationBoxStatus.isChecked()
+    
+    def setOff(self, flag):
+        self.donationBoxStatus.setChecked(flag)
+        
+    @property
     def btnFrame(self):
         return self.uiDialog.btnFrame
     

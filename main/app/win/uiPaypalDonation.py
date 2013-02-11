@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'uiPaypalDonation.ui'
 #
-# Created: Mon Feb 11 17:24:42 2013
+# Created: Mon Feb 11 18:57:27 2013
 #      by: pyside-uic 0.2.14 running on PySide 1.1.2
 #
 # WARNING! All changes made in this file will be lost!
@@ -85,7 +85,7 @@ class Ui_Dialog(object):
         QtCore.QMetaObject.connectSlotsByName(Dialog)
 
     def retranslateUi(self, Dialog):
-        Dialog.setWindowTitle(QtGui.QApplication.translate("Dialog", "Make a donation", None, QtGui.QApplication.UnicodeUTF8))
+        Dialog.setWindowTitle(QtGui.QApplication.translate("Dialog", "Make a donation.", None, QtGui.QApplication.UnicodeUTF8))
         self.info.setText(QtGui.QApplication.translate("Dialog", "...", None, QtGui.QApplication.UnicodeUTF8))
         self.btnClose.setText(QtGui.QApplication.translate("Dialog", "Close", None, QtGui.QApplication.UnicodeUTF8))
         self.donationBoxStatus.setText(QtGui.QApplication.translate("Dialog", "Do not show this message again.", None, QtGui.QApplication.UnicodeUTF8))
