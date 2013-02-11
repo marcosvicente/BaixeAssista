@@ -218,11 +218,14 @@ class Loader(QtGui.QMainWindow):
         self.langActionGroup.addAction(self.uiMainWindow.actionPortuguse)
         self.langActionGroup.addAction(self.uiMainWindow.actionEnglish)
         self.langActionGroup.addAction(self.uiMainWindow.actionSpanish)
-        self.codeLang = {
-            self.uiMainWindow.actionPortuguse: "pt_BR",
-            self.uiMainWindow.actionEnglish: "en_US",
-            self.uiMainWindow.actionSpanish: "es_ES"
-        }
+
+        self.codeLang = {self.uiMainWindow.actionPortuguse: "pt_BR", 
+                         self.uiMainWindow.actionEnglish: "en_US",
+                         self.uiMainWindow.actionSpanish: "es_ES"}
+        
+        # action para a alteração do idioma
+        self.langActionGroup.triggered.connect(self.onLocaleChange)
+        
         self.playerActionGroup = QtGui.QActionGroup(self)
         self.playerActionGroup.addAction(self.uiMainWindow.actionEmbedPlayer)
         self.playerActionGroup.addAction(self.uiMainWindow.actionExternalPlayer)
@@ -243,6 +246,11 @@ class Loader(QtGui.QMainWindow):
         
         self.getLocation().addItems(map(lambda d: self.urlManager.joinUrlDesc(d[0], d[1]), 
                                         self.urlManager.getUrlTitleList()))
+    
+    def onLocaleChange(self):
+        """ Como o idioma está sendo feito na inicialização, apenas avisa para reinicializar """
+        QtGui.QMessageBox.information(self, self.tr("about changing the language"), 
+              self.tr("You need to manually restart the program for the new language to take effect."))
         
     def setupFilesView(self):
         videosView = self.uiMainWindow.videosView
@@ -672,6 +680,7 @@ class Loader(QtGui.QMainWindow):
         conf["Window"].setdefault("position", [0, 0])
         conf["Window"].setdefault("size", [640, 480])
         conf["Window"].setdefault("donationBoxIsOn", True)
+        conf["Window"].setdefault("booted", True)
         
         conf["Path"].setdefault("videoDir", settings.DEFAULT_VIDEOS_DIR)
         conf["Lang"].setdefault("code", "en")
