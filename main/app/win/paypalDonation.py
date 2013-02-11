@@ -10,6 +10,7 @@ from main import settings
 
 class DialogDonate(QtGui.QDialog):
     template = "paypalDoar.html"
+    url = QtCore.QUrl("http://www.contrib-paypal/")
     
     def __init__(self, parent=None):
         super(DialogDonate, self).__init__(parent)
@@ -31,7 +32,9 @@ class DialogDonate(QtGui.QDialog):
         self.webView.loadProgress.connect(self.onProgress)
         self.webView.urlChanged.connect(self.onChangeUrl)
         
-        self.webView.setHtml(self.getTemplateHtml({"msg": self.getDevMsg()}))
+        self.html = self.getTemplateHtml({"msg": self.getDevMsg()})
+        
+        self.webView.setHtml(self.html, self.url)
         self.webViewFrame.layout().addWidget( self.webView )
         
         self.btnClose.clicked.connect(self.close)
@@ -55,7 +58,10 @@ class DialogDonate(QtGui.QDialog):
         
     def onStopRefresh(self):
         if self.btnSR["state"] == "refresh":
-            self.webView.reload()
+            if self.webView.url().host() == self.url.host():
+                self.webView.setHtml(self.html, self.url)
+            else:
+                self.webView.reload()
         else:
             self.webView.stop()
             
