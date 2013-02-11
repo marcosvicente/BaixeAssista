@@ -162,11 +162,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\uiPaypalDonation.py" line="88"/>
-        <source>Make a donation</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <location filename="..\uiPaypalDonation.py" line="90"/>
         <source>Close</source>
         <translation type="unfinished"></translation>
@@ -174,6 +169,11 @@
     <message>
         <location filename="..\uiPaypalDonation.py" line="91"/>
         <source>Do not show this message again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="..\uiPaypalDonation.py" line="88"/>
+        <source>Make a donation.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -231,154 +231,154 @@
 <context>
     <name>Loader</name>
     <message>
-        <location filename="..\loader.py" line="147"/>
+        <location filename="..\loader.py" line="145"/>
         <source>About</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\loader.py" line="149"/>
+        <location filename="..\loader.py" line="147"/>
         <source>BaixeAssista search uncomplicate viewing videos on the internet.
 Developer: geniofuturo@gmail.com</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\loader.py" line="173"/>
+        <location filename="..\loader.py" line="188"/>
         <source>Low</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\loader.py" line="173"/>
+        <location filename="..\loader.py" line="188"/>
         <source>Normal</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\loader.py" line="174"/>
+        <location filename="..\loader.py" line="189"/>
         <source>High</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\loader.py" line="175"/>
+        <location filename="..\loader.py" line="190"/>
         <source>Just remove</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\loader.py" line="175"/>
+        <location filename="..\loader.py" line="190"/>
         <source>Before remove, ask</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\loader.py" line="233"/>
+        <location filename="..\loader.py" line="248"/>
         <source>Video extension</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\loader.py" line="235"/>
+        <location filename="..\loader.py" line="250"/>
         <source>Video size</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\loader.py" line="239"/>
+        <location filename="..\loader.py" line="254"/>
         <source>Downloaded</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\loader.py" line="243"/>
+        <location filename="..\loader.py" line="258"/>
         <source>Video quality</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\loader.py" line="248"/>
+        <location filename="..\loader.py" line="263"/>
         <source>Video path</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\loader.py" line="330"/>
+        <location filename="..\loader.py" line="345"/>
         <source>preview</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\loader.py" line="335"/>
+        <location filename="..\loader.py" line="350"/>
         <source>remove</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\loader.py" line="404"/>
+        <location filename="..\loader.py" line="419"/>
         <source>Choose the location of the external player</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\loader.py" line="405"/>
+        <location filename="..\loader.py" line="420"/>
         <source>All Files (*);;Exe Files (*.exe)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\loader.py" line="409"/>
+        <location filename="..\loader.py" line="424"/>
         <source>choose a valid location!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\loader.py" line="410"/>
+        <location filename="..\loader.py" line="425"/>
         <source>Operation canceled or informed way is not in the file system.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\loader.py" line="416"/>
+        <location filename="..\loader.py" line="431"/>
         <source>Choose the directory of videos</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\loader.py" line="476"/>
+        <location filename="..\loader.py" line="491"/>
         <source>Error</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\loader.py" line="477"/>
+        <location filename="..\loader.py" line="492"/>
         <source>An error occurred starting the download.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\loader.py" line="481"/>
+        <location filename="..\loader.py" line="496"/>
         <source>Stop</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\loader.py" line="482"/>
+        <location filename="..\loader.py" line="497"/>
         <source>Please wait</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\loader.py" line="548"/>
+        <location filename="..\loader.py" line="563"/>
         <source>Download</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\loader.py" line="541"/>
+        <location filename="..\loader.py" line="556"/>
         <source>Download Faleid</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\loader.py" line="542"/>
+        <location filename="..\loader.py" line="557"/>
         <source>Ok</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\loader.py" line="561"/>
+        <location filename="..\loader.py" line="576"/>
         <source>recovery of the temporary file</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\loader.py" line="563"/>
+        <location filename="..\loader.py" line="578"/>
         <source>The current video file is saved in a temporary file.
 Want to save permanently ?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\loader.py" line="571"/>
+        <location filename="..\loader.py" line="586"/>
         <source>Processing...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="..\loader.py" line="579"/>
+        <location filename="..\loader.py" line="594"/>
         <source>The video file was successfully recovered!</source>
         <translation type="unfinished"></translation>
     </message>

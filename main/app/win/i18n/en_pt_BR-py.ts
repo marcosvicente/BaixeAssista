@@ -164,9 +164,9 @@
         <translation>Informações do site</translation>
     </message>
     <message>
-        <location filename="../uiPaypalDonation.py" line="88"/>
+        <location filename="../../uiPaypalDonation.py" line="88"/>
         <source>Make a donation</source>
-        <translation>Faça uma doação</translation>
+        <translation type="obsolete">Faça uma doação.</translation>
     </message>
     <message>
         <location filename="../uiPaypalDonation.py" line="90"/>
@@ -177,6 +177,11 @@
         <location filename="../uiPaypalDonation.py" line="91"/>
         <source>Do not show this message again.</source>
         <translation>Não mostre essa mensagem novamente.</translation>
+    </message>
+    <message>
+        <location filename="../uiPaypalDonation.py" line="88"/>
+        <source>Make a donation.</source>
+        <translation>Faça uma doação.</translation>
     </message>
 </context>
 <context>
@@ -189,15 +194,7 @@
     <message>
         <location filename="../paypalDonation.py" line="49"/>
         <source>Hello! {username}&lt;br/&gt;&lt;br/&gt;Now you have the opportunity to contribute to the development of this project.&lt;br/&gt;Donate the amount you can with the system palypal.&lt;br/&gt;&lt;br/&gt;Suggested Value: $ 5.00&lt;br/&gt;&lt;br/&gt;Click the donate button to start the donation process.&lt;br/&gt;If you do not have a paypal account, you can do by clicking the donate button.&lt;br/&gt;&lt;br/&gt;You can disable this message by checking the box at the bottom of the window.&lt;br/&gt;You can also donate at any time by clicking the menu about.&lt;br/&gt;Anyway, Thanks for attention.&lt;br/&gt;</source>
-        <translation>&quot;Olá! {username}&lt;br/&gt;&lt;br/&gt;&quot;
-&quot;Agora você tem a oportunidade de contribuir para o desenvolvimento desse projeto.&lt;br/&gt;&quot;
-&quot;Doe a quantidade que você puder com o sistema paypal.&lt;br/&gt;&lt;br/&gt;&quot;
-&quot;Valor sugerido: R$ 5.00&lt;br/&gt;&lt;br/&gt;&quot;
-&quot;Clique no botão doar para iniciar o processo de doação.&lt;br/&gt;&quot;
-&quot;Se você não tiver uma contar no paypal, pode fazer uma apartir do botão Doar.&lt;br/&gt;&lt;br/&gt;&quot;
-&quot;Você pode desativar essa mensagem marcando a caixa(checkbox) no fundo da janela.&lt;br/&gt;&quot;
-&quot;Também pode doar, a qualquer momento, clicando no menu Sobre.&lt;br/&gt;&quot;
-&quot;De qualquer forma obrigado pela atenção.&lt;br/&gt;&quot;</translation>
+        <translation>Olá! {username}&lt;br/&gt;&lt;br/&gt;Agora você tem a oportunidade de contribuir para o desenvolvimento desse projeto.&lt;br/&gt;Doe a quantidade que você puder com o sistema paypal.&lt;br/&gt;&lt;br/&gt;Valor sugerido: R$ 5.00&lt;br/&gt;&lt;br/&gt;Clique no botão doar para iniciar o processo de doação.&lt;br/&gt;Se você não tiver uma contar no paypal, pode fazer uma apartir do botão Doar.&lt;br/&gt;&lt;br/&gt;Você pode desativar essa mensagem marcando a caixa(checkbox) no fundo da janela.&lt;br/&gt;Também pode doar, a qualquer momento, clicando no menu Sobre.&lt;br/&gt;De qualquer forma obrigado pela atenção.&lt;br/&gt;</translation>
     </message>
     <message>
         <location filename="../paypalDonation.py" line="67"/>
@@ -241,156 +238,156 @@
 <context>
     <name>Loader</name>
     <message>
-        <location filename="../loader.py" line="147"/>
+        <location filename="../loader.py" line="145"/>
         <source>About</source>
         <translation>Sobre</translation>
     </message>
     <message>
-        <location filename="../loader.py" line="149"/>
+        <location filename="../loader.py" line="147"/>
         <source>BaixeAssista search uncomplicate viewing videos on the internet.
 Developer: geniofuturo@gmail.com</source>
         <translation>BaixeAssista procura descomplicar a visualização de vídeos na internet
 Desenvolvedor: geniofuturo@gmail.com</translation>
     </message>
     <message>
-        <location filename="../loader.py" line="173"/>
+        <location filename="../loader.py" line="188"/>
         <source>Low</source>
         <translation>Baixa</translation>
     </message>
     <message>
-        <location filename="../loader.py" line="173"/>
+        <location filename="../loader.py" line="188"/>
         <source>Normal</source>
         <translation>Média</translation>
     </message>
     <message>
-        <location filename="../loader.py" line="174"/>
+        <location filename="../loader.py" line="189"/>
         <source>High</source>
         <translation>Alta</translation>
     </message>
     <message>
-        <location filename="../loader.py" line="175"/>
+        <location filename="../loader.py" line="190"/>
         <source>Just remove</source>
         <translation>Apenas remova</translation>
     </message>
     <message>
-        <location filename="../loader.py" line="175"/>
+        <location filename="../loader.py" line="190"/>
         <source>Before remove, ask</source>
         <translation>Antes de remover, pegunte</translation>
     </message>
     <message>
-        <location filename="../loader.py" line="233"/>
+        <location filename="../loader.py" line="248"/>
         <source>Video extension</source>
         <translation>Extensão do vídeo</translation>
     </message>
     <message>
-        <location filename="../loader.py" line="235"/>
+        <location filename="../loader.py" line="250"/>
         <source>Video size</source>
         <translation>Tamanho do vídeo</translation>
     </message>
     <message>
-        <location filename="../loader.py" line="239"/>
+        <location filename="../loader.py" line="254"/>
         <source>Downloaded</source>
         <translation>Baixado</translation>
     </message>
     <message>
-        <location filename="../loader.py" line="243"/>
+        <location filename="../loader.py" line="258"/>
         <source>Video quality</source>
         <translation>Qualidade do vídeo</translation>
     </message>
     <message>
-        <location filename="../loader.py" line="248"/>
+        <location filename="../loader.py" line="263"/>
         <source>Video path</source>
         <translation>Caminho do arquivo de vídeo</translation>
     </message>
     <message>
-        <location filename="../loader.py" line="330"/>
+        <location filename="../loader.py" line="345"/>
         <source>preview</source>
         <translation>pré-visualizar</translation>
     </message>
     <message>
-        <location filename="../loader.py" line="335"/>
+        <location filename="../loader.py" line="350"/>
         <source>remove</source>
         <translation>remover</translation>
     </message>
     <message>
-        <location filename="../loader.py" line="404"/>
+        <location filename="../loader.py" line="419"/>
         <source>Choose the location of the external player</source>
         <translation>Escolha a localização do player externo</translation>
     </message>
     <message>
-        <location filename="../loader.py" line="405"/>
+        <location filename="../loader.py" line="420"/>
         <source>All Files (*);;Exe Files (*.exe)</source>
         <translation>Todos os arquivos(*);;Arquivos Exe(*.exe)</translation>
     </message>
     <message>
-        <location filename="../loader.py" line="409"/>
+        <location filename="../loader.py" line="424"/>
         <source>choose a valid location!</source>
         <translation>escolha uma localização válida!</translation>
     </message>
     <message>
-        <location filename="../loader.py" line="410"/>
+        <location filename="../loader.py" line="425"/>
         <source>Operation canceled or informed way is not in the file system.</source>
         <translation>Operação cancelada ou o caminho informado não consta no sistema de arquivos.</translation>
     </message>
     <message>
-        <location filename="../loader.py" line="416"/>
+        <location filename="../loader.py" line="431"/>
         <source>Choose the directory of videos</source>
         <translation>Escolha o diretório de arquivos de vídeo</translation>
     </message>
     <message>
-        <location filename="../loader.py" line="476"/>
+        <location filename="../loader.py" line="491"/>
         <source>Error</source>
         <translation>Erro</translation>
     </message>
     <message>
-        <location filename="../loader.py" line="477"/>
+        <location filename="../loader.py" line="492"/>
         <source>An error occurred starting the download.</source>
         <translation>Um erro ocorreu ao iniciar o download.</translation>
     </message>
     <message>
-        <location filename="../loader.py" line="481"/>
+        <location filename="../loader.py" line="496"/>
         <source>Stop</source>
         <translation>Parar</translation>
     </message>
     <message>
-        <location filename="../loader.py" line="482"/>
+        <location filename="../loader.py" line="497"/>
         <source>Please wait</source>
         <translation>Por favor aguarde</translation>
     </message>
     <message>
-        <location filename="../loader.py" line="548"/>
+        <location filename="../loader.py" line="563"/>
         <source>Download</source>
         <translation>Baixar</translation>
     </message>
     <message>
-        <location filename="../loader.py" line="541"/>
+        <location filename="../loader.py" line="556"/>
         <source>Download Faleid</source>
         <translation>Falha no download</translation>
     </message>
     <message>
-        <location filename="../loader.py" line="542"/>
+        <location filename="../loader.py" line="557"/>
         <source>Ok</source>
         <translation>Ok</translation>
     </message>
     <message>
-        <location filename="../loader.py" line="561"/>
+        <location filename="../loader.py" line="576"/>
         <source>recovery of the temporary file</source>
         <translation>recuperação do arquivo temporário</translation>
     </message>
     <message>
-        <location filename="../loader.py" line="563"/>
+        <location filename="../loader.py" line="578"/>
         <source>The current video file is saved in a temporary file.
 Want to save permanently ?</source>
         <translation>O arquivo de vídeo atual foi salvo como um arquivo temporário.
 Deseja salvá-lo permanentemente ?</translation>
     </message>
     <message>
-        <location filename="../loader.py" line="571"/>
+        <location filename="../loader.py" line="586"/>
         <source>Processing...</source>
         <translation>Processando...</translation>
     </message>
     <message>
-        <location filename="../loader.py" line="579"/>
+        <location filename="../loader.py" line="594"/>
         <source>The video file was successfully recovered!</source>
         <translation>O arquivo de vídeo foi recuperado com sucesso!</translation>
     </message>
@@ -518,7 +515,7 @@ Deseja salvá-lo permanentemente ?</translation>
         <translation>Segmentos</translation>
     </message>
     <message>
-        <location filename="../../../../../mainLayout.py" line="613"/>
+        <location filename="../../../../../../../../../mainLayout.py" line="613"/>
         <source>Progress</source>
         <translation type="obsolete">Progresso</translation>
     </message>
