@@ -21,7 +21,8 @@ from dialogError import DialogError
 from dialogUpdate import DialogUpdate
 from dialogRec import DialogRec
 from tableRow import TableRow
-
+from paypalDonation import DialogDonate
+from dialogAbout import DialogAbout
 import webbrowser
 import browser
 import glob
@@ -121,7 +122,7 @@ class Loader(QtGui.QMainWindow):
     baixeAssista = "BaixeAssista v%s"%settings.PROGRAM_VERSION
     config = configobj.ConfigObj( configPath )
     
-    updateLock = threading.RLock()
+    tableRows = {}
     
     def __init__(self):
         super(Loader, self).__init__()
@@ -130,7 +131,6 @@ class Loader(QtGui.QMainWindow):
         self.uiMainWindow.setupUi(self)
         self.setWindowTitle(self.baixeAssista)
         
-        self.tableRows = {}
         self.LOADING = False
         self.manage = self.mplayer = None
         
@@ -140,14 +140,15 @@ class Loader(QtGui.QMainWindow):
         # restaurando configurações da ui
         self.configUI()
         
-        # iniciando a procura por atualizações.
-        if self.uiMainWindow.actionAutomaticSearch.isChecked():
-            self.onSearchUpdate(False)
+        QtCore.QTimer.singleShot(1000*3, self._initAfter)
         
     def onAbout(self):
-        QtGui.QMessageBox.information(self, " - ".join([self.tr("About"), self.baixeAssista]),
-          self.tr("BaixeAssista search uncomplicate viewing videos on the internet.\n"
-                  "Developer: geniofuturo@gmail.com"))
+        about = DialogAbout(self, title =" - ".join([self.tr("About"), self.baixeAssista]))
+        about.setDevInfoText(
+            self.tr("BaixeAssista search uncomplicate viewing videos on the internet.\n"
+                    "Developer: geniofuturo@gmail.com"))
+        about.btnMakeDonation.clicked.connect(self.showDonationDialog)
+        about.exec_()
     
     def onErroReporting(self):
         dialogError = DialogError()
@@ -165,9 +166,25 @@ class Loader(QtGui.QMainWindow):
         if self.LOADING: self.updateTable()
         
     def updateUIExit(self):
-        if not self.LOADING:
-            self.updateTableExit()
+        if not self.LOADING: self.updateTableExit()
+    
+    def showDonationDialog(self, event=None, show=True):
+        """ show: mostra o diálogo independente da decisão do usuário """
+        if show or self.confWindow.as_bool("donationBoxIsOn"):
+            donate = DialogDonate( self)
+            donate.setOff(not self.confWindow.as_bool("donationBoxIsOn"))
+            donate.exec_()
+            
+            # atualizando com decisão do usuário. sempre respeite isso!
+            self.confWindow["donationBoxIsOn"] = donate.isOn
+            
+    def _initAfter(self):
+        self.showDonationDialog(show=False)
         
+        # iniciando a procura por atualizações.
+        if self.uiMainWindow.actionAutomaticSearch.isChecked():
+            self.onSearchUpdate(False)
+    
     def setupUI(self):
         self.setupTab()
         self.setupLocation()
@@ -304,8 +321,7 @@ class Loader(QtGui.QMainWindow):
         else:
             path = self.confPath["externalPlayer"]
         return path
-                
-        
+    
     def onVideoRemove(self):
         item = self.uiMainWindow.videosView.currentItem()
         title = item.text(0)
@@ -344,23 +360,22 @@ class Loader(QtGui.QMainWindow):
         menu.addAction( actionRemove )
         menu.exec_(event.globalPos())
         
-    def addTableRow(self, _id):
+    def addTableRow(self, ident):
         """ agrupa items por linha """
         # relacionando  com o id para facilitar na atualização de dados
-        self.tableRows[_id] = TableRow( self.uiMainWindow.connectionInfo )
-        self.tableRows[_id].create()
-        return self.tableRows[_id]
-    
-    def removeTableRow(self, _id):
-        tableRow = self.tableRows.pop(_id)
+        self.tableRows[ident] = TableRow( self.uiMainWindow.connectionInfo )
+        self.tableRows[ident].create()
+        return self.tableRows[ident]
+        
+    def removeTableRow(self, ident):
+        tableRow = self.tableRows.pop(ident)
         tableRow.clear()
     
     def clearTable(self):
         """ removendo todas as 'rows' e dados relacionandos """
-        for _id in self.tableRows:
-            self.tableRows[_id].clear()
-        self.tableRows.clear()
-    
+        for ident in self.tableRows.keys():
+            self.removeTableRow( ident )
+        
     @base.protected()
     def updateTable(self):
         """ atualizando apenas as tabelas apresentadas na 'MainWindow' """
@@ -383,12 +398,14 @@ class Loader(QtGui.QMainWindow):
         """ interface de atualização das infos da conexão"""
         # conexão que emitiu o sinal através de 'Info'.
         sender = self.manage.ctrConnection.getById(sender)
+        # para conexões removidas.
+        if sender is None: return
         
         for name in kwargs["fields"]:
             col = manager.StreamManager.listInfo.index(name)
             value = manager.Info.get(sender.ident, name)
             self.tableRows[sender.ident].update(col=col, value=value)
-        
+            
     def updateTableExit(self):
         """ atualização de saída das tabelas. desativando todos os controles """
         self.uiMainWindow.progressBarInfo.setValue(0.0)
@@ -502,11 +519,12 @@ class Loader(QtGui.QMainWindow):
         
         if self.LOADING:
             self.tryRecoverFile()
+            
+            # Eventos gerados por atividade de conexões.
+            manager.Info.update.disconnect(self.updateConnectionUi)
             self.manage.ctrConnection.stopAll()
             
             self.clearTable()
-            # Eventos gerados por atividade de conexões.
-            manager.Info.update.disconnect(self.updateConnectionUi)
             
             self.mplayer.stop()
             self.manage.stop()
@@ -530,14 +548,14 @@ class Loader(QtGui.QMainWindow):
             if self.getLocation().findText( joinedUrl ) < 0:
                 self.getLocation().addItem(joinedUrl)
                 
+            # Eventos gerados por atividade de conexões.
+            manager.Info.update.connect(self.updateConnectionUi)
             self.handleStartupConnection(default = reponse)
+            
             self.mplayer.start()
             self.DIALOG.close()
             
             self.setupFilesView()
-            
-            # Eventos gerados por atividade de conexões.
-            manager.Info.update.connect(self.updateConnectionUi)
         else:
             self.DIALOG.setWindowTitle(self.tr("Download Faleid"))
             self.DIALOG.btnCancel.setText(self.tr("Ok"))
@@ -618,6 +636,7 @@ class Loader(QtGui.QMainWindow):
                         
                 for sm_id in sm_id_list:
                     self.addTableRow( sm_id )
+                    
             elif numOfConn < 0: # remove conexões existentes.
                 for sm_id in connection.stop( numOfConn ):
                     self.removeTableRow( sm_id )
@@ -652,6 +671,7 @@ class Loader(QtGui.QMainWindow):
         
         conf["Window"].setdefault("position", [0, 0])
         conf["Window"].setdefault("size", [640, 480])
+        conf["Window"].setdefault("donationBoxIsOn", True)
         
         conf["Path"].setdefault("videoDir", settings.DEFAULT_VIDEOS_DIR)
         conf["Lang"].setdefault("code", "en")
