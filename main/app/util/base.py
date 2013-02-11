@@ -18,12 +18,11 @@ def trans_install(configs = None):
             configs = {}
             
     configs.setdefault("Lang", {})
-    configs.setdefault("code", "en")
+    configs["Lang"].setdefault("code", "en_US")
     
     translator = gettext.translation("ba_trans", 
-                os.path.join(settings.APPDIR, "locale"), 
-                languages=[configs["Lang"]["code"]])
-    
+                        os.path.join(settings.APPDIR, "locale"), 
+                        languages=[configs["Lang"]["code"]])
     # instala no espaço de nomes embutidos
     translator.install(unicode=True)
     
