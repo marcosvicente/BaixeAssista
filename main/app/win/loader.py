@@ -220,8 +220,8 @@ class Loader(QtGui.QMainWindow):
         self.langActionGroup.addAction(self.uiMainWindow.actionSpanish)
         self.codeLang = {
             self.uiMainWindow.actionPortuguse: "pt_BR",
-            self.uiMainWindow.actionEnglish: "en",
-            self.uiMainWindow.actionSpanish: "es"
+            self.uiMainWindow.actionEnglish: "en_US",
+            self.uiMainWindow.actionSpanish: "es_ES"
         }
         self.playerActionGroup = QtGui.QActionGroup(self)
         self.playerActionGroup.addAction(self.uiMainWindow.actionEmbedPlayer)
