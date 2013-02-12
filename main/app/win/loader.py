@@ -1,12 +1,15 @@
 # coding: utf-8
 import sys, os
-import time, threading, configobj
+import webbrowser
+import glob
+import time
+import threading
+import configobj
 from PySide import QtCore, QtGui
-from main import settings
 
 OldPixmap = QtGui.QPixmap
 def pixmap(*args, **kwargs):
-    """ hack para correção do caminho do pixmap """
+    """ hacke para correção do caminho do pixmap """
     args = list(args)
     if isinstance(args[0],(str, unicode)):
         fileName = os.path.basename(args[0])
@@ -14,41 +17,29 @@ def pixmap(*args, **kwargs):
     return OldPixmap(*tuple(args), **kwargs)
 QtGui.QPixmap = pixmap
 
-import mainLayout, uiDialogDl
-from playerDialog import PlayerDialog
-from dialogError import DialogError
+import mainLayout
+import uiDialogDl
+import browser
+
+from paypalDonation import DialogDonate
 from dialogUpdate import DialogUpdate
+from playerDialog import PlayerDialog
+from dialogAbout import DialogAbout
+from dialogError import DialogError
 from dialogRec import DialogRec
 from tableRow import TableRow
-from paypalDonation import DialogDonate
-from dialogAbout import DialogAbout
-import webbrowser
-import browser
-import glob
 
 from main.app.manager.streamManager import StreamManager
 from main.app.manager.fileManager import FileManager
 from main.app.manager.resumeInfo import ResumeInfo
 from main.app.manager.flvPlayer import FlvPlayer
 from main.app.manager.urls import UrlManager
+from main.app.manager.manage import Manage
 from main.app.manager.server import Server
 from main.app.manager.info import Info
-
 from main.app.util import base
 from main.app import updater
-
-def transUi_install(code):
-    """ instala as traduções da interface gráfica """
-    translator = QtCore.QTranslator()
-    
-    # pesquisando por todos os arquivo de tradução da ui.
-    transfile = glob.glob(os.path.join(settings.APPDIR, "win", "locale", code, "*.qm"))
-    
-    for filepath in transfile:
-        # carregando os arquivos de tradução.
-        translator.load( filepath )
-        
-    return translator
+from main import settings
 
 ## --------------------------------------------------------------------------
 class DialogDl(QtGui.QDialog):

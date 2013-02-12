@@ -4,7 +4,13 @@ import urlparse
 import re
 
 class UrlBase(object):
-    sep = u"::::::"; short = u"%s[%s]"
+    sep   = u"::::::"
+    short = u"%s[%s]"
+    
+    @staticmethod
+    def universal():
+        from main.app.generators import Universal
+        return Universal
     
     @classmethod
     def joinUrlDesc(cls, url, desc):
@@ -30,8 +36,8 @@ class UrlBase(object):
     @classmethod
     def formatUrl(cls, string):
         """ megavideo[t53vqf0l] -> http://www.megavideo.com/v=t53vqf0l """
-        base, strID = cls.splitBaseId( string )
-        return Universal.get_url( base ) % strID
+        base, strID = cls.splitBaseId(string)
+        return cls.universal().get_url( base ) % strID
     
     @classmethod
     def shortUrl(cls, url):
@@ -52,28 +58,32 @@ class UrlBase(object):
     def analizeUrl(cls, url):
         """ http://www.megavideo.com/v=t53vqf0l -> (megavideo.com, t53vqf0l) """
         basename = cls.getBaseName( url )
-        urlid = Universal.get_video_id(basename, url)
+        urlid = cls.universal().get_video_id(basename, url)
         return (basename, urlid)
         
 ########################################################################
 class UrlManager( UrlBase ):
     def __init__(self):
         super(UrlManager, self).__init__()
-        self.models = self.imp_models()
-        
         # acesso a queryset
         self.objects = self.models.Url.objects
-    
-    def imp_models(self):
+        
+    @property
+    def models(self):
         """ tentativa de escapar do import recursivo """
         from main.app import models
         return models
     
+    @property
+    def universal(self):
+        from main.app.generators import Universal
+        return Universal
+        
     def getUrlId(self, title):
         """ retorna o id da url, com base no título(desc) """
         query = self.objects.get(title = title)
         basename = self.getBaseName( query.url )
-        return Universal.get_video_id(basename, query.url)
+        return self.universal.get_video_id(basename, query.url)
         
     def setTitleIndex(self, title):
         """ adiciona um índice ao título se ele já existir """
@@ -133,7 +143,4 @@ class UrlManager( UrlBase ):
         """ avalia se a url já existe na base de dados """
         query = self.objects.filter(_url = self.shortUrl(url))
         return (query.count() > 0) # se maior então existe
-    
-##  ---------- imports recursivos  ---------- 
-from main.app.generators import Universal
     
