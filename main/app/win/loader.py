@@ -680,7 +680,7 @@ class Loader(QtGui.QMainWindow):
         conf["Window"].setdefault("position", [0, 0])
         conf["Window"].setdefault("size", [640, 480])
         conf["Window"].setdefault("donationBoxIsOn", True)
-        conf["Window"].setdefault("booted", True)
+        conf["Window"].setdefault("booted", False)
         
         conf["Path"].setdefault("videoDir", settings.DEFAULT_VIDEOS_DIR)
         conf["Lang"].setdefault("code", "en")
@@ -712,9 +712,19 @@ class Loader(QtGui.QMainWindow):
         self.uiMainWindow.videoSplitSize.setValue(widgetUi.as_int("videoSplitSize"))
         
         self.confWindow = conf["Window"]
-        self.move(*map(int, self.confWindow.as_list("position")))
-        self.resize(*map(int, self.confWindow.as_list("size")))
         
+        if not self.confWindow.as_bool("booted"):
+            self.resize(800, 600)
+            
+            # centralizando a janela no desktop
+            qr = self.frameGeometry()
+            cp = QtGui.QDesktopWidget().availableGeometry().center()
+            qr.moveCenter(cp)
+            self.move(qr.topLeft())
+        else:
+            self.move(*map(int, self.confWindow.as_list("position")))
+            self.resize(*map(int, self.confWindow.as_list("size")))
+            
         self.confPath = conf["Path"]
         self.uiMainWindow.videoDir.setText(self.confPath["videoDir"] 
                 if os.path.exists(self.confPath["videoDir"]) else 
@@ -753,6 +763,7 @@ class Loader(QtGui.QMainWindow):
         
         # traduzindo a 'action' da ui em um código de linguagem.
         self.confLang["code"] = self.codeLang[self.langActionGroup.checkedAction()]
+        self.confWindow["booted"] = True
         
         # salvando as configurações no arquivo
         if not base.security_save((path or self.configPath), _configobj=self.config):

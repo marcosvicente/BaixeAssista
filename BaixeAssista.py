@@ -30,7 +30,6 @@ if not booted:
     
     code = code if trans.load(filepath) else userCode
     
-    loader.Loader.config["Window"]["booted"] = True
     loader.Loader.config["Lang"]["code"] = code
 else:
     filepath = os.path.join(i18nDir, "en_US_%s.qm" %userCode)
