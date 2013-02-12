@@ -4,4 +4,4 @@
 /logdict2.7.1.final.0-2.log
 /movies.ico
 
-*.pyc
+*.py[co]
