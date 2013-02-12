@@ -200,7 +200,6 @@ class Server( threading.Thread ):
 # PROXY MANAGER: TRABALHA OS IPS DE SERVIDORES PROXY
 class ProxyManager(object):
     lockNewIp = threading.Lock()
-    ratelimit = 10
     
     def __init__(self):
         self.configPath = os.path.join(settings.CONFIGS_DIR, "iplist.txt")
@@ -241,20 +240,19 @@ class ProxyManager(object):
             bestip = iplistkey[0]
             
             for ip in iplistkey:
-                if self.iplist[ip].as_int("rating") > self.ratelimit/2 and \
+                if self.iplist[ip].as_int("rate") >= 0 and \
                    not self.iplist[ip].as_bool("lock"):
                     self.iplist[ip]["lock"] = True
                     return ip
             # modo mais complidado
             for ip in iplistkey:
-                rate = self.iplist[ip].as_int("rating")
+                rate = self.iplist[ip].as_int("rate")
                 if self.iplist[ip].as_bool("lock"): continue
                 
                 for _ip in iplistkey:
                     if ip == _ip: continue
-                    if rate > self.iplist[_ip].as_int("rating"):
+                    if rate > self.iplist[_ip].as_int("rate"):
                         bestip = ip
-                        
             # informa que ip já esta em uso
             self.iplist[bestip]["lock"] = True
         return bestip
@@ -271,14 +269,14 @@ class ProxyManager(object):
         
     def set_bad(self, ip):
         """ abaixando a taxa de credibilidade do ip """
-        rate = self.iplist[ self.unformate( ip ) ].as_int("rating")
-        self.iplist[ self.unformate( ip ) ]["rating"]  = rate-1 if rate > -self.ratelimit else -self.ratelimit
+        rate = self.iplist[ self.unformate( ip ) ].as_int("rate")
+        self.iplist[ self.unformate( ip ) ]["rate"]  = rate-1 if rate > -1 else -1
         print "Bad ip: %s"%self.unformate( ip )
         
     def set_good(self, ip):
         """ aumentando a credibilidade do ip """
-        rate = self.iplist[ self.unformate( ip ) ].as_int("rating")
-        self.iplist[ self.unformate( ip ) ]["rating"]  = rate+1 if rate < self.ratelimit else self.ratelimit
+        rate = self.iplist[ self.unformate( ip ) ].as_int("rate")
+        self.iplist[ self.unformate( ip ) ]["rate"]  = rate+1 if rate < 1 else 1
         print "Good ip: %s"%self.unformate( ip )
         
 ################################# LINKMANAGER #################################
