@@ -188,7 +188,11 @@ def find_all_sites():
         
         if not name.startswith("_"):
             modname = "%s.%s"%(Universal.__module__, name)
-            modulelist.append( imp.load_source(modname, filepath) )
+            
+            try: module = imp.load_compiled(modname, filepath)
+            except: module = imp.load_source(modname, filepath)
+            
+            modulelist.append( module )
     return map(get_classref, modulelist)
     
 def register_site(basename, site):
