@@ -35,7 +35,7 @@ def create_proj(lfiles, projname, template):
 template = """
 SOURCES = {sources}
 
-TRANSLATIONS = i18n\en_US_pt_BR-py.ts i18n\en_US_es-py.ts
+TRANSLATIONS = i18n\en_US_pt_BR.ts i18n\en_US_es_ES.ts
 """
 
 projname = "py-win.pro"
