@@ -1,9 +1,9 @@
 # coding: utf-8
 import os, sys
 
-def setup(skip = False):
+def setup(conf = False):
     """ configura o ambiente para a execução de um script separado """
-    if not skip:
+    if conf:
         os.environ['DJANGO_SETTINGS_MODULE'] = "main.settings"
         
         SCRIPT_PATH = os.path.dirname( os.path.abspath(__file__) )
