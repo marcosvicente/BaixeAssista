@@ -11,8 +11,8 @@ class Youtube( SiteBase ):
     controller = {
         "url": "http://www.youtube.com/watch?v=%s", 
         "patterns": (
-             re.compile("(?P<inner_url>(?:http://)?www\.youtube\.com/watch\?.*v=(?P<id>[0-9A-Za-z_-]+))"),
-            [re.compile("(?P<inner_url>(?:http://)?www.youtube(?:-nocookie)?\.com/(?:v/|embed/)(?P<id>[0-9A-Za-z_-]+))")]
+             re.compile("(?P<inner_url>(?:https?://)?www\.youtube\.com/watch\?.*v=(?P<id>[0-9A-Za-z_-]+))"),
+            [re.compile("(?P<inner_url>(?:https?://)?www.youtube(?:-nocookie)?\.com/(?:v/|embed/)(?P<id>[0-9A-Za-z_-]+))")]
         ), 
         "control": "SM_SEEK", 
         "video_control": None
@@ -40,24 +40,44 @@ class Youtube( SiteBase ):
         return msg
     
     def getLink(self):
-        default_url = ""
         vquality = self.params.get("qualidade", 2)
         quality_opt = self.video_quality_opts[ vquality ]
         
-        for index, _type in enumerate( self.raw_data["type"] ):
-            quality = self.raw_data['quality'][index]
-            url = self.configs["urls"][index]
+        quality_size = len(self.raw_data['quality'])
+        type_size    = len(self.raw_data["type"])
+        url_size     = len(self.configs["urls"])
+        
+        if quality_size == type_size == url_size:
+            items = zip(self.configs["urls"], self.raw_data["type"], 
+                        self.raw_data['quality'])
             
-            matchobj = re.search("video/([^\s;]+)", _type)
-            if matchobj: self.configs["ext"] = matchobj.group(1)
+            def link( args ):
+                url, _type, quality = args
+                
+                matchobj = re.search("video/([^\s;]+)", _type)
+                if matchobj: self.configs["ext"] = matchobj.group(1)
+                
+                if re.match(quality_opt, quality):
+                    return urllib.unquote_plus( url )
             
-            # o formato video/webm, mostra-se impat�vel como o swf player
-            if re.match(quality_opt, quality):
-                if not re.match("video/webm", _type):
-                    return urllib.unquote_plus( url )+"&range=%s-"
-            elif not default_url:
-                default_url = urllib.unquote_plus( url )+"&range=%s-"
-        return default_url
+            result = filter(link, items)
+            result = result if len(result) > 0 else items
+            return result[0][0] + "&range=%s-"
+        else:
+            items = zip(self.configs["urls"], self.raw_data["type"])
+            
+            def link( args ):
+                url, _type = args
+                
+                matchobj = re.search("video/([^\s;]+)", _type)
+                if matchobj: self.configs["ext"] = matchobj.group(1)
+                
+                if re.search(quality_opt, _type):
+                    return urllib.unquote_plus( url )
+                
+            result = filter(link, items)
+            result = result if len(result) > 0 else items
+            return result[0][0] + "&range=%s-"
         
     def get_raw_data(self, proxies, timeout):
         video_id = Universal.get_video_id(self.basename, self.url)
@@ -71,6 +91,7 @@ class Youtube( SiteBase ):
         self.message = self.getMessage()
         
         uparams = cgi.parse_qs(self.raw_data["url_encoded_fmt_stream_map"][0])
+        
         self.raw_data["quality"] = uparams["quality"]
         self.raw_data["type"] = uparams["type"]
         self.configs["urls"] = []
@@ -86,3 +107,6 @@ class Youtube( SiteBase ):
         try: self.configs["thumbnail_url"] = self.raw_data["thumbnail_url"][0]
         except (KeyError, IndexError):
             self.configs["thumbnail_url"] = ""
+            
+            
+            
