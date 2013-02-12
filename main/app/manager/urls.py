@@ -7,8 +7,8 @@ class UrlBase(object):
     sep   = u"::::::"
     short = u"%s[%s]"
     
-    @staticmethod
-    def universal():
+    @classmethod
+    def Universal(cls):
         from main.app.generators import Universal
         return Universal
     
@@ -37,7 +37,7 @@ class UrlBase(object):
     def formatUrl(cls, string):
         """ megavideo[t53vqf0l] -> http://www.megavideo.com/v=t53vqf0l """
         base, strID = cls.splitBaseId(string)
-        return cls.universal().get_url( base ) % strID
+        return cls.Universal().get_url( base ) % strID
     
     @classmethod
     def shortUrl(cls, url):
@@ -58,9 +58,15 @@ class UrlBase(object):
     def analizeUrl(cls, url):
         """ http://www.megavideo.com/v=t53vqf0l -> (megavideo.com, t53vqf0l) """
         basename = cls.getBaseName( url )
-        urlid = cls.universal().get_video_id(basename, url)
+        urlid = cls.Universal().get_video_id(basename, url)
         return (basename, urlid)
-        
+    
+    def getUrlId(self, title):
+        """ retorna o id da url, com base no título(desc) """
+        query = self.objects.get(title = title)
+        basename = self.getBaseName(query.url)
+        return self.Universal().get_video_id(basename, query.url)
+    
 ########################################################################
 class UrlManager( UrlBase ):
     def __init__(self):
@@ -74,17 +80,6 @@ class UrlManager( UrlBase ):
         from main.app import models
         return models
     
-    @property
-    def universal(self):
-        from main.app.generators import Universal
-        return Universal
-        
-    def getUrlId(self, title):
-        """ retorna o id da url, com base no título(desc) """
-        query = self.objects.get(title = title)
-        basename = self.getBaseName( query.url )
-        return self.universal.get_video_id(basename, query.url)
-        
     def setTitleIndex(self, title):
         """ adiciona um índice ao título se ele já existir """
         pattern = title + "(?:###\d+)?"
