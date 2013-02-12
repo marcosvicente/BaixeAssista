@@ -376,7 +376,7 @@ class StreamManager(threading.Thread):
                     time.sleep( self.params["waittime"] )
             except Exception as err:
                 Info.set(self.ident, "state", _(u"Falha na conexão"))
-                self.logging.error("%s Connecting: %s" %(self.__class__.__name__, err))
+                self.logger.error("%s Connecting: %s" %(self.__class__.__name__, err))
                 time.sleep( self.params["waittime"] )
             ctry += 1
         return False # nao foi possível conectar
@@ -419,7 +419,7 @@ class StreamManager(threading.Thread):
                     time.sleep(1.0)
             except Exception as err:
                 self.failure(_("Incapaz de conectar"), 1)
-                self.logging.error("%s Mainloop: %s" %(self.__class__.__name__, err))
+                self.logger.error("%s Mainloop: %s" %(self.__class__.__name__, err))
                 
         Info.set(self.ident, "state", _(u"Conexão parada"))
         
