@@ -9,8 +9,8 @@ import time
 from main import environ
 environ.setup((__name__ == "__main__"))
 
+from main.app.manager.streamManager import StreamManager
 from django.conf import settings
-from manager import StreamManager
 from main.app.util import base
 
 ################################# RELEASE ##################################

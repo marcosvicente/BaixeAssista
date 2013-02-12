@@ -18,7 +18,6 @@ import HTMLParser
 import xml.etree.ElementTree
 from main.app import decrypter
 from main.app.generators import Universal
-from main.app import manager
 from main.app.util import sites
 
 class ConnectionProcessor(object):

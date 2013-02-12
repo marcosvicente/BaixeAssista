@@ -4,7 +4,7 @@ from PySide import QtCore, QtGui
 
 os.environ['DJANGO_SETTINGS_MODULE'] = "main.settings"
 
-from main.app.manager import Server
+from main.app.manager.server import Server
 from main.app.win import loader
 from main.app.util import base
 from main import settings

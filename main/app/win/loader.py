@@ -1,4 +1,3 @@
-#! /usr/bin/python
 # coding: utf-8
 import sys, os
 import time, threading, configobj
@@ -27,7 +26,14 @@ import webbrowser
 import browser
 import glob
 
-from main.app import manager
+from main.app.manager.streamManager import StreamManager
+from main.app.manager.fileManager import FileManager
+from main.app.manager.resumeInfo import ResumeInfo
+from main.app.manager.flvPlayer import FlvPlayer
+from main.app.manager.urls import UrlManager
+from main.app.manager.server import Server
+from main.app.manager.info import Info
+
 from main.app.util import base
 from main.app import updater
 
@@ -237,7 +243,7 @@ class Loader(QtGui.QMainWindow):
         self.uiMainWindow.actionChooseExternalPlayer.triggered.connect(self.choosePlayerPath)
         
     def setupLocation(self):
-        self.urlManager = manager.UrlManager()
+        self.urlManager = UrlManager()
         url, title = self.urlManager.getLastUrl()
         joinedUrl = self.urlManager.joinUrlDesc(url, title)
         
@@ -260,11 +266,11 @@ class Loader(QtGui.QMainWindow):
             "videoExt": self.tr("Video extension"),
             "videoSize": {
                 "title": self.tr("Video size"), 
-                "conversor": manager.StreamManager.format_bytes
+                "conversor": StreamManager.format_bytes
             },
             "cacheBytesTotal": {
                 "title": self.tr("Downloaded"), 
-                "conversor": manager.StreamManager.format_bytes
+                "conversor": StreamManager.format_bytes
             },
             "videoQuality": {
                 "title": self.tr("Video quality"),
@@ -272,7 +278,7 @@ class Loader(QtGui.QMainWindow):
             },
             "videoPath": self.tr("Video path")
         }        
-        queryset = manager.ResumeInfo.objects.all()
+        queryset = ResumeInfo.objects.all()
         
         items = [QtGui.QTreeWidgetItem([q.title+"."+q.videoExt]) for q in queryset]
         values = queryset.values(*fields.keys())
@@ -308,10 +314,10 @@ class Loader(QtGui.QMainWindow):
         
         _title = os.path.splitext(title)[0]
         
-        resumeInfo = manager.ResumeInfo(filename=_title)
+        resumeInfo = ResumeInfo(filename=_title)
         
         if not resumeInfo.isEmpty:
-            fileManager = manager.FileManager(filename=_title,
+            fileManager = FileManager(filename=_title,
                           filepath = resumeInfo["videoPath"],
                           fileext = resumeInfo["videoExt"])
             
@@ -319,7 +325,7 @@ class Loader(QtGui.QMainWindow):
             print path, os.path.exists(path)
             
             if os.path.exists(path):
-                mplayer = manager.FlvPlayer(cmd=self.getExternalPlayerPath(), 
+                mplayer = FlvPlayer(cmd=self.getExternalPlayerPath(), 
                                             filepath=path)
                 mplayer.start()
                 
@@ -336,10 +342,10 @@ class Loader(QtGui.QMainWindow):
         
         _title = os.path.splitext(title)[0]
         
-        resumeInfo = manager.ResumeInfo(filename=_title)
+        resumeInfo = ResumeInfo(filename=_title)
         
         if not resumeInfo.isEmpty:
-            fileManager = manager.FileManager(filename=_title,
+            fileManager = FileManager(filename=_title,
                             filepath = resumeInfo["videoPath"],
                             fileext = resumeInfo["videoExt"])
             
@@ -387,7 +393,7 @@ class Loader(QtGui.QMainWindow):
     @base.protected()
     def updateTable(self):
         """ atualizando apenas as tabelas apresentadas na 'MainWindow' """
-        videoSizeFormated = manager.StreamManager.format_bytes(self.manage.getVideoSize())
+        videoSizeFormated = StreamManager.format_bytes(self.manage.getVideoSize())
         videoPercent = base.calc_percent(self.manage.getCacheBytesTotal(), self.manage.getVideoSize())
         
         self.uiMainWindow.videoTileInfo.setText(self.manage.getVideoTitle())
@@ -396,7 +402,7 @@ class Loader(QtGui.QMainWindow):
         
         self.uiMainWindow.progressBarInfo.setValue( videoPercent )
         
-        self.uiMainWindow.downloadedFromInfo.setText(manager.StreamManager.format_bytes(self.manage.getCacheBytesTotal()))
+        self.uiMainWindow.downloadedFromInfo.setText(StreamManager.format_bytes(self.manage.getCacheBytesTotal()))
         self.uiMainWindow.downloadedToInfo.setText( videoSizeFormated )
         self.uiMainWindow.globalSpeedInfo.setText(self.manage.getGlobalSpeed())
         self.uiMainWindow.globalEtaInfo.setText(self.manage.getGlobalEta())
@@ -410,8 +416,8 @@ class Loader(QtGui.QMainWindow):
         if sender is None: return
         
         for name in kwargs["fields"]:
-            col = manager.StreamManager.listInfo.index(name)
-            value = manager.Info.get(sender.ident, name)
+            col = StreamManager.listInfo.index(name)
+            value = Info.get(sender.ident, name)
             self.tableRows[sender.ident].update(col=col, value=value)
             
     def updateTableExit(self):
@@ -449,7 +455,7 @@ class Loader(QtGui.QMainWindow):
     
     def setupVideoPlayer(self):
         url = "http://{0}:{1}/stream/file.flv"
-        url = url.format(manager.Server.HOST, manager.Server.PORT)
+        url = url.format(Server.HOST, Server.PORT)
         
         actionExternal = self.uiMainWindow.actionExternalPlayer
         actionEmbed = self.uiMainWindow.actionEmbedPlayer
@@ -460,7 +466,7 @@ class Loader(QtGui.QMainWindow):
             self.mplayer.btnReload.clicked.connect(self.playerReload)
             
         elif action == actionExternal:
-            self.mplayer = manager.FlvPlayer(cmd=self.getExternalPlayerPath(), url=url)
+            self.mplayer = FlvPlayer(cmd=self.getExternalPlayerPath(), url=url)
             
     def onSetupVideoPlayer(self):
         if self.mplayer: self.mplayer.stop()
@@ -496,7 +502,7 @@ class Loader(QtGui.QMainWindow):
             
             try:
                 # inicia o objeto princial: main_obj
-                self.manage = manager.Manage(url, tempfile = tempfile, 
+                self.manage = Manage(url, tempfile = tempfile, 
                                 videoQuality = (videoQuality+1), #0+1=1
                                 videoPath = videoDir, maxsplit = videoSplitSize)
             except Exception as err:
@@ -529,7 +535,7 @@ class Loader(QtGui.QMainWindow):
             self.tryRecoverFile()
             
             # Eventos gerados por atividade de conexões.
-            manager.Info.update.disconnect(self.updateConnectionUi)
+            Info.update.disconnect(self.updateConnectionUi)
             self.manage.ctrConnection.stopAll()
             
             self.clearTable()
@@ -557,7 +563,7 @@ class Loader(QtGui.QMainWindow):
                 self.getLocation().addItem(joinedUrl)
                 
             # Eventos gerados por atividade de conexões.
-            manager.Info.update.connect(self.updateConnectionUi)
+            Info.update.connect(self.updateConnectionUi)
             self.handleStartupConnection(default = reponse)
             
             self.mplayer.start()
@@ -579,7 +585,7 @@ class Loader(QtGui.QMainWindow):
         self.DIALOG.close()
         print err
     
-    @manager.FM_runLocked()
+    @FileManager.sincronize
     def tryRecoverFile(self):
         isTempFile = self.uiMainWindow.tempFiles.isChecked()
         haveAsk = self.uiMainWindow.tempFileAction.currentIndex()

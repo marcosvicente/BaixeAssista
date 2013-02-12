@@ -1,5 +1,6 @@
 # coding: utf-8
 from _sitebase import *
+from main.app.manager.urls import UrlManager
 
 ###################################### VIDEOBB ########################################
 class Videobb( SiteBase ):
@@ -15,7 +16,7 @@ class Videobb( SiteBase ):
     def __init__(self, url, **params):
         SiteBase.__init__(self, **params)    
         self.settingsLink = "http://www.videobb.com/player_control/settings.php?v=%s"
-        self.basename = manager.UrlManager.getBaseName( url)
+        self.basename = UrlManager.getBaseName( url)
         self.env = ["settings","config"]
         self.res = ["settings","res"]
         self.key2 = 226593

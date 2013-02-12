@@ -1,9 +1,12 @@
 # coding: utf-8
-from django.conf import settings
-from main.app import manager
-from main.app import util
 import os, sys
+from main.app.manager.streamManager import StreamManager
+from main.app.manager.streamManager import StreamManager_
+from main.app.manager.urls import UrlManager, UrlBase
+from django.conf import settings
+from main.app import util
 import glob
+import imp
 
 class Universal(object):
     """ A classe Universal, quarda varias informações e dados usados em toda a extensão do programa. 
@@ -13,11 +16,11 @@ class Universal(object):
     
     @staticmethod
     def SM_SEEK(*args, **kwargs):
-        return manager.StreamManager(*args, **kwargs)
+        return StreamManager(*args, **kwargs)
     
     @staticmethod
     def SM_RANGE(*args, **kwargs):
-        return manager.StreamManager_(*args, **kwargs)
+        return StreamManager_(*args, **kwargs)
         
     @classmethod
     def get_sites(cls):
@@ -108,7 +111,7 @@ class Universal(object):
     @classmethod
     def isEmbed(cls, url):
         """ analiza se a url é de um player embutido """
-        sitename = manager.UrlManager.getBaseName(url)
+        sitename = UrlManager.getBaseName(url)
         patterns = cls.get_patterns(sitename)
         siteAttrs = cls.sites[sitename]
         if type(patterns) is tuple:
@@ -155,7 +158,7 @@ class Universal(object):
     def has_site(cls, url):
         """ avalia se a url é de um site registrado """
         try:
-            basename = manager.UrlManager.getBaseName(url)
+            basename = UrlManager.getBaseName(url)
             matchobj = cls.patternMatch(basename, url)
             has = matchobj and (basename in cls.get_sites())
         except: has = False
@@ -163,7 +166,7 @@ class Universal(object):
         
     @classmethod
     def get_inner_url(cls, url):
-        matchobj = cls.patternMatch(manager.UrlManager.getBaseName(url), url)
+        matchobj = cls.patternMatch(UrlManager.getBaseName(url), url)
         if matchobj: url = matchobj.group("inner_url")
         return url
         
@@ -173,20 +176,19 @@ def get_classref(filemod):
     for classref in filemod.__dict__.values():
         if callable(classref) and hasattr(classref,"controller"):
             return classref
-        
+           
 def find_all_sites():
     """ retorna toda a lista de scripts(já importada) das definições dos sites suportados. """
     modulelist = []
     pylist = glob.glob(os.path.join(settings.APPDIR, "generators", "*.py"))
     pyclist = glob.glob(os.path.join(settings.APPDIR, "generators", "*.pyc"))
     
-    listfiles = pylist if bool(len(pylist)) else pyclist
-    
-    for filepath in listfiles:
+    for filepath in (pylist if bool(len(pylist)) else pyclist):
         name = util.base.get_filename(filepath, False)
+        
         if not name.startswith("_"):
-            package = __import__(Universal.__module__, {}, {}, [name])
-            modulelist.append(getattr(package, name))
+            modname = "%s.%s"%(Universal.__module__, name)
+            modulelist.append( imp.load_source(modname, filepath) )
     return map(get_classref, modulelist)
     
 def register_site(basename, site):
@@ -201,7 +203,7 @@ def register_site(basename, site):
 
 for site in find_all_sites():
     ## print "Site: %s"%site
-    default = manager.UrlBase.getBaseName(site.controller["url"])
+    default = UrlBase.getBaseName(site.controller["url"])
     basename = site.controller.get("basenames", default)    
     
     if type(basename) is list:

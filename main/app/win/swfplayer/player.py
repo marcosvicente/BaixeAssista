@@ -5,7 +5,7 @@ from PySide import QtCore, QtGui, QtWebKit
 from django.template import Context, Template, loader
 from django.core.urlresolvers import reverse
 from main.app.util.sites import get_random_text
-from main.app.manager import Server
+from main.app.manager.server import Server
 from main import settings
 import urllib
 

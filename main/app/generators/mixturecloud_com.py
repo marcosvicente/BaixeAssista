@@ -1,5 +1,6 @@
 # coding: utf-8
 from _sitebase import *
+from main.app.manager.urls import UrlManager
 
 ################################# VIDEO_MIXTURECLOUD ##################################
 class Mixturecloud( SiteBase ):
@@ -27,7 +28,7 @@ class Mixturecloud( SiteBase ):
     def __init__(self, url, **params):
         SiteBase.__init__(self, **params)
         # parte principal da url usada como elemento chave no programa
-        self.basename = manager.UrlManager.getBaseName( url )
+        self.basename = UrlManager.getBaseName( url )
         self.url = url
         
     def getPostData(self, webpage=""):

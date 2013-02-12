@@ -1,6 +1,6 @@
+from main.app.manager.urls import UrlBase
 from django.db import models
 import cPickle
-import manager
 
 ########################################################################
 class LastUrl( models.Model ):
@@ -11,7 +11,7 @@ class LastUrl( models.Model ):
 		return self.title
 	
 ########################################################################
-class Url(models.Model, manager.UrlBase):
+class Url(models.Model, UrlBase):
 	title = models.TextField("Title", unique=True)
 	_url = models.TextField("Url")
 	

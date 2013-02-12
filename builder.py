@@ -1,12 +1,12 @@
 # coding: utf-8
-import os, sys, re
+import os, sys
 import subprocess
 import compileall
 import shutil
+import re
 
 import packer
-from main import settings 
-from main.app import manager
+from main import settings
 
 EXE_NAME = 'BaixeAssista_v%s' % settings.PROGRAM_VERSION
 BUILD_DIR = os.path.join(os.environ["USERPROFILE"], "BaixeAssistaRelease") # build exe

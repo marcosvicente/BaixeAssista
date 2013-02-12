@@ -1,5 +1,6 @@
 # coding: utf-8
 from _sitebase import *
+from main.app.manager.urls import UrlManager
 import videoweed_es
 
 ####################################### NOVAMOV #######################################
@@ -27,7 +28,7 @@ class NowVideo( videoweed_es.Videoweed ):
         # link direto para o site(não embutido)
         self.siteVideoLink = "http://embed.nowvideo.eu/embed.php?v=%s"        
         # parte principal da url usada como elemento chave no programa
-        self.basename = manager.UrlManager.getBaseName( url )
+        self.basename = UrlManager.getBaseName( url )
         self.url = url
         
         
