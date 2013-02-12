@@ -6,7 +6,14 @@ when you run "manage.py test".
 
 Replace this with more appropriate tests for your application.
 """
-import gerador, manager
+from main import environ
+environ.setup(__name__ == "__main__")
+
+from main.app.generators._sitebase import ConnectionProcessor
+##from main.app.manager.streamManager import StreamManager
+from main.app.manager.urls import UrlManager
+from main.app.generators import Universal
+from main.app.util import sites
 
 #######################################################################################
 def debug(video_control, **params):
@@ -21,12 +28,12 @@ def debug(video_control, **params):
         seekpos =  0
         
         seekpos = float("%.2f" % video_control.get_relative( seekpos ))
-        linkseek = gerador.get_with_seek(videolink, seekpos)
+        linkseek = sites.get_with_seek(videolink, seekpos)
         print linkseek
         
         fd = video_control.connect( linkseek )
-        print "Response: %s" % manager.StreamManager.responseCheck(
-                                headersize, seekpos, streamsize, fd.headers)
+        print "Response: %s" % ConnectionProcessor.check_response(headersize, seekpos, 
+                                                                  streamsize, fd.headers)
         
         print repr(fd.read(512))
         print fd.headers.get("Content-Length",0)
@@ -34,10 +41,10 @@ def debug(video_control, **params):
         
 def checkSite(url, proxies={}, timeout=30, **params):
     """ verifica se o site dado por 'baseName' est� respondendo as requisi��es """
-    basename = manager.UrlManager.getBaseName( url )
+    basename = UrlManager.getBaseName( url )
     print "Checking: ", basename
     
-    video_control = gerador.Universal.get_video_control( basename )
+    video_control = Universal.get_video_control( basename )
     video_control = video_control(url, **params)
     
     if video_control.getVideoInfo(1, proxies=proxies, timeout=timeout):
@@ -56,7 +63,7 @@ def checkSite(url, proxies={}, timeout=30, **params):
         return True
     else:
         print "MSG: %s" % video_control.get_message()
-    print "-"*25
+    print "-"*50
     return False
     # ----------------------------------------------
     
@@ -68,7 +75,7 @@ def checkSite(url, proxies={}, timeout=30, **params):
 #pxm.set_bad( proxies )
 #del pxm
 
-checkSite("http://www.putlocker.com/embed/B95BA83B613FC764", proxies={}, quality=3, debug = True)    
+checkSite("http://www.youtube.com/watch?v=1iTg20x7w2s", proxies={}, quality=3, debug = True)    
     
     
     
