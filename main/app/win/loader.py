@@ -195,6 +195,10 @@ class Loader(QtGui.QMainWindow):
         self.uiMainWindow.btnStartDl.clicked.connect(self.handleStartStopDl)
         self.uiMainWindow.actionExit.triggered.connect(self.close)
         
+        # abilita a action com base no estado checkbox.
+        self.uiMainWindow.tempFiles.stateChanged.connect(lambda checked=False: 
+            self.uiMainWindow.tempFileAction.setEnabled(checked))
+        
         self.uiMainWindow.btnToolDir.clicked.connect( self.handleVideoDir )
         self.uiMainWindow.refreshFiles.clicked.connect( self.setupFilesView )
         
