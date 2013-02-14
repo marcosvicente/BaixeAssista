@@ -226,28 +226,33 @@ class Loader(QtGui.QMainWindow):
         self.playerActionGroup.addAction(self.uiMainWindow.actionEmbedPlayer)
         self.playerActionGroup.addAction(self.uiMainWindow.actionExternalPlayer)
         
-        self.uiMainWindow.actionEmbedPlayer.triggered.connect( self.onSetupVideoPlayer )
-        self.uiMainWindow.actionExternalPlayer.triggered.connect( self.onSetupVideoPlayer )
+        self.playerActionGroup.triggered.connect( self.onSetupVideoPlayer )
         
         self.uiMainWindow.actionReloadPlayer.triggered.connect( self.playerReload )
         self.uiMainWindow.actionChooseExternalPlayer.triggered.connect(self.choosePlayerPath)
-        
+    
+    @base.LogOnError
     def setupLocation(self):
+        """ adiciona as urls dos vídeos baixados e adcionandos ao bd. """
         self.urlManager = UrlManager()
+        self.getLocation().addItems(map(lambda items: self.urlManager.joinUrlDesc(*items), 
+                                        self.urlManager.getUrlTitleList()))
         url, title = self.urlManager.getLastUrl()
         joinedUrl = self.urlManager.joinUrlDesc(url, title)
         
+        # inserindo a ultima url adicionada na visualização padrão.
         self.getLocation().setEditText( joinedUrl )
         self.getLocation().setToolTip( title )
         
-        self.getLocation().addItems(map(lambda d: self.urlManager.joinUrlDesc(d[0], d[1]), 
-                                        self.urlManager.getUrlTitleList()))
-    
+        index = self.getLocation().findText( joinedUrl )
+        self.getLocation().setCurrentIndex( index )
+        
     def onLocaleChange(self):
         """ Como o idioma está sendo feito na inicialização, apenas avisa para reinicializar """
         QtGui.QMessageBox.information(self, self.tr("about changing the language"), 
               self.tr("You need to manually restart the program for the new language to take effect."))
-        
+    
+    @base.LogOnError
     def setupFilesView(self):
         videosView = self.uiMainWindow.videosView
         videosView.setColumnCount(1)
@@ -349,20 +354,23 @@ class Loader(QtGui.QMainWindow):
             self.setupFilesView()
             
     def contextMenuEvent(self, event):
-        icon = QtGui.QIcon(os.path.join(settings.IMAGES_DIR,"preview-doc.png"))
-        actionPreview = QtGui.QAction(self.tr("preview"), self,
-            statusTip = "", triggered = self.onPlayeView,
-            icon = icon)
-        
-        icon = QtGui.QIcon(os.path.join(settings.IMAGES_DIR,"remove-db.png"))
-        actionRemove = QtGui.QAction(self.tr("remove"), self,
-            statusTip = "", triggered = self.onVideoRemove,
-            icon = icon)
-        
-        menu = QtGui.QMenu(self)
-        menu.addAction( actionPreview )
-        menu.addAction( actionRemove )
-        menu.exec_(event.globalPos())
+        if self.uiMainWindow.tabFiles == self.uiMainWindow.tabPanel.currentWidget():
+            ## cria o menu para visualização e remoção de arquivos
+            
+            icon = QtGui.QIcon(os.path.join(settings.IMAGES_DIR,"preview-doc.png"))
+            actionPreview = QtGui.QAction(self.tr("preview"), self,
+                statusTip = "", triggered = self.onPlayeView,
+                icon = icon)
+            
+            icon = QtGui.QIcon(os.path.join(settings.IMAGES_DIR,"remove-db.png"))
+            actionRemove = QtGui.QAction(self.tr("remove"), self,
+                statusTip = "", triggered = self.onVideoRemove,
+                icon = icon)
+            
+            menu = QtGui.QMenu(self)
+            menu.addAction( actionPreview )
+            menu.addAction( actionRemove )
+            menu.exec_(event.globalPos())
         
     def addTableRow(self, ident):
         """ agrupa items por linha """
@@ -402,8 +410,7 @@ class Loader(QtGui.QMainWindow):
         """ interface de atualização das infos da conexão"""
         # conexão que emitiu o sinal através de 'Info'.
         sender = self.manage.ctrConnection.getById(sender)
-        # para conexões removidas.
-        if sender is None: return
+        if sender is None: return # ignora conexões removidas.
         
         for name in kwargs["fields"]:
             col = StreamManager.listInfo.index(name)
