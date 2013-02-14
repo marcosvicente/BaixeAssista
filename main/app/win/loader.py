@@ -61,19 +61,18 @@ class DialogDl(QtGui.QDialog):
         self.uiDialog.siteResponse.setHtml("<br/>"+sitemsg)
         
 ## --------------------------------------------------------------------------
-class VLSignal(QtCore.QObject):
+class VideoLoad(threading.Thread, QtCore.QObject):
+    """ Coleta informações iniciais necessárias para baixar o video """
     responseUpdateUi     = QtCore.Signal()
     responseUpdateUiExit = QtCore.Signal()
     responseChanged  = QtCore.Signal(str, str)
     responseFinish   = QtCore.Signal(bool)
     responseError    = QtCore.Signal(str)
     
-class VideoLoad(threading.Thread):
-    events = VLSignal()
-    
-    """ Coleta informações iniciais necessárias para baixar o video """
     def __init__(self, manage, ntry=8):
         threading.Thread.__init__(self)
+        QtCore.QObject.__init__(self)
+        
         self.cancel = False
         self.manage = manage
         self.ntry = ntry
@@ -86,17 +85,17 @@ class VideoLoad(threading.Thread):
         for index in range(1, self.ntry+1):
             try:
                 if self.manage.start(index, self.ntry, proxy=proxy, 
-                                     callback=self.events.responseChanged.emit):
+                                     callback=self.responseChanged.emit):
                     if not self.cancel:
-                        self.events.responseFinish.emit(True)
+                        self.responseFinish.emit(True)
                         return True
                 if self.cancel: break
             except Exception as error:
-                self.events.responseError.emit(str(error))
+                self.responseError.emit(str(error))
                 break
             proxy = self.manage.proxyManager.get_formated()
         else:
-            self.events.responseFinish.emit(False)
+            self.responseFinish.emit(False)
         return False
         
     def run(self):
@@ -104,10 +103,10 @@ class VideoLoad(threading.Thread):
         
         while started and not self.cancel:
             self.manage.update()
-            self.events.responseUpdateUi.emit()
+            self.responseUpdateUi.emit()
             time.sleep(0.01)
         # informa que o evento de atualização parou de correr.
-        self.events.responseUpdateUiExit.emit()
+        self.responseUpdateUiExit.emit()
         
 ## --------------------------------------------------------------------------
 class Loader(QtGui.QMainWindow):
@@ -503,17 +502,19 @@ class Loader(QtGui.QMainWindow):
                 return
             # --------------------------------------------------
             self.uiMainWindow.btnStartDl.setText(self.tr("Stop"))
+            
             self.DIALOG = DialogDl(self.tr("Please wait"), self)
             self.DIALOG.rejected.connect( self.onCancelVideoDl )
             self.DIALOG.show()
             
-            self.videoLoad = videoLoad = VideoLoad(self.manage)
-            videoLoad.events.responseChanged.connect( self.DIALOG.handleUpdate )
-            videoLoad.events.responseFinish.connect( self.onStartVideoDl )
-            videoLoad.events.responseError.connect( self.onErrorVideoDl )
-            videoLoad.events.responseUpdateUi.connect( self.updateUI )
-            videoLoad.events.responseUpdateUiExit.connect( self.updateUIExit )
-            videoLoad.start()
+            self.videoLoad = VideoLoad(self.manage)
+            
+            self.videoLoad.responseChanged.connect( self.DIALOG.handleUpdate)
+            self.videoLoad.responseFinish.connect( self.onStartVideoDl)
+            self.videoLoad.responseError.connect( self.onErrorVideoDl)
+            self.videoLoad.responseUpdateUi.connect( self.updateUI)
+            self.videoLoad.responseUpdateUiExit.connect( self.updateUIExit)
+            self.videoLoad.start()
             
     def handleStopVideoDl(self):
         """ termina todas as ações relacionadas ao download do vídeo atual """
