@@ -34,7 +34,7 @@ class LogOnError(object):
     class wrap(object):
         """ excuta o método protegendo o escopo de excução """
         
-        ferror = "{name}: {error}"
+        ferror = "[On {name}] [In Method: {method}] [Error: {error}]"
         
         def __init__(self, inst, method):
             self.method = method
@@ -44,15 +44,23 @@ class LogOnError(object):
             return self.method(self.inst, *args, **kwargs)
         
         @property
-        def name(self):
+        def cls_name(self):
             """ nome da classe que está no controle do méthodo """
             return self.__class__.__name__
         
+        @property
+        def rm_name(self):
+            """ retorna o nome do método sendo excutado """
+            return self.method.__name__
+        
         def __call__(self, *args, **kwargs):
+            """ executa o método decorado """
             try: return self.__run(*args, **kwargs)
             except Exception as err:
-                logger.error(self.ferror.format(name = self.name,
-                                                error = err))
+                msg = self.ferror.format(name = self.cls_name,
+                                         method = self.rm_name,
+                                         error = err)
+                logger.error( msg )
                 
     def __init__(self, func):
         self.func = func
