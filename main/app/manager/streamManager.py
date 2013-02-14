@@ -316,7 +316,7 @@ class StreamManager(threading.Thread):
         # desassociando o ip dos dados do vídeo.
         del self.videoManager[ ip ] 
         
-    @base.just_try()
+    @base.LogOnError
     def failure(self, errorstring, errornumber):
         # removendo configurações
         self.unconfig(errorstring, errornumber)
@@ -438,7 +438,7 @@ class StreamManager_( StreamManager ):
         Info.set(self.ident, "http", self.proxies.get("http",_(u"Conexão Padrão")))
         self.link = self.getVideoLink()
         
-    @base.just_try()
+    @base.LogOnError
     def failure(self, errorstring, errornumber):
         Info.clear(self.ident)
         Info.set(self.ident, 'state', errorstring)
@@ -462,7 +462,7 @@ class StreamManager_( StreamManager ):
         Info.set(self.ident, "http", self.proxies.get("http", _(u"Conexão Padrão")))
         self.link = self.getVideoLink()
     
-    @base.just_try()
+    @base.LogOnError
     def getVideoLink(self):
         data = self.videoManager.get_init_page(self.proxies) # pagina incial
         link = self.videoManager.get_file_link(data) # link de download

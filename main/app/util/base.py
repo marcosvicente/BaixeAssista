@@ -27,15 +27,39 @@ def trans_install(configs = None):
     translator.install(unicode=True)
     
 #################################### JUST_TRY ##################################
-class just_try(object):
-    """ executa o méthodo dentro de um try:except. loga exceções """
-    def __call__(self, method):
-        def wrap(*args, **kwargs): # magic!
-            try: return method(*args, **kwargs)
+class LogOnError(object):
+    """ Tenta executar o método, caso algo dê errado guarda a 
+        mensagem de erro no arquivo de log.
+    """
+    class wrap(object):
+        """ excuta o método protegendo o escopo de excução """
+        
+        ferror = "{name}: {error}"
+        
+        def __init__(self, inst, method):
+            self.method = method
+            self.inst = inst
+            
+        def __run(self, *args, **kwargs):
+            return self.method(self.inst, *args, **kwargs)
+        
+        @property
+        def name(self):
+            """ nome da classe que está no controle do méthodo """
+            return self.__class__.__name__
+        
+        def __call__(self, *args, **kwargs):
+            try: return self.__run(*args, **kwargs)
             except Exception as err:
-                logger.error("%s: %s"%(self.__class__.__name__, err))
-        return wrap
-
+                logger.error(self.ferror.format(name = self.name,
+                                                error = err))
+                
+    def __init__(self, func):
+        self.func = func
+        
+    def __get__(self, inst, cls):
+        return self.wrap(inst, self.func)
+    
 class protected(object):
     """ executa o méthodo dentro de um try:except. ignora errors """
     def __call__(self, method):

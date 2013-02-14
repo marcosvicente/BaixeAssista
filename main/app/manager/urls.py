@@ -94,7 +94,7 @@ class UrlManager( UrlBase ):
             title = title + ("###%d"%(index+1))
         return title
     
-    @base.just_try()
+    @base.LogOnError
     def remove(self, title):
         """ remove todas as referêcias do banco de dados, com base no título """
         self.objects.get(title=title).delete()
