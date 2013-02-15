@@ -1,3 +1,4 @@
+# coding: utf-8
 from PySide import QtCore, QtGui, QtWebKit
 
 from swfplayer import JWPlayer, FlowPlayer
@@ -7,11 +8,13 @@ from main.app.util import base
 
 ## --------------------------------------------------------------------------
 class PlayerDialog(QtGui.QDialog):
-    def __init__(self, title="SWF Player", parent=None):
+    def __init__(self, title="SWF Player", parent=None, configs={}):
         super(PlayerDialog, self).__init__(parent)
         self.uiPlayerDialog = Ui_playerDialog()
         self.uiPlayerDialog.setupUi(self)
         
+        # instância para as configurações global
+        self.configs = configs
         self.setWindowTitle( title )
         
         self.mFlowPlayer = FlowPlayer.Player( self.playerFrame )
@@ -26,17 +29,22 @@ class PlayerDialog(QtGui.QDialog):
         self.btnFlowPlayer.setToolTip(self.tr("load FlowPlayer"))
         self.btnJwPlayer.setToolTip(self.tr("load JW Player"))
         
-        self.loadFlowPlayer()
+        # inicializa o player da configuração
+        self._startDefaultPlayer()
         
-    def start(self):
+    def start(self, **kwargs):
+        self.mplayer.update(**kwargs)
+        self.mplayer.reload()
         self.show()
         
     def stop(self):
         self.mplayer.stop()
-        self.close()
+        self.hide()
         
-    def reload(self, autostart=False):
-        self.playerReload(autostart)
+    def reload(self, **kwargs):
+        """ recarrega o player, mas antes atualiza seus parâmetros """
+        self.mplayer.update(**kwargs)
+        self.mplayer.reload()
         
     @property
     def player(self):
@@ -62,14 +70,68 @@ class PlayerDialog(QtGui.QDialog):
     def btnSkins(self):
         return self.uiPlayerDialog.btnSkins
     
+    def _startDefaultPlayer(self):
+        self.setDefaultConf()
+        
+        size = map(lambda v: int, self.configs["embedPlayer"]["size"])
+        pos  = map(lambda v: int, self.configs["embedPlayer"]["pos"])
+        
+        if len(size) > 0: self.resize(*size)
+        if len( pos) > 0: self.move(*pos)
+        
+        flowplayer = self.mFlowPlayer.__class__.__module__
+        jwplayer = self.mJWPlayer.__class__.__module__
+        
+        if flowplayer.endswith(self.configs["embedPlayer"]["player"]):
+            self.mplayer = self.mFlowPlayer
+            self.mplayer["skinName"] = self.configs[flowplayer]["skinName"]
+            
+        elif jwplayer.endswith(self.configs["embedPlayer"]["player"]):
+            self.mplayer = self.mJWPlayer
+            self.mplayer["skinName"] = self.configs[jwplayer]["skinName"]
+            
+        layout = self.playerFrame.layout()
+        layout.addWidget(self.mplayer)
+        
+        self.btnSkins.setMenu(self.setupSkinMenu())
+        
+        self.mplayer.show()
+
+    def setDefaultConf(self):
+        self.configs.setdefault("embedPlayer", {})
+        
+        flowplayer = self.mFlowPlayer.__class__.__module__
+        jwplayer = self.mJWPlayer.__class__.__module__
+        
+        self.configs.setdefault(flowplayer, {})
+        self.configs.setdefault(jwplayer, {})
+        
+        self.configs["embedPlayer"].setdefault("size", tuple())
+        self.configs["embedPlayer"].setdefault("pos", tuple())
+        self.configs["embedPlayer"].setdefault("player", flowplayer)
+        
+        self.configs[flowplayer].setdefault("skinName", self.mFlowPlayer.defaultskin)
+        self.configs[jwplayer].setdefault("skinName", self.mJWPlayer.defaultskin)
+        
+    def saveSettings(self):
+        mplayer = self.mplayer.__class__.__module__
+        flowplayer = self.mFlowPlayer.__class__.__module__
+        jwplayer = self.mJWPlayer.__class__.__module__
+        
+        self.configs["embedPlayer"]["size"] = self.size()
+        self.configs["embedPlayer"]["pos"]  = self.pos()
+        self.configs["embedPlayer"]["player"] = mplayer
+        
+        self.configs[flowplayer]["skinName"] = self.mFlowPlayer["skinName"]
+        self.configs[jwplayer]["skinName"] = self.mJWPlayer["skinName"]
+        
     def setupSkinMenu(self):
         menu = QtGui.QMenu(self)
         actionSkinGroup = QtGui.QActionGroup(self)
+        actionSkinGroup.triggered.connect( self.onSkinChange )
         
         for skinName in self.mplayer.getSkinsNames():
-            actionSkin = QtGui.QAction(skinName, self,
-                triggered = self.onSkinChange)
-            
+            actionSkin = QtGui.QAction(skinName, self)
             actionSkin.setCheckable(True)
             
             if skinName == self.mplayer["skinName"]:
@@ -80,40 +142,43 @@ class PlayerDialog(QtGui.QDialog):
         return menu
     
     def onSkinChange(self):
-        self.mplayer["skinName"] = self.sender().text()
-        self.mplayer.reload()
-        
-    def playerReload(self, autostart=False):
-        self.mplayer["autostart"] = autostart
+        """ altera a skin mostrada no player """
+        actionGroup = self.sender()
+        action = actionGroup.checkedAction()
+        self.mplayer["skinName"] = action.text()
         self.mplayer.reload()
         
     @base.protected()
     def removePlayer(self, layout):
-        layout.removeWidget(self.mplayer)
-        self.mplayer.hide()
-        self.playerReload(False)
+        params = dict(autostart = self.mplayer["autostart"])
         
+        self.mplayer.hide()
+        self.mplayer.stop()
+        
+        layout.removeWidget(self.mplayer)
+        return params
+    
     def loadFlowPlayer(self):
         layout = self.playerFrame.layout()
-        self.removePlayer( layout )
+        params = self.removePlayer( layout )
         
         self.mplayer = self.mFlowPlayer
+        layout.addWidget( self.mplayer )
         
-        layout.addWidget( self.mFlowPlayer )
-        self.playerReload(True)
-        self.mFlowPlayer.show()
+        self.reload(**params)
+        self.mplayer.show()
         
         self.btnSkins.setMenu( self.setupSkinMenu() )
         
     def loadJwPlayer(self):
         layout = self.playerFrame.layout()
-        self.removePlayer( layout )
+        params = self.removePlayer( layout )
         
         self.mplayer = self.mJWPlayer
-        
         layout.addWidget( self.mJWPlayer )
-        self.playerReload(True)
-        self.mJWPlayer.show()
+        
+        self.reload(**params)
+        self.mplayer.show()
         
         self.btnSkins.setMenu( self.setupSkinMenu() )
         
@@ -134,7 +199,7 @@ class PlayerDialog(QtGui.QDialog):
                 self.btnFlowPlayer.setChecked(True)
                 self.loadFlowPlayer()
                 
-                
+## ------------------------------------------------------------------------
 if __name__ == "__main__":
     import sys
     app = QtGui.QApplication(sys.argv)
