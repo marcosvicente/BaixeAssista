@@ -56,9 +56,13 @@ class DialogDl(QtGui.QDialog):
     def btnCancel(self):
         return self.uiDialog.buttonBox.button(QtGui.QDialogButtonBox.Cancel)
         
-    def handleUpdate(self, message, sitemsg):
-        self.uiDialog.infoProgress.setText(message)
-        self.uiDialog.siteResponse.setHtml("<br/>"+sitemsg)
+    @property
+    def siteResponse(self):
+        return self.uiDialog.siteResponse
+    
+    def handleUpdate(self, textInfo, siteFailReason):
+        self.uiDialog.infoProgress.setText( textInfo )
+        if siteFailReason: self.siteResponse.setHtml(siteFailReason)
         
 ## --------------------------------------------------------------------------
 class VideoLoad(threading.Thread, QtCore.QObject):
