@@ -1,5 +1,10 @@
 # coding: utf-8
-from _sitebase import *
+from main.app.generators import Universal
+from main.app.util import sites
+from _sitebase import SiteBase
+import urllib
+import cgi
+import re
 
 ####################################### YOUTUBE #######################################
 class Youtube( SiteBase ):
@@ -20,24 +25,23 @@ class Youtube( SiteBase ):
     
     info_url = "http://www.youtube.com/get_video_info?video_id=%s&el=embedded&ps=default&eurl=&hl=en_US"
     video_quality_opts = {1: "small", 2: "medium", 3: "large"}
-    basename = u"youtube.com"
     
     def __init__(self, url, **params):
         SiteBase.__init__(self, **params)
+        self.basename = u"youtube.com"
         self.video_info = {}
         self.url = url
         
     def suportaSeekBar(self): return True
-    
-    def getSiteMsg(self):
+    def getFailReason(self):
         try:
-            if self.raw_data.get("status",[""])[0] == "fail":
-                reason = self.raw_data.get("reason",[""])[0]
-                msg = u"%s informa: %s"%(self.basename, unicode(reason,"UTF-8"))
-            else: msg = ""
-        except: msg = ""
-        return msg
-    
+            if self.raw_data["status"] == "fail":
+                reason = self.raw_data["reason"].decode("utf-8")
+                reason = u"%s informa: %s" % (self.basename, reason)
+            else: reason = u""
+        except: reason = u""
+        return reason
+        
     def getLink(self):
         quality = self.params.get("qualidade", 2)
         quality = self.video_quality_opts[quality]
@@ -54,7 +58,7 @@ class Youtube( SiteBase ):
     
     def extract_one(self):
         """ método de extração padrão. funciona na maioria das vezes """
-        stream_map = self.raw_data["url_encoded_fmt_stream_map"][0]
+        stream_map = self.raw_data["url_encoded_fmt_stream_map"]
         
         def parse_qs(item):
             """ analizando os dados e removendo os indices """
@@ -72,17 +76,19 @@ class Youtube( SiteBase ):
     def start_extraction(self, proxies={}, timeout=25):
         url = self.info_url % Universal.get_video_id(self.basename, self.url)
         fd = self.connect(url, proxies=proxies, timeout=timeout)
-        data = fd.read(); fd.close()
+        self.raw_data = cgi.parse_qs(fd.read()); fd.close()
         
-        self.raw_data = cgi.parse_qs(data)
-        self.message = self.getSiteMsg()
+        for key in self.raw_data.iterkeys(): # index remove
+            self.raw_data[key] = self.raw_data[key][0]
+            
+        self.message = self.getFailReason()
         self.video_info = self.extract_one()
         
-        try: self.configs["title"] = self.raw_data["title"][0]
+        try: self.configs["title"] = self.raw_data["title"]
         except (KeyError, IndexError):
             self.configs["title"] = sites.get_random_text()
             
-        try: self.configs["thumbnail_url"] = self.raw_data["thumbnail_url"][0]
+        try: self.configs["thumbnail_url"] = self.raw_data["thumbnail_url"]
         except (KeyError, IndexError):
             self.configs["thumbnail_url"] = ""
             
