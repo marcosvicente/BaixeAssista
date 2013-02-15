@@ -60,9 +60,9 @@ class DialogDl(QtGui.QDialog):
     def siteResponse(self):
         return self.uiDialog.siteResponse
     
-    def handleUpdate(self, textInfo, siteFailReason):
-        self.uiDialog.infoProgress.setText( textInfo )
-        if siteFailReason: self.siteResponse.setHtml(siteFailReason)
+    def handleUpdate(self, textInfo, siteInfo):
+        self.uiDialog.infoProgress.setText(textInfo)
+        if siteInfo: self.siteResponse.setHtml(siteInfo)
         
 ## --------------------------------------------------------------------------
 class VideoLoad(threading.Thread, QtCore.QObject):
