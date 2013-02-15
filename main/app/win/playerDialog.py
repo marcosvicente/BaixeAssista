@@ -8,6 +8,8 @@ from main.app.util import base
 
 ## --------------------------------------------------------------------------
 class PlayerDialog(QtGui.QDialog):
+    startedOneTime = False
+    
     def __init__(self, title="SWF Player", parent=None, configs={}):
         super(PlayerDialog, self).__init__(parent)
         self.uiPlayerDialog = Ui_playerDialog()
@@ -16,6 +18,10 @@ class PlayerDialog(QtGui.QDialog):
         # instância para as configurações global
         self.configs = configs
         self.setWindowTitle( title )
+        
+        layout = self.playerFrame.layout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
         
         self.mFlowPlayer = FlowPlayer.Player( self.playerFrame )
         self.mJWPlayer = JWPlayer.Player( self.playerFrame )
@@ -35,9 +41,15 @@ class PlayerDialog(QtGui.QDialog):
     def start(self, **kwargs):
         self.mplayer.update(**kwargs)
         self.mplayer.reload()
+        
+        if self.startedOneTime: self.setWinConf()
+        else: self.setStartedOneTime(True)
+        
         self.show()
         
     def stop(self):
+        self.saveSettings()
+        
         self.mplayer.stop()
         self.hide()
         
@@ -45,7 +57,10 @@ class PlayerDialog(QtGui.QDialog):
         """ recarrega o player, mas antes atualiza seus parâmetros """
         self.mplayer.update(**kwargs)
         self.mplayer.reload()
-        
+
+    def setStartedOneTime(self, b):
+        self.__class__.startedOneTime = b
+    
     @property
     def player(self):
         return self.mplayer
@@ -70,31 +85,32 @@ class PlayerDialog(QtGui.QDialog):
     def btnSkins(self):
         return self.uiPlayerDialog.btnSkins
     
+    def setWinConf(self):
+        self.resize(*map(int, self.configs["embedPlayer"].as_list("size")))
+        self.move(*map(int, self.configs["embedPlayer"].as_list("pos")))
+        
     def _startDefaultPlayer(self):
+        """ carrega, inicialmente, o player das configurações """
         self.setDefaultConf()
-        
-        size = map(lambda v: int, self.configs["embedPlayer"]["size"])
-        pos  = map(lambda v: int, self.configs["embedPlayer"]["pos"])
-        
-        if len(size) > 0: self.resize(*size)
-        if len( pos) > 0: self.move(*pos)
         
         flowplayer = self.mFlowPlayer.__class__.__module__
         jwplayer = self.mJWPlayer.__class__.__module__
         
         if flowplayer.endswith(self.configs["embedPlayer"]["player"]):
             self.mplayer = self.mFlowPlayer
-            self.mplayer["skinName"] = self.configs[flowplayer]["skinName"]
+            self.btnFlowPlayer.setChecked(True)
+            module = flowplayer
             
         elif jwplayer.endswith(self.configs["embedPlayer"]["player"]):
             self.mplayer = self.mJWPlayer
-            self.mplayer["skinName"] = self.configs[jwplayer]["skinName"]
+            self.btnJwPlayer.setChecked(True)
+            module = jwplayer
             
         layout = self.playerFrame.layout()
         layout.addWidget(self.mplayer)
         
+        self.mplayer["skinName"] = self.configs[module]["skinName"]
         self.btnSkins.setMenu(self.setupSkinMenu())
-        
         self.mplayer.show()
 
     def setDefaultConf(self):
@@ -106,8 +122,8 @@ class PlayerDialog(QtGui.QDialog):
         self.configs.setdefault(flowplayer, {})
         self.configs.setdefault(jwplayer, {})
         
-        self.configs["embedPlayer"].setdefault("size", tuple())
-        self.configs["embedPlayer"].setdefault("pos", tuple())
+        self.configs["embedPlayer"].setdefault("size", self.size().toTuple())
+        self.configs["embedPlayer"].setdefault("pos", self.pos().toTuple())
         self.configs["embedPlayer"].setdefault("player", flowplayer)
         
         self.configs[flowplayer].setdefault("skinName", self.mFlowPlayer.defaultskin)
@@ -118,8 +134,8 @@ class PlayerDialog(QtGui.QDialog):
         flowplayer = self.mFlowPlayer.__class__.__module__
         jwplayer = self.mJWPlayer.__class__.__module__
         
-        self.configs["embedPlayer"]["size"] = self.size()
-        self.configs["embedPlayer"]["pos"]  = self.pos()
+        self.configs["embedPlayer"]["size"] = self.size().toTuple()
+        self.configs["embedPlayer"]["pos"]  = self.pos().toTuple()
         self.configs["embedPlayer"]["player"] = mplayer
         
         self.configs[flowplayer]["skinName"] = self.mFlowPlayer["skinName"]
