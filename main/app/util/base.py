@@ -72,7 +72,7 @@ class protected(object):
     """ executa o méthodo dentro de um try:except. ignora errors """
     def __call__(self, method):
         def wrap(*args, **kwargs):
-            try: method(*args, **kwargs)
+            try: return method(*args, **kwargs)
             except Exception as err:
                 print "warnning: '%s' protected: %s"%(method.__name__,err)
         return wrap
