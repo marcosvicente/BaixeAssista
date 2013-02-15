@@ -27,6 +27,7 @@ encoding//main/app/proxy.py=ISO-8859-1
 encoding//main/app/tests.py=utf-8
 encoding//main/app/updater.py=UTF-8
 encoding//main/app/util/base.py=utf-8
+encoding//main/app/util/sites.py=utf-8
 encoding//main/app/win/browser.py=utf-8
 encoding//main/app/win/dialogAbout.py=utf-8
 encoding//main/app/win/loader.py=utf-8

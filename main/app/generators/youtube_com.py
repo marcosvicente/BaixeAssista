@@ -24,13 +24,13 @@ class Youtube( SiteBase ):
         self.info_url = "http://www.youtube.com/get_video_info?video_id=%s&el=embedded&ps=default&eurl=&hl=en_US"
         self.video_quality_opts = {1: "small", 2: "medium", 3: "large"}
         self.basename = u"youtube.com"
-        self.raw_data = None
+        self.video_info = {}
         self.url = url
         
     def suportaSeekBar(self):
         return True
     
-    def getMessage(self):
+    def getSiteMsg(self):
         try:
             if self.raw_data.get("status",[""])[0] == "fail":
                 reason = self.raw_data.get("reason",[""])[0]
@@ -40,16 +40,30 @@ class Youtube( SiteBase ):
         return msg
     
     def getLink(self):
+        quality = self.params.get("qualidade", 2)
+        quality = self.video_quality_opts[quality]
+        pattern_type = re.compile("video/(?P<type>[^\s;]+)")
+        
+        for video_info in self.video_info:
+            if video_info["quality"].endswith( quality ):
+                url = video_info["url"]
+                
+                matchobj = pattern_type.search(video_info["type"])
+                self.configs["ext"] = matchobj.group("type")
+                break
+        return url
+    
+    def get_link_m2(self):
         vquality = self.params.get("qualidade", 2)
         quality_opt = self.video_quality_opts[ vquality ]
         
-        quality_size = len(self.raw_data['quality'])
-        type_size    = len(self.raw_data["type"])
+        quality_size = len(self.video_info['quality'])
+        type_size    = len(self.video_info["type"])
         url_size     = len(self.configs["urls"])
         
         if quality_size == type_size == url_size:
-            items = zip(self.configs["urls"], self.raw_data["type"], 
-                        self.raw_data['quality'])
+            items = zip(self.configs["urls"], self.video_info["type"], 
+                        self.video_info['quality'])
             
             def link( args ):
                 url, _type, quality = args
@@ -62,9 +76,9 @@ class Youtube( SiteBase ):
             
             result = filter(link, items)
             result = result if len(result) > 0 else items
-            return result[0][0] + "&range=%s-"
+            return urllib.unquote_plus(result[0][0])+"&range=%s-"
         else:
-            items = zip(self.configs["urls"], self.raw_data["type"])
+            items = zip(self.configs["urls"], self.video_info["type"])
             
             def link( args ):
                 url, _type = args
@@ -77,29 +91,35 @@ class Youtube( SiteBase ):
                 
             result = filter(link, items)
             result = result if len(result) > 0 else items
-            return result[0][0] + "&range=%s-"
+            return urllib.unquote_plus(result[0][0])+"&range=%s-"
         
-    def get_raw_data(self, proxies, timeout):
-        video_id = Universal.get_video_id(self.basename, self.url)
-        url = self.info_url % video_id
-        fd = self.connect(url, proxies=proxies, timeout=timeout)
-        data = fd.read(); fd.close()
-        return cgi.parse_qs( data )
+    def extract_one(self):
+        """ método de extração padrão. funciona na maioria das vezes """
+        stream_map = self.raw_data["url_encoded_fmt_stream_map"][0]
+        
+        def parse_qs(item):
+            """ analizando os dados e removendo os indices """
+            data = cgi.parse_qs(item)
+            
+            for key in data.iterkeys():
+                data[key] = data[key][0]
+                
+            data["url"] = urllib.unquote_plus(data["url"])
+            data["url"] = "&".join([data["url"], "signature=%s" % data["sig"], "range=%s-"])
+            return data
+        
+        return map(parse_qs, stream_map.split(","))
     
     def start_extraction(self, proxies={}, timeout=25):
-        self.raw_data = self.get_raw_data(proxies, timeout)
-        self.message = self.getMessage()
+        url = self.info_url % Universal.get_video_id(self.basename, self.url)
+        fd = self.connect(url, proxies=proxies, timeout=timeout)
+        data = fd.read(); fd.close()
         
-        uparams = cgi.parse_qs(self.raw_data["url_encoded_fmt_stream_map"][0])
+        self.raw_data = cgi.parse_qs(data)
+        self.message = self.getSiteMsg()
         
-        self.raw_data["quality"] = uparams["quality"]
-        self.raw_data["type"] = uparams["type"]
-        self.configs["urls"] = []
+        self.video_info = self.extract_one()
         
-        for index, url in enumerate(uparams["url"]):
-            fullurl = url + "&signature=%s" %uparams["sig"][index]
-            self.configs["urls"].append( fullurl )
-            
         try: self.configs["title"] = self.raw_data["title"][0]
         except (KeyError, IndexError):
             self.configs["title"] = sites.get_random_text()
