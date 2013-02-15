@@ -87,7 +87,12 @@ class Player(QtGui.QWidget):
     
     def stop(self):
         self.webview.setHtml("")
-        
+    
+    def update(self, **kwargs):
+        """ atualiza 'params' mas passa pela validação """
+        for key, value in kwargs.items():
+            self[key] = value
+            
     def pause(self):
         """ pausa a execução do video """
         frame = self.webview.page().mainFrame()
