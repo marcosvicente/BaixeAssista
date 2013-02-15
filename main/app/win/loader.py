@@ -140,12 +140,11 @@ class Loader(QtGui.QMainWindow):
         
     def onAbout(self):
         about = DialogAbout(self, title =" - ".join([self.tr("About"), self.baixeAssista]))
-        about.setDevInfoText(
-            self.tr("BaixeAssista search uncomplicate viewing videos on the internet.\n"
-                    "Developer: geniofuturo@gmail.com"))
+        about.setDevInfoText(self.tr("BaixeAssista search uncomplicate viewing videos on the internet.\n"
+                                     "Developer: geniofuturo@gmail.com"))
         about.btnMakeDonation.clicked.connect(self.showDonationDialog)
         about.exec_()
-    
+        
     def onErroReporting(self):
         dialogError = DialogError()
         dialogError.setDeveloperEmail(self.developerEmail)
@@ -182,9 +181,14 @@ class Loader(QtGui.QMainWindow):
             self.onSearchUpdate(False)
     
     def setupUI(self):
+        # o player externo terá uma instância única.
+        self.embedPlayer = PlayerDialog(parent=self, configs=self.config)
+        self.embedPlayer.btnReload.clicked.connect(self.playerReload)
+        self.embedPlayer.hide()
+        
         self.setupTab()
         self.setupLocation()
-                
+        
         self.videoQualityList = [self.tr("Low"), self.tr("Normal"), self.tr("High")]
         self.uiMainWindow.videoQuality.addItems( self.videoQualityList )
         self.uiMainWindow.tempFileAction.addItems([self.tr("Just remove"), self.tr("Before remove, ask")])
@@ -308,6 +312,7 @@ class Loader(QtGui.QMainWindow):
         boxLayout.addWidget( self.browser )
         
     def onPlayeView(self):
+        """ iniciializa a visualização do vídeo(selecionado) através do player externo. """
         item = self.uiMainWindow.videosView.currentItem()
         title = item.text(0)
         
@@ -329,6 +334,7 @@ class Loader(QtGui.QMainWindow):
                 mplayer.start()
                 
     def getExternalPlayerPath(self):
+        """ valida e retorna o local do player externo """
         if not os.path.exists(self.confPath["externalPlayer"]):
             path = self.choosePlayerPath()
         else:
@@ -336,6 +342,7 @@ class Loader(QtGui.QMainWindow):
         return path
     
     def onVideoRemove(self):
+        """ remove o video selecionando """
         item = self.uiMainWindow.videosView.currentItem()
         title = item.text(0)
         
@@ -426,10 +433,11 @@ class Loader(QtGui.QMainWindow):
         self.uiMainWindow.progressBarInfo.setValue(0.0)
         
     def getLocation(self):
+        """ controle principal para entradas de urls """
         return self.uiMainWindow.location
         
     def playerReload(self):
-        try: self.mplayer.reload( self.LOADING )
+        try: self.mplayer.reload(autostart = self.LOADING)
         except: self.onSetupVideoPlayer()
         
     def choosePlayerPath(self, value=None):
@@ -462,9 +470,8 @@ class Loader(QtGui.QMainWindow):
         actionEmbed = self.uiMainWindow.actionEmbedPlayer
         action = self.playerActionGroup.checkedAction()
         
-        if action == actionEmbed:
-            self.mplayer = PlayerDialog(parent=self)
-            self.mplayer.btnReload.clicked.connect(self.playerReload)
+        if action == actionEmbed: # referencia embutido.
+            self.mplayer = self.embedPlayer 
             
         elif action == actionExternal:
             self.mplayer = FlvPlayer(cmd=self.getExternalPlayerPath(), url=url)
@@ -569,7 +576,7 @@ class Loader(QtGui.QMainWindow):
             Info.update.connect(self.updateConnectionUi)
             self.handleStartupConnection(default = reponse)
             
-            self.mplayer.start()
+            self.mplayer.start(autostart = self.LOADING)
             self.DIALOG.close()
             
             self.setupFilesView()
