@@ -53,46 +53,6 @@ class Youtube( SiteBase ):
                 break
         return url
     
-    def get_link_m2(self):
-        vquality = self.params.get("qualidade", 2)
-        quality_opt = self.video_quality_opts[ vquality ]
-        
-        quality_size = len(self.video_info['quality'])
-        type_size    = len(self.video_info["type"])
-        url_size     = len(self.configs["urls"])
-        
-        if quality_size == type_size == url_size:
-            items = zip(self.configs["urls"], self.video_info["type"], 
-                        self.video_info['quality'])
-            
-            def link( args ):
-                url, _type, quality = args
-                
-                matchobj = re.search("video/([^\s;]+)", _type)
-                if matchobj: self.configs["ext"] = matchobj.group(1)
-                
-                if re.match(quality_opt, quality):
-                    return urllib.unquote_plus( url )
-            
-            result = filter(link, items)
-            result = result if len(result) > 0 else items
-            return urllib.unquote_plus(result[0][0])+"&range=%s-"
-        else:
-            items = zip(self.configs["urls"], self.video_info["type"])
-            
-            def link( args ):
-                url, _type = args
-                
-                matchobj = re.search("video/([^\s;]+)", _type)
-                if matchobj: self.configs["ext"] = matchobj.group(1)
-                
-                if re.search(quality_opt, _type):
-                    return urllib.unquote_plus( url )
-                
-            result = filter(link, items)
-            result = result if len(result) > 0 else items
-            return urllib.unquote_plus(result[0][0])+"&range=%s-"
-        
     def extract_one(self):
         """ método de extração padrão. funciona na maioria das vezes """
         stream_map = self.raw_data["url_encoded_fmt_stream_map"][0]
@@ -117,7 +77,6 @@ class Youtube( SiteBase ):
         
         self.raw_data = cgi.parse_qs(data)
         self.message = self.getSiteMsg()
-        
         self.video_info = self.extract_one()
         
         try: self.configs["title"] = self.raw_data["title"][0]
