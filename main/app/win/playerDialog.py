@@ -37,7 +37,10 @@ class PlayerDialog(QtGui.QDialog):
         
         # inicializa o player da configuração
         self._startDefaultPlayer()
-        
+    
+    def closeEvent(self, event):
+        self.stop()
+    
     def start(self, **kwargs):
         self.mplayer.update(**kwargs)
         self.mplayer.reload()
@@ -57,33 +60,10 @@ class PlayerDialog(QtGui.QDialog):
         """ recarrega o player, mas antes atualiza seus parâmetros """
         self.mplayer.update(**kwargs)
         self.mplayer.reload()
-
+        self.show()
+        
     def setStartedOneTime(self, b):
         self.__class__.startedOneTime = b
-    
-    @property
-    def player(self):
-        return self.mplayer
-    
-    @property
-    def playerFrame(self):
-        return self.uiPlayerDialog.playerFrame
-    
-    @property
-    def btnReload(self):
-        return self.uiPlayerDialog.btnReload
-    
-    @property
-    def btnFlowPlayer(self):
-        return self.uiPlayerDialog.btnFlowPlayer
-    
-    @property
-    def btnJwPlayer(self):
-        return self.uiPlayerDialog.btnJwPlayer
-    
-    @property
-    def btnSkins(self):
-        return self.uiPlayerDialog.btnSkins
     
     def setWinConf(self):
         self.resize(*map(int, self.configs["embedPlayer"].as_list("size")))
@@ -99,11 +79,13 @@ class PlayerDialog(QtGui.QDialog):
         if flowplayer.endswith(self.configs["embedPlayer"]["player"]):
             self.mplayer = self.mFlowPlayer
             self.btnFlowPlayer.setChecked(True)
+            self.btnJwPlayer.setChecked(False)
             module = flowplayer
             
         elif jwplayer.endswith(self.configs["embedPlayer"]["player"]):
             self.mplayer = self.mJWPlayer
             self.btnJwPlayer.setChecked(True)
+            self.btnFlowPlayer.setChecked(False)
             module = jwplayer
             
         layout = self.playerFrame.layout()
@@ -164,7 +146,6 @@ class PlayerDialog(QtGui.QDialog):
         self.mplayer["skinName"] = action.text()
         self.mplayer.reload()
         
-    @base.protected()
     def removePlayer(self, layout):
         params = dict(autostart = self.mplayer["autostart"])
         
@@ -214,7 +195,30 @@ class PlayerDialog(QtGui.QDialog):
             else:
                 self.btnFlowPlayer.setChecked(True)
                 self.loadFlowPlayer()
-                
+    @property
+    def player(self):
+        return self.mplayer
+    
+    @property
+    def playerFrame(self):
+        return self.uiPlayerDialog.playerFrame
+    
+    @property
+    def btnReload(self):
+        return self.uiPlayerDialog.btnReload
+    
+    @property
+    def btnFlowPlayer(self):
+        return self.uiPlayerDialog.btnFlowPlayer
+    
+    @property
+    def btnJwPlayer(self):
+        return self.uiPlayerDialog.btnJwPlayer
+        
+    @property
+    def btnSkins(self):
+        return self.uiPlayerDialog.btnSkins
+    
 ## ------------------------------------------------------------------------
 if __name__ == "__main__":
     import sys
