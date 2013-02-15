@@ -24,9 +24,13 @@ class FlvPlayer(threading.Thread):
     def isRunning(self):
         return self.running
     
+    def start(self, **kwargs):
+        """ modo de compatibilidade """
+        return super(self.__class__, self).start()
+        
     @staticmethod
     def runElevated(cmd, params):
-        """ executa um processo, porém requistando permissões. """
+        """ executa um processo, porï¿½m requistando permissï¿½es. """
         import win32com.shell.shell as shell
         from win32com.shell import shellcon
         from win32con import SW_NORMAL
