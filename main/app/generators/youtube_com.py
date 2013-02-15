@@ -18,17 +18,16 @@ class Youtube( SiteBase ):
         "video_control": None
     }
     
+    info_url = "http://www.youtube.com/get_video_info?video_id=%s&el=embedded&ps=default&eurl=&hl=en_US"
+    video_quality_opts = {1: "small", 2: "medium", 3: "large"}
+    basename = u"youtube.com"
+    
     def __init__(self, url, **params):
-        """Constructor"""
         SiteBase.__init__(self, **params)
-        self.info_url = "http://www.youtube.com/get_video_info?video_id=%s&el=embedded&ps=default&eurl=&hl=en_US"
-        self.video_quality_opts = {1: "small", 2: "medium", 3: "large"}
-        self.basename = u"youtube.com"
         self.video_info = {}
         self.url = url
         
-    def suportaSeekBar(self):
-        return True
+    def suportaSeekBar(self): return True
     
     def getSiteMsg(self):
         try:
