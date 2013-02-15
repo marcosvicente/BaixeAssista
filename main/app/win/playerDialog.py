@@ -37,10 +37,7 @@ class PlayerDialog(QtGui.QDialog):
         
         # inicializa o player da configuração
         self._startDefaultPlayer()
-    
-    def closeEvent(self, event):
-        self.stop()
-    
+            
     def start(self, **kwargs):
         self.mplayer.update(**kwargs)
         self.mplayer.reload()
@@ -61,6 +58,9 @@ class PlayerDialog(QtGui.QDialog):
         self.mplayer.update(**kwargs)
         self.mplayer.reload()
         self.show()
+    
+    def closeEvent(self, event):
+        self.stop()
         
     def setStartedOneTime(self, b):
         self.__class__.startedOneTime = b
@@ -76,13 +76,13 @@ class PlayerDialog(QtGui.QDialog):
         flowplayer = self.mFlowPlayer.__class__.__module__
         jwplayer = self.mJWPlayer.__class__.__module__
         
-        if flowplayer.endswith(self.configs["embedPlayer"]["player"]):
+        if self.configs["embedPlayer"]["player"].endswith(flowplayer):
             self.mplayer = self.mFlowPlayer
             self.btnFlowPlayer.setChecked(True)
             self.btnJwPlayer.setChecked(False)
             module = flowplayer
             
-        elif jwplayer.endswith(self.configs["embedPlayer"]["player"]):
+        elif self.configs["embedPlayer"]["player"].endswith(jwplayer):
             self.mplayer = self.mJWPlayer
             self.btnJwPlayer.setChecked(True)
             self.btnFlowPlayer.setChecked(False)
