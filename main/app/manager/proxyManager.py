@@ -44,26 +44,20 @@ class ProxyManager(object):
         """ retorna um novo ip sem formatação -> 250.180.200.125:8080 """
         with self.lockNewIp:
             iplistkey = self.iplist.keys()
-            bestip = iplistkey[0]
-            
+            newip = ""
             for ip in iplistkey:
-                if self.iplist[ip].as_int("rate") >= 0 and \
-                   not self.iplist[ip].as_bool("lock"):
-                    self.iplist[ip]["lock"] = True
-                    return ip
-            # modo mais complidado
-            for ip in iplistkey:
-                rate = self.iplist[ip].as_int("rate")
-                if self.iplist[ip].as_bool("lock"): continue
-                
-                for _ip in iplistkey:
-                    if ip == _ip: continue
-                    if rate > self.iplist[_ip].as_int("rate"):
-                        bestip = ip
-            # informa que ip já esta em uso
-            self.iplist[bestip]["lock"] = True
-        return bestip
-    
+                obj = self.iplist[ip]
+                if obj.as_bool("lock"): continue
+                if obj.as_int("rate") >= 0:
+                    newip = ip; break
+            else:
+                for ip in iplistkey:
+                    obj = self.iplist[ip]
+                    if obj.as_bool("lock"): continue
+                    newip = ip; break
+        self.iplist[newip]["lock"] = True
+        return newip
+        
     def unlock(self, ip):
         self.iplist[ip]["lock"] = False
         
