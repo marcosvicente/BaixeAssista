@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'mainLayout.ui'
 #
-# Created: Sat Feb 16 15:07:46 2013
+# Created: Sat Feb 16 20:04:57 2013
 #      by: pyside-uic 0.2.14 running on PySide 1.1.2
 #
 # WARNING! All changes made in this file will be lost!
@@ -86,7 +86,7 @@ class Ui_MainWindow(object):
         self.hSliderPageConf.setPageStep(1)
         self.hSliderPageConf.setProperty("value", 0)
         self.hSliderPageConf.setOrientation(QtCore.Qt.Horizontal)
-        self.hSliderPageConf.setTickPosition(QtGui.QSlider.TicksBothSides)
+        self.hSliderPageConf.setTickPosition(QtGui.QSlider.TicksBelow)
         self.hSliderPageConf.setObjectName("hSliderPageConf")
         self.verticalLayout_4.addWidget(self.hSliderPageConf)
         self.groupTypes = QtGui.QToolBox(self.frameTab)
@@ -229,7 +229,7 @@ class Ui_MainWindow(object):
         icon2.addPixmap(QtGui.QPixmap("../images/network-blue.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.groupTypes.addItem(self.configConnection, icon2, "")
         self.configMovie = QtGui.QWidget()
-        self.configMovie.setGeometry(QtCore.QRect(0, 0, 264, 83))
+        self.configMovie.setGeometry(QtCore.QRect(0, 0, 1049, 346))
         self.configMovie.setObjectName("configMovie")
         self.verticalLayout_9 = QtGui.QVBoxLayout(self.configMovie)
         self.verticalLayout_9.setContentsMargins(10, 10, 10, 10)
@@ -268,7 +268,7 @@ class Ui_MainWindow(object):
         icon3.addPixmap(QtGui.QPixmap("../images/movies-blue.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.groupTypes.addItem(self.configMovie, icon3, "")
         self.configFile = QtGui.QWidget()
-        self.configFile.setGeometry(QtCore.QRect(0, 0, 1049, 341))
+        self.configFile.setGeometry(QtCore.QRect(0, 0, 1049, 346))
         self.configFile.setObjectName("configFile")
         self.verticalLayout_6 = QtGui.QVBoxLayout(self.configFile)
         self.verticalLayout_6.setObjectName("verticalLayout_6")
@@ -384,10 +384,6 @@ class Ui_MainWindow(object):
         self.label_9 = QtGui.QLabel(self.groupBox_3)
         self.label_9.setObjectName("label_9")
         self.formLayout.setWidget(0, QtGui.QFormLayout.LabelRole, self.label_9)
-        self.videoTileInfo = QtGui.QLineEdit(self.groupBox_3)
-        self.videoTileInfo.setReadOnly(True)
-        self.videoTileInfo.setObjectName("videoTileInfo")
-        self.formLayout.setWidget(0, QtGui.QFormLayout.FieldRole, self.videoTileInfo)
         self.label_10 = QtGui.QLabel(self.groupBox_3)
         self.label_10.setObjectName("label_10")
         self.formLayout.setWidget(1, QtGui.QFormLayout.LabelRole, self.label_10)
@@ -450,6 +446,10 @@ class Ui_MainWindow(object):
         self.globalEtaInfo.setReadOnly(True)
         self.globalEtaInfo.setObjectName("globalEtaInfo")
         self.formLayout.setWidget(5, QtGui.QFormLayout.FieldRole, self.globalEtaInfo)
+        self.videoTileInfo = QtGui.QLineEdit(self.groupBox_3)
+        self.videoTileInfo.setReadOnly(True)
+        self.videoTileInfo.setObjectName("videoTileInfo")
+        self.formLayout.setWidget(0, QtGui.QFormLayout.FieldRole, self.videoTileInfo)
         self.verticalLayout_10.addLayout(self.formLayout)
         self.verticalLayout_8.addWidget(self.groupBox_3)
         self.verticalLayout_7.addWidget(self.frame)
@@ -609,11 +609,15 @@ class Ui_MainWindow(object):
 
         self.retranslateUi(MainWindow)
         self.tabPanel.setCurrentIndex(1)
-        self.groupTypes.setCurrentIndex(2)
+        self.groupTypes.setCurrentIndex(0)
         self.videoQuality.setCurrentIndex(-1)
         QtCore.QObject.connect(self.hSliderPageConf, QtCore.SIGNAL("valueChanged(int)"), self.groupTypes.setCurrentIndex)
         QtCore.QObject.connect(self.groupTypes, QtCore.SIGNAL("currentChanged(int)"), self.hSliderPageConf.setValue)
         QtCore.QObject.connect(self.tempFiles, QtCore.SIGNAL("toggled(bool)"), self.tempFileAction.setEnabled)
+        QtCore.QObject.connect(self.btnStartDl, QtCore.SIGNAL("toggled(bool)"), self.tempFiles.setDisabled)
+        QtCore.QObject.connect(self.btnStartDl, QtCore.SIGNAL("toggled(bool)"), self.videoSplitSize.setDisabled)
+        QtCore.QObject.connect(self.btnStartDl, QtCore.SIGNAL("toggled(bool)"), self.videoQuality.setDisabled)
+        QtCore.QObject.connect(self.btnStartDl, QtCore.SIGNAL("toggled(bool)"), self.btnToolDir.setDisabled)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
