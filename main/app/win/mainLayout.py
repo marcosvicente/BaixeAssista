@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'mainLayout.ui'
 #
-# Created: Fri Feb 08 22:18:21 2013
+# Created: Sat Feb 16 15:07:46 2013
 #      by: pyside-uic 0.2.14 running on PySide 1.1.2
 #
 # WARNING! All changes made in this file will be lost!
@@ -75,10 +75,24 @@ class Ui_MainWindow(object):
         self.frameTab.setObjectName("frameTab")
         self.verticalLayout_4 = QtGui.QVBoxLayout(self.frameTab)
         self.verticalLayout_4.setObjectName("verticalLayout_4")
+        self.hSliderPageConf = QtGui.QSlider(self.frameTab)
+        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.hSliderPageConf.sizePolicy().hasHeightForWidth())
+        self.hSliderPageConf.setSizePolicy(sizePolicy)
+        self.hSliderPageConf.setMinimum(0)
+        self.hSliderPageConf.setMaximum(2)
+        self.hSliderPageConf.setPageStep(1)
+        self.hSliderPageConf.setProperty("value", 0)
+        self.hSliderPageConf.setOrientation(QtCore.Qt.Horizontal)
+        self.hSliderPageConf.setTickPosition(QtGui.QSlider.TicksBothSides)
+        self.hSliderPageConf.setObjectName("hSliderPageConf")
+        self.verticalLayout_4.addWidget(self.hSliderPageConf)
         self.groupTypes = QtGui.QToolBox(self.frameTab)
         self.groupTypes.setObjectName("groupTypes")
         self.configConnection = QtGui.QWidget()
-        self.configConnection.setGeometry(QtCore.QRect(0, 0, 349, 359))
+        self.configConnection.setGeometry(QtCore.QRect(0, 0, 1028, 359))
         self.configConnection.setObjectName("configConnection")
         self.verticalLayout_5 = QtGui.QVBoxLayout(self.configConnection)
         self.verticalLayout_5.setSpacing(10)
@@ -254,7 +268,7 @@ class Ui_MainWindow(object):
         icon3.addPixmap(QtGui.QPixmap("../images/movies-blue.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.groupTypes.addItem(self.configMovie, icon3, "")
         self.configFile = QtGui.QWidget()
-        self.configFile.setGeometry(QtCore.QRect(0, 0, 270, 87))
+        self.configFile.setGeometry(QtCore.QRect(0, 0, 1049, 341))
         self.configFile.setObjectName("configFile")
         self.verticalLayout_6 = QtGui.QVBoxLayout(self.configFile)
         self.verticalLayout_6.setObjectName("verticalLayout_6")
@@ -594,9 +608,12 @@ class Ui_MainWindow(object):
         self.menubar.addAction(self.menuAbout.menuAction())
 
         self.retranslateUi(MainWindow)
-        self.tabPanel.setCurrentIndex(2)
-        self.groupTypes.setCurrentIndex(0)
+        self.tabPanel.setCurrentIndex(1)
+        self.groupTypes.setCurrentIndex(2)
         self.videoQuality.setCurrentIndex(-1)
+        QtCore.QObject.connect(self.hSliderPageConf, QtCore.SIGNAL("valueChanged(int)"), self.groupTypes.setCurrentIndex)
+        QtCore.QObject.connect(self.groupTypes, QtCore.SIGNAL("currentChanged(int)"), self.hSliderPageConf.setValue)
+        QtCore.QObject.connect(self.tempFiles, QtCore.SIGNAL("toggled(bool)"), self.tempFileAction.setEnabled)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
