@@ -258,7 +258,7 @@ class StreamManager(threading.Thread):
                     Info.set(self.ident, "downloaded", self.format_bytes(self.numBytesLidos))
                     Info.set(self.ident, "total", self.format_bytes(block_size))
                     Info.set(self.ident, "remainder", self.format_bytes(block_size - self.numBytesLidos))
-                    Info.set(self.ident, "percent", self.calc_percent(self.numBytesLidos, block_size))
+                    Info.set(self.ident, "percent", base.calc_percent(self.numBytesLidos, block_size))
                     # calcula a velocidade de transferência da conexão
                     Info.set(self.ident, "speed", self.calc_speed(local_time, time.time(), 
                                                                        self.numBytesLidos))

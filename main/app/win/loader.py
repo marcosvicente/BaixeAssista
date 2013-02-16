@@ -387,7 +387,7 @@ class Loader(QtGui.QMainWindow):
         """ agrupa items por linha """
         # relacionando  com o id para facilitar na atualização de dados
         self.tableRows[ident] = TableRow( self.uiMainWindow.connectionInfo )
-        self.tableRows[ident].create()
+        self.tableRows[ident].create(wCol = StreamManager.listInfo.index("percent"))
         return self.tableRows[ident]
         
     def removeTableRow(self, ident):

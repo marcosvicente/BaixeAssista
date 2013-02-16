@@ -38,6 +38,7 @@ encoding//main/app/win/stopRefreshButton.py=utf-8
 encoding//main/app/win/swfplayer/FlowPlayer.py=ISO-8859-1
 encoding//main/app/win/swfplayer/JWPlayer.py=ISO-8859-1
 encoding//main/app/win/swfplayer/player.py=ISO-8859-1
+encoding//main/app/win/tableRow.py=utf-8
 encoding//main/app/win/uiDialogAbout.py=utf-8
 encoding//main/app/win/uiDialogDl.py=utf-8
 encoding//main/app/win/uiErrorDialog.py=utf-8
