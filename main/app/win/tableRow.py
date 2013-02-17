@@ -1,10 +1,10 @@
 # coding: utf-8
 from PySide import QtCore, QtGui
-from main.app.util import base
 
 ## --------------------------------------------------------------------------
 class BarWidget(QtGui.QWidget):
     """ Cria uma representação o de barra de progresso """
+    offset = 2.0
     
     def __init__(self, parent = None):
         QtGui.QWidget.__init__(self, parent)
@@ -22,11 +22,24 @@ class BarWidget(QtGui.QWidget):
         
     @property
     def mWidth(self):
-        return  (float(self.width()) / 100.0) * self.percent
+        return float(self.width() - self.offset)
+    
+    @property
+    def now(self):
+        return (self.mWidth/100.0) * self.percent
     
     @property
     def mHeight(self):
-        return self.height()-2
+        return float(self.height() - (self.offset*2.0))
+    
+    @property
+    def endpos(self):
+        """ calcula a posicão final da barra de progresso """
+        if self.now < self.mWidth:
+            width = self.mWidth - self.now
+        else:
+            width = self.now - self.mWidth
+        return width
     
     def setPercent(self, value):
         """ move a barra de progresso proprorcional a porcentagem dada """
@@ -48,16 +61,13 @@ class BarWidget(QtGui.QWidget):
         painter.setRenderHint(QtGui.QPainter.Antialiasing)
         painter.save()
         
-        painter.drawRect(QtCore.QRectF(1.0, 1.0, self.mWidth, self.mHeight))
+        painter.drawRect(QtCore.QRectF(self.offset, self.offset, self.now, self.mHeight))
         
-        painter.setBrush(QtGui.QColor(0, 0, 0, 35))
+        painter.setBrush(QtGui.QColor(0, 0, 0, 25))
+        painter.drawRect(QtCore.QRectF(self.now, self.offset, self.endpos, self.mHeight))
         
-        width = self.width() - self.mWidth - 2
-        width = width if self.mWidth < width else self.mWidth
-        painter.drawRect(QtCore.QRectF(self.mWidth, 1.0, width, self.mHeight))
-        
-        painter.drawText(QtCore.QRect(1, 1, self.width(), self.mHeight), 
-                         QtCore.Qt.AlignCenter, "%.2f%%"%self.percent)
+        painter.drawText(QtCore.QRectF(self.offset, self.offset, self.endpos, self.mHeight), 
+                         QtCore.Qt.AlignCenter, "%.2f%%" % self.percent)
         
         painter.restore()
         painter.end()
@@ -133,7 +143,7 @@ if __name__ == "__main__":
     row.create(wCol=1)
     
     row.update(col=0, value="text")
-    row.update(col=1, value="25.2")
+    row.update(col=1, value="4.2")
     
     boxLayout.addWidget( table )
     
