@@ -141,6 +141,10 @@ class Loader(QtGui.QMainWindow):
         self.configUI()
         
         QtCore.QTimer.singleShot(1000*3, self._initAfter)
+    
+    def __del__(self):
+        del self.browser
+        super(Loader, self).__del__()
         
     def onAbout(self):
         about = DialogAbout(self, title =" - ".join([self.tr("About"), self.baixeAssista]))

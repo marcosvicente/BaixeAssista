@@ -95,17 +95,16 @@ class Browser (QtGui.QWidget):
         
         for site in self.getHistorySites():
             self.setupPage(site, (site==lastSite))
-        
-        self.refreshUiTimer = QtCore.QTimer()
-        self.refreshUiTimer.setInterval(500)
-        self.refreshUiTimer.start()
-        
-        self.refreshUiTimer.timeout.connect(self.refreshUI)
-        
+            
         vBox.addWidget( self.tabPagePanel )
         self.setLayout( vBox )
         self.show()
     
+    def __del__(self):
+        del self.mNetWorkManager
+        del self.webView
+        super(Browser, self).__del__()
+        
     def setupPage(self, url="", isDefaulf=False):
         webView = mWebView(self.tabPagePanel)
         
@@ -179,10 +178,11 @@ class Browser (QtGui.QWidget):
             webView = self.tabPagePanel.widget( index )
             self.tabPagePanel.removeTab( index )
             webView.setHtml("")
-            
-    def refreshUI(self, *args):
-        self.btnBack.setEnabled(self.webView.history().canGoBack())
-        self.btnForward.setEnabled(self.webView.history().canGoForward())
+    
+    def paintEvent(self, event):
+        history = self.webView.history()
+        self.btnBack.setEnabled(history.canGoBack())
+        self.btnForward.setEnabled(history.canGoForward())
         
     def updateWebView(self, index):
         webView = self.tabPagePanel.widget( index )
