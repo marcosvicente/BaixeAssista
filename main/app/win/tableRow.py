@@ -66,7 +66,7 @@ class BarWidget(QtGui.QWidget):
         painter.setBrush(QtGui.QColor(0, 0, 0, 25))
         painter.drawRect(QtCore.QRectF(self.now, self.offset, self.endpos, self.mHeight))
         
-        painter.drawText(QtCore.QRectF(self.offset, self.offset, self.endpos, self.mHeight), 
+        painter.drawText(QtCore.QRectF(self.offset, self.offset, self.mWidth, self.mHeight), 
                          QtCore.Qt.AlignCenter, "%.2f%%" % self.percent)
         
         painter.restore()
