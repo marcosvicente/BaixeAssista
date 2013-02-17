@@ -37,7 +37,7 @@ class FileManager(object):
             params["filepath"] = settings.DEFAULT_VIDEOS_DIR
         
     def __del__(self):
-        self.closeFile()
+        self.close()
         del self.params
         
     def __setitem__(self, key, value):
@@ -47,7 +47,7 @@ class FileManager(object):
         return self.params[key]
     
     @base.protected()
-    def closeFile(self):
+    def close(self):
         self.file.close()
     
     def open(self):

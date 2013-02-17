@@ -195,7 +195,8 @@ class Manage(object):
         
         if not self.isTempFileMode: 
             self.salveInfoResumo()
-            
+        
+        self.fileManager.close()
         self.clear()
         
     def clear(self):
