@@ -98,11 +98,19 @@ class SiteBase(ConnectionProcessor):
     #----------------------------------------------------------------------
     def __init__(self, **params):
         ConnectionProcessor.__init__(self)
+        self.params = params
+        self.setDefaultParams()
+        
         self.streamSize = params.get("streamSize",0)
         self.url = self.basename = self.message = ""
-        self.params = params
+        
         self.configs = {}
         self.headers = {}
+    
+    def setDefaultParams(self):
+        self.params.setdefault("quality",2)
+        if self.params["quality"] == 0:
+            self.params["quality"] = 1
         
     def __del__(self):
         del self.basename

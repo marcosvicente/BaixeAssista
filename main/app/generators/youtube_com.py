@@ -43,7 +43,7 @@ class Youtube( SiteBase ):
         return reason
         
     def getLink(self):
-        quality = self.params.get("qualidade", 2)
+        quality = self.params.get("quality", 2)
         quality = self.video_quality_opts[quality]
         pattern_type = re.compile("video/(?P<type>[^\s;]+)")
         

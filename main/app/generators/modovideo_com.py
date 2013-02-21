@@ -24,7 +24,7 @@ class Modovideo( SiteBase ):
     def suportaSeekBar(self): return True
     
     def getLink(self):
-        vquality = int(self.params.get("qualidade", 2))
+        vquality = int(self.params.get("quality", 2))
         optToNotFound = self.configs.get(1, None)
         optToNotFound = self.configs.get(2, optToNotFound)
         optToNotFound = self.configs.get(3, optToNotFound)

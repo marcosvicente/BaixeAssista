@@ -309,7 +309,7 @@ class Loader(QtGui.QMainWindow):
             return listItems
         
         for index, item in enumerate(items):
-            item.addChildren(children(values[index]))
+            item.addChildren( children(values[index]) )
             
         videosView.addTopLevelItems( items )
         
@@ -513,7 +513,7 @@ class Loader(QtGui.QMainWindow):
             tempfile = self.uiMainWindow.tempFiles.isChecked()
             
             # opção de qualidade do vídeo
-            videoQuality = self.uiMainWindow.videoQuality.currentIndex() +1
+            videoQuality = self.uiMainWindow.videoQuality.currentIndex()
             
             # diretório onde serão salvos os arquivos de vídeos.
             videoDir = self.uiMainWindow.videoDir.text()

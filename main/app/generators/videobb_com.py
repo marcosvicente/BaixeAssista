@@ -91,7 +91,7 @@ class Videobb( SiteBase ):
         return "&".join([new_url, parse])
 
     def getLink(self):
-        vquality = int(self.params.get("qualidade", 2))
+        vquality = int(self.params.get("quality", 2))
         optToNotFound = self.configs.get("token1", None)
         optToNotFound = self.configs.get(1, optToNotFound)
         optToNotFound = self.configs.get(2, optToNotFound)
