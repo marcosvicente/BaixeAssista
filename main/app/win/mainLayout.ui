@@ -78,7 +78,7 @@
          <item>
           <widget class="QTabWidget" name="tabPanel">
            <property name="currentIndex">
-            <number>1</number>
+            <number>0</number>
            </property>
            <widget class="QWidget" name="tabBrowser">
             <attribute name="icon">
@@ -443,8 +443,8 @@
                     <rect>
                      <x>0</x>
                      <y>0</y>
-                     <width>1049</width>
-                     <height>346</height>
+                     <width>264</width>
+                     <height>83</height>
                     </rect>
                    </property>
                    <attribute name="icon">
@@ -535,8 +535,8 @@
                     <rect>
                      <x>0</x>
                      <y>0</y>
-                     <width>1049</width>
-                     <height>346</height>
+                     <width>270</width>
+                     <height>87</height>
                     </rect>
                    </property>
                    <attribute name="icon">
