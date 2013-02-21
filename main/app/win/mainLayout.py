@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'mainLayout.ui'
 #
-# Created: Sat Feb 16 20:04:57 2013
+# Created: Wed Feb 20 22:44:48 2013
 #      by: pyside-uic 0.2.14 running on PySide 1.1.2
 #
 # WARNING! All changes made in this file will be lost!
@@ -229,7 +229,7 @@ class Ui_MainWindow(object):
         icon2.addPixmap(QtGui.QPixmap("../images/network-blue.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.groupTypes.addItem(self.configConnection, icon2, "")
         self.configMovie = QtGui.QWidget()
-        self.configMovie.setGeometry(QtCore.QRect(0, 0, 1049, 346))
+        self.configMovie.setGeometry(QtCore.QRect(0, 0, 264, 83))
         self.configMovie.setObjectName("configMovie")
         self.verticalLayout_9 = QtGui.QVBoxLayout(self.configMovie)
         self.verticalLayout_9.setContentsMargins(10, 10, 10, 10)
@@ -268,7 +268,7 @@ class Ui_MainWindow(object):
         icon3.addPixmap(QtGui.QPixmap("../images/movies-blue.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.groupTypes.addItem(self.configMovie, icon3, "")
         self.configFile = QtGui.QWidget()
-        self.configFile.setGeometry(QtCore.QRect(0, 0, 1049, 346))
+        self.configFile.setGeometry(QtCore.QRect(0, 0, 270, 87))
         self.configFile.setObjectName("configFile")
         self.verticalLayout_6 = QtGui.QVBoxLayout(self.configFile)
         self.verticalLayout_6.setObjectName("verticalLayout_6")
@@ -608,7 +608,7 @@ class Ui_MainWindow(object):
         self.menubar.addAction(self.menuAbout.menuAction())
 
         self.retranslateUi(MainWindow)
-        self.tabPanel.setCurrentIndex(1)
+        self.tabPanel.setCurrentIndex(0)
         self.groupTypes.setCurrentIndex(0)
         self.videoQuality.setCurrentIndex(-1)
         QtCore.QObject.connect(self.hSliderPageConf, QtCore.SIGNAL("valueChanged(int)"), self.groupTypes.setCurrentIndex)
