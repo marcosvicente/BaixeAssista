@@ -100,21 +100,19 @@ class UrlManager( UrlBase ):
         self.objects.get(title=title).delete()
 
     def add(self, url, title):
-        """ Adiciona o título e a url a base de dados. 
-        É importante saber se a url já foi adicionada, use o método 'exist'
-        """
-        try: lasturl = self.models.LastUrl.objects.latest("url")
-        except: lasturl = self.models.LastUrl()
-        
-        # impede títulos iguais
+        """ Adiciona o título e a url a base de dados """
         if self.objects.filter(title = title).count() > 0:
             title = self.setTitleIndex(title)
         
-        # muitas urls para uma unica lasturl
-        lasturl.url = url; lasturl.title = title
-        lasturl.save()
-        
         self.models.Url(_url = self.shortUrl(url), title=title).save()
+        
+    def saveLast(self, url, title):
+        try: lasturl = self.models.LastUrl.objects.latest("url")
+        except: lasturl = self.models.LastUrl()
+        
+        lasturl.title = title
+        lasturl.url = url
+        lasturl.save()
         
     def getTitleList(self):
         return [query.title for query in self.objects.all().order_by("title")]

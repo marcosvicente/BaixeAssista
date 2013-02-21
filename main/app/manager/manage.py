@@ -116,18 +116,21 @@ class Manage(object):
             if not self.getInfo(ctry, ntry, proxy, callback):
                 return False
             
-            if not self.isTempFileMode:
-                # salvando o link e o título
-                if not self.urlManager.exist( self.streamUrl ):
-                    self.urlManager.add(self.streamUrl, self.videoTitle)
-                    
+        if not self.isTempFileMode:
+            # salvando o link e o título
+            if not self.urlManager.exist(self.streamUrl):
+                self.urlManager.add(self.streamUrl, self.videoTitle)
+                
                 # pega o título já com um índice
                 title = self.urlManager.getUrlTitle(self.streamUrl)
                 self.videoTitle = title or self.videoTitle
-            else:
-                if not self.urlManager.exist( self.streamUrl ):
-                    self.videoTitle = self.urlManager.setTitleIndex(self.videoTitle)
                 
+            # salvando referênica para o ultimo video viusalizado.
+            self.urlManager.saveLast(self.streamUrl, self.videoTitle)
+            
+        elif not self.urlManager.exist(self.streamUrl):
+            self.videoTitle = self.urlManager.setTitleIndex(self.videoTitle)
+        
         if not self.resuming:
             self.fileManager = FileManager(
                 filename = self.videoTitle, 
@@ -137,11 +140,12 @@ class Manage(object):
             )
             # blocks serão criados do ponto zero da stream
             self.interval = Interval(maxsize = self.videoSize, 
-                    seekpos = self.params["seekpos"],
-                    maxsplit = self.params["maxsplit"])
-                    
+                                     seekpos = self.params["seekpos"],
+                                     maxsplit = self.params["maxsplit"])
+            
+            # salvando dados de resumo inicial.
             if not self.isTempFileMode: self.salveInfoResumo()
-        
+            
         # abre o arquivo. seja criando um novo ou alterando um exitente
         self.fileManager.open()
         
@@ -215,18 +219,17 @@ class Manage(object):
     @FileManager.sincronize
     def recoverTempFile(self):
         """ tenta fazer a recuperação de um arquivo temporário """
-        badfile = (not self.isTempFileMode or self.interval.getOffset() != 0)
         # começa a recuperação do arquivo temporário.
-        for copy in self.fileManager.recover(badfile=badfile):
+        for copy in self.fileManager.recover(badfile=(not self.isTempFileMode or self.interval.getOffset() != 0)):
             if copy.inProgress and copy.progress == 100.0 and copy.sucess and not copy.error:
-                # salvando os dados de resumo. O arquivo será resumível
-                self.salveInfoResumo()
-                
-                # nunca se deve adcionar a mesma url
-                if not self.urlManager.exist( self.streamUrl ):
+                # nunca se deve adcionar a mesma url.
+                if not self.urlManager.exist(self.streamUrl):
                     self.urlManager.add(self.streamUrl, self.videoTitle)
+                    self.urlManager.saveLast(self.streamUrl, self.videoTitle)
+                # caso o download não esteja completo.
+                self.salveInfoResumo()
             yield copy
-    
+            
     def isComplete(self):
         """ informa se o arquivo já foi completamente baixado """
         return (self.cacheBytesTotal >= (self.videoSize-25))
