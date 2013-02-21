@@ -252,12 +252,12 @@ class Loader(QtGui.QMainWindow):
         url, title = self.urlManager.getLastUrl()
         joinedUrl = self.urlManager.joinUrlDesc(url, title)
         
+        index = self.getLocation().findText( joinedUrl )
+        self.getLocation().setCurrentIndex( index )
+        
         # inserindo a ultima url adicionada na visualização padrão.
         self.getLocation().setEditText( joinedUrl )
         self.getLocation().setToolTip( title )
-        
-        index = self.getLocation().findText( joinedUrl )
-        self.getLocation().setCurrentIndex( index )
         
     def onLocaleChange(self):
         """ Como o idioma está sendo feito na inicialização, apenas avisa para reinicializar """
