@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'mainLayout.ui'
 #
-# Created: Wed Feb 20 22:44:48 2013
+# Created: Wed Feb 20 22:48:10 2013
 #      by: pyside-uic 0.2.14 running on PySide 1.1.2
 #
 # WARNING! All changes made in this file will be lost!
@@ -543,6 +543,7 @@ class Ui_MainWindow(object):
         self.actionAbout.setObjectName("actionAbout")
         self.actionSpanish = QtGui.QAction(MainWindow)
         self.actionSpanish.setCheckable(True)
+        self.actionSpanish.setEnabled(False)
         font = QtGui.QFont()
         font.setFamily("Arial")
         font.setPointSize(10)
