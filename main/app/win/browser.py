@@ -6,7 +6,6 @@ from PySide import QtWebKit
 from PySide import QtNetwork
 
 import main.environ
-from wx.html2 import WebView
 main.environ.setup((__name__ == "__main__"))
 
 from stopRefreshButton import StopRefreshButton
