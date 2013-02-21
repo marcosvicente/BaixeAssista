@@ -6,9 +6,10 @@ import threading
 import tempfile
 import os
     
+## -----------------------------------------------------------------------------------
 class FileManager(object):
-    tempFilePath = os.path.join(settings.DEFAULT_VIDEOS_DIR, settings.VIDEOS_DIR_TEMP_NAME)
-    
+    tempDir = os.path.join(settings.DEFAULT_VIDEOS_DIR, 
+                           settings.VIDEOS_DIR_TEMP_NAME)
     class sincronize(object):
         """ sicroniza a escrita com a leitura de dados e alteração externas no arquivo """
         _lock = threading.RLock()
@@ -79,61 +80,69 @@ class FileManager(object):
         # local para o novo arquivo.
         filepath = self.getFilePath()
         
-        class sucess(object):
-            def __init__(self):
-                self.msg = _(u"O arquivo foi recuperado com sucesso!")
-                self.sucess = False
-            def get_msg(self): return self.msg
-            
-        class error(object):
-            bad_file_msg = u"".join([
-                _(u"O arquivo de vídeo está corrompido!"), 
-                _(u"\nIsso por causa da \"seekbar\".")
-            ])
-            def __init__(self):
-                self.msg = _(u"Erro tentando recuperar arquivo.\nCausa: %s")
-                self.error = False
-            def get_msg(self): return self.msg
-            def set_f_msg(self, msg): self.msg %= msg
-            def set_msg(self, msg): self.msg = msg
-            
-        class copy(object):
+        class Copy(object):
+            """ converte um arquivo temporário em um definitivo em disco """
             warning = _(u"O arquivo já existe!")
             
+            class Sucess(object):
+                info = _(u"O arquivo foi recuperado com sucesso!")
+                
+                def __init__(self):
+                    self.sucess = False
+                    
+                def getInfo(self):
+                    return self.info
+            
+            class Error(object):
+                bFileInfo = u"".join([
+                    _(u"O arquivo de vídeo está corrompido!"), 
+                    _(u"\nIsso por causa da \"seekbar\".")
+                ])
+                def __init__(self):
+                    self.info = _(u"Erro tentando recuperar arquivo.\nCausa: %s")
+                    self.error = False
+                    
+                def getInfo(self): return self.info
+                def setFormatInfo(self, info): self.info %= info
+                def setInfo(self, info): self.info = info
+                
             def __init__(self):
                 self.progress = 0.0
                 self.inProgress = self.cancel = False
-                self.err, self.scs = error(), sucess()
+                self.scs = self.Sucess()
+                self.err = self.Error()
                 
-            def _set_sucess(self, b): self.scs.sucess = b
-            def _get_sucess(self): return self.scs.sucess
-            sucess = property(fget=_get_sucess, fset=_set_sucess)
+            @property
+            def sucess(self): return self.scs.sucess
+            @property
+            def error(self): return self.err.error
+            @sucess.setter
+            def sucess(self, b): self.scs.sucess = b
+            @error.setter
+            def error(self, b): self.err.error = b
             
-            def _set_error(self, b): self.err.error = b
-            def _get_error(self): return self.err.error
-            error = property(fget=_get_error, fset=_set_error)
-            
-            def get_msg(self):
-                if self.error: return self.err.get_msg()
-                if self.sucess: return self.scs.get_msg()
-                
-        cp = copy() # representa o progresso da cópia
+            def getInfo(self):
+                if self.error: info = self.err.getInfo()
+                elif self.sucess: info = self.scs.getInfo()
+                return info
+        # representa o progresso da cópia
+        copy = Copy()
         
         if os.path.exists( filepath ) or badfile:
-            if not badfile: cp.err.set_f_msg( cp.warning )
-            else: cp.err.set_msg( cp.err.bad_file_msg )
-            cp.error = True
+            if not badfile: copy.err.setFormatInfo(copy.warning)
+            else: copy.err.setInfo(copy.err.bFileInfo)
+            copy.error = True
         else:
             try:
                 block_size = (1024**2) *4 # 4M
                 bytes_count = 0
                 
                 with open(filepath, "w+b") as new_file:
-                    cp.inProgress = True
+                    copy.inProgress = True
                     
-                    while not cp.cancel:
+                    while not copy.cancel:
                         if filesize == 0: break # zerodivision erro!
-                        cp.progress = ((float(bytes_count)/filesize)*100.0)
+                        copy.progress = ((float(bytes_count)/filesize)*100.0)
                         
                         stream = self.file.read( block_size )
                         bytes_len = len( stream )
@@ -143,21 +152,21 @@ class FileManager(object):
                         new_file.write( stream )
                         bytes_count += bytes_len
                         
-                        yield cp # update progress
-                    cp.sucess = not cp.cancel
-                    yield cp # after break
+                        yield copy # update progress
+                    copy.sucess = not copy.cancel
+                    yield copy # after break
             except Exception as err:
-                cp.err.set_f_msg( str(err) )
-                cp.error = True
-        if cp.cancel: # cancel copy
+                copy.err.setFormatInfo(str(err))
+                copy.error = True
+        if copy.cancel: # cancel copy
             try: os.remove( filepath )
             except: pass
-        yield cp
+        yield copy
         
     def fileGetOrCreate(self):
         """ cria o arquivo """
         if self.params["tempfile"]:
-            obj = tempfile.TemporaryFile(dir=self.tempFilePath)
+            obj = tempfile.TemporaryFile(dir=self.tempDir)
         else:
             filepath = self.getFilePath()
             obj = open(filepath, ("w+b" if not os.path.exists(filepath) else "r+b"))

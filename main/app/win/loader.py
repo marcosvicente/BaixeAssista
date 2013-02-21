@@ -627,10 +627,10 @@ class Loader(QtGui.QMainWindow):
                         dialog.progressBar.setValue(100.0)
                         break
                     elif copy.error:
-                        dialog.textProgress.setText(copy.get_msg())
+                        dialog.textProgress.setText(copy.getInfo())
                         dialog.progressBar.setValue(0.0)
                         break
-                
+                    
                 dialog.btnOK.setEnabled(True)
                 dialog.btnCancel.setEnabled(False)
                 dialog.exec_()
