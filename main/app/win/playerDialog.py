@@ -1,7 +1,7 @@
 # coding: utf-8
 from PySide import QtCore, QtGui, QtWebKit
 
-from swfplayer import JWPlayer, FlowPlayer
+from swfplayer import jwplayer, flowplayer
 from uiPlayerDialog import Ui_playerDialog
 
 from main.app.util import base
@@ -23,8 +23,8 @@ class PlayerDialog(QtGui.QDialog):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
         
-        self.mFlowPlayer = FlowPlayer.Player( self.playerFrame )
-        self.mJWPlayer = JWPlayer.Player( self.playerFrame )
+        self.mFlowPlayer = flowplayer.Player( self.playerFrame )
+        self.mJWPlayer = jwplayer.Player( self.playerFrame )
         
         self.mFlowPlayer.hide()
         self.mJWPlayer.hide()
