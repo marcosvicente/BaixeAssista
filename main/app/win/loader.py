@@ -121,7 +121,6 @@ class Loader(QtGui.QMainWindow):
     
     baixeAssista = "BaixeAssista v%s"%settings.PROGRAM_VERSION
     config = configobj.ConfigObj( configPath )
-    
     tableRows = {}
     
     def __init__(self):
@@ -131,7 +130,7 @@ class Loader(QtGui.QMainWindow):
         self.uiMainWindow.setupUi(self)
         self.setWindowTitle(self.baixeAssista)
         
-        self.LOADING = False
+        self.LOADING = self.WCLOSE = False
         self.manage = self.mplayer = None
         
         self.setupUI()
@@ -160,10 +159,18 @@ class Loader(QtGui.QMainWindow):
         dialogError.exec_()
         
     def closeEvent(self, event):
-        # browser settings
-        self.browser.saveSettings()
-        # ui settings
-        self.saveSettings()
+        if self.LOADING:
+            # salvando o arquivo atualmente sendo baixado.
+            self.WCLOSE = True
+            
+            self.handleStopVideoDl()
+            event.ignore()
+        else:
+            # browser settings
+            self.browser.saveSettings()
+            
+            # ui settings
+            self.saveSettings()
         
     def updateUI(self):
         if self.LOADING: self.updateTable()
@@ -491,10 +498,12 @@ class Loader(QtGui.QMainWindow):
             self.handleStartVideoDl()
         else:
             self.handleStopVideoDl()
-        
+    
+    @base.LogOnError
     def handleStartVideoDl(self):
         """ inicia todo o processo de download e transferênica do video """
         if not self.LOADING:
+            self.changeStartDlState("Stop", True)
             self.setupVideoPlayer()
             
             url = self.getLocation().currentText()
@@ -504,7 +513,7 @@ class Loader(QtGui.QMainWindow):
             tempfile = self.uiMainWindow.tempFiles.isChecked()
             
             # opção de qualidade do vídeo
-            videoQuality = self.uiMainWindow.videoQuality.currentIndex()
+            videoQuality = self.uiMainWindow.videoQuality.currentIndex() +1
             
             # diretório onde serão salvos os arquivos de vídeos.
             videoDir = self.uiMainWindow.videoDir.text()
@@ -515,55 +524,60 @@ class Loader(QtGui.QMainWindow):
             try:
                 # inicia o objeto princial: main_obj
                 self.manage = Manage(url, tempfile = tempfile, 
-                                videoQuality = (videoQuality+1), #0+1=1
-                                videoPath = videoDir, maxsplit = videoSplitSize)
+                                     videoQuality = videoQuality, videoPath = videoDir, 
+                                     maxsplit = videoSplitSize)
             except Exception as err:
                 QtGui.QMessageBox.information(self, self.tr("Error"), 
-                        self.tr("An error occurred starting the download.")+"\n\n%s"%err)
-                self.uiMainWindow.btnStartDl.setChecked(False)
-                return
-            # --------------------------------------------------
-            self.uiMainWindow.btnStartDl.setText(self.tr("Stop"))
-            
+                          self.tr("An error occurred starting the download.")+"\n\n%s"%err)
+                self.changeStartDlState("Download", False)
+                return # fechando o bloco de inicialização.
+            ## -------------------------------------------------
             self.DIALOG = DialogDl(self.tr("Please wait"), self)
-            self.DIALOG.rejected.connect( self.onCancelVideoDl )
+            self.DIALOG.rejected.connect( self.onCancelVideoDl)
             self.DIALOG.show()
             
-            self.videoLoad = VideoLoad(self.manage)
-            
+            self.videoLoad = VideoLoad( self.manage)
             self.videoLoad.responseChanged.connect( self.DIALOG.handleUpdate)
             self.videoLoad.responseFinish.connect( self.onStartVideoDl)
             self.videoLoad.responseError.connect( self.onErrorVideoDl)
             self.videoLoad.responseUpdateUi.connect( self.updateUI)
             self.videoLoad.responseUpdateUiExit.connect( self.updateUIExit)
             self.videoLoad.start()
-            
+    
+    def changeStartDlState(self, text, checked):
+        """ modifica o estado e o texto do botão inicializador do download """
+        self.uiMainWindow.btnStartDl.setText(self.tr(text))
+        self.uiMainWindow.btnStartDl.setChecked(checked)
+        
     def handleStopVideoDl(self):
         """ termina todas as ações relacionadas ao download do vídeo atual """
-        # cancela o 'loop' de atualização de dados
-        self.videoLoad.setCancelDl(True)
-        self.uiMainWindow.btnStartDl.setText(self.tr("Download"))
-        self.DIALOG.close()
-        
         if self.LOADING:
             self.tryRecoverFile()
+            
+            self.videoLoad.setCancelDl(True) # emit cancel
+            self.changeStartDlState("Download", False)
             
             # Eventos gerados por atividade de conexões.
             Info.update.disconnect(self.updateConnectionUi)
             self.manage.ctrConnection.stopAll()
             
             self.clearTable()
-            
             self.mplayer.stop()
             self.manage.stop()
             
             self.LOADING = False
             self.manage = None
             
+            if self.WCLOSE: self.destroy()
+        else:
+            self.onCancelVideoDl()
+            
     def onStartVideoDl(self, reponse):
         self.LOADING = reponse
         
         if self.LOADING:
+            self.DIALOG.close()
+            
             # titulo do arquivo de video
             title = self.manage.getVideoTitle()
             url = self.manage.getVideoUrl()
@@ -581,8 +595,6 @@ class Loader(QtGui.QMainWindow):
             self.handleStartupConnection(default = reponse)
             
             self.mplayer.start(autostart = self.LOADING)
-            self.DIALOG.close()
-            
             self.setupFilesView()
         else:
             self.DIALOG.setWindowTitle(self.tr("Download Faleid"))
@@ -590,10 +602,9 @@ class Loader(QtGui.QMainWindow):
             
     def onCancelVideoDl(self):
         if not self.LOADING:
-            self.videoLoad.setCancelDl(True)
-            
-            self.uiMainWindow.btnStartDl.setText(self.tr("Download"))
-            self.uiMainWindow.btnStartDl.setChecked(False)
+            self.videoLoad.setCancelDl(True) # emit cancel
+            self.changeStartDlState("Download", False)
+            self.DIALOG.close()
         
     def onErrorVideoDl(self, err):
         self.DIALOG.close()
