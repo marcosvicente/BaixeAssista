@@ -10,6 +10,7 @@ class BarWidget(QtGui.QWidget):
         QtGui.QWidget.__init__(self, parent)
         
         self.pen = QtGui.QPen()
+        self.pen.setColor(QtCore.Qt.darkGreen)
         
         linearGradient = QtGui.QLinearGradient(0, 0, 100, 100)
         linearGradient.setColorAt(0.01, QtCore.Qt.white)
@@ -48,7 +49,7 @@ class BarWidget(QtGui.QWidget):
         
     def setText(self, text):
         """ configura a procentagem no formato de texto """
-        self.setPercent(float(text))
+        self.setPercent(float(text if text else 0.0))
         
     def paintEvent(self, event):
         """ constrói a represtação da barra de progresso """
@@ -143,7 +144,7 @@ if __name__ == "__main__":
     row.create(wCol=1)
     
     row.update(col=0, value="text")
-    row.update(col=1, value="4.2")
+    row.update(col=1, value="80.2")
     
     boxLayout.addWidget( table )
     
