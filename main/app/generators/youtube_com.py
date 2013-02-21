@@ -53,9 +53,11 @@ class Youtube( SiteBase ):
                 
                 matchobj = pattern_type.search(video_info["type"])
                 self.configs["ext"] = matchobj.group("type")
-                break
+                
+                if not self.configs["ext"].endswith("webm"):
+                    break
         return url
-    
+        
     def extract_one(self):
         """ método de extração padrão. funciona na maioria das vezes """
         stream_map = self.raw_data["url_encoded_fmt_stream_map"]
