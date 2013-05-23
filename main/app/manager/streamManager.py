@@ -269,9 +269,8 @@ class StreamManager(threading.Thread):
                     self.manage.setGlobalSpeed(self.calc_speed(start, time.time(), current))
                     
                     if self.numBytesLidos >= block_size:
-                        self.manage.interval.remove(self.ident)
-                        
                         if not self.manage.isComplete() and self.manage.interval.canContinue(self.ident):
+                            self.manage.interval.remove(self.ident)
                             # associando aconexão a um novo bloco de bytes
                             if not self.configure(): break
                             local_time = time.time()
