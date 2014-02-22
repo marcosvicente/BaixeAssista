@@ -1,6 +1,6 @@
 # coding: utf-8
 import re
-import urllib
+import urllib.parse
 
 from ._sitebase import SiteBase
 from main.app.util import sites

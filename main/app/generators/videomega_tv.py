@@ -1,5 +1,9 @@
 # coding: utf-8
-from ._sitebase import *
+import urllib.parse
+import re
+
+from ._sitebase import SiteBase
+from main.app.util import sites
 
 
 class Videomega(SiteBase):

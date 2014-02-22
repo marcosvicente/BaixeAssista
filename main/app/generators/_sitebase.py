@@ -90,7 +90,6 @@ class ConnectionProcessor(object):
         return self.opener.open(request, timeout=timeout)
 
 
-#################################### BASEVIDEOSITE ####################################
 class SiteBase(ConnectionProcessor):
     MP4_HEADER = "\x00\x00\x00\x1cftypmp42\x00\x00\x00\x01isommp423gp5\x00\x00\x00*freevideo served by mod_h264_streaming"
     FLV_HEADER = "FLV\x01\x01\x00\x00\x00\t\x00\x00\x00\t"
@@ -168,9 +167,9 @@ class SiteBase(ConnectionProcessor):
                     if not self.stream_size:
                         self.stream_size = self.get_size(proxies=proxies, timeout=timeout)
                 except Exception as e:
-                    pass
+                    print(str(e))
                 if not self.has_conf():
-                    self.configs = {};
+                    self.configs = {}
                     nfalhas += 1
                 else:
                     break  # sucesso!

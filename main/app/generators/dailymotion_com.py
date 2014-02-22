@@ -1,7 +1,7 @@
 # coding: utf-8
 from html.parser import HTMLParser
 import re
-import urllib
+import urllib.parse
 
 from ._sitebase import SiteBase
 from main.app.generators import Universal

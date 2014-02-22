@@ -1,6 +1,11 @@
 # coding: utf-8
-from ._sitebase import *
+import re
+import urllib.parse
+
+from ._sitebase import SiteBase
+from main.app.generators import Universal
 from main.app.manager.urls import UrlManager
+from main.app.util import sites
 
 
 class Videoweed(SiteBase):

@@ -1,5 +1,4 @@
 import re
-import urllib
 
 from ._sitebase import SiteBase
 
@@ -25,11 +24,13 @@ class Xvideos(SiteBase):
 
     def start_extraction(self, proxies={}, timeout=25):
         fd = self.connect(self.url, proxies=proxies, timeout=timeout)
-        web_page = fd.read()
+        web_page = str(fd.read())
         fd.close()
 
-        flash_vars = re.search('\<embed\s*type.+flashvars="(.*?)"', web_page).group(1)
-        video_data = urllib.parser.parse_qs(flash_vars)
+        match_obj = re.search('\<embed\s*type.+flashvars="(.*?)"', web_page)
+        flash_vars = match_obj.group(1)
+
+        video_data = .parse_qs(flash_vars)
 
         try:
             title = re.search("<title>(.*?)</title>", web_page).group(1)

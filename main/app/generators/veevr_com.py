@@ -1,7 +1,10 @@
 # coding: utf-8
 import xml
+import re
+import urllib.parse
 
-from ._sitebase import *
+from ._sitebase import SiteBase
+from main.app.util import sites
 
 
 class Veevr(SiteBase):

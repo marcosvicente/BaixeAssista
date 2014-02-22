@@ -2,9 +2,9 @@ import cgi
 import re
 from urllib.parse import unquote_plus
 
-from main.app.generators import Universal
+from . import Universal
 from main.app.util import sites
-from main.app.generators._sitebase import SiteBase
+from ._sitebase import SiteBase
 
 
 class Youtube(SiteBase):

@@ -1,8 +1,13 @@
 # coding: utf-8
-from ._sitebase import *
-from main.app.manager.urls import UrlManager
+import urllib.parse
+import re
 
-################################# VIDEO_MIXTURECLOUD ##################################
+from ._sitebase import SiteBase
+from main.app.generators import Universal
+from main.app.manager.urls import UrlManager
+from main.app.util import sites
+
+
 class Mixturecloud(SiteBase):
     ## http://www.mixturecloud.com/video=iM1zoh
     ## http://www.mixturecloud.com/download=MB8JBD
@@ -144,5 +149,3 @@ class Mixturecloud(SiteBase):
 
         self.message = self.getMessage(web_page)
         self.configs.update(self.get_configs(web_page))
-        
-        
