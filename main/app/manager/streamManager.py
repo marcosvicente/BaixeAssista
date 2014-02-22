@@ -330,12 +330,12 @@ class StreamManager(threading.Thread):
         del self.video_manager[ip]
 
     @base.LogOnError
-    def failure(self, error_string, errorn_umber):
+    def failure(self, error_string, error_number):
         # removendo configurações
-        self.unconfig(error_string, errorn_umber)
+        self.unconfig(error_string, error_number)
 
         # retorna porque a conexao foi encerrada
-        if not self.is_running or errorn_umber == 3:
+        if not self.is_running or error_number == 3:
             return
         Info.clear(self.ident)
 
@@ -346,7 +346,7 @@ class StreamManager(threading.Thread):
             if self.params["typechange"]:
                 self.proxies = self.manage.proxyManager.get_formated()
 
-        elif errorn_umber == 1 or self.bytes_num < self.manage.interval.getMinBlock():
+        elif error_number == 1 or self.bytes_num < self.manage.interval.getMinBlock():
             if not self.params["typechange"]:
                 self.proxies = self.manage.proxyManager.get_formated()
             else:
@@ -455,20 +455,20 @@ class StreamManager_(StreamManager):
         self.link = self.getVideoLink()
 
     @base.LogOnError
-    def failure(self, error_string, errorn_umber):
+    def failure(self, error_string, error_number):
         Info.clear(self.ident)
         Info.set(self.ident, 'state', error_string)
 
-        self.unconfig(error_string, errorn_umber)  # removendo configurações
+        self.unconfig(error_string, error_number)  # removendo configurações
 
-        if not self.is_running or errorn_umber == 3: return  # retorna porque a conexao foi encerrada
+        if not self.is_running or error_number == 3: return  # retorna porque a conexao foi encerrada
         Info.set(self.ident, "state", _("Reconfigurando"))
 
         if not self.using_proxy:
             if self.params["typechange"]:
                 self.proxies = self.manage.proxyManager.get_formated()
 
-        elif errorn_umber == 1 or self.bytes_num < self.manage.interval.getMinBlock():
+        elif error_number == 1 or self.bytes_num < self.manage.interval.getMinBlock():
             if not self.params["typechange"]:
                 self.proxies = self.manage.proxyManager.get_formated()
             else:
