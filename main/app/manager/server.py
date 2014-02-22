@@ -38,7 +38,7 @@ class Server(threading.Thread):
 
     def run(self):
         try:
-            cmd = runserver.BaseCommand()
+            cmd = runserver.Command()
             Server.running = True
             self.logger.info("[SERVER] running...")
             cmd.execute("%s:%s" % (self.HOST, self.PORT), use_reloader=False)
