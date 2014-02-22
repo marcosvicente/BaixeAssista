@@ -170,7 +170,6 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'django.contrib.admin',
     'main.app',
-    'concurrent_server',
     'south',
     # Uncomment the next line to enable the admin:
     # 'django.contrib.admin',
