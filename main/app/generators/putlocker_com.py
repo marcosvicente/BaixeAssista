@@ -31,7 +31,7 @@ class PutLocker(SiteBase):
         self.basename = "putlocker.com"
         self.url = url
 
-    def suportaSeekBar(self):
+    def random_mode(self):
         return True
 
     def get_site_message(self, web_page):

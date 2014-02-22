@@ -10,7 +10,7 @@ from main import environ
 
 environ.setup(__name__ == "__main__")
 
-from main.app.generators._sitebase import ConnectionProcessor
+from main.app.generators._sitebase import ConnectionBase
 from main.app.manager.urls import UrlManager
 from main.app.generators import Universal
 from main.app.util import sites
@@ -33,7 +33,7 @@ def debug(video_control, **params):
 
         fd = video_control.connect(linkseek)
         print(("Response: {!s}".format(
-            ConnectionProcessor.check_response(headersize, seekpos, streamsize, fd.headers))
+            ConnectionBase.check_response(headersize, seekpos, streamsize, fd.headers))
         ))
 
         print((repr(fd.read(512))))
@@ -50,10 +50,10 @@ def checkSite(url, proxies={}, timeout=30, **params):
     video_control = Universal.get_video_control(basename)
     video_control = video_control(url, **params)
 
-    if video_control.getVideoInfo(1, proxies=proxies, timeout=timeout):
-        videolink = video_control.getLink()
-        streamsize = video_control.getStreamSize()
-        streamtitle = video_control.getTitle()
+    if video_control.get_video_info(1, proxies=proxies, timeout=timeout):
+        videolink = video_control.get_link()
+        streamsize = video_control.get_video_size()
+        streamtitle = video_control.get_title()
 
         print(("Url: ", videolink))
         print(("Size: ", streamsize))

@@ -167,13 +167,13 @@ class Manage(object):
 
         callback(message, "")
 
-        if self.videoManager.getVideoInfo(ntry=1, proxies=proxy):
+        if self.videoManager.get_video_info(ntry=1, proxies=proxy):
             # tamanho do arquivo de vídeo
-            self.videoSize = self.videoManager.getStreamSize()
+            self.videoSize = self.videoManager.get_video_size()
             # título do arquivo de video
-            self.videoTitle = self.videoManager.getTitle()
+            self.videoTitle = self.videoManager.get_title()
             # extensão do arquivo de video
-            self.videoExt = self.videoManager.getVideoExt()
+            self.videoExt = self.videoManager.get_video_ext()
 
         # função de atualização externa
         callback(message, self.videoManager.get_message())

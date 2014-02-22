@@ -32,7 +32,7 @@ class Videobb(SiteBase):
         self.cfg = {}
         self.url = url
 
-    def suportaSeekBar(self):
+    def random_mode(self):
         return True
 
     def isToken(self, key):
@@ -103,7 +103,7 @@ class Videobb(SiteBase):
         )
         return "&".join([new_url, parse])
 
-    def getLink(self):
+    def get_link(self):
         video_quality = int(self.params.get("quality", 2))
         when_not_found = self.configs.get("token1", None)
         when_not_found = self.configs.get(1, when_not_found)

@@ -22,10 +22,10 @@ class Vk(SiteBase):
         self.basename = "vk.com"
         self.url = url
 
-    def suportaSeekBar(self):
+    def random_mode(self):
         return True
 
-    def getLink(self):
+    def get_link(self):
         vquality = int(self.params.get("quality", 2))
         optToNotFound = self.configs.get(1, None)
         optToNotFound = self.configs.get(2, optToNotFound)

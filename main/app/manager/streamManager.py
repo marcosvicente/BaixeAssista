@@ -159,9 +159,9 @@ class StreamManager(threading.Thread):
         if self.using_proxy:
             self.proxies = self.manage.proxyManager.get_formated()
 
-        if self.video_manager.getVideoInfo(proxies=self.proxies,
+        if self.video_manager.get_video_info(proxies=self.proxies,
                                            timeout=self.params["timeout"]):
-            self.link = self.video_manager.getLink()
+            self.link = self.video_manager.get_link()
 
         Info.set(self.ident, "http", self.proxies.get("http", _("Conexão Padrão")))
 
@@ -355,8 +355,8 @@ class StreamManager(threading.Thread):
         self.using_proxy = bool(self.proxies)
         Info.set(self.ident, "http", self.proxies.get("http", _("Conexão Padrão")))
 
-        if self.video_manager.getVideoInfo(proxies=self.proxies, timeout=self.params["timeout"]):
-            self.link = self.video_manager.getLink()
+        if self.video_manager.get_video_info(proxies=self.proxies, timeout=self.params["timeout"]):
+            self.link = self.video_manager.get_link()
 
     def connect(self):
         seek_pos = self.manage.interval.getStart(self.ident)

@@ -147,9 +147,9 @@ class TesteIP(threading.Thread):
     def start_read(self, address):
         proxies = {"http": "http://%s" % address}
 
-        if self.videoManager.getVideoInfo(1, proxies=proxies, timeout=15):
-            streamSize = self.videoManager.getStreamSize()
-            streamLink = self.videoManager.getLink()
+        if self.videoManager.get_video_info(1, proxies=proxies, timeout=15):
+            streamSize = self.videoManager.get_video_size()
+            streamLink = self.videoManager.get_link()
         else:
             del self.videoManager[address]
             return

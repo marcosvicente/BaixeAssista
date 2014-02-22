@@ -27,7 +27,7 @@ class MoeVideo(SiteBase):
         self.basename = "moevideo.net"
         self.url = url
 
-    def suportaSeekBar(self):
+    def random_mode(self):
         return True
 
     def getPostData(self, video_id):

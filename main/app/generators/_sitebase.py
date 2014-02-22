@@ -12,13 +12,14 @@ from main.app.generators import Universal
 from main.app.util import sites
 
 
-class ConnectionProcessor(object):
+class ConnectionBase(object):
     """ Processa conexões guardando 'cookies' e dados por ips """
 
     def __init__(self):
         self.cookiejar = cookiejar.CookieJar()
-        self.cookieProcessor = urllib.request.HTTPCookieProcessor(cookiejar=self.cookiejar)
+        self.cookie_processor = urllib.request.HTTPCookieProcessor(cookiejar=self.cookiejar)
         self.logged = False
+        self.opener = None
 
     def login(self, opener=None, timeout=0):
         """ struct login"""
@@ -40,37 +41,41 @@ class ConnectionProcessor(object):
         return stream, header
 
     @staticmethod
-    def check_response(offset, seekpos, seekmax, headers):
-        """ Verifica se o ponto de leitura atual, mais quanto falta da stream, 
-        corresponde ao comprimento total dela """
-        contentLength = headers.get("Content-Length", None)
-        contentType = headers.get("Content-Type", None)
+    def check_response(offset, seek_pos, seek_max, headers):
+        """
+        Verifica se o ponto de leitura atual, mais quanto falta da stream,
+        corresponde ao comprimento total dela
+        """
+        content_length = headers.get("Content-Length", None)
+        content_type = headers.get("Content-Type", None)
 
-        if contentType is None: return False
-        is_video = bool(re.match("(video/.*$|application/octet.*$)", contentType))
+        if content_type is None:
+            return False
+        is_video = bool(re.match("(video/.*$|application/octet.*$)", content_type))
 
-        if not is_video or contentLength is None: return False
-        contentLength = int(contentLength)
+        if not is_video or content_length is None:
+            return False
+        content_length = int(content_length)
 
         # video.mixturecloud: bug de 1bytes
-        is_valid = (seekpos != 0 and seekmax == (seekpos + contentLength + 1))
+        is_valid = (seek_pos != 0 and seek_max == (seek_pos + content_length + 1))
 
-        if not is_valid: is_valid = (seekmax == contentLength)
+        if not is_valid:
+            is_valid = (seek_max == content_length)
 
         if not is_valid:
             # no bytes 0 o tamanho do arquivo é o original
-            if seekpos == 0:
+            if seek_pos == 0:
                 _offset = 0
             else:
                 _offset = offset
-
             # comprimento total(considerando os bytes removidos), da stream
-            length = seekpos + contentLength - _offset
-            is_valid = (seekmax == length)
-
+            length = seek_pos + content_length - _offset
+            is_valid = (seek_max == length)
         return is_valid
 
-    def get_request(self, url, headers={}, data=None):
+    @staticmethod
+    def get_request(url, headers={}, data=None):
         req = urllib.request.Request(url, headers=headers, data=data)
         req.add_header("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:11.0) Gecko/20100101 Firefox/11.0")
         req.add_header("Connection", "keep-alive")
@@ -78,27 +83,26 @@ class ConnectionProcessor(object):
 
     def connect(self, url="", headers={}, data=None, proxies={}, timeout=25, request=None, login=False):
         """ conecta a url data e retorna o objeto criado """
-        if request is None: request = self.get_request(url, headers, data)
-
-        self.opener = urllib.request.build_opener(self.cookieProcessor, urllib.request.ProxyHandler(proxies))
+        if request is None:
+            request = self.get_request(url, headers, data)
+        self.opener = urllib.request.build_opener(self.cookie_processor, urllib.request.ProxyHandler(proxies))
 
         # faz o login se necessário
         if not self.logged or login:
             self.logged = self.login(self.opener, timeout=timeout)
-            if not self.logged: return
-
+            if not self.logged:
+                return
         return self.opener.open(request, timeout=timeout)
 
 
-class SiteBase(ConnectionProcessor):
+class SiteBase(ConnectionBase):
     MP4_HEADER = "\x00\x00\x00\x1cftypmp42\x00\x00\x00\x01isommp423gp5\x00\x00\x00*freevideo served by mod_h264_streaming"
     FLV_HEADER = "FLV\x01\x01\x00\x00\x00\t\x00\x00\x00\t"
 
-    #----------------------------------------------------------------------
     def __init__(self, **params):
-        ConnectionProcessor.__init__(self)
+        ConnectionBase.__init__(self)
         self.params = params
-        self.setDefaultParams()
+        self.set_default_params()
 
         self.stream_size = params.get("streamSize", 0)
         self.url = self.basename = self.message = ""
@@ -106,7 +110,7 @@ class SiteBase(ConnectionProcessor):
         self.configs = {}
         self.headers = {}
 
-    def setDefaultParams(self):
+    def set_default_params(self):
         self.params.setdefault("quality", 2)
         if self.params["quality"] == 0:
             self.params["quality"] = 1
@@ -132,7 +136,7 @@ class SiteBase(ConnectionProcessor):
     def get_message(self):
         return self.message
 
-    def suportaSeekBar(self):
+    def random_mode(self):
         return False
 
     def get_header(self):
@@ -154,13 +158,16 @@ class SiteBase(ConnectionProcessor):
         return Universal.get_video_id(self.basename, self.url)
 
     def get_init_page(self, proxies={}, timeout=30):
-        assert self.getVideoInfo(proxies=proxies, timeout=timeout)
+        assert self.get_video_info(proxies=proxies, timeout=timeout)
 
-    def getVideoInfo(self, ntry=3, proxies={}, timeout=60):
+    def start_extraction(*args, **kwargs):
+        pass
+
+    def get_video_info(self, ntry=3, proxies={}, timeout=60):
         # extrai o titulo e o link do video, se já não tiverem sido extraidos
         if not self.configs:
-            nfalhas = 0
-            while nfalhas < ntry:
+            try_num = 0
+            while try_num < ntry:
                 try:
                     self.start_extraction(proxies=proxies, timeout=timeout)
                     # extrai e guarda o tanho do arquivo
@@ -170,9 +177,9 @@ class SiteBase(ConnectionProcessor):
                     print(str(e))
                 if not self.has_conf():
                     self.configs = {}
-                    nfalhas += 1
+                    try_num += 1
                 else:
-                    break  # sucesso!
+                    break  # OK
         return self.has_conf()
 
     def has_conf(self):
@@ -181,27 +188,27 @@ class SiteBase(ConnectionProcessor):
 
     def has_link(self):
         try:
-            haslink = bool(self.getLink())
+            has = bool(self.get_link())
         except:
-            haslink = False
-        return haslink
+            has = False
+        return has
 
     def has_title(self):
         try:
-            hastitle = bool(self.getTitle())
+            has = bool(self.get_title())
         except:
-            hastitle = False
-        return hastitle
+            has = False
+        return has
 
     def get_file_link(self, data):
         """ retorna o link para download do arquivo de video """
-        return self.getLink()
+        return self.get_link()
 
     def get_count(self, data):
         """ herdado e anulado. retorna zero para manter a compatibilidade """
         return 0
 
-    def getLink(self):
+    def get_link(self):
         return self.configs["url"]
 
     def has_duration(self):
@@ -214,7 +221,7 @@ class SiteBase(ConnectionProcessor):
         """ retorna o valor de pos em bytes relativo a duração em mp4 """
         if self.has_duration():  # if 'video/mp4' file
             try:
-                result = float(self.get_duration()) * (float(pos) / self.getStreamSize())
+                result = float(self.get_duration()) * (float(pos) / self.get_video_size())
             except:
                 result = 0
         else:
@@ -224,7 +231,7 @@ class SiteBase(ConnectionProcessor):
     def get_relative_mp4(self, pos):
         if self.has_duration():  # if 'video/mp4' file
             try:
-                result = (float(pos) / self.get_duration()) * self.getStreamSize()
+                result = (float(pos) / self.get_duration()) * self.get_video_size()
             except:
                 result = 0
         else:
@@ -234,10 +241,10 @@ class SiteBase(ConnectionProcessor):
     def is_mp4(self):
         return self.has_duration()
 
-    def getVideoExt(self):
+    def get_video_ext(self):
         return self.configs.get("ext", "flv")
 
-    def getTitle(self):
+    def get_title(self):
         """ pega o titulo do video """
         title = urllib.parse.unquote_plus(self.configs["title"])
         title = sites.DECODE(title)  # decodifica o title
@@ -247,7 +254,7 @@ class SiteBase(ConnectionProcessor):
 
     def get_size(self, proxies={}, timeout=60):
         """ retorna o tamanho do arquivo de vídeo, através do cabeçalho de resposta """
-        link = self.getLink()
+        link = self.get_link()
         try:
             fd = self.connect(sites.get_with_seek(link, 0),
                               headers={"Range": "bytes=0-"},
@@ -257,13 +264,12 @@ class SiteBase(ConnectionProcessor):
             assert (length and (fd.code == 200 or fd.code == 206))
         except:
             link = link.rsplit("&", 1)[0]
-            fd = self.connect(url=link, timeout=timeout);
+            fd = self.connect(url=link, timeout=timeout)
             fd.close()
             length = int(fd.headers.get("Content-Length", 0))
             assert (length and (fd.code == 200 or fd.code == 206))
         return length
 
-    def getStreamSize(self):
+    def get_video_size(self):
         """ retorna o tamanho compleot do arquivo de video """
         return self.stream_size
-    

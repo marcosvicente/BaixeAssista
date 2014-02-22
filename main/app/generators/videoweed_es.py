@@ -31,7 +31,7 @@ class Videoweed(SiteBase):
         self.basename = UrlManager.getBaseName(url)
         self.url = url
 
-    def suportaSeekBar(self):
+    def random_mode(self):
         return True
 
     @staticmethod
@@ -45,7 +45,7 @@ class Videoweed(SiteBase):
             message = ''
         return message
 
-    def getLink(self):
+    def get_link(self):
         video_quality = int(self.params.get("quality", 2))
         when_not_found = self.configs.get(1, None)
         when_not_found = self.configs.get(2, when_not_found)

@@ -22,7 +22,7 @@ class Metacafe(SiteBase):
         self.basename = "metacafe.com"
         self.url = url
 
-    def getLink(self):
+    def get_link(self):
         video_quality = int(self.params.get("quality", 2))
         when_not_found = self.configs.get(1, None)
         when_not_found = self.configs.get(2, when_not_found)

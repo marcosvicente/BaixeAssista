@@ -20,7 +20,7 @@ class Xvideos(SiteBase):
         self.basename = "xvideos.com"
         self.url = url
 
-    def suportaSeekBar(self):
+    def random_mode(self):
         return True
 
     def start_extraction(self, proxies={}, timeout=25):

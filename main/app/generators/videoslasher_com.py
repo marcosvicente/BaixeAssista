@@ -27,7 +27,7 @@ class Videoslasher(SiteBase):
         self.basename = "videoslasher.com"
         self.url = url
 
-    def suportaSeekBar(self):
+    def random_mode(self):
         return True
 
     def postPage(self, web_page, proxies, timeout):

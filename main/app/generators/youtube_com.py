@@ -33,7 +33,7 @@ class Youtube(SiteBase):
         self.video_info = {}
         self.url = url
 
-    def suportaSeekBar(self):
+    def random_mode(self):
         return True
 
     def getFailReason(self):
@@ -47,7 +47,7 @@ class Youtube(SiteBase):
             reason = ""
         return reason
 
-    def getLink(self):
+    def get_link(self):
         quality = self.params.get("quality", 2)
         quality = self.video_quality_opts[quality]
         pattern_type = re.compile("video/(?P<type>[^\s;]+)")

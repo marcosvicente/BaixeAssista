@@ -23,7 +23,7 @@ class Hostingbulk(SiteBase):
         "video_control": None
     }
 
-    def suportaSeekBar(self):
+    def random_mode(self):
         return True
 
     @staticmethod
