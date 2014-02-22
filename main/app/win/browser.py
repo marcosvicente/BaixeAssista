@@ -8,7 +8,7 @@ from PySide import QtNetwork
 import main.environ
 main.environ.setup((__name__ == "__main__"))
 
-from stopRefreshButton import StopRefreshButton
+from .stopRefreshButton import StopRefreshButton
 from main.app import generators
 from main.app import models
 from main import settings
@@ -35,7 +35,7 @@ class mWebView(QtWebKit.QWebView):
     
     @staticmethod
     def setStrUrl(url):
-        return url if isinstance(url, (str,unicode)) else url.toString()
+        return url if isinstance(url, str) else url.toString()
     
     def getMovieSpinPixmap(self):
         return self.movieSpin.currentPixmap()
@@ -135,7 +135,7 @@ class Browser (QtGui.QWidget):
     
     def getHistorySites(self):
         queries = self.objects.filter(site=None, lastsite=None)
-        return map(lambda q: q.historysite, queries)
+        return [q.historysite for q in queries]
     
     def addHistorySites(self, sites):
         """ guarda o histórico de urls """
@@ -149,7 +149,7 @@ class Browser (QtGui.QWidget):
     def getSites(self):
         """ retorna uma lista com todos os sites adicionados """
         queries = self.objects.filter(lastsite=None, historysite=None)
-        return map(lambda q: q.site, queries)
+        return [q.site for q in queries]
     
     @staticmethod
     def formatUrl(url):

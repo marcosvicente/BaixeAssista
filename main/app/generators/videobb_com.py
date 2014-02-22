@@ -1,5 +1,5 @@
 # coding: utf-8
-from _sitebase import *
+from ._sitebase import *
 from main.app.manager.urls import UrlManager
 
 ###################################### VIDEOBB ########################################
@@ -48,7 +48,7 @@ class Videobb( SiteBase ):
     def get_urls(self, params):
         urls = {}
         config = params[self.env[0]][self.env[1]]
-        for tokenname in filter(self.isToken, config.keys()):
+        for tokenname in filter(self.isToken, list(config.keys())):
             url = base64.b64decode(config[tokenname])
 
             if url.startswith("http"):

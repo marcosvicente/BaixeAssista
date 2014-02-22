@@ -1,5 +1,5 @@
 # Create your views here.
-import urllib
+import urllib.request, urllib.parse, urllib.error
 
 from django.http import HttpResponse, StreamingHttpResponse
 from django.shortcuts import render_to_response
@@ -41,6 +41,6 @@ def stream_loader(request):
 
 def player_loader(request):
     params = request.GET.copy()
-    for key in params: params[key] = urllib.unquote_plus(params[key])
+    for key in params: params[key] = urllib.parse.unquote_plus(params[key])
     return render_to_response(params["template"], {"params": params},
                               mimetype="text/html")

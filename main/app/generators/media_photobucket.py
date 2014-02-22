@@ -1,5 +1,5 @@
 # coding: utf-8
-from _sitebase import *
+from ._sitebase import *
 
 ##################################### PHOTOBUCKET #####################################
 class Photobucket( SiteBase ):
@@ -24,7 +24,7 @@ class Photobucket( SiteBase ):
         
         # Extract URL, uploader, and title from webpage
         mobj = re.search(r'<link rel="video_src" href=".*\?file=([^"]+)" />', webpage)
-        mediaURL = urllib.unquote(mobj.group(1))
+        mediaURL = urllib.parse.unquote(mobj.group(1))
         video_url = mediaURL
         
         try:
@@ -35,10 +35,10 @@ class Photobucket( SiteBase ):
 
         self.configs = {
             'url': video_url.decode('utf-8'),
-            'upload_date': u'NA',
+            'upload_date': 'NA',
             'title': video_title,
             'ext': video_extension.decode('utf-8'),
-            'format': u'NA',
+            'format': 'NA',
             'player_url': None
         }
         

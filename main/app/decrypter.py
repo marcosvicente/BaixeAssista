@@ -2,6 +2,8 @@
 import base64, re
 import time
 import math
+from builtins import xrange
+
 
 class AES(object):
     BIT_KEY_128 = 128;
@@ -18,7 +20,7 @@ class AES(object):
         loc_4 = 16;
 
         if not (param3 == self.BIT_KEY_128 or param3 == self.BIT_KEY_192 or param3 == self.BIT_KEY_256):
-            raise AttributeError, "Must be a key mode of either 128, 192, 256 bits"
+            raise AttributeError("Must be a key mode of either 128, 192, 256 bits")
         
         param1 = base64.b64decode(param1)
         param2 = param2.encode("utf-8")
@@ -101,7 +103,7 @@ class AES(object):
             loc_5[ moduleIndex ][ floorIndex ] = param1[loc_6];
             loc_6 += 1
             
-        print  loc_5
+        print(loc_5)
         
         loc_5 = self.addRoundKey(loc_5, param2, 0, loc_3)
 
@@ -278,12 +280,12 @@ def decrypt32byte(hexString, key1, key2):
     reg1 = string2bin( hexString )
 
     reg6 = []
-    for index in xrange(384):
+    for index in range(384):
         key1 = (int(key1) * 11 + 77213) % 81371
         key2 = (int(key2) * 17 + 92717) % 192811
         reg6.append((int(key1) + int(key2)) % 128)
 
-    for index in xrange(256, -1, -1):
+    for index in range(256, -1, -1):
         reg5 = reg6[ index ]
         reg8 = reg1[ reg5 ]
 
@@ -292,12 +294,12 @@ def decrypt32byte(hexString, key1, key2):
 
         reg1[ reg4 ] = reg8
 
-    for index in xrange(0, 128):
+    for index in range(0, 128):
         reg1[ index ] = str( int(reg1[ index ]) ^ int(reg6[ index + 256 ] ) & 1)
 
     lista_bin = []
     binString = "".join( reg1 )
-    for index in xrange(0, len(binString), 4):
+    for index in range(0, len(binString), 4):
         # fatiando a string em pedaços de 4 caracteres
         lista_bin.append( binString[ index : index + 4] )
 
@@ -375,12 +377,12 @@ def parse( **kwargs):
 
 
 if __name__ == "__main__":
-    import urllib
+    import urllib.request, urllib.parse, urllib.error
     
     title = "Filling this ebony whores gaping asshole"
     url = "nwDaHk+De1Dun0x1EDTR+wkg5J3ks0t9tDYP7tejr76+2yFH2ce4F0dWXgRYZQiNWStgP9ngyTz2ZPJ22LExSBzv4o7L3jVUgvWfmhGDZSC1y+6ezVQGuxtOBsUoChl6cnEPMFxjswQG2AMaz7+rk3AKMbRj3aCPUgZk/M/Aq1wf9Pemv6d8vecXhx2Ut12w+aJYPgWd"
     
     aes = AES()
     
-    print title, url
-    print aes.decrypt(url, title, AES.BIT_KEY_256)
+    print((title, url))
+    print((aes.decrypt(url, title, AES.BIT_KEY_256)))

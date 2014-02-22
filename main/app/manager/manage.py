@@ -2,14 +2,14 @@
 from main import settings
 from main.app.util import base
 from main.app.generators import Universal
-from proxyManager import ProxyManager
-from fileManager import FileManager
-from resumeInfo import ResumeInfo
-from connection import Connection
-from interval import Interval
-from streamer import Streamer
-from urls import UrlManager
-from info import Info
+from .proxyManager import ProxyManager
+from .fileManager import FileManager
+from .resumeInfo import ResumeInfo
+from .connection import Connection
+from .interval import Interval
+from .streamer import Streamer
+from .urls import UrlManager
+from .info import Info
 
 import time
 
@@ -48,7 +48,7 @@ class Manage(object):
         self.urlManager = UrlManager()
 
         try: self.urlManager.analizeUrl( self.streamUrl )
-        except: raise AttributeError, _(u"Sem suporte para a url fornecida.")
+        except: raise AttributeError(_("Sem suporte para a url fornecida."))
 
         # nome do video ligado a url
         self.videoTitle = self.urlManager.getUrlTitle( self.streamUrl )
@@ -156,10 +156,10 @@ class Manage(object):
         return True
 
     def getInfo(self, ctry, ntry, proxy, callback):
-        message = u"\n".join([
-            _(u"Coletando informações necessárias"),
-              u"IP: %s" % proxy.get("http", _(u"Conexão padrão")),
-            _(u"Tentativa %d/%d\n") % (ctry, ntry)
+        message = "\n".join([
+            _("Coletando informações necessárias"),
+              "IP: %s" % proxy.get("http", _("Conexão padrão")),
+            _("Tentativa %d/%d\n") % (ctry, ntry)
         ])
         
         callback(message, "")

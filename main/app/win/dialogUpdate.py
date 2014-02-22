@@ -1,5 +1,5 @@
 from PySide import QtCore, QtGui
-from uiDialogUpdate import Ui_Dialog
+from .uiDialogUpdate import Ui_Dialog
 
 class DialogUpdate(QtGui.QDialog):
     

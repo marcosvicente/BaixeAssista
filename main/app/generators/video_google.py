@@ -1,5 +1,5 @@
 # coding: utf-8
-from _sitebase import *
+from ._sitebase import *
 
 ##################################### VIDEO.GOOGLE ####################################
 class GoogleVideo( SiteBase ):
@@ -33,7 +33,7 @@ class GoogleVideo( SiteBase ):
             mobj = re.search(r"(?i)videoUrl\\x3d(.+?)\\x26", webpage)
         if mobj is None: return
 
-        mediaURL = urllib.unquote(mobj.group(1))
+        mediaURL = urllib.parse.unquote(mobj.group(1))
         mediaURL = mediaURL.replace('\\x3d', '\x3d')
         mediaURL = mediaURL.replace('\\x26', '\x26')
 
@@ -55,10 +55,10 @@ class GoogleVideo( SiteBase ):
         self.configs = {
             'id':        video_id.decode('utf-8'),
             'url':        video_url.decode('utf-8'),
-            'uploader':    u'NA',
-            'upload_date':    u'NA',
+            'uploader':    'NA',
+            'upload_date':    'NA',
             'title':    video_title,
             'ext':        video_extension.decode('utf-8'),
-            'format':    u'NA',
+            'format':    'NA',
             'player_url': None,
         }

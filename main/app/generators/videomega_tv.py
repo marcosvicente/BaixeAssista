@@ -1,5 +1,5 @@
 # coding: utf-8
-from _sitebase import *
+from ._sitebase import *
 
 ###################################### MEGAVIDEO ######################################
 class Videomega( SiteBase ):
@@ -22,7 +22,7 @@ class Videomega( SiteBase ):
         webpage = fd.read(); fd.close()
         
         matchobj = re.search("unescape\s*\((?:\"|')(.+)(?:\"|')\)", webpage)
-        settings = urllib.unquote_plus( matchobj.group(1) )
+        settings = urllib.parse.unquote_plus( matchobj.group(1) )
         
         matchobj = re.search("file\s*:\s*(?:\"|')(.+?)(?:\"|')", settings)
         url = matchobj.group(1)

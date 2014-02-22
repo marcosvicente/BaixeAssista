@@ -1,5 +1,5 @@
 # coding: utf-8
-from _sitebase import *
+from ._sitebase import *
 
 ##################################### DAILYMOTION #####################################
 class Dailymotion( SiteBase ):
@@ -27,9 +27,9 @@ class Dailymotion( SiteBase ):
         # Extract URL, uploader and title from webpage
         mobj = re.search(r'addVariable\(\"sequence\"\s*,\s*\"(.+?)\"\)', webpage, re.DOTALL|re.IGNORECASE)
 
-        sequence = urllib.unquote(mobj.group(1))
+        sequence = urllib.parse.unquote(mobj.group(1))
         mobj = re.search(r',\"sdURL\"\:\"([^\"]+?)\",', sequence)
-        mediaURL = urllib.unquote(mobj.group(1)).replace('\\', '')
+        mediaURL = urllib.parse.unquote(mobj.group(1)).replace('\\', '')
         # if needed add http://www.dailymotion.com/ if relative URL
         video_url = mediaURL
 
@@ -47,9 +47,9 @@ class Dailymotion( SiteBase ):
             'id':        video_id.decode('utf-8'),
             'url':        video_url.decode('utf-8'),
             'uploader':    video_uploader.decode('utf-8'),
-            'upload_date': u'NA',
+            'upload_date': 'NA',
             'title':    video_title,
             'ext':        video_extension.decode('utf-8'),
-            'format':    u'NA',
+            'format':    'NA',
             'player_url': None,
         }

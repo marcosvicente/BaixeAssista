@@ -1,5 +1,5 @@
 # coding: utf-8
-from _sitebase import *
+from ._sitebase import *
 
 ###################################### REDTUBE #######################################
 class Pornhub( SiteBase ):
@@ -29,11 +29,11 @@ class Pornhub( SiteBase ):
         try:
             fs = ""
             matchobj = re.search('''(?:"|')video_url(?:"|')\s*:\s*(?:"|')(.+?)(?:"|')''', webpage, re.DOTALL)
-            try: url = base64.b64decode(urllib.unquote_plus(matchobj.group(1)))
-            except: url = urllib.unquote_plus(matchobj.group(1))
+            try: url = base64.b64decode(urllib.parse.unquote_plus(matchobj.group(1)))
+            except: url = urllib.parse.unquote_plus(matchobj.group(1))
             
             matchobj = re.search('''(?:"|')video_title(?:"|')\s*:\s*(?:"|')(.*?)(?:"|')''', webpage, re.DOTALL)
-            try: title = urllib.unquote_plus( matchobj.group(1) )
+            try: title = urllib.parse.unquote_plus( matchobj.group(1) )
             except: title = sites.get_random_text()
         except:
             urlid = Universal.get_video_id(self.basename, self.url)

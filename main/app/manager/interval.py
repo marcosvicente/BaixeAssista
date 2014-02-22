@@ -70,12 +70,12 @@ class Interval(object):
     
     def has(self, obj_id):
         """ avalia se o objeto tem um intervalo ligado a ele """
-        return self.blocks.has_key(obj_id)
+        return obj_id in self.blocks
     
     def getFirstStart(self):
         """ retorna o começo(start) do primeiro intervalo da lista de blocks """
-        blocks = (map(lambda item: item[1], self.blocks.values()) +
-                  map(lambda item: item[2], self.pending))
+        blocks = ([item[1] for item in list(self.blocks.values())] +
+                  [item[2] for item in self.pending])
         blocks.sort()
         return (-1 if len(blocks) == 0 else blocks[0])
     
@@ -100,7 +100,7 @@ class Interval(object):
         
     def updateIndex(self):
         """ reorganiza a tabela de indices """
-        items = self.blocks.items()
+        items = list(self.blocks.items())
         
         # organiza por start: (obj_id = 1, (0, start = 1, 2, 3))
         items.sort(key=lambda item: item[1][1])
@@ -140,7 +140,7 @@ class Interval(object):
             """ verifica se o intervalo é condidato a alteração """
             return (get_average(data) > self.min_block)
         
-        items = self.blocks.items()
+        items = list(self.blocks.items())
         items.sort(key=lambda item: item[1][1])
         
         for obj_id, data in items:

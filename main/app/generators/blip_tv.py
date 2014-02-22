@@ -1,5 +1,5 @@
 # coding: utf-8
-from _sitebase import *
+from ._sitebase import *
 
 ####################################### BLIPTV ########################################
 class BlipTV( SiteBase ):

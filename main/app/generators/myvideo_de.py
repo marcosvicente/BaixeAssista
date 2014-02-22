@@ -1,5 +1,5 @@
 # coding: utf-8
-from _sitebase import *
+from ._sitebase import *
 
 ####################################### MYVIDEO #######################################
 class MyVideo( SiteBase ):
@@ -33,10 +33,10 @@ class MyVideo( SiteBase ):
         self.configs = {
             'id': video_id,
             'url': video_url,
-            'uploader':    u'NA',
-            'upload_date': u'NA',
+            'uploader':    'NA',
+            'upload_date': 'NA',
             'title': video_title,
-            'ext': u'flv',
-            'format': u'NA',
+            'ext': 'flv',
+            'format': 'NA',
             'player_url': None,
         }

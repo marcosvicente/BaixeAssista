@@ -11,23 +11,23 @@ OldPixmap = QtGui.QPixmap
 def pixmap(*args, **kwargs):
     """ hacke para correção do caminho do pixmap """
     args = list(args)
-    if isinstance(args[0],(str, unicode)):
+    if isinstance(args[0],str):
         fileName = os.path.basename(args[0])
         args[0] = os.path.join(settings.IMAGES_DIR, fileName)
     return OldPixmap(*tuple(args), **kwargs)
 QtGui.QPixmap = pixmap
 
-import mainLayout
-import uiDialogDl
-import browser
+from . import mainLayout
+from . import uiDialogDl
+from . import browser
 
-from paypalDonation import DialogDonate
-from dialogUpdate import DialogUpdate
-from playerDialog import PlayerDialog
-from dialogAbout import DialogAbout
-from dialogError import DialogError
-from dialogRec import DialogRec
-from tableRow import TableRow
+from .paypalDonation import DialogDonate
+from .dialogUpdate import DialogUpdate
+from .playerDialog import PlayerDialog
+from .dialogAbout import DialogAbout
+from .dialogError import DialogError
+from .dialogRec import DialogRec
+from .tableRow import TableRow
 
 from main.app.manager.streamManager import StreamManager
 from main.app.manager.fileManager import FileManager
@@ -254,8 +254,7 @@ class Loader(QtGui.QMainWindow):
     def setupLocation(self):
         """ adiciona as urls dos vídeos baixados e adcionandos ao bd. """
         self.urlManager = UrlManager()
-        self.getLocation().addItems(map(lambda items: self.urlManager.joinUrlDesc(*items), 
-                                        self.urlManager.getUrlTitleList()))
+        self.getLocation().addItems([self.urlManager.joinUrlDesc(*items) for items in self.urlManager.getUrlTitleList()])
         url, title = self.urlManager.getLastUrl()
         joinedUrl = self.urlManager.joinUrlDesc(url, title)
         
@@ -295,7 +294,7 @@ class Loader(QtGui.QMainWindow):
         queryset = ResumeInfo.objects.all()
         
         items = [QtGui.QTreeWidgetItem([q.title+"."+q.videoExt]) for q in queryset]
-        values = queryset.values(*fields.keys())
+        values = queryset.values(*list(fields.keys()))
         
         def children(element):
             listItems = []
@@ -304,7 +303,7 @@ class Loader(QtGui.QMainWindow):
                 if type(title) is dict:
                     value = title["conversor"](value)
                     title = title["title"]
-                item = QtGui.QTreeWidgetItem([u"{0} ::: {1}".format(title, value)])
+                item = QtGui.QTreeWidgetItem(["{0} ::: {1}".format(title, value)])
                 listItems.append( item )
             return listItems
         
@@ -337,7 +336,7 @@ class Loader(QtGui.QMainWindow):
                           fileext = resumeInfo["videoExt"])
             
             path = fileManager.getFilePath()
-            print path, os.path.exists(path)
+            print((path, os.path.exists(path)))
             
             if os.path.exists(path):
                 mplayer = FlvPlayer(cmd=self.getExternalPlayerPath(), 
@@ -367,7 +366,7 @@ class Loader(QtGui.QMainWindow):
                             fileext = resumeInfo["videoExt"])
             
             path = fileManager.getFilePath()
-            print path, os.path.exists(path)
+            print((path, os.path.exists(path)))
             
             self.urlManager.remove(_title)
             resumeInfo.remove()
@@ -407,7 +406,7 @@ class Loader(QtGui.QMainWindow):
     
     def clearTable(self):
         """ removendo todas as 'rows' e dados relacionandos """
-        for ident in self.tableRows.keys():
+        for ident in list(self.tableRows.keys()):
             self.removeTableRow( ident )
         
     @base.protected()
@@ -608,7 +607,7 @@ class Loader(QtGui.QMainWindow):
         
     def onErrorVideoDl(self, err):
         self.DIALOG.close()
-        print err
+        print(err)
     
     @FileManager.sincronize
     def tryRecoverFile(self):
@@ -753,8 +752,8 @@ class Loader(QtGui.QMainWindow):
             qr.moveCenter(cp)
             self.move(qr.topLeft())
         else:
-            self.move(*map(int, self.confWindow.as_list("position")))
-            self.resize(*map(int, self.confWindow.as_list("size")))
+            self.move(*list(map(int, self.confWindow.as_list("position"))))
+            self.resize(*list(map(int, self.confWindow.as_list("size"))))
             
         self.confPath = conf["Path"]
         self.uiMainWindow.videoDir.setText(self.confPath["videoDir"] 
@@ -798,13 +797,13 @@ class Loader(QtGui.QMainWindow):
         
         # salvando as configurações no arquivo
         if not base.security_save((path or self.configPath), _configobj=self.config):
-            print "*** Warnnig: config save error!"
+            print("*** Warnnig: config save error!")
             
     def onShowResultInfo(self, title, text):
         QtGui.QMessageBox.information(self, title, text)
         
     def onReleasedFound(self, response):
-        response += _(u"\nPressione OK para ir a página de download.")
+        response += _("\nPressione OK para ir a página de download.")
         reply = QtGui.QMessageBox.information(self, _("Novidade!"),
             response, buttons = QtGui.QMessageBox.Ok | QtGui.QMessageBox.Cancel
             )
@@ -815,8 +814,8 @@ class Loader(QtGui.QMainWindow):
         automatic = self.uiMainWindow.actionAutomaticSearch.isChecked()
         self.confProg["packetVersion"] = version
         
-        title = _(u"Ativada)") if automatic else _(u"Desativada)")
-        title = _(u"Novas atualizações recebidas! (Atualização automática - ") + title
+        title = _("Ativada)") if automatic else _("Desativada)")
+        title = _("Novas atualizações recebidas! (Atualização automática - ") + title
         
         dialogUpdate = DialogUpdate(self)
         dialogUpdate.setWindowTitle(title)
@@ -902,7 +901,7 @@ if __name__ == "__main__":
     filepath = os.path.join(settings.INTERFACE_DIR, "i18n", filename)
     
     translator = QtCore.QTranslator()
-    print "TL: ", translator.load( filepath )
+    print(("TL: ", translator.load( filepath )))
     app.installTranslator(translator)
     
     mw = Loader()

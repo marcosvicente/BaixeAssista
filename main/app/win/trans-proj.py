@@ -8,7 +8,7 @@ ldir = os.path.join(cdir, "i18n")
 
 def set_relative_paths():
     for filename in os.listdir(ldir):
-        print "Processing: ", filename
+        print(("Processing: ", filename))
         
         with open(os.path.join(ldir, filename), "r+") as f:
             content = f.read()
@@ -30,7 +30,7 @@ def create_proj(lfiles, projname, template):
         sources = " ".join(lfiles)
         data = template.format(sources = sources)
         _file.write( data )
-        print data
+        print(data)
 
 template = """
 SOURCES = {sources}

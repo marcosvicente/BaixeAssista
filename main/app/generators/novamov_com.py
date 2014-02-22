@@ -1,7 +1,7 @@
 # coding: utf-8
-from _sitebase import *
+from ._sitebase import *
 from main.app.manager.urls import UrlManager
-import videoweed_es
+from . import videoweed_es
 
 
 ####################################### NOVAMOV #######################################

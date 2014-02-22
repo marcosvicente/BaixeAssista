@@ -1,7 +1,7 @@
 # coding: utf-8
 import sys, os
 from PySide import QtCore, QtGui
-from uiDialogAbout import Ui_Dialog
+from .uiDialogAbout import Ui_Dialog
 ## --------------------------------------------------------------------------
 
 class DialogAbout(QtGui.QDialog):

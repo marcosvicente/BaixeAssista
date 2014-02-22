@@ -1,5 +1,5 @@
 from PySide import QtCore, QtGui
-from uiDialogRec import Ui_Dialog
+from .uiDialogRec import Ui_Dialog
 
 ## --------------------------------------------------------------------------
 class DialogRec(QtGui.QDialog):

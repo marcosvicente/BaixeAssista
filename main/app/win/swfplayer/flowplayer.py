@@ -2,7 +2,7 @@
 
 import os
 from main import settings
-import player
+from . import player
 
 # -----------------------------------------------------------------------------
 class Player( player.Player ):

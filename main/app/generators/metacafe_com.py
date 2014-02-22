@@ -1,5 +1,5 @@
 # coding: utf-8
-from _sitebase import *
+from ._sitebase import *
 
 ###################################### METACAFE #######################################
 class Metacafe( SiteBase ):
@@ -32,14 +32,14 @@ class Metacafe( SiteBase ):
         webpage = fd.read(); fd.close()
         
         matchobj = re.search("flashVarsCache\s*=\s*\{(.*?)\}", webpage)
-        flashvars = urllib.unquote_plus(matchobj.group(1))
+        flashvars = urllib.parse.unquote_plus(matchobj.group(1))
         
         matchobj = re.search("\"mediaData\".+?\"mediaURL\"\s*:\s*\"(.*?)\".*\"key\"\s*:\s*\"(.*?)\".*\"value\"\s*:\s*\"(.*?)\"", flashvars)
-        lowMediaURL = urllib.unquote_plus(matchobj.group(1)) +"?%s=%s" % (matchobj.group(2), matchobj.group(3))
+        lowMediaURL = urllib.parse.unquote_plus(matchobj.group(1)) +"?%s=%s" % (matchobj.group(2), matchobj.group(3))
         lowMediaURL = lowMediaURL.replace("\/", "/")
         
         matchobj = re.search("\"highDefinitionMP4\".+?\"mediaURL\"\s*:\s*\"(.*?)\".*\"key\"\s*:\s*\"(.*?)\".*\"value\"\s*:\s*\"(.*?)\"", flashvars)
-        highMediaURL = urllib.unquote_plus(matchobj.group(1)) +"?%s=%s" % (matchobj.group(2), matchobj.group(3))
+        highMediaURL = urllib.parse.unquote_plus(matchobj.group(1)) +"?%s=%s" % (matchobj.group(2), matchobj.group(3))
         highMediaURL = highMediaURL.replace("\/", "/")
         
         try: title = re.search("<title>(.+)</title>", webpage).group(1)

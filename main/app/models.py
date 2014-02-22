@@ -1,6 +1,6 @@
 from main.app.manager.urls import UrlBase
 from django.db import models
-import cPickle
+import pickle
 
 ########################################################################
 class LastUrl( models.Model ):
@@ -41,11 +41,11 @@ class Resume( models.Model ):
 	
 	@property
 	def pending(self):
-		return cPickle.loads(self._pending.encode("ascii"))
+		return pickle.loads(self._pending.encode("ascii"))
 		
 	@pending.setter
 	def pending(self, data):
-		self._pending = cPickle.dumps(data)
+		self._pending = pickle.dumps(data)
 	
 	@property
 	def isCompleteDown(self):

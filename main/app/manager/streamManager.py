@@ -1,6 +1,6 @@
 # coding: utf-8
 from main.app.util import base, sites
-from info import Info
+from .info import Info
 import threading
 import logging
 import math
@@ -71,7 +71,7 @@ class StreamManager(threading.Thread):
         self.params.setdefault("timeout", 30)
         
     def __setitem__(self, key, value):
-        assert self.params.has_key( key ), "invalid option name: '%s'"%key
+        assert key in self.params, "invalid option name: '%s'"%key
         self.params[ key ] = value
         
     def __del__(self):
@@ -158,11 +158,11 @@ class StreamManager(threading.Thread):
                                           timeout = self.params["timeout"]):
             self.link = self.videoManager.getLink()
             
-        Info.set(self.ident, "http", self.proxies.get("http", _(u"Conexão Padrão")))
+        Info.set(self.ident, "http", self.proxies.get("http", _("Conexão Padrão")))
         
     def stop(self):
         """ pára toda a atividade da conexão """
-        self.unconfig(_(u"Parado pelo usuário"), 3)
+        self.unconfig(_("Parado pelo usuário"), 3)
         self.isRunning = False
         
     def wasStopped(self):
@@ -338,7 +338,7 @@ class StreamManager(threading.Thread):
                 self.proxies = {}
                 
         self.usingProxy = bool(self.proxies)
-        Info.set(self.ident, "http", self.proxies.get("http", _(u"Conexão Padrão")))
+        Info.set(self.ident, "http", self.proxies.get("http", _("Conexão Padrão")))
         
         if self.videoManager.getVideoInfo(proxies=self.proxies, timeout=self.params["timeout"]):
             self.link = self.videoManager.getLink()
@@ -370,11 +370,11 @@ class StreamManager(threading.Thread):
                     Info.set(self.ident, "try", "Ok")
                     return True
                 else:
-                    Info.set(self.ident, "state", _(u"Resposta inválida"))
+                    Info.set(self.ident, "state", _("Resposta inválida"))
                     self.streamSocket.close()
                     time.sleep( self.params["waittime"] )
             except Exception as err:
-                Info.set(self.ident, "state", _(u"Falha na conexão"))
+                Info.set(self.ident, "state", _("Falha na conexão"))
                 self.logger.error("%s Connecting: %s" %(self.__class__.__name__, err))
                 time.sleep( self.params["waittime"] )
             ctry += 1
@@ -420,7 +420,7 @@ class StreamManager(threading.Thread):
                 self.failure(_("Incapaz de conectar"), 1)
                 self.logger.error("%s Mainloop: %s" %(self.__class__.__name__, err))
                 
-        Info.set(self.ident, "state", _(u"Conexão parada"))
+        Info.set(self.ident, "state", _("Conexão parada"))
         
         
 class StreamManager_( StreamManager ):
@@ -430,11 +430,11 @@ class StreamManager_( StreamManager ):
     def _init(self):
         """ iniciado com thread. Evita travar no init """
         Info.add(self.ident)
-        Info.set(self.ident, "state", _(u"Iniciando"))
+        Info.set(self.ident, "state", _("Iniciando"))
         
         if self.usingProxy: self.proxies = self.manage.proxyManager.get_formated()
         
-        Info.set(self.ident, "http", self.proxies.get("http",_(u"Conexão Padrão")))
+        Info.set(self.ident, "http", self.proxies.get("http",_("Conexão Padrão")))
         self.link = self.getVideoLink()
         
     @base.LogOnError
@@ -458,7 +458,7 @@ class StreamManager_( StreamManager ):
                 self.proxies = {}
                 
         self.usingProxy = bool(self.proxies)
-        Info.set(self.ident, "http", self.proxies.get("http", _(u"Conexão Padrão")))
+        Info.set(self.ident, "http", self.proxies.get("http", _("Conexão Padrão")))
         self.link = self.getVideoLink()
     
     @base.LogOnError
@@ -466,7 +466,7 @@ class StreamManager_( StreamManager ):
         data = self.videoManager.get_init_page(self.proxies) # pagina incial
         link = self.videoManager.get_file_link(data) # link de download
         for second in range(self.videoManager.get_count(data), 0, -1):
-            Info.set(self.ident, "state", _(u"Aguarde %02ds")%second)
+            Info.set(self.ident, "state", _("Aguarde %02ds")%second)
             time.sleep(1)
         return link
         
@@ -498,11 +498,11 @@ class StreamManager_( StreamManager ):
                     Info.set(self.ident, "try", "Ok")
                     return True
                 else:
-                    Info.set(self.ident, "state", _(u"Resposta inválida"))
+                    Info.set(self.ident, "state", _("Resposta inválida"))
                     self.streamSocket.close()
                     time.sleep( self.params["waittime"] )
             except Exception as err:
-                Info.set(self.ident, "state", _(u"Falha na conexão"))
+                Info.set(self.ident, "state", _("Falha na conexão"))
                 self.logger.error("%s Connecting: %s" %(self.__class__.__name__, err))
                 time.sleep( self.params["waittime"] )
             ctry += 1
@@ -526,5 +526,5 @@ class StreamManager_( StreamManager ):
                 self.failure(_("Incapaz de conectar"), 1)
                 self.logger.error("%s Mainloop: %s" %(self.__class__.__name__, err))
                 
-        Info.set(self.ident, "state", _(u"Conexão parada"))
+        Info.set(self.ident, "state", _("Conexão parada"))
         

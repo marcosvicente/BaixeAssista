@@ -2,9 +2,9 @@
 import sys, os
 from PySide import QtCore, QtGui
 from PySide.QtWebKit import QWebView
-from uiPaypalDonation import Ui_Dialog
+from .uiPaypalDonation import Ui_Dialog
 from django.template import Context, Template, loader
-from stopRefreshButton import StopRefreshButton
+from .stopRefreshButton import StopRefreshButton
 from main import settings
 ## --------------------------------------------------------------------------
 

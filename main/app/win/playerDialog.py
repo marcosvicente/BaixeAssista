@@ -1,8 +1,8 @@
 # coding: utf-8
 from PySide import QtCore, QtGui, QtWebKit
 
-from swfplayer import jwplayer, flowplayer
-from uiPlayerDialog import Ui_playerDialog
+from .swfplayer import jwplayer, flowplayer
+from .uiPlayerDialog import Ui_playerDialog
 
 from main.app.util import base
 
@@ -66,8 +66,8 @@ class PlayerDialog(QtGui.QDialog):
         self.__class__.startedOneTime = b
     
     def setWinConf(self):
-        self.resize(*map(int, self.configs["embedPlayer"].as_list("size")))
-        self.move(*map(int, self.configs["embedPlayer"].as_list("pos")))
+        self.resize(*list(map(int, self.configs["embedPlayer"].as_list("size"))))
+        self.move(*list(map(int, self.configs["embedPlayer"].as_list("pos"))))
         
     def _startDefaultPlayer(self):
         """ carrega, inicialmente, o player das configurações """

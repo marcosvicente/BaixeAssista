@@ -105,9 +105,9 @@ class TableRow(object):
         """ atualiza o texto de todas as colunas, ou apenas uma coluna individual """
         if col is None:
             for index, value in enumerate(values):
-                self.items[index].setText(unicode(value))
+                self.items[index].setText(str(value))
         else:
-            self.items[col].setText(unicode(value))
+            self.items[col].setText(str(value))
     
     def setupBarWidgetAt(self, col, row):
         """ configura a barra de progresso nas coordenada """

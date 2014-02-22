@@ -1,6 +1,6 @@
 # coding: utf-8
-from _sitebase import *
-import videobb_com
+from ._sitebase import *
+from . import videobb_com
 
 ###################################### USERPORN #######################################
 class Userporn( videobb_com.Videobb ):

@@ -1,5 +1,5 @@
 # coding: utf-8
-from _sitebase import *
+from ._sitebase import *
 from main.app.manager.urls import UrlManager
 
 ################################# VIDEO_MIXTURECLOUD ##################################
@@ -47,7 +47,7 @@ class Mixturecloud( SiteBase ):
             longin_data["submit_form_login"] = matchobj.group(1)
             longin_data["submit_key"] = matchobj.group(2)
 
-        return urllib.urlencode( longin_data )
+        return urllib.parse.urlencode( longin_data )
 
     def login(self, opener, timeout):
         """ faz o login necess�rio para transferir o arquivo de v�deo. opener � quem armazer� o cookie """
@@ -80,7 +80,7 @@ class Mixturecloud( SiteBase ):
 
     def getMessage(self, webpage):
         matchobj = re.search('<div class="alert i_alert red".*?>(?P<msg>.+?)</div>', webpage)
-        try: msg = u"%s informa: %s"%(self.basename, unicode(matchobj.group("msg"),"UTF-8"))
+        try: msg = "%s informa: %s"%(self.basename, str(matchobj.group("msg"),"UTF-8"))
         except: msg = ""
         return msg
     

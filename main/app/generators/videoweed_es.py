@@ -1,5 +1,5 @@
 # coding: utf-8
-from _sitebase import *
+from ._sitebase import *
 from main.app.manager.urls import UrlManager
 
 ###################################### VIDEOWEED ######################################
@@ -64,13 +64,13 @@ class Videoweed( SiteBase ):
 
         params = dict(re.findall("(\w+)=(.*?)&", info_data))
 
-        url = urllib.unquote_plus( params["url"] )
-        seekparm = urllib.unquote_plus( params["seekparm"] )
+        url = urllib.parse.unquote_plus( params["url"] )
+        seekparm = urllib.parse.unquote_plus( params["seekparm"] )
 
         if not seekparm: seekparm = "?start="
         elif seekparm.rfind("=") < 0: seekparm += "="
         
-        try: title = urllib.unquote_plus( params["title"] )
+        try: title = urllib.parse.unquote_plus( params["title"] )
         except: title = sites.get_random_text()
         
         self.configs = {1: url + seekparm, "title": title}

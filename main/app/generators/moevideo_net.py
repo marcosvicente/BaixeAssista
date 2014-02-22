@@ -1,5 +1,5 @@
 # coding: utf-8
-from _sitebase import *
+from ._sitebase import *
 
 ###################################### MOEVIDEO #######################################
 class MoeVideo( SiteBase ):
@@ -32,13 +32,13 @@ class MoeVideo( SiteBase ):
              ["preview/flv_image",{"uid":"%s"%video_id}], 
              ["preview/flv_link",{"uid":"%s"%video_id}]])
                 }
-        return urllib.urlencode( post )
+        return urllib.parse.urlencode( post )
 
     def extratcLink(self, videoinfo):
         link = ""
         if videoinfo["status"].lower() == "ok":
             for info in videoinfo["data"]:
-                if type(info) is dict and info.has_key("link"):
+                if type(info) is dict and "link" in info:
                     link = info["link"]
                     break
         return link
@@ -53,7 +53,7 @@ class MoeVideo( SiteBase ):
             if videoinfo["status"].lower() == "fail":
                 msg = videoinfo["data"]
             else:
-                if u"not_found" in videoinfo["data"]:
+                if "not_found" in videoinfo["data"]:
                     msg = "file not found"
                 else:
                     msg = videoinfo["data"][0]

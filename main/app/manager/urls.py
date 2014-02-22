@@ -1,11 +1,11 @@
 # coding: utf-8
 from main.app.util import base
-import urlparse
+import urllib.parse
 import re
 
 class UrlBase(object):
-    sep   = u"::::::"
-    short = u"%s[%s]"
+    sep   = "::::::"
+    short = "%s[%s]"
     
     @classmethod
     def Universal(cls):
@@ -15,7 +15,7 @@ class UrlBase(object):
     @classmethod
     def joinUrlDesc(cls, url, desc):
         """ junta a url com sua decrição(título), usando o separador padrão """
-        return u"%s %s %s"%(url, cls.sep, desc)
+        return "%s %s %s"%(url, cls.sep, desc)
     
     @classmethod
     def splitUrlDesc(cls, string):
@@ -46,7 +46,7 @@ class UrlBase(object):
     @staticmethod
     def getBaseName(url):
         """ http://www.megavideo.com/v=t53vqf0l -> megavideo.com """
-        parse = urlparse.urlparse( url )
+        parse = urllib.parse.urlparse( url )
         netloc_split = parse.netloc.split(".")
         if parse.netloc.startswith("www"):
             basename = "%s.%s"%tuple(netloc_split[1:3])

@@ -24,7 +24,7 @@ def trans_install(configs = None):
                         os.path.join(settings.APPDIR, "locale"), 
                         languages=[configs["Lang"]["code"]])
     # instala no espaço de nomes embutidos
-    translator.install(unicode=True)
+    translator.install(str=True)
     
 #################################### JUST_TRY ##################################
 class LogOnError(object):
@@ -74,7 +74,7 @@ class protected(object):
         def wrap(*args, **kwargs):
             try: return method(*args, **kwargs)
             except Exception as err:
-                print "warnning: '%s' protected: %s"%(method.__name__,err)
+                print(("warnning: '%s' protected: %s"%(method.__name__,err)))
         return wrap
     
 def calc_percent(byte_counter, data_len):
@@ -101,14 +101,14 @@ def security_save(filepath, _configobj=None, _list=None, newline="\n"):
         filename = get_filename( filepath ) # nome do arquivo no path.
         bkfilepath = filepath.replace(filename,("bk_"+filename))
     except Exception as err:
-        logger.error(u"Path to backup file: %s"%err)
+        logger.error("Path to backup file: %s"%err)
         return False
     
     # guarda o arquivo antigo temporariamente
     if os.path.exists( filepath ):
         try: os.rename(filepath, bkfilepath)
         except Exception as err:
-            logger.error(u"Rename config to backup: %s"%err)
+            logger.error("Rename config to backup: %s"%err)
             return False
             
     try: # começa a criação do novo arquivo de configuração
@@ -120,12 +120,12 @@ def security_save(filepath, _configobj=None, _list=None, newline="\n"):
                 _configobj.write( configsfile )
             # levanta a exeção com o objetivo de recuperar o arquivo original
             else:
-                raise AttributeError, "invalid config data"
+                raise AttributeError("invalid config data")
         if os.path.exists(filepath):
             try: os.remove(bkfilepath)
             except: pass
     except Exception as err:
-        logger.critical(u"Saving config file: %s"%err)
+        logger.critical("Saving config file: %s"%err)
         # remove o arquivo atual do erro.
         if os.path.exists( filepath ):
             try: os.remove(filepath)

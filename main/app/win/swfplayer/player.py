@@ -7,7 +7,7 @@ from django.core.urlresolvers import reverse
 from main.app.util.sites import get_random_text
 from main.app.manager.server import Server
 from main import settings
-import urllib
+import urllib.request, urllib.parse, urllib.error
 
 ## --------------------------------------------------------------------
 
@@ -72,17 +72,17 @@ class Player(QtGui.QWidget):
         
     def getSkinsNames(self):
         """ retorna os nomes das skins disponiveis """
-        return self.skins.keys()
+        return list(self.skins.keys())
     
     def hasSkinName(self, name):
-        return self.skins.has_key(name)
+        return name in self.skins
     
     def __setitem__(self, name, value):
-        assert self.params.has_key( name ), 'set:option "%s" not found!'%name
+        assert name in self.params, 'set:option "%s" not found!'%name
         self.params[ name ] = value
         
     def __getitem__(self, name):
-        assert self.params.has_key( name ), 'get:option "%s" not found!'%name
+        assert name in self.params, 'get:option "%s" not found!'%name
         return self.params[ name ]
     
     def stop(self):
@@ -90,7 +90,7 @@ class Player(QtGui.QWidget):
     
     def update(self, **kwargs):
         """ atualiza 'params' mas passa pela validação """
-        for key, value in kwargs.items():
+        for key, value in list(kwargs.items()):
             self[key] = value
             
     def pause(self):
@@ -141,7 +141,7 @@ class Player(QtGui.QWidget):
         """ recarrega a página atualizando os parâmetros do player """
         params = self.getParams()
         params["template"] = self.template
-        fullurl = params["hostdomain"] + self.relativeurl+"?"+urllib.urlencode(params)
+        fullurl = params["hostdomain"] + self.relativeurl+"?"+urllib.parse.urlencode(params)
         self.webview.load( fullurl )
         
         

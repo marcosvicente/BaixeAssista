@@ -1,5 +1,5 @@
 # coding: utf-8
-from _sitebase import *
+from ._sitebase import *
 
 class Supervideo(SiteBase):
     # http://supervideo.biz/embed-duzx1non5fch-518x392.html

@@ -1,5 +1,5 @@
 from PySide import QtCore, QtGui
-from uiErrorDialog import Ui_Dialog
+from .uiErrorDialog import Ui_Dialog
 from main.app.bugs import Bugs
 from main import settings
 import glob, os, threading

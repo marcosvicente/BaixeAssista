@@ -1,5 +1,5 @@
 # coding: utf-8
-from _sitebase import *
+from ._sitebase import *
 
 ######################################## VEEVR ########################################
 class Veevr( SiteBase ):
@@ -29,7 +29,7 @@ class Veevr( SiteBase ):
                 webpage, re.DOTALL|re.IGNORECASE
             )
             # url final para o v�deo ?
-            mediaUrl = urllib.unquote_plus( matchobj.group(1) )
+            mediaUrl = urllib.parse.unquote_plus( matchobj.group(1) )
         except Exception as err:
             matchobj = re.search(
                 "playlist:.+url:\s*(?:'|\")(http://hwcdn.net/.+/cds/.+?token=.+?)(?:'|\")", 
@@ -37,7 +37,7 @@ class Veevr( SiteBase ):
 
             # url final para o v�deo
             mediaUrl = matchobj.group(1)
-            mediaUrl = urllib.unquote_plus( mediaUrl )
+            mediaUrl = urllib.parse.unquote_plus( mediaUrl )
 
         # iniciando a extra��o do t�tulo do v�deo
         try:

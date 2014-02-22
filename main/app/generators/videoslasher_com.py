@@ -1,6 +1,6 @@
 # coding: utf-8
-from _sitebase import *
-import putlocker_com
+from ._sitebase import *
+from . import putlocker_com
 
 ########################################################################
 class Videoslasher( SiteBase ):
@@ -38,7 +38,7 @@ class Videoslasher( SiteBase ):
         hashname = matchobj.group("name") or  matchobj.group("_name")
         confirmvalue = matchobj.group("confirm")
         
-        data = urllib.urlencode({hashname: hashvalue, "confirm": confirmvalue})
+        data = urllib.parse.urlencode({hashname: hashvalue, "confirm": confirmvalue})
         fd = self.connect(self.url, proxies=proxies, timeout=timeout, data=data)
         webpage = fd.read(); fd.close()
         return webpage
