@@ -47,7 +47,7 @@ from main.app.util import base
 from main.app import updater
 from main import settings
 
-## --------------------------------------------------------------------------
+
 class DialogDl(QtGui.QDialog):
     def __init__(self, title="Dialog", parent=None):
         super(DialogDl, self).__init__(parent)
@@ -70,7 +70,6 @@ class DialogDl(QtGui.QDialog):
         if siteInfo: self.siteResponse.setHtml(siteInfo)
 
 
-## --------------------------------------------------------------------------
 class VideoLoad(threading.Thread, QtCore.QObject):
     """ Coleta informações iniciais necessárias para baixar o video """
     responseUpdateUi = QtCore.Signal()
@@ -103,7 +102,7 @@ class VideoLoad(threading.Thread, QtCore.QObject):
             except Exception as error:
                 self.responseError.emit(str(error))
                 break
-            proxy = self.manage.proxyManager.get_formated()
+            proxy = self.manage.proxy_manager.get_formated()
         else:
             self.responseFinish.emit(False)
         return False
@@ -421,19 +420,19 @@ class Loader(QtGui.QMainWindow):
     @base.protected()
     def updateTable(self):
         """ atualizando apenas as tabelas apresentadas na 'MainWindow' """
-        videoSizeFormated = StreamManager.format_bytes(self.manage.getVideoSize())
-        videoPercent = base.calc_percent(self.manage.getCacheBytesTotal(), self.manage.getVideoSize())
+        videoSizeFormated = StreamManager.format_bytes(self.manage.get_video_size())
+        videoPercent = base.calc_percent(self.manage.get_cache_bytes_total(), self.manage.get_video_size())
 
-        self.uiMainWindow.videoTileInfo.setText(self.manage.getVideoTitle())
+        self.uiMainWindow.videoTileInfo.setText(self.manage.get_video_title())
         self.uiMainWindow.videoSizeInfo.setText(videoSizeFormated)
-        self.uiMainWindow.videoExtInfo.setText(self.manage.getVideoExt())
+        self.uiMainWindow.videoExtInfo.setText(self.manage.get_video_ext())
 
         self.uiMainWindow.progressBarInfo.setValue(videoPercent)
 
-        self.uiMainWindow.downloadedFromInfo.setText(StreamManager.format_bytes(self.manage.getCacheBytesTotal()))
+        self.uiMainWindow.downloadedFromInfo.setText(StreamManager.format_bytes(self.manage.get_cache_bytes_total()))
         self.uiMainWindow.downloadedToInfo.setText(videoSizeFormated)
-        self.uiMainWindow.globalSpeedInfo.setText(self.manage.getGlobalSpeed())
-        self.uiMainWindow.globalEtaInfo.setText(self.manage.getGlobalEta())
+        self.uiMainWindow.globalSpeedInfo.setText(self.manage.get_global_speed())
+        self.uiMainWindow.globalEtaInfo.setText(self.manage.get_global_eta())
 
     @base.protected()
     def updateConnectionUi(self, sender, **kwargs):
@@ -589,8 +588,8 @@ class Loader(QtGui.QMainWindow):
             self.DIALOG.close()
 
             # titulo do arquivo de video
-            title = self.manage.getVideoTitle()
-            url = self.manage.getVideoUrl()
+            title = self.manage.get_video_title()
+            url = self.manage.get_video_url()
 
             self.getLocation().setToolTip(title)
 
@@ -625,7 +624,7 @@ class Loader(QtGui.QMainWindow):
         isTempFile = self.uiMainWindow.tempFiles.isChecked()
         haveAsk = self.uiMainWindow.tempFileAction.currentIndex()
 
-        if isTempFile and self.manage.isTempFileMode and haveAsk == 1:
+        if isTempFile and self.manage.is_tempfile_mode and haveAsk == 1:
             reply = QtGui.QMessageBox.question(self, self.tr("recovery of the temporary file"),
                                                self.tr("The current video file is saved in a temporary file.\n"
                                                        "Want to save permanently ?"),
@@ -638,7 +637,7 @@ class Loader(QtGui.QMainWindow):
 
                 dialog.textProgress.setText(self.tr("Processing..."))
 
-                for copy in self.manage.recoverTempFile():
+                for copy in self.manage.recover_tempfile():
                     if copy.inProgress and not copy.sucess:
                         dialog.textProgress.setText("Processing %.2f%%" % copy.progress)
                         dialog.progressBar.setValue(copy.progress)
@@ -648,7 +647,7 @@ class Loader(QtGui.QMainWindow):
                         dialog.progressBar.setValue(100.0)
                         break
                     elif copy.error:
-                        dialog.textProgress.setText(copy.getInfo())
+                        dialog.textProgress.setText(copy.get_info())
                         dialog.progressBar.setValue(0.0)
                         break
 
@@ -658,7 +657,7 @@ class Loader(QtGui.QMainWindow):
 
     def handleStartupConnection(self, value=None, default=False):
         """ controla o fluxo de criação e remoção de conexões """
-        if self.LOADING and not self.manage.isComplete():
+        if self.LOADING and not self.manage.is_complete():
             connection = self.manage.ctrConnection
             nActiveConn = connection.countActive()
 

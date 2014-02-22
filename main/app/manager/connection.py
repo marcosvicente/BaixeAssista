@@ -7,7 +7,7 @@ class Connection(object):
     def __init__(self, manage):
         self.manage = manage
         # controla a transferência do arquivo de vídeo.
-        self.streamManager = Universal.getStreamManager(manage.getVideoUrl())
+        self.streamManager = Universal.getStreamManager(manage.get_video_url())
         # guarda as conexoes criadas
         self.connlist = []
 

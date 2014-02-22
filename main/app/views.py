@@ -12,7 +12,7 @@ def stream_loader(request):
         return HttpResponse("waiting...")
 
     manage = request.manage
-    video_manager = manage.videoManager
+    video_manager = manage.video_manager
     seek_pos = request.GET.get("start", 0)
 
     try:
@@ -20,16 +20,16 @@ def stream_loader(request):
     except ValueError:
         seek_pos = video_manager.get_relative_mp4(seek_pos)
 
-    if seek_pos > 0 and manage.videoManager.random_mode():
-        manage.setRandomRead(seek_pos)
+    if seek_pos > 0 and manage.video_manager.random_mode():
+        manage.set_random(seek_pos)
         status_code = 206
     else:
-        manage.reloadSettings()
+        manage.reload_settings()
         status_code = 200
 
-    filename = manage.getVideoTitle()
+    filename = manage.get_video_title()
     filename = filename.encode("utf-8", "ignore")
-    video_size = manage.getVideoSize()
+    video_size = manage.get_video_size()
     video_type = manage.get_video_ext()
 
     response = StreamingHttpResponse(manage.get_streamer(), status=status_code)

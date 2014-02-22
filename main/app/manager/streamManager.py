@@ -57,7 +57,7 @@ class StreamManager(threading.Thread):
         self.using_proxy = not noProxy
         self.proxies = {}
 
-        self.video_manager = manage.createVideoManager()
+        self.video_manager = manage.create_video_manager()
         self.link = ''
 
         self.lock_wait = threading.Event()
@@ -157,7 +157,7 @@ class StreamManager(threading.Thread):
         Info.set(self.ident, "state", _("Iniciando"))
 
         if self.using_proxy:
-            self.proxies = self.manage.proxyManager.get_formated()
+            self.proxies = self.manage.proxy_manager.get_formated()
 
         if self.video_manager.get_video_info(proxies=self.proxies,
                                            timeout=self.params["timeout"]):
@@ -213,10 +213,10 @@ class StreamManager(threading.Thread):
 
             # Escreve os dados na posição resultante
             pos = start - offset + self.bytes_num
-            self.manage.fileManager.write(pos, stream)
+            self.manage.file_manager.write(pos, stream)
 
             # quanto ja foi baixado da stream
-            self.manage.cacheBytesTotal += bytes_num
+            self.manage.cache_bytes_total += bytes_num
             self.manage.interval.send_info["nbytes"][start] += bytes_num
 
             # bytes lidos da conexão.
@@ -265,9 +265,9 @@ class StreamManager(threading.Thread):
                     # começa a escrita da stream de video no arquivo local.
                     self.write(stream, stream_len)
 
-                    start = self.manage.getGlobalStartTime()
-                    current = self.manage.getCacheBytesTotal() - self.manage.getStartCacheSize()
-                    total = self.manage.getVideoSize() - self.manage.getStartCacheSize()
+                    start = self.manage.get_global_start_time()
+                    current = self.manage.get_cache_bytes_total() - self.manage.get_cache_start_size()
+                    total = self.manage.get_video_size() - self.manage.get_cache_start_size()
 
                     Info.set(self.ident, "downloaded", self.format_bytes(self.bytes_num))
                     Info.set(self.ident, "total", self.format_bytes(block_size))
@@ -277,13 +277,13 @@ class StreamManager(threading.Thread):
                     Info.set(self.ident, "speed", self.calc_speed(local_time, time.time(),
                                                                   self.bytes_num))
                     # tempo total do download do arquivo
-                    self.manage.setGlobalEta(self.calc_eta(start, time.time(), total, current))
+                    self.manage.set_global_eta(self.calc_eta(start, time.time(), total, current))
 
                     # calcula a velocidade global
-                    self.manage.setGlobalSpeed(self.calc_speed(start, time.time(), current))
+                    self.manage.set_global_speed(self.calc_speed(start, time.time(), current))
 
                     if self.bytes_num >= block_size:
-                        if not self.manage.isComplete() and self.manage.interval.canContinue(self.ident):
+                        if not self.manage.is_complete() and self.manage.interval.canContinue(self.ident):
                             self.manage.interval.remove(self.ident)
                             # associando aconexão a um novo bloco de bytes
                             if not self.configure():
@@ -291,7 +291,7 @@ class StreamManager(threading.Thread):
                             local_time = time.time()
                         else:
                             break
-                    elif self.manage.nowSending() != seekpos:
+                    elif self.manage.is_sending() != seekpos:
                         self.slow_down(local_time, self.bytes_num)
                 except:
                     self.failure(_("Erro de leitura"), 2)
@@ -324,7 +324,7 @@ class StreamManager(threading.Thread):
         bad_read = (number_error != 3 and self.bytes_num < self.manage.interval.getMinBlock())
 
         if ip != "default" and (number_error == 1 or bad_read):
-            self.manage.proxyManager.set_bad(ip)
+            self.manage.proxy_manager.set_bad(ip)
 
         # desassociando o ip dos dados do vídeo.
         del self.video_manager[ip]
@@ -344,11 +344,11 @@ class StreamManager(threading.Thread):
 
         if not self.using_proxy:
             if self.params["typechange"]:
-                self.proxies = self.manage.proxyManager.get_formated()
+                self.proxies = self.manage.proxy_manager.get_formated()
 
         elif error_number == 1 or self.bytes_num < self.manage.interval.getMinBlock():
             if not self.params["typechange"]:
-                self.proxies = self.manage.proxyManager.get_formated()
+                self.proxies = self.manage.proxy_manager.get_formated()
             else:
                 self.proxies = {}
 
@@ -362,7 +362,7 @@ class StreamManager(threading.Thread):
         seek_pos = self.manage.interval.getStart(self.ident)
         start = self.video_manager.get_relative(seek_pos)
         link = sites.get_with_seek(self.link, start)
-        video_size = self.manage.getVideoSize()
+        video_size = self.manage.get_video_size()
         try_num = 0
         while self.is_running and try_num < self.params["reconexao"]:
             try:
@@ -383,7 +383,7 @@ class StreamManager(threading.Thread):
                     if stream:
                         self.write(stream, len(stream))
                     if self.using_proxy:
-                        self.manage.proxyManager.set_good(self.proxies["http"])
+                        self.manage.proxy_manager.set_good(self.proxies["http"])
                     Info.set(self.ident, "try", "Ok")
                     return True
                 else:
@@ -423,7 +423,7 @@ class StreamManager(threading.Thread):
         # configura um link inicial
         self._init()
 
-        while self.is_running and not self.manage.isComplete():
+        while self.is_running and not self.manage.is_complete():
             try:
                 if self.configure():
                     # iniciando a conexão com o servidor de vídeo.
@@ -449,7 +449,7 @@ class StreamManager_(StreamManager):
         Info.add(self.ident)
         Info.set(self.ident, "state", _("Iniciando"))
 
-        if self.using_proxy: self.proxies = self.manage.proxyManager.get_formated()
+        if self.using_proxy: self.proxies = self.manage.proxy_manager.get_formated()
 
         Info.set(self.ident, "http", self.proxies.get("http", _("Conexão Padrão")))
         self.link = self.getVideoLink()
@@ -466,11 +466,11 @@ class StreamManager_(StreamManager):
 
         if not self.using_proxy:
             if self.params["typechange"]:
-                self.proxies = self.manage.proxyManager.get_formated()
+                self.proxies = self.manage.proxy_manager.get_formated()
 
         elif error_number == 1 or self.bytes_num < self.manage.interval.getMinBlock():
             if not self.params["typechange"]:
-                self.proxies = self.manage.proxyManager.get_formated()
+                self.proxies = self.manage.proxy_manager.get_formated()
             else:
                 self.proxies = {}
 
@@ -491,7 +491,7 @@ class StreamManager_(StreamManager):
         seek_pos = self.manage.interval.getStart(self.ident)
         start = self.video_manager.get_relative(seek_pos)
         link = sites.get_with_seek(self.link, start)
-        video_size = self.manage.getVideoSize()
+        video_size = self.manage.get_video_size()
         try_num = 0
         while self.is_running and try_num < self.params["reconexao"]:
             try:
@@ -512,7 +512,7 @@ class StreamManager_(StreamManager):
                     if stream:
                         self.write(stream, len(stream))
                     if self.using_proxy:
-                        self.manage.proxyManager.set_good(self.proxies["http"])
+                        self.manage.proxy_manager.set_good(self.proxies["http"])
                     Info.set(self.ident, "try", "Ok")
                     return True
                 else:
@@ -530,7 +530,7 @@ class StreamManager_(StreamManager):
         # configura um link inicial
         self._init()
 
-        while self.is_running and not self.manage.isComplete():
+        while self.is_running and not self.manage.is_complete():
             try:
                 if self.configure():
                     # inciando a conexão com o servidor de vídeo.
