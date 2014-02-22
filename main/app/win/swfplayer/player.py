@@ -27,7 +27,7 @@ class Player(QtGui.QWidget):
     # arquivos swfs
     flashplayer = ""
     
-    relativeurl = reverse("main.app.views.playerLoader")
+    relativeurl = reverse("player-loader")
     
     def __init__(self, parent=None, **params):
         """params = {}
