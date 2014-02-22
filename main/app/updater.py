@@ -4,8 +4,10 @@ import zipfile
 import platform
 import re
 import time
+import urllib.request
+import urllib.error
+import urllib.parse
 
-import urllib.request, urllib.error, urllib.parse
 from main import environ
 
 
@@ -115,7 +117,7 @@ class Updater(object):
                     pattern = "<{language}>(.*)</{language}>".format(language=language)
                     matchobj = re.search(pattern, rawText, re.DOTALL)
 
-                    text = matchobj.group(1)
+                    text = str(matchobj.group(1))
                     text = text.strip("\r\n ")
 
                     header = "%s:\n" % base.get_filename(packetPath, False)
@@ -203,7 +205,7 @@ class Updater(object):
         if matchobj:
             pk = matchobj.group("pk")
             pg = matchobj.group("pg")
-        return (pk, pg)
+        return pk, pg
 
     def get_system_name(self, link):
         matchobj = self.pv_pattern.search(link)
@@ -244,14 +246,15 @@ class Updater(object):
         """ inicia a busca por novos pacotes de atualização """
         try:
             s = urllib.request.urlopen(self.sourcesLink)
-            contenty = s.read()
+            data = str(s.read())
             s.close()
-            assert contenty
+            assert data
         except:
             return False
 
-        links = contenty.split("\r\n")
-        if not any(links): links = contenty.split("\n")
+        links = data.split("\r\n")
+        if not any(links):
+            links = data.split("\n")
 
         # guarda o grupo de pacotes com versão maior que a atual
         self.packetsLinks = self.packetFilter(links)

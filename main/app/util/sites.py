@@ -34,7 +34,7 @@ def clear_text(text):
     return re.sub(r"[/*&:|\"\'=\\?<>!%$@#()]+", "_", text)
 
 def get_random_text(size=25):
-    return binascii.hexlify(os.urandom(int(size*0.5)))
+    return str(binascii.hexlify(os.urandom(int(size*0.5))))
 
 def get_with_seek(link, seek):
     if link.endswith(","): link += str(seek)
