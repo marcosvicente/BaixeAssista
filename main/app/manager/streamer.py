@@ -5,9 +5,9 @@ import time
 class Streamer(object):
     """ lê e retorna a stream de dados """
 
-    def __init__(self, manage, blocksize=524288):
+    def __init__(self, manage, block_size=524288):
         self.seek_pos = self.sent = 0
-        self.block_size = blocksize
+        self.block_size = block_size
         self.manage = manage
         self._stop = False
 
