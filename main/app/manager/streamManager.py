@@ -286,7 +286,8 @@ class StreamManager(threading.Thread):
                         if not self.manage.isComplete() and self.manage.interval.canContinue(self.ident):
                             self.manage.interval.remove(self.ident)
                             # associando aconexão a um novo bloco de bytes
-                            if not self.configure(): break
+                            if not self.configure():
+                                break
                             local_time = time.time()
                         else:
                             break
@@ -329,23 +330,23 @@ class StreamManager(threading.Thread):
         del self.video_manager[ip]
 
     @base.LogOnError
-    def failure(self, errorstring, errornumber):
+    def failure(self, error_string, errorn_umber):
         # removendo configurações
-        self.unconfig(errorstring, errornumber)
+        self.unconfig(error_string, errorn_umber)
 
         # retorna porque a conexao foi encerrada
-        if not self.is_running or errornumber == 3:
+        if not self.is_running or errorn_umber == 3:
             return
         Info.clear(self.ident)
 
-        Info.set(self.ident, "state", errorstring)
+        Info.set(self.ident, "state", error_string)
         Info.set(self.ident, "state", _("Reconfigurando"))
 
         if not self.using_proxy:
             if self.params["typechange"]:
                 self.proxies = self.manage.proxyManager.get_formated()
 
-        elif errornumber == 1 or self.bytes_num < self.manage.interval.getMinBlock():
+        elif errorn_umber == 1 or self.bytes_num < self.manage.interval.getMinBlock():
             if not self.params["typechange"]:
                 self.proxies = self.manage.proxyManager.get_formated()
             else:
@@ -454,20 +455,20 @@ class StreamManager_(StreamManager):
         self.link = self.getVideoLink()
 
     @base.LogOnError
-    def failure(self, errorstring, errornumber):
+    def failure(self, error_string, errorn_umber):
         Info.clear(self.ident)
-        Info.set(self.ident, 'state', errorstring)
+        Info.set(self.ident, 'state', error_string)
 
-        self.unconfig(errorstring, errornumber)  # removendo configurações
+        self.unconfig(error_string, errorn_umber)  # removendo configurações
 
-        if not self.is_running or errornumber == 3: return  # retorna porque a conexao foi encerrada
+        if not self.is_running or errorn_umber == 3: return  # retorna porque a conexao foi encerrada
         Info.set(self.ident, "state", _("Reconfigurando"))
 
         if not self.using_proxy:
             if self.params["typechange"]:
                 self.proxies = self.manage.proxyManager.get_formated()
 
-        elif errornumber == 1 or self.bytes_num < self.manage.interval.getMinBlock():
+        elif errorn_umber == 1 or self.bytes_num < self.manage.interval.getMinBlock():
             if not self.params["typechange"]:
                 self.proxies = self.manage.proxyManager.get_formated()
             else:

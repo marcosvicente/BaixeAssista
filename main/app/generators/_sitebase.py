@@ -26,14 +26,13 @@ class ConnectionProcessor(object):
 
     @staticmethod
     def get_stream_header(stream, seek_pos, header=''):
-        stream = str(stream)
-        if stream.startswith("FLV"):
-            if stream[:13].endswith("\t" + ("\x00" * 4)) or stream[:13].endswith(("\x00" * 3) + "\t"):
+        if stream.startswith(b"FLV"):
+            if stream[:13].endswith(b"\t" + (b"\x00" * 4)) or stream[:13].endswith((b"\x00" * 3) + b"\t"):
                 if seek_pos == 0:
                     header = stream[:13]
                 else:
                     header, stream = stream[:13], stream[13:]
-            elif stream[:9].endswith("\t"):
+            elif stream[:9].endswith(b"\t"):
                 if seek_pos == 0:
                     header = stream[:9]
                 else:
