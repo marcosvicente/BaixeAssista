@@ -1,6 +1,6 @@
 import re
 
-from main.app.generators._sitebase import SiteBase
+from ._sitebase import SiteBase
 from main.app.util import sites
 
 
@@ -26,51 +26,52 @@ class Vk(SiteBase):
         return True
 
     def get_link(self):
-        vquality = int(self.params.get("quality", 2))
-        optToNotFound = self.configs.get(1, None)
-        optToNotFound = self.configs.get(2, optToNotFound)
-        optToNotFound = self.configs.get(3, optToNotFound)
-        return self.configs.get(vquality, optToNotFound)
+        video_quality = int(self.params.get("quality", 2))
+        when_not_fount = self.configs.get(1, None)
+        when_not_fount = self.configs.get(2, when_not_fount)
+        when_not_fount = self.configs.get(3, when_not_fount)
+        return self.configs.get(video_quality, when_not_fount)
 
     def start_extraction(self, proxies={}, timeout=25):
         ## http://cs519609.userapi.com/u165193745/video/7cad4a848e.360.mp4
         fd = self.connect(self.url, proxies=proxies, timeout=timeout)
-        webdata = fd.read()
+        web_data = str(fd.read())
         fd.close()
         params = {}
         try:
-            mathobj = re.search("var\s*video_host\s*=\s*'(?P<url>.+?)'", webdata, re.DOTALL)
-            params["url"] = mathobj.group("url")
+            math_obj = re.search("var\s*video_host\s*=\s*'(?P<url>.+?)'", web_data, re.DOTALL)
+            params["url"] = math_obj.group("url")
 
-            mathobj = re.search("var\s*video_uid\s*=\s*'(?P<uid>.+?)'", webdata, re.DOTALL)
-            params["uid"] = mathobj.group("uid")
+            math_obj = re.search("var\s*video_uid\s*=\s*'(?P<uid>.+?)'", web_data, re.DOTALL)
+            params["uid"] = math_obj.group("uid")
 
-            mathobj = re.search("var\s*video_vtag\s*=\s*'(?P<vtag>.+?)'", webdata, re.DOTALL)
-            params["vtag"] = mathobj.group("vtag")
+            math_obj = re.search("var\s*video_vtag\s*=\s*'(?P<vtag>.+?)'", web_data, re.DOTALL)
+            params["vtag"] = math_obj.group("vtag")
 
-            mathobj = re.search("var\s*video_max_hd\s*=\s*(?:')?(?P<max_hd>.+?)(?:')?", webdata, re.DOTALL)
-            params["max_hd"] = mathobj.group("max_hd")
+            math_obj = re.search("var\s*video_max_hd\s*=\s*(?:')?(?P<max_hd>.+?)(?:')?", web_data, re.DOTALL)
+            params["max_hd"] = math_obj.group("max_hd")
 
-            mathobj = re.search("var\s*video_no_flv\s*=\s*(?:')?(?P<no_flv>.+?)(?:')?", webdata, re.DOTALL)
-            params["no_flv"] = mathobj.group("no_flv")
+            math_obj = re.search("var\s*video_no_flv\s*=\s*(?:')?(?P<no_flv>.+?)(?:')?", web_data, re.DOTALL)
+            params["no_flv"] = math_obj.group("no_flv")
         except:
-            matchobj = re.search("var\s*vars\s*=\s*\{(?P<vars>.+?)\}", webdata, re.DOTALL)
-            raw_params = matchobj.group("vars").replace(r'\"', '"')
+            match_obj = re.search("var\s*vars\s*=\s*\{(?P<vars>.+?)\}", web_data, re.DOTALL)
+            raw_params = match_obj.group("vars").replace(r'\"', '"')
             params = dict([(a, (b or c)) for a, b, c in re.findall('"(.+?)"\s*:\s*(?:"(.*?)"|(-?\d*))', raw_params)])
             params["url"] = "http://cs%s.vk.com" % params.pop("host")
 
         try:
-            title = re.search("<title>(.+?)</title>", webdata).group(1)
+            match_obj = re.search("<title>(.+?)</title>", web_data)
+            title = match_obj.group(1)
         except:
             title = sites.get_random_text()
 
         if int(params.get("no_flv", 0)):
-            baseUrl = params["url"] + "/u%s/videos/%s.{res}.mp4" % (params["uid"], params["vtag"])
-            url_hd240 = baseUrl.format(res=240)
-            url_hd360 = baseUrl.format(res=360)
+            base_url = params["url"] + "/u%s/videos/%s.{res}.mp4" % (params["uid"], params["vtag"])
+            url_hd240 = base_url.format(res=240)
+            url_hd360 = base_url.format(res=360)
             ext = "mp4"
         else:
             url_hd240 = url_hd360 = params["url"] + "u%s/videos/%s.flv" % (params["uid"], params["vtag"])
             ext = "flv"
 
-        self.configs = {1: url_hd240, 2: url_hd360, "title": title, "ext": ext}
+        self.configs = {"title": title, "ext": ext, 1: url_hd240, 2: url_hd360}
