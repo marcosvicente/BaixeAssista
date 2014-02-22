@@ -37,7 +37,7 @@ class Uploaded( SiteBase ):
         size, unit = search.group(1), search.group(2)
         # convers�o da unidade para bytes
         bytes_size = float(size.replace(",",".")) * self.unidades[ unit.upper() ]
-        return long( bytes_size )
+        return int( bytes_size )
 
     def start_extraction(self, proxies={}, timeout=25):
         """ extrai as informa��es necess�rias, para a transfer�cia do arquivo de video """

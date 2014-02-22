@@ -86,7 +86,7 @@ class StreamManager(threading.Thread):
         if current == 0 or dif < 0.001: # One millisecond
             return '--:--'
         rate = float(current) / dif
-        eta = long((float(total) - float(current)) / rate)
+        eta = int((float(total) - float(current)) / rate)
         (eta_mins, eta_secs) = divmod(eta, 60)
         (eta_hours, eta_mins)=  divmod(eta_mins, 60)
         return '%02d:%02d:%02d' % (eta_hours, eta_mins, eta_secs)
@@ -96,13 +96,13 @@ class StreamManager(threading.Thread):
         new_min = max(bytes / 2.0, 1.0)
         new_max = min(max(bytes * 2.0, 1.0), 4194304) # Do not surpass 4 MB
         if elapsed_time < 0.001:
-            return long(new_max)
+            return int(new_max)
         rate = bytes / elapsed_time
         if rate > new_max:
-            return long(new_max)
+            return int(new_max)
         if rate < new_min:
-            return long(new_min)
-        return long(rate)
+            return int(new_min)
+        return int(rate)
 
     @staticmethod
     def format_bytes(bytes):
@@ -113,7 +113,7 @@ class StreamManager(threading.Thread):
         if bytes == 0.0:
             exponent = 0
         else:
-            exponent = long(math.log(float(bytes), 1024.0))
+            exponent = int(math.log(float(bytes), 1024.0))
         suffix = 'bkMGTPEZY'[exponent]
         converted = float(bytes) / float(1024**exponent)
         return '%.2f%s' % (converted, suffix)

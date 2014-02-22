@@ -53,7 +53,7 @@ class ConnectionProcessor(object):
         is_video = bool(re.match("(video/.*$|application/octet.*$)", contentType))
         
         if not is_video or contentLength is None: return False
-        contentLength = long(contentLength)
+        contentLength = int(contentLength)
         
         # video.mixturecloud: bug de 1bytes
         is_valid = (seekpos != 0 and seekmax == (seekpos +contentLength +1))
@@ -235,12 +235,12 @@ class SiteBase(ConnectionProcessor):
                               headers = {"Range": "bytes=0-"},
                               proxies=proxies, timeout=timeout)
             fd.close()
-            length = long(fd.headers.get("Content-Length", 0))
+            length = int(fd.headers.get("Content-Length", 0))
             assert (length and (fd.code == 200 or fd.code == 206))
         except:
             link = link.rsplit("&",1)[0]
             fd = self.connect(url=link, timeout=timeout); fd.close()
-            length = long(fd.headers.get("Content-Length", 0))
+            length = int(fd.headers.get("Content-Length", 0))
             assert (length and (fd.code == 200 or fd.code == 206))
         return length
         

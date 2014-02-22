@@ -14,7 +14,7 @@ def stream_loader(request):
     seek_pos = request.GET.get("start", 0)
 
     try:
-        seek_pos = long(seek_pos)
+        seek_pos = int(seek_pos)
     except ValueError:
         seek_pos = video_manager.get_relative_mp4(seek_pos)
 

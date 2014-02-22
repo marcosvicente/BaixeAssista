@@ -95,7 +95,7 @@ class AES(object):
         loc_6 = 0
         while (loc_6 < 4 * loc_3):
             
-            floorIndex = long(math.floor(loc_6 / 4))
+            floorIndex = int(math.floor(loc_6 / 4))
             moduleIndex = loc_6 % 4
             
             loc_5[ moduleIndex ][ floorIndex ] = param1[loc_6];
