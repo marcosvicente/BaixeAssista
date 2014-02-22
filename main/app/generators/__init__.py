@@ -179,11 +179,11 @@ class Universal(object):
         return url
 
 
-def get_classref(filemod):
+def get_class_ref(mod_file):
     """ retorna apenas, sites com a variável de controle(controller) """
-    for classref in list(filemod.__dict__.values()):
-        if isinstance(classref, collections.Callable) and hasattr(classref, "controller"):
-            return classref
+    for class_ref in list(mod_file.__dict__.values()):
+        if isinstance(class_ref, collections.Callable) and hasattr(class_ref, "controller"):
+            return class_ref
 
 
 def find_all_sites():
@@ -196,16 +196,11 @@ def find_all_sites():
         filename = base.get_filename(filepath, False)
 
         if not filename.startswith("_"):
-            modname = "{!s}.{!s}".format(Universal.__module__, filename)
-            print(modname, filepath)
-
-            loader = importlib.find_loader(modname, filepath)
-            print(loader)
-            module = loader.load_module(modname)
-
+            mod_name = "{!s}.{!s}".format(Universal.__module__, filename)
+            module = importlib.import_module(mod_name, Universal.__module__)
             mod_all.append(module)
 
-    return list(map(get_classref, mod_all))
+    return list(map(get_class_ref, mod_all))
 
 
 def register_site(basename, site):
