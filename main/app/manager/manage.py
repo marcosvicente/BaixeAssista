@@ -268,7 +268,7 @@ class Manage(object):
     def get_video_ext(self):
         return self.video_text
 
-    def is_sending(self):
+    def position_sent(self):
         return self.interval.send_info['sending']
 
     def get_cache_bytes_total(self):

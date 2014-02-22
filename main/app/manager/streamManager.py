@@ -291,7 +291,7 @@ class StreamManager(threading.Thread):
                             local_time = time.time()
                         else:
                             break
-                    elif self.manage.is_sending() != seekpos:
+                    elif self.manage.position_sent() != seekpos:
                         self.slow_down(local_time, self.bytes_num)
                 except:
                     self.failure(_("Erro de leitura"), 2)
