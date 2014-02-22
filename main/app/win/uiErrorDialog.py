@@ -9,6 +9,7 @@
 
 from PySide import QtCore, QtGui
 
+
 class Ui_Dialog(object):
     def setupUi(self, Dialog):
         Dialog.setObjectName("Dialog")
@@ -84,12 +85,22 @@ class Ui_Dialog(object):
         QtCore.QMetaObject.connectSlotsByName(Dialog)
 
     def retranslateUi(self, Dialog):
-        Dialog.setWindowTitle(QtGui.QApplication.translate("Dialog", "Error reporting", None, QtGui.QApplication.UnicodeUTF8))
-        self.groupBox.setTitle(QtGui.QApplication.translate("Dialog", "Describe the problem you are having", None, QtGui.QApplication.UnicodeUTF8))
-        self.groupBox_3.setTitle(QtGui.QApplication.translate("Dialog", "If you want information about the issue, please email below.", None, QtGui.QApplication.UnicodeUTF8))
-        self.groupBox_4.setTitle(QtGui.QApplication.translate("Dialog", "Make direct contact with the developer through the email below.", None, QtGui.QApplication.UnicodeUTF8))
-        self.groupBox_2.setTitle(QtGui.QApplication.translate("Dialog", "Your opinion is important. If you want to say something about the program, suggest something.", None, QtGui.QApplication.UnicodeUTF8))
-        self.logSend.setText(QtGui.QApplication.translate("Dialog", "Send log files along with the problem description.", None, QtGui.QApplication.UnicodeUTF8))
+        Dialog.setWindowTitle(
+            QtGui.QApplication.translate("Dialog", "Error reporting", None, QtGui.QApplication.UnicodeUTF8))
+        self.groupBox.setTitle(QtGui.QApplication.translate("Dialog", "Describe the problem you are having", None,
+                                                            QtGui.QApplication.UnicodeUTF8))
+        self.groupBox_3.setTitle(
+            QtGui.QApplication.translate("Dialog", "If you want information about the issue, please email below.", None,
+                                         QtGui.QApplication.UnicodeUTF8))
+        self.groupBox_4.setTitle(
+            QtGui.QApplication.translate("Dialog", "Make direct contact with the developer through the email below.",
+                                         None, QtGui.QApplication.UnicodeUTF8))
+        self.groupBox_2.setTitle(QtGui.QApplication.translate("Dialog",
+                                                              "Your opinion is important. If you want to say something about the program, suggest something.",
+                                                              None, QtGui.QApplication.UnicodeUTF8))
+        self.logSend.setText(
+            QtGui.QApplication.translate("Dialog", "Send log files along with the problem description.", None,
+                                         QtGui.QApplication.UnicodeUTF8))
         self.infoSendEmail.setText(QtGui.QApplication.translate("Dialog", "...", None, QtGui.QApplication.UnicodeUTF8))
         self.btnSendEmail.setText(QtGui.QApplication.translate("Dialog", "Send", None, QtGui.QApplication.UnicodeUTF8))
 

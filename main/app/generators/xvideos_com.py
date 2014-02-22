@@ -1,7 +1,8 @@
-import cgi
 import re
+import urllib
 
-from main.app.generators._sitebase import SiteBase
+from ._sitebase import SiteBase
+
 from main.app.util import sites
 
 
@@ -24,14 +25,14 @@ class Xvideos(SiteBase):
 
     def start_extraction(self, proxies={}, timeout=25):
         fd = self.connect(self.url, proxies=proxies, timeout=timeout)
-        webpage = fd.read()
+        web_page = fd.read()
         fd.close()
 
-        flashvar = re.search('\<embed\s*type.+flashvars="(.*?)"', webpage).group(1)
-        video_data = cgi.parse_qs(flashvar)
+        flash_vars = re.search('\<embed\s*type.+flashvars="(.*?)"', web_page).group(1)
+        video_data = urllib.parser.parse_qs(flash_vars)
 
         try:
-            title = re.search("<title>(.*?)</title>", webpage).group(1)
+            title = re.search("<title>(.*?)</title>", web_page).group(1)
         except:
             title = sites.get_random_text()
 

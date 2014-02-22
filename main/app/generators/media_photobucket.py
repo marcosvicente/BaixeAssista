@@ -1,17 +1,21 @@
 # coding: utf-8
-from ._sitebase import *
+import re
+import urllib
 
-##################################### PHOTOBUCKET #####################################
-class Photobucket( SiteBase ):
-    """Information extractor for photobucket.com."""
+from ._sitebase import SiteBase
+from main.app.util import sites
+
+
+class Photobucket(SiteBase):
+    """ Information extractor for photobucket.com """
     ## http://photobucket.com/videos
     controller = {
-        "url": "http://media.photobucket.com/video/%s", 
-        "patterns": re.compile("(?P<inner_url>(?:http://)?media\.photobucket\.com/video/(?P<id>.*))"), 
-        "control": "SM_RANGE", 
+        "url": "http://media.photobucket.com/video/%s",
+        "patterns": re.compile("(?P<inner_url>(?:http://)?media\.photobucket\.com/video/(?P<id>.*))"),
+        "control": "SM_RANGE",
         "video_control": None
     }
-    
+
     def __init__(self, url, **params):
         SiteBase.__init__(self, **params)
         self.basename = "media.photobucket"
@@ -19,26 +23,26 @@ class Photobucket( SiteBase ):
 
     def start_extraction(self, proxies={}, timeout=25):
         fd = self.connect(self.url, proxies=proxies, timeout=timeout)
-        webpage = fd.read(); fd.close()
+        web_page = fd.read()
+        fd.close()
         video_extension = 'flv'
-        
-        # Extract URL, uploader, and title from webpage
-        mobj = re.search(r'<link rel="video_src" href=".*\?file=([^"]+)" />', webpage)
-        mediaURL = urllib.parse.unquote(mobj.group(1))
-        video_url = mediaURL
-        
+
+        # Extract URL, uploader, and title from web_page
+        matchobj = re.search(r'<link rel="video_src" href=".*\?file=([^"]+)" />', web_page)
+        media_url = urllib.parse.unquote(matchobj.group(1))
+        video_url = media_url
+
         try:
-            mobj = re.search(r'<meta name="description" content="(.+)"', webpage)
-            video_title = mobj.group(1).decode('utf-8')
+            matchobj = re.search(r'<meta name="description" content="(.+)"', web_page)
+            video_title = matchobj.group(1).decode('utf-8')
         except:
             video_title = sites.get_random_text()
 
         self.configs = {
-            'url': video_url.decode('utf-8'),
+            'url': video_url,
             'upload_date': 'NA',
             'title': video_title,
-            'ext': video_extension.decode('utf-8'),
+            'ext': video_extension,
             'format': 'NA',
             'player_url': None
         }
-        

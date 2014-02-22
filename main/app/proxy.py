@@ -12,8 +12,9 @@ from main.app.util import base, sites
 
 try:
     _("test translation")
-except:
-    base.trans_install()  # instala as traduções.
+except AttributeError:
+    # instala as traduções.
+    base.trans_install()
 
 
 class ProxyControl(object):

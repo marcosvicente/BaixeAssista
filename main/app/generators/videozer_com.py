@@ -15,7 +15,7 @@ class Videozer(videobb_com.Videobb):
 
     def __init__(self, url, **params):
         super(self.__class__, self).__init__(url, **params)
-        self.settingsLink = 'http://www.videozer.com/player_control/settings.php?v=%s&fv=v1.1.14'
+        self.settings_url = 'http://www.videozer.com/player_control/settings.php?v=%s&fv=v1.1.14'
         self.env = ["cfg", "environment"]
         self.res = ["cfg", "quality"]
         self.key2 = 215678

@@ -1,6 +1,7 @@
 # coding: utf-8
-from . import putlocker_com
 import re
+
+from . import putlocker_com
 
 
 class Sockshare(putlocker_com.PutLocker):

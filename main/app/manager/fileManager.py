@@ -21,6 +21,7 @@ class FileManager(object):
             def wrapper(*args, **kwargs):
                 with self._lock:
                     return self.fun(inst, *args, **kwargs)
+
             return wrapper
 
     def __init__(self, **params):

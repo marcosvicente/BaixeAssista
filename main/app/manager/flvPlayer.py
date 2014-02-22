@@ -48,21 +48,23 @@ class FlvPlayer(threading.Thread):
             processHandle = hProcess
 
             @staticmethod
-            def terminate(): win32api.TerminateProcess(hProcess, 0)
+            def terminate():
+                win32api.TerminateProcess(hProcess, 0)
 
             @staticmethod
-            def wait(): win32event.WaitForSingleObject(hProcess, win32event.INFINITE)
+            def wait():
+                win32event.WaitForSingleObject(hProcess, win32event.INFINITE)
 
         return Process
 
     def run(self):
         try:
             self.process = self.runElevated(self.cmd, self.url)
-            self.running = True;
+            self.running = True
             self.process.wait()
         except ImportError:
             self.process = subprocess.Popen(self.url, executable=self.cmd)
-            self.running = True;
+            self.running = True
             self.process.wait()
         except:
             pass

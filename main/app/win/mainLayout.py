@@ -9,6 +9,7 @@
 
 from PySide import QtCore, QtGui
 
+
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
@@ -145,7 +146,7 @@ class Ui_MainWindow(object):
         sizePolicy.setHeightForWidth(self.connectionActive.sizePolicy().hasHeightForWidth())
         self.connectionActive.setSizePolicy(sizePolicy)
         self.connectionActive.setAutoFillBackground(False)
-        self.connectionActive.setAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignLeft|QtCore.Qt.AlignVCenter)
+        self.connectionActive.setAlignment(QtCore.Qt.AlignLeading | QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
         self.connectionActive.setButtonSymbols(QtGui.QAbstractSpinBox.UpDownArrows)
         self.connectionActive.setMinimum(1)
         self.connectionActive.setMaximum(30)
@@ -612,7 +613,8 @@ class Ui_MainWindow(object):
         self.tabPanel.setCurrentIndex(0)
         self.groupTypes.setCurrentIndex(0)
         self.videoQuality.setCurrentIndex(-1)
-        QtCore.QObject.connect(self.hSliderPageConf, QtCore.SIGNAL("valueChanged(int)"), self.groupTypes.setCurrentIndex)
+        QtCore.QObject.connect(self.hSliderPageConf, QtCore.SIGNAL("valueChanged(int)"),
+                               self.groupTypes.setCurrentIndex)
         QtCore.QObject.connect(self.groupTypes, QtCore.SIGNAL("currentChanged(int)"), self.hSliderPageConf.setValue)
         QtCore.QObject.connect(self.tempFiles, QtCore.SIGNAL("toggled(bool)"), self.tempFileAction.setEnabled)
         QtCore.QObject.connect(self.btnStartDl, QtCore.SIGNAL("toggled(bool)"), self.tempFiles.setDisabled)
@@ -622,62 +624,122 @@ class Ui_MainWindow(object):
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
-        MainWindow.setWindowTitle(QtGui.QApplication.translate("MainWindow", "BaixeAssista", None, QtGui.QApplication.UnicodeUTF8))
-        self.btnStartDl.setText(QtGui.QApplication.translate("MainWindow", "Download", None, QtGui.QApplication.UnicodeUTF8))
-        self.tabPanel.setTabText(self.tabPanel.indexOf(self.tabBrowser), QtGui.QApplication.translate("MainWindow", "Browser", None, QtGui.QApplication.UnicodeUTF8))
-        self.groupBox.setTitle(QtGui.QApplication.translate("MainWindow", "Control", None, QtGui.QApplication.UnicodeUTF8))
-        self.label.setText(QtGui.QApplication.translate("MainWindow", "Active connections", None, QtGui.QApplication.UnicodeUTF8))
+        MainWindow.setWindowTitle(
+            QtGui.QApplication.translate("MainWindow", "BaixeAssista", None, QtGui.QApplication.UnicodeUTF8))
+        self.btnStartDl.setText(
+            QtGui.QApplication.translate("MainWindow", "Download", None, QtGui.QApplication.UnicodeUTF8))
+        self.tabPanel.setTabText(self.tabPanel.indexOf(self.tabBrowser),
+                                 QtGui.QApplication.translate("MainWindow", "Browser", None,
+                                                              QtGui.QApplication.UnicodeUTF8))
+        self.groupBox.setTitle(
+            QtGui.QApplication.translate("MainWindow", "Control", None, QtGui.QApplication.UnicodeUTF8))
+        self.label.setText(
+            QtGui.QApplication.translate("MainWindow", "Active connections", None, QtGui.QApplication.UnicodeUTF8))
         self.label_3.setText(QtGui.QApplication.translate("MainWindow", "Speed", None, QtGui.QApplication.UnicodeUTF8))
-        self.label_5.setText(QtGui.QApplication.translate("MainWindow", "Timeout", None, QtGui.QApplication.UnicodeUTF8))
-        self.groupBox_2.setTitle(QtGui.QApplication.translate("MainWindow", "Behavior", None, QtGui.QApplication.UnicodeUTF8))
-        self.label_2.setText(QtGui.QApplication.translate("MainWindow", "Connection attempts", None, QtGui.QApplication.UnicodeUTF8))
-        self.label_4.setText(QtGui.QApplication.translate("MainWindow", "Wait between connection attempts", None, QtGui.QApplication.UnicodeUTF8))
-        self.groupBox_4.setTitle(QtGui.QApplication.translate("MainWindow", "Types", None, QtGui.QApplication.UnicodeUTF8))
-        self.connectionType.setText(QtGui.QApplication.translate("MainWindow", "Modify connection type", None, QtGui.QApplication.UnicodeUTF8))
-        self.proxyDisable.setText(QtGui.QApplication.translate("MainWindow", "Disable proxy", None, QtGui.QApplication.UnicodeUTF8))
-        self.groupTypes.setItemText(self.groupTypes.indexOf(self.configConnection), QtGui.QApplication.translate("MainWindow", "Connection", None, QtGui.QApplication.UnicodeUTF8))
+        self.label_5.setText(
+            QtGui.QApplication.translate("MainWindow", "Timeout", None, QtGui.QApplication.UnicodeUTF8))
+        self.groupBox_2.setTitle(
+            QtGui.QApplication.translate("MainWindow", "Behavior", None, QtGui.QApplication.UnicodeUTF8))
+        self.label_2.setText(
+            QtGui.QApplication.translate("MainWindow", "Connection attempts", None, QtGui.QApplication.UnicodeUTF8))
+        self.label_4.setText(QtGui.QApplication.translate("MainWindow", "Wait between connection attempts", None,
+                                                          QtGui.QApplication.UnicodeUTF8))
+        self.groupBox_4.setTitle(
+            QtGui.QApplication.translate("MainWindow", "Types", None, QtGui.QApplication.UnicodeUTF8))
+        self.connectionType.setText(
+            QtGui.QApplication.translate("MainWindow", "Modify connection type", None, QtGui.QApplication.UnicodeUTF8))
+        self.proxyDisable.setText(
+            QtGui.QApplication.translate("MainWindow", "Disable proxy", None, QtGui.QApplication.UnicodeUTF8))
+        self.groupTypes.setItemText(self.groupTypes.indexOf(self.configConnection),
+                                    QtGui.QApplication.translate("MainWindow", "Connection", None,
+                                                                 QtGui.QApplication.UnicodeUTF8))
         self.btnToolDir.setText(QtGui.QApplication.translate("MainWindow", "...", None, QtGui.QApplication.UnicodeUTF8))
-        self.label_7.setText(QtGui.QApplication.translate("MainWindow", "Directory videos", None, QtGui.QApplication.UnicodeUTF8))
-        self.label_6.setText(QtGui.QApplication.translate("MainWindow", "Video quality", None, QtGui.QApplication.UnicodeUTF8))
-        self.groupTypes.setItemText(self.groupTypes.indexOf(self.configMovie), QtGui.QApplication.translate("MainWindow", "Movies", None, QtGui.QApplication.UnicodeUTF8))
-        self.label_8.setText(QtGui.QApplication.translate("MainWindow", "Divide the number of times", None, QtGui.QApplication.UnicodeUTF8))
-        self.tempFiles.setText(QtGui.QApplication.translate("MainWindow", "Use temporary file", None, QtGui.QApplication.UnicodeUTF8))
-        self.groupTypes.setItemText(self.groupTypes.indexOf(self.configFile), QtGui.QApplication.translate("MainWindow", "Files", None, QtGui.QApplication.UnicodeUTF8))
-        self.tabPanel.setTabText(self.tabPanel.indexOf(self.tabConfig), QtGui.QApplication.translate("MainWindow", "Configuration", None, QtGui.QApplication.UnicodeUTF8))
-        self.connectionInfo.horizontalHeaderItem(0).setText(QtGui.QApplication.translate("MainWindow", "Proxy", None, QtGui.QApplication.UnicodeUTF8))
-        self.connectionInfo.horizontalHeaderItem(1).setText(QtGui.QApplication.translate("MainWindow", "Try", None, QtGui.QApplication.UnicodeUTF8))
-        self.connectionInfo.horizontalHeaderItem(2).setText(QtGui.QApplication.translate("MainWindow", "State", None, QtGui.QApplication.UnicodeUTF8))
-        self.connectionInfo.horizontalHeaderItem(3).setText(QtGui.QApplication.translate("MainWindow", "Segment", None, QtGui.QApplication.UnicodeUTF8))
-        self.connectionInfo.horizontalHeaderItem(4).setText(QtGui.QApplication.translate("MainWindow", "Downloaded", None, QtGui.QApplication.UnicodeUTF8))
-        self.connectionInfo.horizontalHeaderItem(5).setText(QtGui.QApplication.translate("MainWindow", "Total", None, QtGui.QApplication.UnicodeUTF8))
-        self.connectionInfo.horizontalHeaderItem(6).setText(QtGui.QApplication.translate("MainWindow", "Remainder", None, QtGui.QApplication.UnicodeUTF8))
-        self.connectionInfo.horizontalHeaderItem(7).setText(QtGui.QApplication.translate("MainWindow", "Percent", None, QtGui.QApplication.UnicodeUTF8))
-        self.connectionInfo.horizontalHeaderItem(8).setText(QtGui.QApplication.translate("MainWindow", "Speed", None, QtGui.QApplication.UnicodeUTF8))
-        self.groupBox_3.setTitle(QtGui.QApplication.translate("MainWindow", "About current video download", None, QtGui.QApplication.UnicodeUTF8))
-        self.label_9.setText(QtGui.QApplication.translate("MainWindow", "Video title", None, QtGui.QApplication.UnicodeUTF8))
-        self.label_10.setText(QtGui.QApplication.translate("MainWindow", "Video ext", None, QtGui.QApplication.UnicodeUTF8))
-        self.label_11.setText(QtGui.QApplication.translate("MainWindow", "Video size", None, QtGui.QApplication.UnicodeUTF8))
-        self.label_12.setText(QtGui.QApplication.translate("MainWindow", "Global progress", None, QtGui.QApplication.UnicodeUTF8))
-        self.label_13.setText(QtGui.QApplication.translate("MainWindow", "Downloaded", None, QtGui.QApplication.UnicodeUTF8))
+        self.label_7.setText(
+            QtGui.QApplication.translate("MainWindow", "Directory videos", None, QtGui.QApplication.UnicodeUTF8))
+        self.label_6.setText(
+            QtGui.QApplication.translate("MainWindow", "Video quality", None, QtGui.QApplication.UnicodeUTF8))
+        self.groupTypes.setItemText(self.groupTypes.indexOf(self.configMovie),
+                                    QtGui.QApplication.translate("MainWindow", "Movies", None,
+                                                                 QtGui.QApplication.UnicodeUTF8))
+        self.label_8.setText(QtGui.QApplication.translate("MainWindow", "Divide the number of times", None,
+                                                          QtGui.QApplication.UnicodeUTF8))
+        self.tempFiles.setText(
+            QtGui.QApplication.translate("MainWindow", "Use temporary file", None, QtGui.QApplication.UnicodeUTF8))
+        self.groupTypes.setItemText(self.groupTypes.indexOf(self.configFile),
+                                    QtGui.QApplication.translate("MainWindow", "Files", None,
+                                                                 QtGui.QApplication.UnicodeUTF8))
+        self.tabPanel.setTabText(self.tabPanel.indexOf(self.tabConfig),
+                                 QtGui.QApplication.translate("MainWindow", "Configuration", None,
+                                                              QtGui.QApplication.UnicodeUTF8))
+        self.connectionInfo.horizontalHeaderItem(0).setText(
+            QtGui.QApplication.translate("MainWindow", "Proxy", None, QtGui.QApplication.UnicodeUTF8))
+        self.connectionInfo.horizontalHeaderItem(1).setText(
+            QtGui.QApplication.translate("MainWindow", "Try", None, QtGui.QApplication.UnicodeUTF8))
+        self.connectionInfo.horizontalHeaderItem(2).setText(
+            QtGui.QApplication.translate("MainWindow", "State", None, QtGui.QApplication.UnicodeUTF8))
+        self.connectionInfo.horizontalHeaderItem(3).setText(
+            QtGui.QApplication.translate("MainWindow", "Segment", None, QtGui.QApplication.UnicodeUTF8))
+        self.connectionInfo.horizontalHeaderItem(4).setText(
+            QtGui.QApplication.translate("MainWindow", "Downloaded", None, QtGui.QApplication.UnicodeUTF8))
+        self.connectionInfo.horizontalHeaderItem(5).setText(
+            QtGui.QApplication.translate("MainWindow", "Total", None, QtGui.QApplication.UnicodeUTF8))
+        self.connectionInfo.horizontalHeaderItem(6).setText(
+            QtGui.QApplication.translate("MainWindow", "Remainder", None, QtGui.QApplication.UnicodeUTF8))
+        self.connectionInfo.horizontalHeaderItem(7).setText(
+            QtGui.QApplication.translate("MainWindow", "Percent", None, QtGui.QApplication.UnicodeUTF8))
+        self.connectionInfo.horizontalHeaderItem(8).setText(
+            QtGui.QApplication.translate("MainWindow", "Speed", None, QtGui.QApplication.UnicodeUTF8))
+        self.groupBox_3.setTitle(QtGui.QApplication.translate("MainWindow", "About current video download", None,
+                                                              QtGui.QApplication.UnicodeUTF8))
+        self.label_9.setText(
+            QtGui.QApplication.translate("MainWindow", "Video title", None, QtGui.QApplication.UnicodeUTF8))
+        self.label_10.setText(
+            QtGui.QApplication.translate("MainWindow", "Video ext", None, QtGui.QApplication.UnicodeUTF8))
+        self.label_11.setText(
+            QtGui.QApplication.translate("MainWindow", "Video size", None, QtGui.QApplication.UnicodeUTF8))
+        self.label_12.setText(
+            QtGui.QApplication.translate("MainWindow", "Global progress", None, QtGui.QApplication.UnicodeUTF8))
+        self.label_13.setText(
+            QtGui.QApplication.translate("MainWindow", "Downloaded", None, QtGui.QApplication.UnicodeUTF8))
         self.label_14.setText(QtGui.QApplication.translate("MainWindow", "To", None, QtGui.QApplication.UnicodeUTF8))
-        self.label_15.setText(QtGui.QApplication.translate("MainWindow", "Global speed", None, QtGui.QApplication.UnicodeUTF8))
+        self.label_15.setText(
+            QtGui.QApplication.translate("MainWindow", "Global speed", None, QtGui.QApplication.UnicodeUTF8))
         self.label_16.setText(QtGui.QApplication.translate("MainWindow", "Eta", None, QtGui.QApplication.UnicodeUTF8))
-        self.tabPanel.setTabText(self.tabPanel.indexOf(self.tabInfo), QtGui.QApplication.translate("MainWindow", "Info", None, QtGui.QApplication.UnicodeUTF8))
-        self.tabPanel.setTabText(self.tabPanel.indexOf(self.tabFiles), QtGui.QApplication.translate("MainWindow", "Files", None, QtGui.QApplication.UnicodeUTF8))
-        self.menuEdit.setTitle(QtGui.QApplication.translate("MainWindow", "Players", None, QtGui.QApplication.UnicodeUTF8))
+        self.tabPanel.setTabText(self.tabPanel.indexOf(self.tabInfo),
+                                 QtGui.QApplication.translate("MainWindow", "Info", None,
+                                                              QtGui.QApplication.UnicodeUTF8))
+        self.tabPanel.setTabText(self.tabPanel.indexOf(self.tabFiles),
+                                 QtGui.QApplication.translate("MainWindow", "Files", None,
+                                                              QtGui.QApplication.UnicodeUTF8))
+        self.menuEdit.setTitle(
+            QtGui.QApplication.translate("MainWindow", "Players", None, QtGui.QApplication.UnicodeUTF8))
         self.menuLang.setTitle(QtGui.QApplication.translate("MainWindow", "Lang", None, QtGui.QApplication.UnicodeUTF8))
-        self.menuAbout.setTitle(QtGui.QApplication.translate("MainWindow", "Help", None, QtGui.QApplication.UnicodeUTF8))
-        self.menuUpdate.setTitle(QtGui.QApplication.translate("MainWindow", "Update", None, QtGui.QApplication.UnicodeUTF8))
-        self.actionExit.setText(QtGui.QApplication.translate("MainWindow", "Exit", None, QtGui.QApplication.UnicodeUTF8))
-        self.actionEnglish.setText(QtGui.QApplication.translate("MainWindow", "English", None, QtGui.QApplication.UnicodeUTF8))
-        self.actionPortuguse.setText(QtGui.QApplication.translate("MainWindow", "Portuguese", None, QtGui.QApplication.UnicodeUTF8))
-        self.actionAbout.setText(QtGui.QApplication.translate("MainWindow", "About", None, QtGui.QApplication.UnicodeUTF8))
-        self.actionSpanish.setText(QtGui.QApplication.translate("MainWindow", "Spanish", None, QtGui.QApplication.UnicodeUTF8))
-        self.actionReloadPlayer.setText(QtGui.QApplication.translate("MainWindow", "Reload player", None, QtGui.QApplication.UnicodeUTF8))
-        self.actionChooseExternalPlayer.setText(QtGui.QApplication.translate("MainWindow", "Choose external player", None, QtGui.QApplication.UnicodeUTF8))
-        self.actionEmbedPlayer.setText(QtGui.QApplication.translate("MainWindow", "Use embedded player", None, QtGui.QApplication.UnicodeUTF8))
-        self.actionExternalPlayer.setText(QtGui.QApplication.translate("MainWindow", "Use external player", None, QtGui.QApplication.UnicodeUTF8))
-        self.actionErroReporting.setText(QtGui.QApplication.translate("MainWindow", "Error reporting", None, QtGui.QApplication.UnicodeUTF8))
-        self.actionAutomaticSearch.setText(QtGui.QApplication.translate("MainWindow", "Automatic search", None, QtGui.QApplication.UnicodeUTF8))
-        self.actionCheckNow.setText(QtGui.QApplication.translate("MainWindow", "Check now", None, QtGui.QApplication.UnicodeUTF8))
+        self.menuAbout.setTitle(
+            QtGui.QApplication.translate("MainWindow", "Help", None, QtGui.QApplication.UnicodeUTF8))
+        self.menuUpdate.setTitle(
+            QtGui.QApplication.translate("MainWindow", "Update", None, QtGui.QApplication.UnicodeUTF8))
+        self.actionExit.setText(
+            QtGui.QApplication.translate("MainWindow", "Exit", None, QtGui.QApplication.UnicodeUTF8))
+        self.actionEnglish.setText(
+            QtGui.QApplication.translate("MainWindow", "English", None, QtGui.QApplication.UnicodeUTF8))
+        self.actionPortuguse.setText(
+            QtGui.QApplication.translate("MainWindow", "Portuguese", None, QtGui.QApplication.UnicodeUTF8))
+        self.actionAbout.setText(
+            QtGui.QApplication.translate("MainWindow", "About", None, QtGui.QApplication.UnicodeUTF8))
+        self.actionSpanish.setText(
+            QtGui.QApplication.translate("MainWindow", "Spanish", None, QtGui.QApplication.UnicodeUTF8))
+        self.actionReloadPlayer.setText(
+            QtGui.QApplication.translate("MainWindow", "Reload player", None, QtGui.QApplication.UnicodeUTF8))
+        self.actionChooseExternalPlayer.setText(
+            QtGui.QApplication.translate("MainWindow", "Choose external player", None, QtGui.QApplication.UnicodeUTF8))
+        self.actionEmbedPlayer.setText(
+            QtGui.QApplication.translate("MainWindow", "Use embedded player", None, QtGui.QApplication.UnicodeUTF8))
+        self.actionExternalPlayer.setText(
+            QtGui.QApplication.translate("MainWindow", "Use external player", None, QtGui.QApplication.UnicodeUTF8))
+        self.actionErroReporting.setText(
+            QtGui.QApplication.translate("MainWindow", "Error reporting", None, QtGui.QApplication.UnicodeUTF8))
+        self.actionAutomaticSearch.setText(
+            QtGui.QApplication.translate("MainWindow", "Automatic search", None, QtGui.QApplication.UnicodeUTF8))
+        self.actionCheckNow.setText(
+            QtGui.QApplication.translate("MainWindow", "Check now", None, QtGui.QApplication.UnicodeUTF8))
 

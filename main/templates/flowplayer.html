@@ -3,32 +3,32 @@
 {% block title %} FlowPlayer {% endblock %}
 
 {% block head %}
-	<script type="text/javascript" src="{{params.playerscript}}"></script>
+    <script type="text/javascript" src="{{ params.playerscript }}"></script>
 
-	<script type="text/javascript">
-		$(document).ready(function() {
-			BA_GLOBAL_PLAYER = flowplayer("mediaplayer", "{{params.swfplayer}}", {
-				clip: {
-					url: "{{params.file}}",
-					autoPlay: {{params.autostart}},
-					provider: "{{params.provider}}",
+    <script type="text/javascript">
+        $(document).ready(function () {
+            BA_GLOBAL_PLAYER = flowplayer("mediaplayer", "{{params.swfplayer}}", {
+                clip: {
+                    url: "{{params.file}}",
+                    autoPlay: {{params.autostart}},
+                    provider: "{{params.provider}}",
 
-					onStart: function(clip) {
-					   var json = JSON.stringify({
-						   duration: clip.duration
-					   })
-				       document.title = json
-				  	}
-				},
-				plugins: {
-					pseudo: {
-						url: "{{params.pluginskin}}"
-					},
-					controls: {
-						url: "{{params.skin}}"
-					}
-				}
-			});
-		});
-	</script>
+                    onStart: function (clip) {
+                        var json = JSON.stringify({
+                            duration: clip.duration
+                        });
+                        document.title = json;
+                    }
+                },
+                plugins: {
+                    pseudo: {
+                        url: "{{params.pluginskin}}"
+                    },
+                    controls: {
+                        url: "{{params.skin}}"
+                    }
+                }
+            });
+        });
+    </script>
 {% endblock %}

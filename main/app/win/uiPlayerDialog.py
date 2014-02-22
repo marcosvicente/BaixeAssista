@@ -9,6 +9,7 @@
 
 from PySide import QtCore, QtGui
 
+
 class Ui_playerDialog(object):
     def setupUi(self, playerDialog):
         playerDialog.setObjectName("playerDialog")
@@ -75,6 +76,8 @@ class Ui_playerDialog(object):
         QtCore.QMetaObject.connectSlotsByName(playerDialog)
 
     def retranslateUi(self, playerDialog):
-        playerDialog.setWindowTitle(QtGui.QApplication.translate("playerDialog", "SWF Player", None, QtGui.QApplication.UnicodeUTF8))
-        self.btnSkins.setText(QtGui.QApplication.translate("playerDialog", "skin", None, QtGui.QApplication.UnicodeUTF8))
+        playerDialog.setWindowTitle(
+            QtGui.QApplication.translate("playerDialog", "SWF Player", None, QtGui.QApplication.UnicodeUTF8))
+        self.btnSkins.setText(
+            QtGui.QApplication.translate("playerDialog", "skin", None, QtGui.QApplication.UnicodeUTF8))
 

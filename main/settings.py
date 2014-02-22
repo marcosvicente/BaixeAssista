@@ -1,5 +1,7 @@
 # -*- coding: UTF-8 -*-
-import os, sys, re
+import os
+import sys
+import re
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
@@ -49,24 +51,25 @@ VIDEOS_DIR_TEMP_NAME = "temp"
 VIDEOS_DIR_NAME = "videos"
 DEFAULT_VIDEOS_DIR = os.path.join(ROOT_DIR, VIDEOS_DIR_NAME)
 
-if not ROOT_DIR in sys.path: # import do projeto
-    sys.path.append( ROOT_DIR )
-    
-if not PROJECTPATH in sys.path: # import do projeto
-    sys.path.append( PROJECTPATH )
-    
-if not APPDIR in sys.path: # import das apps
-    sys.path.append( APPDIR )
+if not ROOT_DIR in sys.path:  # import do projeto
+    sys.path.append(ROOT_DIR)
+
+if not PROJECTPATH in sys.path:  # import do projeto
+    sys.path.append(PROJECTPATH)
+
+if not APPDIR in sys.path:  # import das apps
+    sys.path.append(APPDIR)
 # ------------------------------------------
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3', # Add 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': os.path.join(CONFIGS_DIR,"database","db_main.db"),  # Or path to database file if using sqlite3.
-        'USER': '',                      # Not used with sqlite3.
-        'PASSWORD': '',                  # Not used with sqlite3.
-        'HOST': '',                      # Set to empty string for localhost. Not used with sqlite3.
-        'PORT': '',                      # Set to empty string for default. Not used with sqlite3.
+        'ENGINE': 'django.db.backends.sqlite3',
+        # Add 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
+        'NAME': os.path.join(CONFIGS_DIR, "database", "db_main.db"),  # Or path to database file if using sqlite3.
+        'USER': '',  # Not used with sqlite3.
+        'PASSWORD': '',  # Not used with sqlite3.
+        'HOST': '',  # Set to empty string for localhost. Not used with sqlite3.
+        'PORT': '',  # Set to empty string for default. Not used with sqlite3.
     }
 }
 
@@ -119,7 +122,7 @@ ADMIN_MEDIA_PREFIX = '/static/admin/'
 
 # Additional locations of static files
 STATICFILES_DIRS = (
-    STATIC_PATH.replace(os.sep,"/"),
+    STATIC_PATH.replace(os.sep, "/"),
     # Put strings here, like "/home/html/static" or "C:/www/django/static".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
@@ -130,7 +133,7 @@ STATICFILES_DIRS = (
 STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
-#    'django.contrib.staticfiles.finders.DefaultStorageFinder',
+    #    'django.contrib.staticfiles.finders.DefaultStorageFinder',
 )
 
 # Make this unique, and don't share it with anybody.
@@ -140,7 +143,7 @@ SECRET_KEY = '^h*90a=&08zj=m^!kg5b8xh_qyj65)a6a8fulgm1!jca*euq#o'
 TEMPLATE_LOADERS = (
     'django.template.loaders.filesystem.Loader',
     'django.template.loaders.app_directories.Loader',
-#     'django.template.loaders.eggs.Loader',
+    #     'django.template.loaders.eggs.Loader',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -155,7 +158,7 @@ MIDDLEWARE_CLASSES = (
 ROOT_URLCONF = 'main.urls'
 
 TEMPLATE_DIRS = (
-    TEMPLATE_PATH.replace(os.sep,"/"),
+    TEMPLATE_PATH.replace(os.sep, "/"),
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
@@ -195,11 +198,11 @@ LOGGING = {
             'level': 'ERROR',
             'class': 'django.utils.log.AdminEmailHandler'
         },
-         'BA_MANAGER': {
+        'BA_MANAGER': {
             'filename': os.path.join(LOGS_DIR, "manager.log"),
             'class': 'logging.handlers.RotatingFileHandler',
             'formatter': 'simple',
-            'maxBytes': 1024**2, # 1 MB
+            'maxBytes': 1024 ** 2,  # 1 MB
             'backupCount': 5,
             'level': 'DEBUG'
         },
@@ -207,15 +210,15 @@ LOGGING = {
             'filename': os.path.join(LOGS_DIR, "sendmail.log"),
             'class': 'logging.handlers.RotatingFileHandler',
             'formatter': 'simple',
-            'maxBytes': 1024**2, # 1 MB
+            'maxBytes': 1024 ** 2,  # 1 MB
             'backupCount': 5,
             'level': 'DEBUG'
         },
-         'BA_WMOVIE': {
+        'BA_WMOVIE': {
             'filename': os.path.join(LOGS_DIR, "wmovie.log"),
             'class': 'logging.handlers.RotatingFileHandler',
             'formatter': 'simple',
-            'maxBytes': 1024**2, # 1 MB
+            'maxBytes': 1024 ** 2,  # 1 MB
             'backupCount': 5,
             'level': 'DEBUG'
         }

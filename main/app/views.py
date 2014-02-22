@@ -1,5 +1,7 @@
 # Create your views here.
-import urllib.request, urllib.parse, urllib.error
+import urllib.request
+import urllib.parse
+import urllib.error
 
 from django.http import HttpResponse, StreamingHttpResponse
 from django.shortcuts import render_to_response

@@ -1,21 +1,22 @@
-﻿<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0//EN" "http://www.w3.org/TR/REC-html40/strict.dtd">
+﻿<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0//EN">
 <html>
-	<head>
-		<meta name="qrichtext" content="1" />
-		<style type="text/css">p, li { white-space: pre-wrap; }</style>
-	</head>
-	
-	<body style=" font-family:'MS Shell Dlg 2'; font-size:7.8pt; font-weight:400; font-style:normal;">
-		<center>
-		<form action="https://www.paypal.com/cgi-bin/webscr" method="post">
-			<input type="hidden" name="cmd" value="_s-xclick">
-			<input type="hidden" name="hosted_button_id" value="6RAM8D68CYC5E">
-			<input type="image" src="https://www.paypalobjects.com/pt_BR/BR/i/btn/btn_donateCC_LG.gif" border="0" name="submit" alt="PayPal - A maneira mais fácil e segura de efetuar pagamentos online!">
-			<img alt="" border="0" src="https://www.paypalobjects.com/pt_BR/i/scr/pixel.gif" width="1" height="1">
-		</form>
-		<h3>
-			<p>{% autoescape off %}{{ params.msg }}{% endautoescape %}</p>
-		</h3>
-		</center>
-	</body>
+<head>
+    <meta name="qrichtext" content="1"/>
+    <style type="text/css">p, li {
+        white-space: pre-wrap;
+    }</style>
+</head>
+
+<body style=" font-family:'MS Shell Dlg 2',serif; font-size:7.8pt; font-weight:400; font-style:normal;">
+<center>
+    <form action="https://www.paypal.com/cgi-bin/webscr" method="post">
+        <input type="hidden" name="cmd" value="_s-xclick">
+        <input type="hidden" name="hosted_button_id" value="6RAM8D68CYC5E">
+        <input type="image" src="https://www.paypalobjects.com/pt_BR/BR/i/btn/btn_donateCC_LG.gif"
+               name="submit" alt="PayPal - A maneira mais fácil e segura de efetuar pagamentos online!">
+        <img alt="" border="0" src="https://www.paypalobjects.com/pt_BR/i/scr/pixel.gif" width="1" height="1">
+    </form>
+    <h3>{% autoescape off %}{{ params.msg }}{% endautoescape %}</h3>
+</center>
+</body>
 </html>

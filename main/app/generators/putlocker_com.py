@@ -2,12 +2,14 @@
 import re
 from urllib.parse import urlencode
 
-from main.app.generators._sitebase import SiteBase
+from ._sitebase import SiteBase
 from main.app.util import sites
 
 
 class PutLocker(SiteBase):
-    ## http://www.putlocker.com/file/3E3190548EE7A2BD
+    ##
+    # http://www.putlocker.com/file/3E3190548EE7A2BD
+    ##
     controller = {
         "url": "http://www.putlocker.com/file/%s",
         "patterns": (
@@ -17,9 +19,9 @@ class PutLocker(SiteBase):
         "control": "SM_RANGE",
         "video_control": None
     }
-    patternForm = re.compile(
+    pattern_form = re.compile(
         '<form method="post">.*?<input.+?(?:value="(?P<hash>\w+)|name="(?P<name>\w+)")'
-        '.*?(?:value="(?P<_hash>\w+)|name="(?P<_name>\w+)").*?<input.*value="(?P<confirm>[\w\s]+)"',
+        '.*?(?:value="(?P<hash_second>\w+)|name="(?P<name_second>\w+)").*?<input.*value="(?P<confirm>[\w\s]+)"',
         re.DOTALL | re.IGNORECASE
     )
 
@@ -32,12 +34,12 @@ class PutLocker(SiteBase):
     def suportaSeekBar(self):
         return True
 
-    def get_site_message(self, webpage):
+    def get_site_message(self, web_page):
         try:
             try:
-                msg = re.search("<div class='message t_\d+'>(?P<msg>.+?)</div>", webpage).group("msg")
+                msg = re.search("<div class='message t_\d+'>(?P<msg>.+?)</div>", web_page).group("msg")
             except:
-                msg = re.search("<div class='error_message'>(?P<msg>.+?)</div>", webpage).group("msg")
+                msg = re.search("<div class='error_message'>(?P<msg>.+?)</div>", web_page).group("msg")
             msg = "%s informa: %s" % (self.basename, msg.decode("utf-8", "ignore"))
         except:
             msg = ""
@@ -55,36 +57,37 @@ class PutLocker(SiteBase):
         # página web inicial
         url = self.url.replace("/embed", "/file")
         fd = self.connect(url, proxies=proxies, timeout=timeout)
-        webpage = fd.read()
+        web_page = fd.read()
         fd.close()
 
         # messagem de erro. se houver alguma
-        self.message = self.get_site_message(webpage)
+        self.message = self.get_site_message(web_page)
 
         # padrão captua de dados
-        matchobj = self.patternForm.search(webpage)
-        hashvalue = matchobj.group("hash") or matchobj.group("_hash")
-        hashname = matchobj.group("name") or matchobj.group("_name")
-        confirmvalue = matchobj.group("confirm")
+        match_obj = self.pattern_form.search(web_page)
 
-        data = urlencode({hashname: hashvalue, "confirm": confirmvalue})
+        hash_value = match_obj.group("hash") or match_obj.group("hash_second")
+        hash_name = match_obj.group("name") or match_obj.group("name_second")
+        confirm = match_obj.group("confirm")
+
+        data = urlencode({hash_name: hash_value, "confirm": confirm})
         fd = self.connect(url, proxies=proxies, timeout=timeout, data=data)
-        webpage = fd.read()
+        web_page = fd.read()
         fd.close()
 
-        self.message = self.get_site_message(webpage)
+        self.message = self.get_site_message(web_page)
 
         # extraindo o titulo.
         try:
-            title = re.search("<title>(.*?)</title>", webpage).group(1)
+            title = re.search("<title>(.*?)</title>", web_page).group(1)
         except:
             title = sites.get_random_text()
 
         # começa a extração do link vídeo.
         ## playlist: '/get_file.php?stream=WyJORVE0TkRjek5FUkdPRFJETkRKR05Eb3',
         pattern = "playlist:\s*(?:'|\")(/get_file\.php\?stream=.+?)(?:'|\")"
-        matchobj = re.search(pattern, webpage, re.DOTALL | re.IGNORECASE)
-        url = self.getFileBaseUrl + matchobj.group(1)
+        match_obj = re.search(pattern, web_page, re.DOTALL | re.IGNORECASE)
+        url = self.getFileBaseUrl + match_obj.group(1)
 
         # começa a análize do xml
         fd = self.connect(url, proxies=proxies, timeout=timeout)

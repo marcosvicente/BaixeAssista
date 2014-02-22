@@ -101,7 +101,7 @@ class SiteBase(ConnectionProcessor):
         self.params = params
         self.setDefaultParams()
 
-        self.streamSize = params.get("streamSize", 0)
+        self.stream_size = params.get("streamSize", 0)
         self.url = self.basename = self.message = ""
 
         self.configs = {}
@@ -165,8 +165,8 @@ class SiteBase(ConnectionProcessor):
                 try:
                     self.start_extraction(proxies=proxies, timeout=timeout)
                     # extrai e guarda o tanho do arquivo
-                    if not self.streamSize:
-                        self.streamSize = self.get_size(proxies=proxies, timeout=timeout)
+                    if not self.stream_size:
+                        self.stream_size = self.get_size(proxies=proxies, timeout=timeout)
                 except Exception as e:
                     pass
                 if not self.has_conf():
@@ -178,7 +178,7 @@ class SiteBase(ConnectionProcessor):
 
     def has_conf(self):
         return (self.has_link() and self.has_title() and
-                bool(self.streamSize))
+                bool(self.stream_size))
 
     def has_link(self):
         try:
@@ -266,5 +266,5 @@ class SiteBase(ConnectionProcessor):
 
     def getStreamSize(self):
         """ retorna o tamanho compleot do arquivo de video """
-        return self.streamSize
+        return self.stream_size
     

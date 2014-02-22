@@ -52,11 +52,11 @@ class Release(object):
     def search(self):
         try:
             fd = urllib.request.urlopen(self.dl_url)
-            webpage = fd.read()
+            web_page = fd.read()
             fd.close()
 
             groups = []
-            for raw_tag in self.dl_pattern.findall(webpage):
+            for raw_tag in self.dl_pattern.findall(web_page):
                 matchobj = self.tag_pattern.search(raw_tag)
 
                 if matchobj:
