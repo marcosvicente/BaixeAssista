@@ -1,4 +1,5 @@
 import re
+import urllib.parse
 
 from ._sitebase import SiteBase
 
@@ -30,7 +31,7 @@ class Xvideos(SiteBase):
         match_obj = re.search('\<embed\s*type.+flashvars="(.*?)"', web_page)
         flash_vars = match_obj.group(1)
 
-        video_data = .parse_qs(flash_vars)
+        video_data = urllib.parse.parse_qs(flash_vars)
 
         try:
             title = re.search("<title>(.*?)</title>", web_page).group(1)
