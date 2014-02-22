@@ -25,15 +25,16 @@ class ConnectionProcessor(object):
         return True
 
     @staticmethod
-    def get_stream_header(stream, seekpos, header=""):
+    def get_stream_header(stream, seek_pos, header=''):
+        stream = str(stream)
         if stream.startswith("FLV"):
-            if (stream[:13].endswith("\t" + ("\x00" * 4)) or stream[:13].endswith(("\x00" * 3) + "\t")):
-                if seekpos == 0:
+            if stream[:13].endswith("\t" + ("\x00" * 4)) or stream[:13].endswith(("\x00" * 3) + "\t"):
+                if seek_pos == 0:
                     header = stream[:13]
                 else:
                     header, stream = stream[:13], stream[13:]
             elif stream[:9].endswith("\t"):
-                if seekpos == 0:
+                if seek_pos == 0:
                     header = stream[:9]
                 else:
                     header, stream = stream[:9], stream[9:]

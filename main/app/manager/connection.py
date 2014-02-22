@@ -19,7 +19,8 @@ class Connection(object):
     def update(self, **params):
         """ atualiza os parametros de configuração das conexões ativas """
         for conn in self.connlist:
-            if conn.wasStopped(): continue
+            if conn.was_stopped:
+                continue
             for key, value in list(params.items()):
                 conn[key] = value
 
@@ -39,10 +40,10 @@ class Connection(object):
             for y in range(len(self.connlist) - 1, -1, -1):
                 conn = self.connlist[y]
                 # desconsidera conexões inativas
-                if conn.wasStopped(): continue
-
+                if conn.was_stopped:
+                    continue
                 connlist.append(conn.ident)
-                conn.stop();
+                conn.stop()
                 break
         # remove todas as conexões paradas
         self.removeStopped()
@@ -61,7 +62,7 @@ class Connection(object):
 
     def countActive(self):
         """ retorna o número de conexões criadas e ativas """
-        return len([conn for conn in self.connlist if not conn.wasStopped()])
+        return len([conn for conn in self.connlist if not conn.was_stopped])
 
     def count(self):
         """ retorna o número de conexões criadas"""

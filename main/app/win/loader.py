@@ -406,7 +406,7 @@ class Loader(QtGui.QMainWindow):
         """ agrupa items por linha """
         # relacionando  com o id para facilitar na atualização de dados
         self.tableRows[ident] = TableRow(self.uiMainWindow.connectionInfo)
-        self.tableRows[ident].create(wCol=StreamManager.listInfo.index("percent"))
+        self.tableRows[ident].create(wCol=StreamManager.list_info.index("percent"))
         return self.tableRows[ident]
 
     def removeTableRow(self, ident):
@@ -443,7 +443,7 @@ class Loader(QtGui.QMainWindow):
         if sender is None: return  # ignora conexões removidas.
 
         for name in kwargs["fields"]:
-            col = StreamManager.listInfo.index(name)
+            col = StreamManager.list_info.index(name)
             value = Info.get(sender.ident, name)
             self.tableRows[sender.ident].update(col=col, value=value)
 

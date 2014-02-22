@@ -346,9 +346,9 @@ class Manage(object):
         """ Informa as conexões que um novo ponto da stream está sendo lido """
         for conn in self.ctrConnection.getConnList():
             if condition:
-                conn.setWait()
-            elif conn.isWaiting:
-                conn.stopWait()
+                conn.set_wait()
+            elif conn.is_waiting:
+                conn.stop_wait()
 
     @base.protected()
     def update(self):
