@@ -23,11 +23,11 @@ class BarWidget(QtGui.QWidget):
 
     @property
     def max_width(self):
-        return float(self.width() - self.offset)
+        return float(self.width() - self.start_coord)
 
     @property
     def max_height(self):
-        return float(self.height() - (self.offset * 2.0))
+        return float(self.height() - (self.start_coord * 2.0))
 
     @property
     def now(self):
