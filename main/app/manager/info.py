@@ -29,13 +29,11 @@ class Info(object):
     @classmethod
     @Synchronize
     def event_update(cls, *args, **kwargs):
-        field = kwargs["fields"][0]
-
         if len(kwargs["fields"]) == 1:
+            field = kwargs["fields"][0]
             if (time.time() - cls.info_timer[field]) < cls.update_sleep:
                 time.sleep(cls.update_sleep)
                 cls.info_timer[field] = time.time()
-
         cls.update.send(*args, **kwargs)
 
     @classmethod
