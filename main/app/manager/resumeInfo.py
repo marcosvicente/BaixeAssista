@@ -1,16 +1,15 @@
 # coding: utf-8
-from main.app import models
+from main.app.models import Resume
 from main.app.util import base
 
 
 class ResumeInfo(object):
-    objects = models.Resume.objects
 
     def __init__(self, filename):
         try:
-            self.q = self.objects.get(title=filename)
-        except:
-            self.q = models.Resume(title=filename)
+            self.q = Resume.objects.get(title=filename)
+        except Resume.DoesNotExist:
+            self.q = Resume(title=filename)
 
         self.filename = filename
 
@@ -19,9 +18,7 @@ class ResumeInfo(object):
          - videoExt; videoSize; seekPos; pending; cacheBytesTotal; 
          - cacheBytesCount; videoQuality
         """
-        for field in kwargs:
-            setattr(self.q, field, kwargs[field])
-
+        self.q.__dict__.update(kwargs)
         self.q.save()
 
     def __getitem__(self, name):
@@ -38,4 +35,3 @@ class ResumeInfo(object):
     @base.LogOnError
     def remove(self):
         self.q.delete()
-        

@@ -56,7 +56,7 @@ class Manage(object):
         # nome do video ligado a url
         self.video_title = self.urlManager.getUrlTitle(self.streamUrl)
         self.video_size = 0  # tamanho total do video
-        self.video_text = ""  # extensão do arquivo de vídeo
+        self.video_ext = ""  # extensão do arquivo de vídeo
 
         # embora o método _init tenha outro propósito, ele também 
         # complementa a primeira inicialização do objeto Manage.
@@ -105,7 +105,7 @@ class Manage(object):
             self.params["videoQuality"] = self.resume_info["videoQuality"]
             self.params["videoPath"] = self.resume_info["videoPath"]
 
-            self.video_text = self.resume_info["videoExt"]
+            self.video_ext = self.resume_info["videoExt"]
 
             self.interval = Interval(maxsize=self.video_size,
                                      seekpos=seek_pos, offset=0, pending=pending,
@@ -140,7 +140,7 @@ class Manage(object):
                 filename=self.video_title,
                 tempfile=self.params["tempfile"],
                 filepath=self.params["videoPath"],
-                fileext=self.video_text
+                fileext=self.video_ext
             )
             # blocks serão criados do ponto zero da stream
             self.interval = Interval(maxsize=self.video_size,
@@ -148,7 +148,8 @@ class Manage(object):
                                      maxsplit=self.params["maxsplit"])
 
             # salvando dados de resumo inicial.
-            if not self.is_tempfile_mode: self.save_resume()
+            if not self.is_tempfile_mode:
+                self.save_resume()
 
         # abre o arquivo. seja criando um novo ou alterando um exitente
         self.file_manager.open()
@@ -174,7 +175,7 @@ class Manage(object):
             # título do arquivo de video
             self.video_title = self.video_manager.get_title()
             # extensão do arquivo de video
-            self.video_text = self.video_manager.get_video_ext()
+            self.video_ext = self.video_manager.get_video_ext()
 
         # função de atualização externa
         callback(message, self.video_manager.get_message())
@@ -267,7 +268,7 @@ class Manage(object):
         return self.video_size
 
     def get_video_ext(self):
-        return self.video_text
+        return self.video_ext
 
     def position_sent(self):
         return self.interval.send_info['sending']
@@ -309,14 +310,14 @@ class Manage(object):
         pending.extend(self.interval.getPending())
         pending.sort()
 
-        self.resume_info.update(title=self.video_title,
+        self.resume_info.update(title=str(self.video_title),
                                videoQuality=self.params["videoQuality"],
                                cacheBytesTotal=self.cache_bytes_total,
                                cacheBytesCount=self.cache_bytes_counter,
                                videoPath=self.params["videoPath"],
                                seekPos=self.interval.seekpos,
                                videoSize=self.video_size,
-                               videoExt=self.video_text,
+                               videoExt=str(self.video_ext),
                                pending=pending)
 
     def set_random(self, seek_pos):
