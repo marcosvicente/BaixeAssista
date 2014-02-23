@@ -21,11 +21,8 @@ class ResumeInfo(object):
         return getattr(self.q, name)
 
     def update(self, **kwargs):
-        """ kwargs = {}
-         - videoExt; videoSize; seekPos; pending; cacheBytesTotal; 
-         - cacheBytesCount; videoQuality
-        """
-        self.q.__dict__.update(kwargs)
+        for field, value in kwargs.items():
+            setattr(self.q, field, value)
         self.q.save()
 
     @property

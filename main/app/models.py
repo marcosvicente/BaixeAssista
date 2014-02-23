@@ -1,4 +1,5 @@
 import pickle
+import base64
 
 from django.db import models
 
@@ -44,14 +45,16 @@ class Resume(models.Model):
     @property
     def pending(self):
         if self._pending:
-            data = pickle.loads(self._pending.encode("ascii"))
+            data = base64.b64decode(self._pending)
+            data = pickle.loads(data)
         else:
             data = []
         return data
 
     @pending.setter
     def pending(self, data):
-        self._pending = pickle.dumps(data)
+        data = base64.b64encode(pickle.dumps(data))
+        self._pending = str(data, encoding='utf-8')
 
     @property
     def isCompleteDown(self):
