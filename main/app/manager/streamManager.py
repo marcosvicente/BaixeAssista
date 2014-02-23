@@ -160,7 +160,7 @@ class StreamManager(threading.Thread):
             self.proxies = self.manage.proxy_manager.get_formated()
 
         if self.video_manager.get_video_info(proxies=self.proxies,
-                                           timeout=self.params["timeout"]):
+                                             timeout=self.params["timeout"]):
             self.link = self.video_manager.get_link()
 
         Info.set(self.ident, "http", self.proxies.get("http", _("Conexão Padrão")))

@@ -6,63 +6,67 @@ from django.dispatch import Signal
 
 
 class Info(object):
-    """ guarda o estado do objeto adicionado """
-    # 'Signal' usado para notificar atualiza��o dos dados de I/O
+    """ Guarda o estado do objeto adicionado """
+    ##
+    # 'Signal' usado para notificar atualização dos dados de I/O
+    ##
     update = Signal(providing_args=["fields"])
-    updateSleep = 0.05
+    update_sleep = 0.05
+    info_timer = {}
     info = {}
-    infoTimer = {}
 
-    class sincronize(object):
-        """ sicroniza as altera��es sobre 'info' nas diferentes threads """
-        _lock = threading.RLock()
+    class Synchronize(object):
+        """ Sicroniza as alterações sobre 'info' nas diferentes threads """
+        lock = threading.RLock()
 
-        def __init__(self, func): self.func = func
+        def __init__(self, func):
+            self.func = func
 
         def __call__(self, *args, **kwargs):
-            with self._lock: return self.func(*args, **kwargs)
+            with self.lock:
+                return self.func(*args, **kwargs)
 
     @classmethod
-    @sincronize
-    def eventUpdate(cls, *args, **kwargs):
+    @Synchronize
+    def event_update(cls, *args, **kwargs):
         field = kwargs["fields"][0]
 
         if len(kwargs["fields"]) == 1:
-            if (time.time() - cls.infoTimer[field]) < cls.updateSleep:
-                time.sleep(cls.updateSleep)
-                cls.infoTimer[field] = time.time()
+            if (time.time() - cls.info_timer[field]) < cls.update_sleep:
+                time.sleep(cls.update_sleep)
+                cls.info_timer[field] = time.time()
 
         cls.update.send(*args, **kwargs)
 
     @classmethod
-    def sendEvent(cls, *args, **kwargs):
-        """ emitindo o sinal para atualiza��o de I/O """
-        th = threading.Thread(target=cls.eventUpdate,
-                              args=args, kwargs=kwargs)
+    def sent_event(cls, *args, **kwargs):
+        """ Emitindo o sinal para atualização de I/O """
+        th = threading.Thread(target=cls.event_update, args=args, kwargs=kwargs)
         th.start()
 
     @classmethod
-    def add(cls, rootkey):
-        cls.info[rootkey] = {}
+    def add(cls, identify):
+        cls.info[identify] = {}
 
     @classmethod
-    def delete(cls, rootkey):
-        return cls.info.pop(rootkey, None)
+    def delete(cls, identify):
+        return cls.info.pop(identify, None)
 
     @classmethod
-    def get(cls, rootkey, infokey):
-        return cls.info.get(rootkey, {}).get(infokey, "")
+    def get(cls, identify, info):
+        return cls.info.get(identify, {}).get(info, '')
 
     @classmethod
-    @sincronize
-    def set(cls, rootkey, infokey, info):
-        cls.info[rootkey][infokey] = info
-        cls.infoTimer.setdefault(infokey, time.time())
-        cls.sendEvent(sender=rootkey, fields=(infokey,))
+    @Synchronize
+    def set(cls, identify, info, value):
+        cls.info[identify][info] = value
+        cls.info_timer.setdefault(info, time.time())
+        cls.sent_event(sender=identify, fields=(info,))
 
     @classmethod
-    @sincronize
-    def clear(cls, rootkey, *keys, **params):
-        keys = [name for name in (keys or cls.info[rootkey]) if not name in params.get("exclude", [])]
-        for infokey in keys: cls.info[rootkey][infokey] = ""
-        cls.sendEvent(sender=rootkey, fields=keys)
+    @Synchronize
+    def clear(cls, identify, *args, **params):
+        args = [name for name in (args or cls.info[identify]) if not name in params.get("exclude", [])]
+        for info in args:
+            cls.info[identify][info] = ''
+        cls.sent_event(sender=identify, fields=args)
