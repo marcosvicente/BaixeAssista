@@ -63,7 +63,6 @@ class Manage(object):
         self._init()
 
         # controla a obtenção de links, tamanho do arquivo, title, etc.
-        self.video_manager_cls = Universal.getVideoManager(self.streamUrl)
         self.video_manager = self.create_video_manager()
 
         # controle das conexões
@@ -183,8 +182,10 @@ class Manage(object):
 
     def create_video_manager(self):
         """ controla a obtenção de links, tamanho do arquivo, title, etc """
-        return self.video_manager_cls(self.streamUrl, streamSize=self.video_size,
-                                    quality=self.params["videoQuality"])
+        return Universal.getVideoManager(self.streamUrl)(
+            self.streamUrl, streamSize=self.video_size,
+            quality=self.params["videoQuality"]
+        )
 
     def get_streamer(self):
         """ streamer controla a leitura dos bytes enviados ao player """

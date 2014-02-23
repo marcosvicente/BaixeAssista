@@ -43,8 +43,11 @@ def get_random_text(size=25):
 
 
 def get_with_seek(link, seek):
-    if link.endswith(","): link += str(seek)
-    if re.match(".+(?:start=|ec_seek=|fs=)", link): link += str(seek)
-    if re.match(".+(?:range=%s-)", link): link %= str(seek)
+    if link.endswith(","):
+        link += str(seek)
+    if re.match(".+(?:start=|ec_seek=|fs=)", link):
+        link += str(seek)
+    if re.match(".+(?:range=%s-)", link):
+        link %= str(seek)
     return link
 
