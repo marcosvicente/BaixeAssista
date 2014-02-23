@@ -32,22 +32,20 @@ class Vk(SiteBase):
         when_not_fount = self.configs.get(3, when_not_fount)
         return self.configs.get(video_quality, when_not_fount)
 
-    @staticmethod
-    def message_discover(web_page):
+    def message_discover(self, web_page):
         _message = "This video has been removed from public access."
         pattern = re.compile(_message, re.I | re.DOTALL)
         if pattern.search(web_page):
-            message = _message
+            self.message = _message
         else:
-            message = ''
-        return message
+            self.message = ''
 
     def start_extraction(self, proxies={}, timeout=25):
         ## http://cs519609.userapi.com/u165193745/video/7cad4a848e.360.mp4
         fd = self.connect(self.url, proxies=proxies, timeout=timeout)
         web_data = str(fd.read())
         fd.close()
-        self.message = self.message_discover(web_data)
+        self.message_discover(web_data)
         params = {}
         try:
             math_obj = re.search("var\s*video_host\s*=\s*'(?P<url>.+?)'", web_data, re.DOTALL)
@@ -78,8 +76,14 @@ class Vk(SiteBase):
 
         if int(params.get("no_flv", 0)):
             base_url = params["url"] + "/u%s/videos/%s.{res}.mp4" % (params["uid"], params["vtag"])
-            url_hd240 = base_url.format(res=240)
-            url_hd360 = base_url.format(res=360)
+            if params.get('url240', '').startswith('http'):
+                url_hd240 = params['url240'].replace("\\", '')
+            else:
+                url_hd240 = base_url.format(res=240)
+            if params.get('url360', '').startswith('http'):
+                url_hd360 = params['url360'].replace("\\", '')
+            else:
+                url_hd360 = base_url.format(res=360)
             ext = "mp4"
         else:
             url_hd240 = url_hd360 = params["url"] + "u%s/videos/%s.flv" % (params["uid"], params["vtag"])

@@ -502,7 +502,7 @@ class StreamManager_(StreamManager):
                                 headers={"Range": "bytes=%s-%s" % (seek_pos, video_size)},
                                 proxies=self.proxies, timeout=self.params["timeout"])
 
-                stream = str(self._stream.read(self.cache_start_size))
+                stream = self._stream.read(self.cache_start_size)
                 stream, header = self.video_manager.get_stream_header(stream, seek_pos)
 
                 is_valid = self.video_manager.check_response(len(header),
