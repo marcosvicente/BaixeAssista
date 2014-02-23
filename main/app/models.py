@@ -5,16 +5,14 @@ from django.db import models
 from main.app.manager.urls import UrlBase
 
 
-########################################################################
 class LastUrl(models.Model):
     title = models.TextField("Title", unique=True)
     url = models.TextField("Url")
 
-    def __unicode__(self):
+    def __str__(self):
         return self.title
 
 
-########################################################################
 class Url(models.Model, UrlBase):
     title = models.TextField("Title", unique=True)
     _url = models.TextField("Url")
@@ -27,11 +25,10 @@ class Url(models.Model, UrlBase):
     def url(self, data):
         self._url = self.shortUrl(data)
 
-    def __unicode__(self):
+    def __str__(self):
         return self.title
 
 
-########################################################################
 class Resume(models.Model):
     title = models.TextField("Title")
 
@@ -46,7 +43,11 @@ class Resume(models.Model):
 
     @property
     def pending(self):
-        return pickle.loads(self._pending.encode("ascii"))
+        if self._pending:
+            data = pickle.loads(self._pending.encode("ascii"))
+        else:
+            data = []
+        return data
 
     @pending.setter
     def pending(self, data):
@@ -54,17 +55,16 @@ class Resume(models.Model):
 
     @property
     def isCompleteDown(self):
-        return (self.cacheBytesCount >= (self.videoSize - 50))
+        return self.cacheBytesCount >= (self.videoSize - 50)
 
-    def __unicode__(self):
+    def __str__(self):
         return self.title
 
 
-########################################################################
 class Browser(models.Model):
     site = models.TextField("Site", null=True)
     lastsite = models.TextField("Last site", null=True)
     historysite = models.TextField("History site", null=True)
 
-    def __unicode__(self):
-        return (self.site or self.lastsite or self.historysite)
+    def __str__(self):
+        return self.site or self.lastsite or self.historysite

@@ -4,6 +4,7 @@ from main.app.util import base
 
 
 class ResumeInfo(object):
+    objects = Resume.objects
 
     def __init__(self, filename):
         try:
@@ -14,6 +15,9 @@ class ResumeInfo(object):
         self.filename = filename
 
     def __getattr__(self, name):
+        return getattr(self.q, name)
+
+    def __getitem__(self, name):
         return getattr(self.q, name)
 
     def update(self, **kwargs):
