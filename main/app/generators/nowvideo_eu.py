@@ -3,7 +3,7 @@ from ._sitebase import *
 from main.app.manager.urls import UrlManager
 from . import videoweed_es
 
-####################################### NOVAMOV #######################################
+
 class NowVideo(videoweed_es.Videoweed):
     """ Novamov: segue a mesma sequência lógica de Videoweed """
     ## http://embed.nowvideo.eu/embed.php?v=xhfpn4q7f8k3u&width=600&height=480
@@ -30,5 +30,3 @@ class NowVideo(videoweed_es.Videoweed):
         # parte principal da url usada como elemento chave no programa
         self.basename = UrlManager.getBaseName(url)
         self.url = url
-        
-        

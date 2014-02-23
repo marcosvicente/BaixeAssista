@@ -225,7 +225,7 @@ lock = False
 rate = -1
 [110.139.207.196:8080]
 lock = False
-rate = 0
+rate = -1
 [218.78.215.175:80]
 lock = False
 rate = -1

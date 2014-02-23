@@ -57,7 +57,7 @@ class Videoweed(SiteBase):
         url = self.video_url % url_id
 
         fd = self.connect(url, proxies=proxies, timeout=timeout)
-        web_page = fd.read()
+        web_page = str(fd.read())
         fd.close()
 
         # message gerada caso o video tenha sido removido
@@ -70,7 +70,7 @@ class Videoweed(SiteBase):
 
         url = self.player_api % (file_key, url_id)  # ip; id
         fd = self.connect(url, proxies=proxies, timeout=timeout)
-        info_data = fd.read()
+        info_data = str(fd.read())
         fd.close()
 
         params = dict(re.findall("(\w+)=(.*?)&", info_data))
