@@ -86,10 +86,10 @@ class Manage(object):
 
         self.resume_info = ResumeInfo(filename=self.video_title)
 
-        if not self.params["tempfile"] and not self.resume_info.isEmpty:
+        if not self.params["tempfile"] and not self.resume_info.is_empty:
             self.file_manager = FileManager(
                 filename=self.video_title,
-                tempfile=self.resume_info.isEmpty,
+                tempfile=self.resume_info.is_empty,
                 filepath=self.resume_info["videoPath"],
                 fileext=self.resume_info["videoExt"]
             )
@@ -301,7 +301,7 @@ class Manage(object):
             if self.interval.has(identify):
                 pending.append((
                     self.interval.getIndex(identify),
-                    stream_manager.numBytesLidos,
+                    stream_manager.bytes_num,
                     self.interval.getStart(identify),
                     self.interval.getEnd(identify),
                     self.interval.getBlockSize(identify)
@@ -310,14 +310,14 @@ class Manage(object):
         pending.extend(self.interval.getPending())
         pending.sort()
 
-        self.resume_info.update(title=str(self.video_title),
+        self.resume_info.update(title=self.video_title,
                                videoQuality=self.params["videoQuality"],
                                cacheBytesTotal=self.cache_bytes_total,
                                cacheBytesCount=self.cache_bytes_counter,
                                videoPath=self.params["videoPath"],
                                seekPos=self.interval.seekpos,
                                videoSize=self.video_size,
-                               videoExt=str(self.video_ext),
+                               videoExt=self.video_ext,
                                pending=pending)
 
     def set_random(self, seek_pos):

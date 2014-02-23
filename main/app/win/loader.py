@@ -179,10 +179,10 @@ class Loader(QtGui.QMainWindow):
             self.saveSettings()
 
     def updateUI(self):
-        if self.LOADING: self.updateTable()
+        if self.LOADING: self.update_table()
 
     def updateUIExit(self):
-        if not self.LOADING: self.updateTableExit()
+        if not self.LOADING: self.update_table_exit()
 
     def showDonationDialog(self, event=None, show=True):
         """ show: mostra o diálogo independente da decisão do usuário """
@@ -204,24 +204,24 @@ class Loader(QtGui.QMainWindow):
     def setupUI(self):
         # o player externo terá uma instância única.
         self.embedPlayer = PlayerDialog(parent=self, configs=self.config)
-        self.embedPlayer.btnReload.clicked.connect(self.playerReload)
+        self.embedPlayer.btnReload.clicked.connect(self.reload_player)
         self.embedPlayer.hide()
 
-        self.setupTab()
-        self.setupLocation()
+        self.setup_tab()
+        self.setup_location()
 
         self.videoQualityList = [self.tr("Low"), self.tr("Normal"), self.tr("High")]
         self.uiMainWindow.videoQuality.addItems(self.videoQualityList)
         self.uiMainWindow.tempFileAction.addItems([self.tr("Just remove"), self.tr("Before remove, ask")])
 
-        self.setupFilesView()
+        self.setup_files_view()
 
     def setupAction(self):
         self.uiMainWindow.btnStartDl.clicked.connect(self.handleStartStopDl)
         self.uiMainWindow.actionExit.triggered.connect(self.close)
 
-        self.uiMainWindow.btnToolDir.clicked.connect(self.handleVideoDir)
-        self.uiMainWindow.refreshFiles.clicked.connect(self.setupFilesView)
+        self.uiMainWindow.btnToolDir.clicked.connect(self.handle_video_dir)
+        self.uiMainWindow.refreshFiles.clicked.connect(self.setup_files_view)
 
         self.uiMainWindow.actionErroReporting.triggered.connect(self.onErroReporting)
         self.uiMainWindow.actionCheckNow.triggered.connect(self.onSearchUpdate)
@@ -245,44 +245,44 @@ class Loader(QtGui.QMainWindow):
                          self.uiMainWindow.actionSpanish: "es_ES"}
 
         # action para a alteração do idioma
-        self.langActionGroup.triggered.connect(self.onLocaleChange)
+        self.langActionGroup.triggered.connect(self.on_locale_change)
 
         self.playerActionGroup = QtGui.QActionGroup(self)
         self.playerActionGroup.addAction(self.uiMainWindow.actionEmbedPlayer)
         self.playerActionGroup.addAction(self.uiMainWindow.actionExternalPlayer)
 
-        self.playerActionGroup.triggered.connect(self.onSetupVideoPlayer)
+        self.playerActionGroup.triggered.connect(self.on_setup_player)
 
-        self.uiMainWindow.actionReloadPlayer.triggered.connect(self.playerReload)
-        self.uiMainWindow.actionChooseExternalPlayer.triggered.connect(self.choosePlayerPath)
+        self.uiMainWindow.actionReloadPlayer.triggered.connect(self.reload_player)
+        self.uiMainWindow.actionChooseExternalPlayer.triggered.connect(self.choose_player_path)
 
     @base.LogOnError
-    def setupLocation(self):
+    def setup_location(self):
         """ adiciona as urls dos vídeos baixados e adcionandos ao bd. """
-        self.urlManager = UrlManager()
-        self.getLocation().addItems(
-            [self.urlManager.joinUrlDesc(*items) for items in self.urlManager.getUrlTitleList()])
-        url, title = self.urlManager.getLastUrl()
-        joinedUrl = self.urlManager.joinUrlDesc(url, title)
+        self.url_manager = UrlManager()
+        self.get_location().addItems(
+            [self.url_manager.joinUrlDesc(*items) for items in self.url_manager.getUrlTitleList()])
+        url, title = self.url_manager.getLastUrl()
+        joinedUrl = self.url_manager.joinUrlDesc(url, title)
 
-        index = self.getLocation().findText(joinedUrl)
-        self.getLocation().setCurrentIndex(index)
+        index = self.get_location().findText(joinedUrl)
+        self.get_location().setCurrentIndex(index)
 
         # inserindo a ultima url adicionada na visualização padrão.
-        self.getLocation().setEditText(joinedUrl)
-        self.getLocation().setToolTip(title)
+        self.get_location().setEditText(joinedUrl)
+        self.get_location().setToolTip(title)
 
-    def onLocaleChange(self):
+    def on_locale_change(self):
         """ Como o idioma está sendo feito na inicialização, apenas avisa para reinicializar """
         QtGui.QMessageBox.information(self, self.tr("about changing the language"),
                                       self.tr(
                                           "You need to manually restart the program for the new language to take effect."))
 
     @base.LogOnError
-    def setupFilesView(self):
-        videosView = self.uiMainWindow.videosView
-        videosView.setColumnCount(1)
-        videosView.clear()
+    def setup_files_view(self):
+        video_view = self.uiMainWindow.videosView
+        video_view.setColumnCount(1)
+        video_view.clear()
         fields = {
             "videoExt": self.tr("Video extension"),
             "videoSize": {
@@ -305,82 +305,77 @@ class Loader(QtGui.QMainWindow):
         values = queryset.values(*list(fields.keys()))
 
         def children(element):
-            listItems = []
+            list_item = []
             for key in element:
                 title, value = fields[key], element[key]
                 if type(title) is dict:
                     value = title["conversor"](value)
                     title = title["title"]
-                item = QtGui.QTreeWidgetItem(["{0} ::: {1}".format(title, value)])
-                listItems.append(item)
-            return listItems
+                obj = QtGui.QTreeWidgetItem(["{0} ::: {1}".format(title, value)])
+                list_item.append(obj)
+            return list_item
 
         for index, item in enumerate(items):
             item.addChildren(children(values[index]))
 
-        videosView.addTopLevelItems(items)
+        video_view.addTopLevelItems(items)
 
-    def setupTab(self):
-        boxLayout = QtGui.QVBoxLayout()
-        boxLayout.setContentsMargins(0, 0, 0, 0)
-        boxLayout.setSpacing(0)
+    def setup_tab(self):
+        box_layout = QtGui.QVBoxLayout()
+        box_layout.setContentsMargins(0, 0, 0, 0)
+        box_layout.setSpacing(0)
 
-        self.uiMainWindow.tabBrowser.setLayout(boxLayout)
+        self.uiMainWindow.tabBrowser.setLayout(box_layout)
         self.browser = browser.Browser(self)
-        boxLayout.addWidget(self.browser)
+        box_layout.addWidget(self.browser)
 
-    def onPlayeView(self):
+    def on_player_view(self):
         """ iniciializa a visualização do vídeo(selecionado) através do player externo. """
         item = self.uiMainWindow.videosView.currentItem()
-        title = item.text(0)
 
-        _title = os.path.splitext(title)[0]
+        title = os.path.splitext(item.text(0))[0]
+        resume_info = ResumeInfo(filename=title)
 
-        resumeInfo = ResumeInfo(filename=_title)
-
-        if not resumeInfo.isEmpty:
-            fileManager = FileManager(filename=_title,
-                                      filepath=resumeInfo["videoPath"],
-                                      fileext=resumeInfo["videoExt"])
-
-            path = fileManager.getFilePath()
+        if not resume_info.is_empty:
+            file_manager = FileManager(
+                filename=title, filepath=resume_info["videoPath"],
+                fileext=resume_info["videoExt"]
+            )
+            path = file_manager.getFilePath()
             print((path, os.path.exists(path)))
 
             if os.path.exists(path):
-                mplayer = FlvPlayer(cmd=self.getExternalPlayerPath(),
-                                    filepath=path)
+                mplayer = FlvPlayer(cmd=self.get_external_player_path(), filepath=path)
                 mplayer.start()
 
-    def getExternalPlayerPath(self):
+    def get_external_player_path(self):
         """ valida e retorna o local do player externo """
         if not os.path.exists(self.confPath["externalPlayer"]):
-            path = self.choosePlayerPath()
+            path = self.choose_player_path()
         else:
             path = self.confPath["externalPlayer"]
         return path
 
-    def onVideoRemove(self):
+    def on_video_remove(self):
         """ remove o video selecionando """
         item = self.uiMainWindow.videosView.currentItem()
-        title = item.text(0)
+        title = os.path.splitext(item.text(0))[0]
 
-        _title = os.path.splitext(title)[0]
+        resume_info = ResumeInfo(filename=title)
 
-        resumeInfo = ResumeInfo(filename=_title)
-
-        if not resumeInfo.isEmpty:
-            fileManager = FileManager(filename=_title,
-                                      filepath=resumeInfo["videoPath"],
-                                      fileext=resumeInfo["videoExt"])
-
-            path = fileManager.getFilePath()
+        if not resume_info.is_empty:
+            file_manager = FileManager(
+                filename=title, filepath=resume_info["videoPath"],
+                fileext=resume_info["videoExt"]
+            )
+            path = file_manager.getFilePath()
             print((path, os.path.exists(path)))
 
-            self.urlManager.remove(_title)
-            resumeInfo.remove()
-            fileManager.remove()
+            self.url_manager.remove(title)
+            resume_info.remove()
+            file_manager.remove()
 
-            self.setupFilesView()
+            self.setup_files_view()
 
     def contextMenuEvent(self, event):
         if self.uiMainWindow.tabFiles == self.uiMainWindow.tabPanel.currentWidget():
@@ -388,12 +383,12 @@ class Loader(QtGui.QMainWindow):
 
             icon = QtGui.QIcon(os.path.join(settings.IMAGES_DIR, "preview-doc.png"))
             actionPreview = QtGui.QAction(self.tr("preview"), self,
-                                          statusTip="", triggered=self.onPlayeView,
+                                          statusTip="", triggered=self.on_player_view,
                                           icon=icon)
 
             icon = QtGui.QIcon(os.path.join(settings.IMAGES_DIR, "remove-db.png"))
             actionRemove = QtGui.QAction(self.tr("remove"), self,
-                                         statusTip="", triggered=self.onVideoRemove,
+                                         statusTip="", triggered=self.on_video_remove,
                                          icon=icon)
 
             menu = QtGui.QMenu(self)
@@ -401,66 +396,67 @@ class Loader(QtGui.QMainWindow):
             menu.addAction(actionRemove)
             menu.exec_(event.globalPos())
 
-    def addTableRow(self, ident):
-        """ agrupa items por linha """
+    def add_table_row(self, ident):
+        """ Agrupa items por linha """
         # relacionando  com o id para facilitar na atualização de dados
         self.tableRows[ident] = TableRow(self.uiMainWindow.connectionInfo)
         self.tableRows[ident].create(wCol=StreamManager.list_info.index("percent"))
         return self.tableRows[ident]
 
-    def removeTableRow(self, ident):
-        tableRow = self.tableRows.pop(ident)
-        tableRow.clear()
+    def remove_table_row(self, identify):
+        row = self.tableRows.pop(identify)
+        row.clear()
 
-    def clearTable(self):
+    def clear_table(self):
         """ removendo todas as 'rows' e dados relacionandos """
-        for ident in list(self.tableRows.keys()):
-            self.removeTableRow(ident)
+        for identify in list(self.tableRows.keys()):
+            self.remove_table_row(identify)
 
     @base.protected()
-    def updateTable(self):
-        """ atualizando apenas as tabelas apresentadas na 'MainWindow' """
-        videoSizeFormated = StreamManager.format_bytes(self.manage.get_video_size())
-        videoPercent = base.calc_percent(self.manage.get_cache_bytes_total(), self.manage.get_video_size())
+    def update_table(self):
+        """ Atualizando apenas as tabelas apresentadas na 'MainWindow' """
+        video_size_formatted = StreamManager.format_bytes(self.manage.get_video_size())
+        video_percent = base.calc_percent(self.manage.get_cache_bytes_total(), self.manage.get_video_size())
 
         self.uiMainWindow.videoTileInfo.setText(self.manage.get_video_title())
-        self.uiMainWindow.videoSizeInfo.setText(videoSizeFormated)
+        self.uiMainWindow.videoSizeInfo.setText(video_size_formatted)
         self.uiMainWindow.videoExtInfo.setText(self.manage.get_video_ext())
 
-        self.uiMainWindow.progressBarInfo.setValue(videoPercent)
+        self.uiMainWindow.progressBarInfo.setValue(video_percent)
 
         self.uiMainWindow.downloadedFromInfo.setText(StreamManager.format_bytes(self.manage.get_cache_bytes_total()))
-        self.uiMainWindow.downloadedToInfo.setText(videoSizeFormated)
+        self.uiMainWindow.downloadedToInfo.setText(video_size_formatted)
         self.uiMainWindow.globalSpeedInfo.setText(self.manage.get_global_speed())
         self.uiMainWindow.globalEtaInfo.setText(self.manage.get_global_eta())
 
     @base.protected()
-    def updateConnectionUi(self, sender, **kwargs):
+    def update_connection_ui(self, sender, **kwargs):
         """ interface de atualização das infos da conexão"""
         # conexão que emitiu o sinal através de 'Info'.
         sender = self.manage.ctrConnection.getById(sender)
-        if sender is None: return  # ignora conexões removidas.
-
+        # ignora conexões removidas.
+        if sender is None:
+            return
         for name in kwargs["fields"]:
             col = StreamManager.list_info.index(name)
             value = Info.get(sender.ident, name)
             self.tableRows[sender.ident].update(col=col, value=value)
 
-    def updateTableExit(self):
+    def update_table_exit(self):
         """ atualização de saída das tabelas. desativando todos os controles """
         self.uiMainWindow.progressBarInfo.setValue(0.0)
 
-    def getLocation(self):
-        """ controle principal para entradas de urls """
+    def get_location(self):
+        """ Controle principal para entradas de urls """
         return self.uiMainWindow.location
 
-    def playerReload(self):
+    def reload_player(self):
         try:
             self.mplayer.reload(autostart=self.LOADING)
         except:
-            self.onSetupVideoPlayer()
+            self.on_setup_player()
 
-    def choosePlayerPath(self, value=None):
+    def choose_player_path(self, value=None):
         """ guardando o local do player externo nas configuração """
         filepath, filtr = QtGui.QFileDialog.getOpenFileName(self,
                                                             self.tr("Choose the location of the external player"), "",
@@ -472,34 +468,36 @@ class Loader(QtGui.QMainWindow):
                                       self.tr("Operation canceled or informed way is not in the file system."))
         return filepath
 
-    def handleVideoDir(self, value=None):
-        currentDir = self.uiMainWindow.videoDir.text()
-        videoDir = QtGui.QFileDialog.getExistingDirectory(self,
-                                                          self.tr("Choose the directory of videos"), currentDir)
+    def handle_video_dir(self, value=None):
+        current_dir = self.uiMainWindow.videoDir.text()
+        video_dir = QtGui.QFileDialog.getExistingDirectory(self,
+                                                           self.tr("Choose the directory of videos"), current_dir)
         self.uiMainWindow.videoDir.setText(
-            videoDir if os.path.exists(videoDir) else (
-                currentDir if os.path.exists(currentDir) else settings.DEFAULT_VIDEOS_DIR
+            video_dir if os.path.exists(video_dir) else (
+                current_dir if os.path.exists(current_dir) else settings.DEFAULT_VIDEOS_DIR
             )
         )
 
-    def setupVideoPlayer(self):
+    def setup_player(self):
         url = "http://{0}:{1}/stream/file.flv"
         url = url.format(Server.HOST, Server.PORT)
 
-        actionExternal = self.uiMainWindow.actionExternalPlayer
-        actionEmbed = self.uiMainWindow.actionEmbedPlayer
+        action_external = self.uiMainWindow.actionExternalPlayer
+        action_embed = self.uiMainWindow.actionEmbedPlayer
         action = self.playerActionGroup.checkedAction()
 
-        if action == actionEmbed:  # referencia embutido.
+        if action == action_embed:  # referencia embutido.
             self.mplayer = self.embedPlayer
 
-        elif action == actionExternal:
-            self.mplayer = FlvPlayer(cmd=self.getExternalPlayerPath(), url=url)
+        elif action == action_external:
+            self.mplayer = FlvPlayer(cmd=self.get_external_player_path(), url=url)
 
-    def onSetupVideoPlayer(self):
-        if self.mplayer: self.mplayer.stop()
-        self.setupVideoPlayer()
-        if self.LOADING: self.mplayer.start()
+    def on_setup_player(self):
+        if self.mplayer:
+            self.mplayer.stop()
+        self.setup_player()
+        if self.LOADING:
+            self.mplayer.start()
 
     def handleStartStopDl(self):
         """ chama o método de acordo com o estado do botão """
@@ -513,10 +511,10 @@ class Loader(QtGui.QMainWindow):
         """ inicia todo o processo de download e transferênica do video """
         if not self.LOADING:
             self.changeStartDlState("Stop", True)
-            self.setupVideoPlayer()
+            self.setup_player()
 
-            url = self.getLocation().currentText()
-            url, title = self.urlManager.splitUrlDesc(url)
+            url = self.get_location().currentText()
+            url, title = self.url_manager.splitUrlDesc(url)
 
             # opção para uso de arquivo temporário
             tempfile = self.uiMainWindow.tempFiles.isChecked()
@@ -567,10 +565,10 @@ class Loader(QtGui.QMainWindow):
             self.changeStartDlState("Download", False)
 
             # Eventos gerados por atividade de conexões.
-            Info.update.disconnect(self.updateConnectionUi)
+            Info.update.disconnect(self.update_connection_ui)
             self.manage.ctrConnection.stopAll()
 
-            self.clearTable()
+            self.clear_table()
             self.mplayer.stop()
             self.manage.stop()
 
@@ -591,20 +589,20 @@ class Loader(QtGui.QMainWindow):
             title = self.manage.get_video_title()
             url = self.manage.get_video_url()
 
-            self.getLocation().setToolTip(title)
+            self.get_location().setToolTip(title)
 
-            joinedUrl = self.urlManager.joinUrlDesc(url, title)
-            self.getLocation().setEditText(joinedUrl)
+            joinedUrl = self.url_manager.joinUrlDesc(url, title)
+            self.get_location().setEditText(joinedUrl)
 
-            if self.getLocation().findText(joinedUrl) < 0:
-                self.getLocation().addItem(joinedUrl)
+            if self.get_location().findText(joinedUrl) < 0:
+                self.get_location().addItem(joinedUrl)
 
             # Eventos gerados por atividade de conexões.
-            Info.update.connect(self.updateConnectionUi)
+            Info.update.connect(self.update_connection_ui)
             self.handleStartupConnection(default=reponse)
 
             self.mplayer.start(autostart=self.LOADING)
-            self.setupFilesView()
+            self.setup_files_view()
         else:
             self.DIALOG.setWindowTitle(self.tr("Download Faleid"))
             self.DIALOG.btnCancel.setText(self.tr("Ok"))
@@ -621,15 +619,14 @@ class Loader(QtGui.QMainWindow):
 
     @FileManager.sincronize
     def tryRecoverFile(self):
-        isTempFile = self.uiMainWindow.tempFiles.isChecked()
-        haveAsk = self.uiMainWindow.tempFileAction.currentIndex()
+        checked_tempfile = self.uiMainWindow.tempFiles.isChecked()
+        ask = bool(self.uiMainWindow.tempFileAction.currentIndex())
 
-        if isTempFile and self.manage.is_tempfile_mode and haveAsk == 1:
+        if ask and checked_tempfile and self.manage.is_tempfile_mode:
             reply = QtGui.QMessageBox.question(self, self.tr("recovery of the temporary file"),
                                                self.tr("The current video file is saved in a temporary file.\n"
                                                        "Want to save permanently ?"),
                                                QtGui.QMessageBox.Yes | QtGui.QMessageBox.No)
-
             if reply == QtGui.QMessageBox.Yes:
                 dialog = DialogRec()
                 dialog.setModal(True)
@@ -683,15 +680,16 @@ class Loader(QtGui.QMainWindow):
                         sm_id_list = connection.startWithProxy(numOfConn, **params)
 
                 for sm_id in sm_id_list:
-                    self.addTableRow(sm_id)
+                    self.add_table_row(sm_id)
 
             elif numOfConn < 0:  # remove conexões existentes.
                 for sm_id in connection.stop(numOfConn):
-                    self.removeTableRow(sm_id)
+                    self.remove_table_row(sm_id)
             else:  # mudança dinânica dos parametros das conexões.
                 connection.update(**params)
 
-    def setConfigDefault(self, conf):
+    @staticmethod
+    def set_default_config(conf):
         conf.setdefault("Path", {})
         conf.setdefault("MenuUi", {})
         conf.setdefault("WidgetUi", {})
@@ -729,7 +727,7 @@ class Loader(QtGui.QMainWindow):
 
     def configUI(self):
         conf = self.config
-        self.setConfigDefault(conf)
+        self.set_default_config(conf)
 
         self.confMenuUi = menuUi = conf["MenuUi"]
         self.uiMainWindow.actionEmbedPlayer.setChecked(menuUi.as_bool("actionEmbedPlayer"))

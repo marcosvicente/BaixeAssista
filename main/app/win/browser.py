@@ -214,11 +214,11 @@ class Browser(QtGui.QWidget):
         """ controla o fluxo de links reconhecidos como válidos """
         strUrl = url.toString()
 
-        if hasattr(self.mainWin, "getLocation") and generators.Universal.has_site(strUrl):
+        if hasattr(self.mainWin, "get_location") and generators.Universal.has_site(strUrl):
             strUrl = generators.Universal.get_inner_url(strUrl)
 
             if not generators.Universal.isEmbed(strUrl):
-                self.mainWin.getLocation().setEditText(strUrl)
+                self.mainWin.get_location().setEditText(strUrl)
             else:
                 self.onRequestCreated(strUrl)
         else:
@@ -275,8 +275,8 @@ class Browser(QtGui.QWidget):
 
     def handleEmbed(self):
         url = self.embed.currentText()
-        if hasattr(self.mainWin, "getLocation"):
-            self.mainWin.getLocation().setEditText(url)
+        if hasattr(self.mainWin, "get_location"):
+            self.mainWin.get_location().setEditText(url)
 
     def handleStopRefresh(self):
         if self.btnStopRefresh["state"] == "refresh":

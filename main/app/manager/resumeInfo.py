@@ -13,6 +13,9 @@ class ResumeInfo(object):
 
         self.filename = filename
 
+    def __getattr__(self, name):
+        return getattr(self.q, name)
+
     def update(self, **kwargs):
         """ kwargs = {}
          - videoExt; videoSize; seekPos; pending; cacheBytesTotal; 
@@ -21,15 +24,12 @@ class ResumeInfo(object):
         self.q.__dict__.update(kwargs)
         self.q.save()
 
-    def __getitem__(self, name):
-        return getattr(self.q, name)
-
     @property
     def query(self):
         return self.q
 
     @property
-    def isEmpty(self):
+    def is_empty(self):
         return self.q.pk is None
 
     @base.LogOnError
