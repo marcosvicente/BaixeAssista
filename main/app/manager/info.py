@@ -28,7 +28,7 @@ class Info(object):
 
     @classmethod
     @Synchronize
-    def event_update(cls, *args, **kwargs):
+    def send(cls, *args, **kwargs):
         if len(kwargs["fields"]) == 1:
             field = kwargs["fields"][0]
             if (time.time() - cls.info_timer[field]) < cls.update_sleep:
@@ -37,34 +37,35 @@ class Info(object):
         cls.update.send(*args, **kwargs)
 
     @classmethod
-    def sent_event(cls, *args, **kwargs):
-        """ Emitindo o sinal para atualização de I/O """
-        th = threading.Thread(target=cls.event_update, args=args, kwargs=kwargs)
-        th.start()
-
-    @classmethod
-    def add(cls, identify):
-        cls.info[identify] = {}
-
-    @classmethod
-    def delete(cls, identify):
-        return cls.info.pop(identify, None)
-
-    @classmethod
-    def get(cls, identify, info):
-        return cls.info.get(identify, {}).get(info, '')
+    @Synchronize
+    def add(cls, ident):
+        cls.info[ident] = {}
 
     @classmethod
     @Synchronize
-    def set(cls, identify, info, value):
-        cls.info[identify][info] = value
-        cls.info_timer.setdefault(info, time.time())
-        cls.sent_event(sender=identify, fields=(info,))
+    def delete(cls, ident):
+        return cls.info.pop(ident, None)
 
     @classmethod
     @Synchronize
-    def clear(cls, identify, *args, **params):
-        args = [name for name in (args or cls.info[identify]) if not name in params.get("exclude", [])]
-        for info in args:
-            cls.info[identify][info] = ''
-        cls.sent_event(sender=identify, fields=args)
+    def get(cls, ident, name):
+        if ident in cls.info:
+            items = cls.info[ident]
+        else:
+            items = {}
+        return items.get(name, '')
+
+    @classmethod
+    @Synchronize
+    def set(cls, ident, name, value):
+        cls.info[ident][name] = value
+        cls.info_timer.setdefault(name, time.time())
+        cls.send(sender=ident, fields=(name,))
+
+    @classmethod
+    @Synchronize
+    def clear(cls, ident, *names, **params):
+        for name in (names or cls.info[ident]):
+            if not name in params.get("exclude", []):
+                cls.info[ident][name] = ''
+        cls.send(sender=ident, fields=names)
