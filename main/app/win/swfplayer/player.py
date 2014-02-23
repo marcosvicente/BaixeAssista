@@ -14,15 +14,6 @@ from main.app.manager.server import Server
 from main import settings
 
 
-
-
-
-
-
-
-
-## --------------------------------------------------------------------
-
 class Player(QtGui.QWidget):
     # template usando na renderização do player
     template = ""
@@ -157,7 +148,3 @@ class Player(QtGui.QWidget):
         params["template"] = self.template
         fullurl = params["hostdomain"] + self.relativeurl + "?" + urllib.parse.urlencode(params)
         self.webview.load(fullurl)
-        
-        
-        
-        

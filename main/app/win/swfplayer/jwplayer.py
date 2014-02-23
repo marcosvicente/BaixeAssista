@@ -6,7 +6,6 @@ from main import settings
 from . import player
 
 
-# -----------------------------------------------------------------------------
 class Player(player.Player):
     defaultskin = "chelseaskin"
 

@@ -1,10 +1,10 @@
 # coding: utf-8
 from PySide import QtCore, QtGui
 
-## --------------------------------------------------------------------------
+
 class BarWidget(QtGui.QWidget):
     """ Cria uma representação o de barra de progresso """
-    offset = 2.0
+    start_coord = 2.0
 
     def __init__(self, parent=None):
         QtGui.QWidget.__init__(self, parent)
@@ -22,24 +22,24 @@ class BarWidget(QtGui.QWidget):
         self.percent = 0.0
 
     @property
-    def mWidth(self):
+    def max_width(self):
         return float(self.width() - self.offset)
 
     @property
-    def now(self):
-        return (self.mWidth / 100.0) * self.percent
+    def max_height(self):
+        return float(self.height() - (self.offset * 2.0))
 
     @property
-    def mHeight(self):
-        return float(self.height() - (self.offset * 2.0))
+    def now(self):
+        return (self.max_width / 100.0) * self.percent
 
     @property
     def endpos(self):
         """ calcula a posicão final da barra de progresso """
-        if self.now < self.mWidth:
-            width = self.mWidth - self.now
+        if self.now < self.max_width:
+            width = self.max_width - self.now
         else:
-            width = self.now - self.mWidth
+            width = self.now - self.max_width
         return width
 
     def setPercent(self, value):
@@ -62,12 +62,12 @@ class BarWidget(QtGui.QWidget):
         painter.setRenderHint(QtGui.QPainter.Antialiasing)
         painter.save()
 
-        painter.drawRect(QtCore.QRectF(self.offset, self.offset, self.now, self.mHeight))
+        painter.drawRect(QtCore.QRectF(self.start_coord, self.start_coord, self.now, self.max_height))
 
         painter.setBrush(QtGui.QColor(0, 0, 0, 25))
-        painter.drawRect(QtCore.QRectF(self.now, self.offset, self.endpos, self.mHeight))
+        painter.drawRect(QtCore.QRectF(self.now, self.start_coord, self.endpos, self.max_height))
 
-        painter.drawText(QtCore.QRectF(self.offset, self.offset, self.mWidth, self.mHeight),
+        painter.drawText(QtCore.QRectF(self.start_coord, self.start_coord, self.max_width, self.max_height),
                          QtCore.Qt.AlignCenter, "%.2f%%" % self.percent)
 
         painter.restore()
