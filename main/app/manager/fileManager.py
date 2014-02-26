@@ -62,7 +62,7 @@ class FileManager(object):
 
     def getFilePath(self):
         """ retorna o caminho completo para o local do arquivo """
-        filename = self.params["filename"]
+        filename = str(self.params["filename"])
 
         try:
             filename = unicodedata.normalize("NFKD", filename)
