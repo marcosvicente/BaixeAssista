@@ -2,6 +2,23 @@
 import threading
 
 
+class Segment(object):
+
+    def __init__(self, index=0, start=0, end=0, size=0):
+        self.index = index
+        self.start = start
+        self.end = end
+        self._size = size
+
+    @property
+    def size(self):
+        return self._size
+
+    @size.setter
+    def size(self, value):
+        self._size = value
+
+
 class Interval(object):
     def __init__(self, **params):
         """params = {}; 
