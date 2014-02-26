@@ -208,8 +208,8 @@ class StreamManager(threading.Thread):
         if not self.manage.interval.has(self.ident):
             return
         if self.is_running and self.lock_wait.is_set():
-            start = self.manage.interval.getStart(self.ident)
-            offset = self.manage.interval.getOffset()
+            start = self.manage.interval.get_start(self.ident)
+            offset = self.manage.interval.get_offset()
 
             # Escreve os dados na posição resultante
             pos = start - offset + self.bytes_num
@@ -228,12 +228,12 @@ class StreamManager(threading.Thread):
 
         while self.is_running:
             # bloqueia alterações sobre os dados do intervalo da conexão
-            with self.manage.interval.getLock(self.ident):
+            with self.manage.interval.get_lock(self.ident):
                 try:
                     # o intervalo da conexão pode sofrer alteração.
-                    seekpos = self.manage.interval.getStart(self.ident)
-                    block_size = self.manage.interval.getBlockSize(self.ident)
-                    block_index = self.manage.interval.getIndex(self.ident)
+                    seekpos = self.manage.interval.get_start(self.ident)
+                    block_size = self.manage.interval.get_block_size(self.ident)
+                    block_index = self.manage.interval.get_index(self.ident)
 
                     # condição atual da conexão: Baixando
                     Info.set(self.ident, "state", _("Baixando"))
@@ -283,7 +283,7 @@ class StreamManager(threading.Thread):
                     self.manage.set_global_speed(self.calc_speed(start, time.time(), current))
 
                     if self.bytes_num >= block_size:
-                        if not self.manage.is_complete() and self.manage.interval.canContinue(self.ident):
+                        if not self.manage.is_complete() and self.manage.interval.can_continue(self.ident):
                             self.manage.interval.remove(self.ident)
                             # associando aconexão a um novo bloco de bytes
                             if not self.configure():
@@ -311,17 +311,17 @@ class StreamManager(threading.Thread):
     def unconfig(self, error_string, number_error):
         """ remove todas as configurações, importantes, dadas a conexão """
         if self.manage.interval.has(self.ident):
-            self.manage.interval.setPending(
-                self.manage.interval.getIndex(self.ident),
+            self.manage.interval.set_pending(
+                self.manage.interval.get_index(self.ident),
                 self.bytes_num,
-                self.manage.interval.getStart(self.ident),
-                self.manage.interval.getEnd(self.ident),
-                self.manage.interval.getBlockSize(self.ident))
+                self.manage.interval.get_start(self.ident),
+                self.manage.interval.get_end(self.ident),
+                self.manage.interval.get_block_size(self.ident))
 
             self.manage.interval.remove(self.ident)
 
         ip = self.proxies.get("http", "default")
-        bad_read = (number_error != 3 and self.bytes_num < self.manage.interval.getMinBlock())
+        bad_read = (number_error != 3 and self.bytes_num < self.manage.interval.get_min_block())
 
         if ip != "default" and (number_error == 1 or bad_read):
             self.manage.proxy_manager.set_bad(ip)
@@ -346,7 +346,7 @@ class StreamManager(threading.Thread):
             if self.params["typechange"]:
                 self.proxies = self.manage.proxy_manager.get_formated()
 
-        elif error_number == 1 or self.bytes_num < self.manage.interval.getMinBlock():
+        elif error_number == 1 or self.bytes_num < self.manage.interval.get_min_block():
             if not self.params["typechange"]:
                 self.proxies = self.manage.proxy_manager.get_formated()
             else:
@@ -359,7 +359,7 @@ class StreamManager(threading.Thread):
             self.link = self.video_manager.get_link()
 
     def connect(self):
-        seek_pos = self.manage.interval.getStart(self.ident)
+        seek_pos = self.manage.interval.get_start(self.ident)
         start = self.video_manager.get_relative(seek_pos)
         link = sites.get_with_seek(self.link, start)
         video_size = self.manage.get_video_size()
@@ -401,16 +401,16 @@ class StreamManager(threading.Thread):
         """ associa a conexão a uma parte da stream """
         if self.lock_wait.is_set():
             with self.lock_block_config:
-                if self.manage.interval.countPending() > 0:
+                if self.manage.interval.size_pending() > 0:
                     # associa um intervalo pendente(intervalos pendentes, são gerados em falhas de conexão)
-                    self.manage.interval.configurePending(self.ident)
+                    self.manage.interval.config_pending(self.ident)
                 else:
                     # cria um novo intervalo e associa a conexão.
-                    self.manage.interval.createNew(self.ident)
+                    self.manage.interval.create_new(self.ident)
 
                     # como novos intervalos não são infinitos, atribui um novo, apartir de um já existente.
                     if not self.manage.interval.has(self.ident):
-                        self.manage.interval.configureDerivate(self.ident)
+                        self.manage.interval.config_derivative(self.ident)
 
                 # contador de bytes do intervalod de bytes atual
                 self.bytes_num = 0
@@ -468,7 +468,7 @@ class StreamManager_(StreamManager):
             if self.params["typechange"]:
                 self.proxies = self.manage.proxy_manager.get_formated()
 
-        elif error_number == 1 or self.bytes_num < self.manage.interval.getMinBlock():
+        elif error_number == 1 or self.bytes_num < self.manage.interval.get_min_block():
             if not self.params["typechange"]:
                 self.proxies = self.manage.proxy_manager.get_formated()
             else:
@@ -488,7 +488,7 @@ class StreamManager_(StreamManager):
         return link
 
     def connect(self):
-        seek_pos = self.manage.interval.getStart(self.ident)
+        seek_pos = self.manage.interval.get_start(self.ident)
         start = self.video_manager.get_relative(seek_pos)
         link = sites.get_with_seek(self.link, start)
         video_size = self.manage.get_video_size()

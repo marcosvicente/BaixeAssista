@@ -227,7 +227,7 @@ class Manage(object):
     def recover_tempfile(self):
         """ tenta fazer a recuperação de um arquivo temporário """
         # começa a recuperação do arquivo temporário.
-        for copy in self.file_manager.recover(badfile=(not self.is_tempfile_mode or self.interval.getOffset() != 0)):
+        for copy in self.file_manager.recover(badfile=(not self.is_tempfile_mode or self.interval.get_offset() != 0)):
             if copy.inProgress and copy.progress == 100.0 and copy.sucess and not copy.error:
                 # nunca se deve adcionar a mesma url.
                 if not self.urlManager.exist(self.streamUrl):
@@ -271,7 +271,7 @@ class Manage(object):
         return self.video_ext
 
     def position_sent(self):
-        return self.interval.send_info['sending']
+        return self.interval['sending']
 
     def get_cache_bytes_total(self):
         return self.cache_bytes_total
@@ -300,14 +300,14 @@ class Manage(object):
             # a conexão deve estar ligada a um interv
             if self.interval.has(identify):
                 pending.append((
-                    self.interval.getIndex(identify),
+                    self.interval.get_index(identify),
                     stream_manager.bytes_num,
-                    self.interval.getStart(identify),
-                    self.interval.getEnd(identify),
-                    self.interval.getBlockSize(identify)
+                    self.interval.get_start(identify),
+                    self.interval.get_end(identify),
+                    self.interval.get_block_size(identify)
                 ))
 
-        pending.extend(self.interval.getPending())
+        pending.extend(self.interval.get_pending())
         pending.sort()
 
         self.resume_info.update(title=self.video_title,
@@ -358,12 +358,12 @@ class Manage(object):
     @base.protected()
     def update(self):
         """ atualiza dados de transferência do arquivo de vídeo atual """
-        start = self.interval.getFirstStart()
-        self.interval.send_info["sending"] = start
-        bytes_num = self.interval.send_info["nbytes"].get(start, 0)
+        start = self.interval.get_first_start()
+        self.interval.meta["sending"] = start
+        bytes_num = self.interval.meta["nbytes"].get(start, 0)
 
         if start >= 0:
-            absolute_start = start - self.interval.getOffset()
+            absolute_start = start - self.interval.get_offset()
             self.cache_bytes_counter = absolute_start + bytes_num
 
         elif self.is_complete():  # is_complete: tira a necessidade de uma igualdade absoluta
