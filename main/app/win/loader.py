@@ -430,15 +430,13 @@ class Loader(QtGui.QMainWindow):
         self.uiMainWindow.globalSpeedInfo.setText(self.manage.get_global_speed())
         self.uiMainWindow.globalEtaInfo.setText(self.manage.get_global_eta())
 
-    @base.Protected
-    def update_connection_ui(self, identify, **kwargs):
+    def update_connection_ui(self, sender, **kwargs):
         """ Interface de atualização das infos da conexão """
-        print(identify, ": ", identify in self.table_rows)
-        if identify in self.table_rows:
+        if sender in self.table_rows:
             for name in kwargs["fields"]:
-                self.table_rows[identify].update(
+                self.table_rows[sender].update(
                     col=StreamManager.list_info.index(name),
-                    value=Info.get(identify, name)
+                    value=Info.get(sender, name)
                 )
 
     def update_table_exit(self):
@@ -595,8 +593,8 @@ class Loader(QtGui.QMainWindow):
             if self.get_location().findText(joined_url) < 0:
                 self.get_location().addItem(joined_url)
 
-            self.startup_connection_handle(default=response)
             Info.update.connect(self.update_connection_ui, dispatch_uid='update_connection_ui')
+            self.startup_connection_handle(default=response)
 
             self.mplayer.start(autostart=self.is_loading)
             self.setup_view_files()

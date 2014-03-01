@@ -60,7 +60,7 @@ class Info(object):
     def set(cls, ident, name, value):
         cls.info[ident][name] = value
         cls.info_timer.setdefault(name, time.time())
-        cls.send(sender=ident, fields=(name,))
+        cls.send(ident, fields=(name,))
 
     @classmethod
     @Synchronize
