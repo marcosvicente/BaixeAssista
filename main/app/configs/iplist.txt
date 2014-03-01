@@ -258,421 +258,421 @@ lock = False
 rate = -1
 [190.108.83.21:8080]
 lock = False
-rate = 0
+rate = -1
 [183.203.12.19:443]
 lock = False
-rate = 0
+rate = -1
 [190.6.206.106:80]
 lock = False
-rate = 0
+rate = -1
 [219.224.27.92:808]
 lock = False
-rate = 0
+rate = -1
 [119.2.3.222:3128]
 lock = False
-rate = 0
+rate = -1
 [180.246.111.143:3128]
 lock = False
-rate = 0
+rate = -1
 [41.196.22.244:80]
 lock = False
-rate = 0
+rate = -1
 [78.189.90.139:80]
 lock = False
-rate = 0
+rate = -1
 [180.96.19.24:8080]
 lock = False
-rate = 0
+rate = -1
 [110.139.206.93:8080]
 lock = False
-rate = 0
+rate = -1
 [124.160.239.234:80]
 lock = False
-rate = 0
+rate = -1
 [201.96.110.97:8080]
 lock = False
-rate = 0
+rate = -1
 [190.85.37.90:8080]
 lock = False
-rate = 0
+rate = -1
 [190.254.68.54:3128]
 lock = False
-rate = 0
+rate = -1
 [222.255.28.33:3128]
 lock = False
-rate = 0
+rate = -1
 [118.175.3.227:3128]
 lock = False
-rate = 0
+rate = -1
 [203.66.65.244:80]
 lock = False
-rate = 0
+rate = -1
 [125.162.170.42:3128]
 lock = False
-rate = 0
+rate = -1
 [119.161.163.222:3128]
 lock = False
-rate = 0
+rate = -1
 [190.85.57.162:3128]
 lock = False
-rate = 0
+rate = -1
 [178.131.50.253:8080]
 lock = False
-rate = 0
+rate = -1
 [101.44.1.107:80]
 lock = False
-rate = 0
+rate = -1
 [116.255.139.64:808]
 lock = False
-rate = 0
+rate = -1
 [115.236.19.228:80]
 lock = False
-rate = 0
+rate = -1
 [119.235.54.69:80]
 lock = False
-rate = 0
+rate = -1
 [220.243.2.243:3128]
 lock = False
-rate = 0
+rate = -1
 [46.10.180.111:8080]
 lock = False
-rate = 0
+rate = -1
 [186.56.57.187:80]
 lock = False
-rate = 0
+rate = -1
 [200.80.34.42:8080]
 lock = False
-rate = 0
+rate = -1
 [190.105.161.208:3128]
 lock = False
-rate = 0
+rate = -1
 [177.75.176.254:8080]
 lock = False
-rate = 0
+rate = -1
 [109.123.126.253:8080]
 lock = False
-rate = 0
+rate = -1
 [46.252.33.201:8080]
 lock = False
-rate = 0
+rate = -1
 [111.94.140.111:3128]
 lock = False
-rate = 0
+rate = -1
 [177.43.180.214:8080]
 lock = False
-rate = 0
+rate = -1
 [190.0.52.214:8080]
 lock = False
-rate = 0
+rate = -1
 [200.150.34.165:3128]
 lock = False
-rate = 0
+rate = -1
 [211.151.186.226:80]
 lock = False
-rate = 0
+rate = -1
 [115.84.183.3:808]
 lock = False
-rate = 0
+rate = -1
 [180.183.121.152:3128]
 lock = False
-rate = 0
+rate = -1
 [118.96.153.133:8080]
 lock = False
-rate = 0
+rate = -1
 [201.28.169.43:80]
 lock = False
-rate = 0
+rate = -1
 [41.35.46.103:8080]
 lock = False
-rate = 0
+rate = -1
 [190.235.100.182:8080]
 lock = False
-rate = 0
+rate = -1
 [202.137.11.166:8080]
 lock = False
-rate = 0
+rate = -1
 [60.210.0.30:8080]
 lock = False
-rate = 0
+rate = -1
 [113.140.74.26:8000]
 lock = False
-rate = 0
+rate = -1
 [114.113.158.29:80]
 lock = False
-rate = 0
+rate = -1
 [50.22.238.34:80]
 lock = False
-rate = 0
+rate = -1
 [113.106.194.221:82]
 lock = False
-rate = 0
+rate = -1
 [124.207.162.190:80]
 lock = False
-rate = 0
+rate = -1
 [200.111.115.173:8080]
 lock = False
-rate = 0
+rate = -1
 [140.113.216.134:3128]
 lock = False
-rate = 0
+rate = -1
 [110.137.77.19:8282]
 lock = False
-rate = 0
+rate = -1
 [71.13.87.59:8000]
 lock = False
-rate = 0
+rate = -1
 [201.18.135.101:3128]
 lock = False
-rate = 0
+rate = -1
 [60.190.189.214:8123]
 lock = False
-rate = 0
+rate = -1
 [217.119.81.106:3128]
 lock = False
-rate = 0
+rate = -1
 [180.247.198.182:8080]
 lock = False
-rate = 0
+rate = -1
 [122.194.11.208:808]
 lock = False
-rate = 0
+rate = -1
 [221.10.112.228:8080]
 lock = False
-rate = 0
+rate = -1
 [202.182.124.12:3128]
 lock = False
-rate = 0
+rate = -1
 [83.170.104.134:808]
 lock = False
-rate = 0
+rate = -1
 [188.128.118.177:8080]
 lock = False
-rate = 0
+rate = -1
 [109.74.236.147:8080]
 lock = False
-rate = 0
+rate = -1
 [210.79.216.252:8080]
 lock = False
-rate = 0
+rate = -1
 [178.168.69.153:8080]
 lock = False
-rate = 0
+rate = -1
 [67.205.100.85:54321]
 lock = False
-rate = 0
+rate = -1
 [190.43.175.160:3128]
 lock = False
-rate = 0
+rate = -1
 [205.214.205.59:8080]
 lock = False
-rate = 0
+rate = -1
 [195.5.55.92:3128]
 lock = False
-rate = 0
+rate = -1
 [202.29.97.5:3128]
 lock = False
-rate = 0
+rate = -1
 [80.233.133.75:8080]
 lock = False
-rate = 0
+rate = -1
 [178.135.51.214:8080]
 lock = False
-rate = 0
+rate = -1
 [125.162.185.92:3128]
 lock = False
-rate = 0
+rate = -1
 [119.147.241.58:80]
 lock = False
-rate = 0
+rate = -1
 [202.47.88.65:3128]
 lock = False
-rate = 0
+rate = -1
 [190.14.231.106:3128]
 lock = False
-rate = 0
+rate = -1
 [162.105.241.54:3128]
 lock = False
-rate = 0
+rate = -1
 [207.211.86.196:80]
 lock = False
-rate = 0
+rate = -1
 [141.255.161.105:8080]
 lock = False
-rate = 0
+rate = -1
 [187.52.2.162:3128]
 lock = False
-rate = 0
+rate = -1
 [113.106.194.221:84]
 lock = False
-rate = 0
+rate = -1
 [190.145.74.10:3128]
 lock = False
-rate = 0
+rate = -1
 [79.165.191.114:3128]
 lock = False
-rate = 0
+rate = -1
 [222.89.55.123:8080]
 lock = False
-rate = 0
+rate = -1
 [202.183.155.171:3128]
 lock = False
-rate = 0
+rate = -1
 [186.113.178.234:8080]
 lock = False
-rate = 0
+rate = -1
 [125.165.165.128:8080]
 lock = False
-rate = 0
+rate = -1
 [175.103.58.55:3128]
 lock = False
-rate = 0
+rate = -1
 [78.85.39.109:3128]
 lock = False
-rate = 0
+rate = -1
 [221.133.238.138:8080]
 lock = False
-rate = 0
+rate = -1
 [190.0.46.66:8080]
 lock = False
-rate = 0
+rate = -1
 [110.139.150.155:80]
 lock = False
-rate = 0
+rate = -1
 [211.94.93.224:3128]
 lock = False
-rate = 0
+rate = -1
 [200.87.126.54:8080]
 lock = False
-rate = 0
+rate = -1
 [190.67.169.194:8080]
 lock = False
-rate = 0
+rate = -1
 [195.234.10.98:3128]
 lock = False
-rate = 0
+rate = -1
 [122.72.20.126:80]
 lock = False
-rate = 0
+rate = -1
 [190.203.174.199:8080]
 lock = False
-rate = 0
+rate = -1
 [202.65.116.244:8080]
 lock = False
-rate = 0
+rate = -1
 [189.84.230.165:8080]
 lock = False
-rate = 0
+rate = -1
 [180.243.237.149:3128]
 lock = False
-rate = 0
+rate = -1
 [41.75.204.71:80]
 lock = False
-rate = 0
+rate = -1
 [186.207.197.137:8080]
 lock = False
-rate = 0
+rate = -1
 [218.206.228.222:3128]
 lock = False
-rate = 0
+rate = -1
 [130.93.219.180:3128]
 lock = False
-rate = 0
+rate = -1
 [187.103.115.146:80]
 lock = False
-rate = 0
+rate = -1
 [115.96.32.18:3128]
 lock = False
-rate = 0
+rate = -1
 [213.17.209.125:80]
 lock = False
-rate = 0
+rate = -1
 [190.182.18.109:3128]
 lock = False
-rate = 0
+rate = -1
 [113.105.93.119:80]
 lock = False
-rate = 0
+rate = -1
 [94.23.8.208:3128]
 lock = False
-rate = 0
+rate = -1
 [186.216.160.147:8080]
 lock = False
-rate = 0
+rate = -1
 [208.71.174.126:80]
 lock = False
-rate = 0
+rate = -1
 [118.96.8.196:80]
 lock = False
-rate = 0
+rate = -1
 [180.247.54.98:3128]
 lock = False
-rate = 0
+rate = -1
 [177.46.8.131:80]
 lock = False
-rate = 0
+rate = -1
 [202.129.79.90:80]
 lock = False
-rate = 0
+rate = -1
 [60.12.117.28:80]
 lock = False
-rate = 0
+rate = -1
 [213.197.182.78:3128]
 lock = False
-rate = 0
+rate = -1
 [58.216.168.138:1337]
 lock = False
-rate = 0
+rate = -1
 [81.213.157.71:80]
 lock = False
-rate = 0
+rate = -1
 [189.3.154.131:3128]
 lock = False
-rate = 0
+rate = -1
 [93.86.249.179:8080]
 lock = False
-rate = 0
+rate = -1
 [123.30.208.134:8080]
 lock = False
-rate = 0
+rate = -1
 [58.67.147.208:8080]
 lock = False
-rate = 0
+rate = -1
 [68.230.115.99:8080]
 lock = False
-rate = 0
+rate = -1
 [201.251.5.248:8080]
 lock = False
-rate = 0
+rate = -1
 [109.175.28.45:8080]
 lock = False
-rate = 0
+rate = -1
 [119.42.80.66:8080]
 lock = False
-rate = 0
+rate = -1
 [122.72.33.138:80]
 lock = False
-rate = 0
+rate = -1
 [180.96.19.196:3128]
 lock = False
-rate = 0
+rate = -1
 [201.75.29.193:3128]
 lock = False
-rate = 0
+rate = -1
 [210.14.148.3:80]
 lock = False
-rate = 0
+rate = -1
 [119.97.146.152:80]
 lock = False
-rate = 0
+rate = -1
 [66.129.160.2:80]
 lock = False
-rate = 0
+rate = -1
 [110.137.129.242:3128]
 lock = False
-rate = 0
+rate = -1
 [186.109.91.204:8080]
 lock = False
-rate = 0
+rate = -1
 [58.248.217.216:80]
 lock = False
 rate = 0
@@ -681,7 +681,7 @@ lock = False
 rate = 0
 [186.153.120.42:8080]
 lock = False
-rate = 0
+rate = -1
 [77.71.1.190:8080]
 lock = False
 rate = 0

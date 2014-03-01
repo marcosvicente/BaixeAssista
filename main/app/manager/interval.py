@@ -10,6 +10,9 @@ class Segment(object):
         self.end = end
         self._size = size
 
+    def block_size(self):
+        return self.end - self.start
+
     @property
     def size(self):
         return self._size
