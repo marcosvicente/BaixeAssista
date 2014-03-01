@@ -136,7 +136,7 @@ class Loader(QtGui.QMainWindow):
         self.uiMainWindow.setupUi(self)
         self.setWindowTitle(self.baixeAssista)
 
-        self.LOADING = self.WCLOSE = False
+        self.is_loading = self.WCLOSE = False
         self.manage = self.mplayer = None
 
         self.setupUI()
@@ -165,11 +165,11 @@ class Loader(QtGui.QMainWindow):
         dialogError.exec_()
 
     def closeEvent(self, event):
-        if self.LOADING:
+        if self.is_loading:
             # salvando o arquivo atualmente sendo baixado.
             self.WCLOSE = True
 
-            self.handleStopVideoDl()
+            self.on_stop_video_handle()
             event.ignore()
         else:
             # browser settings
@@ -178,11 +178,12 @@ class Loader(QtGui.QMainWindow):
             # ui settings
             self.saveSettings()
 
-    def updateUI(self):
-        if self.LOADING: self.update_table()
+    def on_update_ui(self):
+        if self.is_loading:
+            self.update_table()
 
-    def updateUIExit(self):
-        if not self.LOADING: self.update_table_exit()
+    def on_update_ui_exit(self):
+        if not self.is_loading: self.update_table_exit()
 
     def showDonationDialog(self, event=None, show=True):
         """ show: mostra o diálogo independente da decisão do usuário """
@@ -226,12 +227,12 @@ class Loader(QtGui.QMainWindow):
         self.uiMainWindow.actionErroReporting.triggered.connect(self.onErroReporting)
         self.uiMainWindow.actionCheckNow.triggered.connect(self.onSearchUpdate)
 
-        self.uiMainWindow.connectionActive.valueChanged.connect(self.handleStartupConnection)
-        self.uiMainWindow.connectionSpeed.valueChanged.connect(self.handleStartupConnection)
-        self.uiMainWindow.connectionTimeout.valueChanged.connect(self.handleStartupConnection)
-        self.uiMainWindow.connectionSleep.valueChanged.connect(self.handleStartupConnection)
-        self.uiMainWindow.connectionAttempts.valueChanged.connect(self.handleStartupConnection)
-        self.uiMainWindow.connectionType.stateChanged.connect(self.handleStartupConnection)
+        self.uiMainWindow.connectionActive.valueChanged.connect(self.startup_connection_handle)
+        self.uiMainWindow.connectionSpeed.valueChanged.connect(self.startup_connection_handle)
+        self.uiMainWindow.connectionTimeout.valueChanged.connect(self.startup_connection_handle)
+        self.uiMainWindow.connectionSleep.valueChanged.connect(self.startup_connection_handle)
+        self.uiMainWindow.connectionAttempts.valueChanged.connect(self.startup_connection_handle)
+        self.uiMainWindow.connectionType.stateChanged.connect(self.startup_connection_handle)
 
         self.uiMainWindow.actionAbout.triggered.connect(self.onAbout)
 
@@ -438,9 +439,10 @@ class Loader(QtGui.QMainWindow):
         if sender is None:
             return
         for name in kwargs["fields"]:
-            col = StreamManager.list_info.index(name)
-            value = Info.get(sender.ident, name)
-            self.tableRows[sender.ident].update(col=col, value=value)
+            self.tableRows[sender.ident].update(
+                col=StreamManager.list_info.index(name),
+                value=Info.get(sender.ident, name)
+            )
 
     def update_table_exit(self):
         """ atualização de saída das tabelas. desativando todos os controles """
@@ -452,7 +454,7 @@ class Loader(QtGui.QMainWindow):
 
     def reload_player(self):
         try:
-            self.mplayer.reload(autostart=self.LOADING)
+            self.mplayer.reload(autostart=self.is_loading)
         except:
             self.on_setup_player()
 
@@ -496,7 +498,7 @@ class Loader(QtGui.QMainWindow):
         if self.mplayer:
             self.mplayer.stop()
         self.setup_player()
-        if self.LOADING:
+        if self.is_loading:
             self.mplayer.start()
 
     def handleStartStopDl(self):
@@ -504,12 +506,12 @@ class Loader(QtGui.QMainWindow):
         if self.uiMainWindow.btnStartDl.isChecked():
             self.handleStartVideoDl()
         else:
-            self.handleStopVideoDl()
+            self.on_stop_video_handle()
 
     @base.LogOnError
     def handleStartVideoDl(self):
         """ inicia todo o processo de download e transferênica do video """
-        if not self.LOADING:
+        if not self.is_loading:
             self.changeStartDlState("Stop", True)
             self.setup_player()
 
@@ -537,18 +539,18 @@ class Loader(QtGui.QMainWindow):
                 QtGui.QMessageBox.information(self, self.tr("Error"),
                                               self.tr("An error occurred starting the download.") + "\n\n%s" % err)
                 self.changeStartDlState("Download", False)
-                return  # fechando o bloco de inicialização.
-            ## -------------------------------------------------
-            self.DIALOG = DialogDl(self.tr("Please wait"), self)
-            self.DIALOG.rejected.connect(self.onCancelVideoDl)
-            self.DIALOG.show()
+                # fechando o bloco de inicialização.
+                return
+            self.dialog = DialogDl(self.tr("Please wait"), self)
+            self.dialog.rejected.connect(self.on_cancel_video_handle)
+            self.dialog.show()
 
             self.videoLoad = VideoLoad(self.manage)
-            self.videoLoad.responseChanged.connect(self.DIALOG.handleUpdate)
-            self.videoLoad.responseFinish.connect(self.onStartVideoDl)
-            self.videoLoad.responseError.connect(self.onErrorVideoDl)
-            self.videoLoad.responseUpdateUi.connect(self.updateUI)
-            self.videoLoad.responseUpdateUiExit.connect(self.updateUIExit)
+            self.videoLoad.responseChanged.connect(self.dialog.handleUpdate)
+            self.videoLoad.responseFinish.connect(self.on_start_video_handle)
+            self.videoLoad.responseError.connect(self.on_error_video_handle)
+            self.videoLoad.responseUpdateUi.connect(self.on_update_ui)
+            self.videoLoad.responseUpdateUiExit.connect(self.on_update_ui_exit)
             self.videoLoad.start()
 
     def changeStartDlState(self, text, checked):
@@ -556,10 +558,10 @@ class Loader(QtGui.QMainWindow):
         self.uiMainWindow.btnStartDl.setText(self.tr(text))
         self.uiMainWindow.btnStartDl.setChecked(checked)
 
-    def handleStopVideoDl(self):
+    def on_stop_video_handle(self):
         """ termina todas as ações relacionadas ao download do vídeo atual """
-        if self.LOADING:
-            self.tryRecoverFile()
+        if self.is_loading:
+            self.recover_tempfile()
 
             self.videoLoad.setCancelDl(True)  # emit cancel
             self.changeStartDlState("Download", False)
@@ -572,18 +574,19 @@ class Loader(QtGui.QMainWindow):
             self.mplayer.stop()
             self.manage.stop()
 
-            self.LOADING = False
+            self.is_loading = False
             self.manage = None
 
-            if self.WCLOSE: self.destroy()
+            if self.WCLOSE:
+                self.destroy()
         else:
-            self.onCancelVideoDl()
+            self.on_cancel_video_handle()
 
-    def onStartVideoDl(self, reponse):
-        self.LOADING = reponse
+    def on_start_video_handle(self, response):
+        self.is_loading = response
 
-        if self.LOADING:
-            self.DIALOG.close()
+        if self.is_loading:
+            self.dialog.close()
 
             # titulo do arquivo de video
             title = self.manage.get_video_title()
@@ -591,34 +594,34 @@ class Loader(QtGui.QMainWindow):
 
             self.get_location().setToolTip(title)
 
-            joinedUrl = self.url_manager.joinUrlDesc(url, title)
-            self.get_location().setEditText(joinedUrl)
+            joined_url = self.url_manager.joinUrlDesc(url, title)
+            self.get_location().setEditText(joined_url)
 
-            if self.get_location().findText(joinedUrl) < 0:
-                self.get_location().addItem(joinedUrl)
+            if self.get_location().findText(joined_url) < 0:
+                self.get_location().addItem(joined_url)
 
             # Eventos gerados por atividade de conexões.
             Info.update.connect(self.update_connection_ui)
-            self.handleStartupConnection(default=reponse)
+            self.startup_connection_handle(default=response)
 
-            self.mplayer.start(autostart=self.LOADING)
+            self.mplayer.start(autostart=self.is_loading)
             self.setup_files_view()
         else:
-            self.DIALOG.setWindowTitle(self.tr("Download Faleid"))
-            self.DIALOG.btnCancel.setText(self.tr("Ok"))
+            self.dialog.setWindowTitle(self.tr("Download Faleid"))
+            self.dialog.btnCancel.setText(self.tr("Ok"))
 
-    def onCancelVideoDl(self):
-        if not self.LOADING:
+    def on_cancel_video_handle(self):
+        if not self.is_loading:
             self.videoLoad.setCancelDl(True)  # emit cancel
             self.changeStartDlState("Download", False)
-            self.DIALOG.close()
+            self.dialog.close()
 
-    def onErrorVideoDl(self, err):
-        self.DIALOG.close()
+    def on_error_video_handle(self, err):
+        self.dialog.close()
         print(err)
 
     @FileManager.sincronize
-    def tryRecoverFile(self):
+    def recover_tempfile(self):
         checked_tempfile = self.uiMainWindow.tempFiles.isChecked()
         ask = bool(self.uiMainWindow.tempFileAction.currentIndex())
 
@@ -652,9 +655,9 @@ class Loader(QtGui.QMainWindow):
                 dialog.btnCancel.setEnabled(False)
                 dialog.exec_()
 
-    def handleStartupConnection(self, value=None, default=False):
+    def startup_connection_handle(self, value=None, default=False):
         """ controla o fluxo de criação e remoção de conexões """
-        if self.LOADING and not self.manage.is_complete():
+        if self.is_loading and not self.manage.is_complete():
             connection = self.manage.ctrConnection
             nActiveConn = connection.countActive()
 
