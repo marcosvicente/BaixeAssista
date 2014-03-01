@@ -67,7 +67,7 @@ class Vk(SiteBase):
             raw_params = match_obj.group("vars").replace(r'\"', '"')
             params = dict([(a, (b or c)) for a, b, c in re.findall('"(.+?)"\s*:\s*(?:"(.*?)"|(-?\d*))', raw_params)])
             params["url"] = "http://cs%s.vk.com" % params.pop("host")
-
+            print(params)
         try:
             match_obj = re.search("<title>(.+?)</title>", web_data)
             title = match_obj.group(1)
@@ -76,17 +76,27 @@ class Vk(SiteBase):
 
         if int(params.get("no_flv", 0)):
             base_url = params["url"] + "/u%s/videos/%s.{res}.mp4" % (params["uid"], params["vtag"])
-            if params.get('url240', '').startswith('http'):
+
+            if 'url240' in params and params['url240'].startswith('http'):
                 url_hd240 = params['url240'].replace("\\", '')
             else:
                 url_hd240 = base_url.format(res=240)
-            if params.get('url360', '').startswith('http'):
+
+            if 'url360' in params and params['url360'].startswith('http'):
                 url_hd360 = params['url360'].replace("\\", '')
             else:
                 url_hd360 = base_url.format(res=360)
+
+            if 'cache240' in params and params['cache240']:
+                url_hd240 = params['cache240'].replace("\\", '')
+
+            if 'cache360' in params and params['cache360']:
+                url_hd360 = params['cache360'].replace("\\", '')
+
             ext = "mp4"
         else:
             url_hd240 = url_hd360 = params["url"] + "u%s/videos/%s.flv" % (params["uid"], params["vtag"])
             ext = "flv"
-
+        print(url_hd240)
+        print(url_hd360)
         self.configs = {"title": title, "ext": ext, 1: url_hd240, 2: url_hd360}
