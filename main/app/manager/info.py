@@ -35,7 +35,12 @@ class Info(object):
 
     @classmethod
     def get(cls, ident, name):
-        return cls.info[ident].get(name, '') if ident in cls.info else ''
+        if cls.lock:
+            if ident in cls.info:
+                data = cls.info[ident].get(name, '')
+            else:
+                data = ''
+            return data
 
     @classmethod
     def set(cls, ident, name, value):
