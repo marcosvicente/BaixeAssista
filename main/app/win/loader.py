@@ -136,11 +136,11 @@ class Loader(QtGui.QMainWindow):
         self.uiMainWindow.setupUi(self)
         self.setWindowTitle(self.baixeAssista)
 
-        self.is_loading = self.WCLOSE = False
+        self.is_loading = self.w_close = False
         self.manage = self.mplayer = None
 
-        self.setupUI()
-        self.setupAction()
+        self.setup_ui()
+        self.setup_actions()
 
         # restaurando configurações da ui
         self.config_ui()
@@ -167,7 +167,7 @@ class Loader(QtGui.QMainWindow):
     def closeEvent(self, event):
         if self.is_loading:
             # salvando o arquivo atualmente sendo baixado.
-            self.WCLOSE = True
+            self.w_close = True
 
             self.stop_video_dl()
             event.ignore()
@@ -202,7 +202,7 @@ class Loader(QtGui.QMainWindow):
         if self.uiMainWindow.actionAutomaticSearch.isChecked():
             self.onSearchUpdate(False)
 
-    def setupUI(self):
+    def setup_ui(self):
         # o player externo terá uma instância única.
         self.embedPlayer = PlayerDialog(parent=self, configs=self.config)
         self.embedPlayer.btnReload.clicked.connect(self.reload_player)
@@ -217,7 +217,7 @@ class Loader(QtGui.QMainWindow):
 
         self.setup_view_files()
 
-    def setupAction(self):
+    def setup_actions(self):
         self.uiMainWindow.btnStartDl.clicked.connect(self.on_start_stop_handle)
         self.uiMainWindow.actionExit.triggered.connect(self.close)
 
@@ -572,7 +572,7 @@ class Loader(QtGui.QMainWindow):
             self.is_loading = False
             self.manage = None
 
-            if self.WCLOSE:
+            if self.w_close:
                 self.destroy()
         else:
             self.on_cancel_video_handle()
