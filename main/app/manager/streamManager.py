@@ -223,6 +223,7 @@ class StreamManager(threading.Thread):
             self.bytes_num += bytes_num
 
     def read(self):
+        Info.set(self.ident, "http", self.proxies.get("http", _("Conexão Padrão")))
         local_time = time.time()
         block_read = 1024
 
