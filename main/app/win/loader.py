@@ -169,7 +169,7 @@ class Loader(QtGui.QMainWindow):
             # salvando o arquivo atualmente sendo baixado.
             self.WCLOSE = True
 
-            self.on_stop_video_handle()
+            self.stop_video_dl()
             event.ignore()
         else:
             # browser settings
@@ -218,7 +218,7 @@ class Loader(QtGui.QMainWindow):
         self.setup_files_view()
 
     def setupAction(self):
-        self.uiMainWindow.btnStartDl.clicked.connect(self.handleStartStopDl)
+        self.uiMainWindow.btnStartDl.clicked.connect(self.on_start_stop_handle)
         self.uiMainWindow.actionExit.triggered.connect(self.close)
 
         self.uiMainWindow.btnToolDir.clicked.connect(self.handle_video_dir)
@@ -501,18 +501,18 @@ class Loader(QtGui.QMainWindow):
         if self.is_loading:
             self.mplayer.start()
 
-    def handleStartStopDl(self):
+    def on_start_stop_handle(self):
         """ chama o método de acordo com o estado do botão """
         if self.uiMainWindow.btnStartDl.isChecked():
-            self.handleStartVideoDl()
+            self.start_video_dl()
         else:
-            self.on_stop_video_handle()
+            self.stop_video_dl()
 
     @base.LogOnError
-    def handleStartVideoDl(self):
+    def start_video_dl(self):
         """ inicia todo o processo de download e transferênica do video """
         if not self.is_loading:
-            self.changeStartDlState("Stop", True)
+            self.change_button_dl_state("Stop", True)
             self.setup_player()
 
             url = self.get_location().currentText()
@@ -537,10 +537,10 @@ class Loader(QtGui.QMainWindow):
                                      maxsplit=videoSplitSize)
             except Exception as err:
                 QtGui.QMessageBox.information(self, self.tr("Error"),
-                                              self.tr("An error occurred starting the download.") + "\n\n%s" % err)
-                self.changeStartDlState("Download", False)
-                # fechando o bloco de inicialização.
-                return
+                                              "{!s}\n\n{!s}".format(self.tr("An error occurred starting the download."),
+                                                                    err))
+                self.change_button_dl_state("Download", False)
+                return  # failed
             self.dialog = DialogDl(self.tr("Please wait"), self)
             self.dialog.rejected.connect(self.on_cancel_video_handle)
             self.dialog.show()
@@ -553,18 +553,18 @@ class Loader(QtGui.QMainWindow):
             self.videoLoad.responseUpdateUiExit.connect(self.on_update_ui_exit)
             self.videoLoad.start()
 
-    def changeStartDlState(self, text, checked):
+    def change_button_dl_state(self, text, checked):
         """ modifica o estado e o texto do botão inicializador do download """
         self.uiMainWindow.btnStartDl.setText(self.tr(text))
         self.uiMainWindow.btnStartDl.setChecked(checked)
 
-    def on_stop_video_handle(self):
+    def stop_video_dl(self):
         """ termina todas as ações relacionadas ao download do vídeo atual """
         if self.is_loading:
             self.recover_tempfile()
 
             self.videoLoad.setCancelDl(True)  # emit cancel
-            self.changeStartDlState("Download", False)
+            self.change_button_dl_state("Download", False)
 
             # Eventos gerados por atividade de conexões.
             Info.update.disconnect(self.update_connection_ui)
@@ -607,13 +607,13 @@ class Loader(QtGui.QMainWindow):
             self.mplayer.start(autostart=self.is_loading)
             self.setup_files_view()
         else:
-            self.dialog.setWindowTitle(self.tr("Download Faleid"))
+            self.dialog.setWindowTitle(self.tr("Download Failed"))
             self.dialog.btnCancel.setText(self.tr("Ok"))
 
     def on_cancel_video_handle(self):
         if not self.is_loading:
             self.videoLoad.setCancelDl(True)  # emit cancel
-            self.changeStartDlState("Download", False)
+            self.change_button_dl_state("Download", False)
             self.dialog.close()
 
     def on_error_video_handle(self, err):
@@ -659,11 +659,11 @@ class Loader(QtGui.QMainWindow):
         """ controla o fluxo de criação e remoção de conexões """
         if self.is_loading and not self.manage.is_complete():
             connection = self.manage.ctrConnection
-            nActiveConn = connection.countActive()
+            active_conn = connection.countActive()
 
-            nConnCtr = self.uiMainWindow.connectionActive.value()
-            proxyDisable = self.uiMainWindow.proxyDisable.isChecked()
-            numOfConn = nConnCtr - nActiveConn
+            max_conn = self.uiMainWindow.connectionActive.value()
+            proxy_disable = self.uiMainWindow.proxyDisable.isChecked()
+            num_of_conn = max_conn - active_conn
 
             params = {
                 "ratelimit": self.uiMainWindow.connectionSpeed.value(),
@@ -672,21 +672,21 @@ class Loader(QtGui.QMainWindow):
                 "waittime": self.uiMainWindow.connectionSleep.value(),
                 "reconexao": self.uiMainWindow.connectionAttempts.value()
             }
-            if numOfConn > 0:  # adiciona novas conexões.
-                if proxyDisable:
-                    sm_id_list = connection.startWithoutProxy(numOfConn, **params)
+            if num_of_conn > 0:  # adiciona novas conexões.
+                if proxy_disable:
+                    sm_id_list = connection.startWithoutProxy(num_of_conn, **params)
                 else:
                     if default:
                         sm_id_list = connection.startWithoutProxy(1, **params)
-                        sm_id_list += connection.startWithProxy(numOfConn - 1, **params)
+                        sm_id_list += connection.startWithProxy(num_of_conn - 1, **params)
                     else:
-                        sm_id_list = connection.startWithProxy(numOfConn, **params)
+                        sm_id_list = connection.startWithProxy(num_of_conn, **params)
 
                 for sm_id in sm_id_list:
                     self.add_table_row(sm_id)
 
-            elif numOfConn < 0:  # remove conexões existentes.
-                for sm_id in connection.stop(numOfConn):
+            elif num_of_conn < 0:  # remove conexões existentes.
+                for sm_id in connection.stop(num_of_conn):
                     self.remove_table_row(sm_id)
             else:  # mudança dinânica dos parametros das conexões.
                 connection.update(**params)
