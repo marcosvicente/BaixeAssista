@@ -355,7 +355,7 @@ class Manage(object):
             elif conn.is_waiting:
                 conn.stop_wait()
 
-    @base.protected()
+    @base.Protected
     def update(self):
         """ atualiza dados de transferência do arquivo de vídeo atual """
         start = self.interval.get_first_start()

@@ -416,7 +416,7 @@ class Loader(QtGui.QMainWindow):
         for identify in list(self.table_rows.keys()):
             self.remove_table_row(identify)
 
-    @base.protected()
+    @base.Protected
     def update_table(self):
         """ Atualizando apenas as tabelas apresentadas na 'MainWindow' """
         video_size_formatted = StreamManager.format_bytes(self.manage.get_video_size())
@@ -433,7 +433,7 @@ class Loader(QtGui.QMainWindow):
         self.uiMainWindow.globalSpeedInfo.setText(self.manage.get_global_speed())
         self.uiMainWindow.globalEtaInfo.setText(self.manage.get_global_eta())
 
-    @base.protected()
+    @base.Protected
     def update_connection_ui(self, identify, **kwargs):
         """ Interface de atualização das infos da conexão """
         if identify in self.table_rows:

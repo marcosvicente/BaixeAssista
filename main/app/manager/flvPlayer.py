@@ -18,7 +18,7 @@ class FlvPlayer(threading.Thread):
 
         self.setDaemon(True)
 
-    @base.protected()
+    @base.Protected
     def stop(self):
         """ stop player process """
         self.process.terminate()

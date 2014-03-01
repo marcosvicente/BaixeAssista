@@ -30,7 +30,6 @@ def trans_install(configs=None):
     translator.install()
 
 
-#################################### JUST_TRY ##################################
 class LogOnError(object):
     """ Tenta executar o método, caso algo dê errado guarda a 
         mensagem de erro no arquivo de log.
@@ -75,22 +74,24 @@ class LogOnError(object):
         return self.wrap(inst, self.func)
 
 
-class protected(object):
-    """ executa o méthodo dentro de um try:except. ignora errors """
+class Protected(object):
+    """ Executa o método dentro de um try:except. Ignora errors """
 
-    def __call__(self, method):
+    def __init__(self, method):
+        self.method = method
+
+    def __get__(self, instance, owner):
         def wrap(*args, **kwargs):
             try:
-                return method(*args, **kwargs)
+                return self.method(instance, *args, **kwargs)
             except Exception as err:
-                print(("warnning: '%s' protected: %s" % (method.__name__, err)))
-
+                print(("Warnning: '{!s}' Protected: {!s}".format(self.method.__name__, err)))
         return wrap
 
 
 def calc_percent(byte_counter, data_len):
     """ calcula a porcentagem. retorna o resultado sem formatação."""
-    return ((float(byte_counter) / float(data_len)) * 100.0)
+    return (float(byte_counter) / float(data_len)) * 100.0
 
 
 def get_filename(filepath, fullname=True):

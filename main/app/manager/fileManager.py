@@ -49,7 +49,7 @@ class FileManager(object):
     def __getitem__(self, key):
         return self.params[key]
 
-    @base.protected()
+    @base.Protected
     def close(self):
         self.file.close()
 
