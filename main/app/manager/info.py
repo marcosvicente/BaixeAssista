@@ -68,4 +68,4 @@ class Info(object):
         for name in (names or cls.info[ident]):
             if not name in params.get("exclude", []):
                 cls.info[ident][name] = ''
-        cls.send(sender=ident, fields=names)
+        cls.send(ident, fields=names)

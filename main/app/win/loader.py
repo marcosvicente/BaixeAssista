@@ -127,7 +127,7 @@ class Loader(QtGui.QMainWindow):
 
     baixeAssista = "BaixeAssista v%s" % settings.PROGRAM_VERSION
     config = configobj.ConfigObj(configPath)
-    tableRows = {}
+    table_rows = {}
 
     def __init__(self):
         super(Loader, self).__init__()
@@ -146,6 +146,9 @@ class Loader(QtGui.QMainWindow):
         self.configUI()
 
         QtCore.QTimer.singleShot(1000 * 3, self._initAfter)
+
+        # Eventos gerados por atividade de conexões.
+        Info.update.connect(self.update_connection_ui)
 
     def __del__(self):
         del self.browser
@@ -215,14 +218,14 @@ class Loader(QtGui.QMainWindow):
         self.uiMainWindow.videoQuality.addItems(self.videoQualityList)
         self.uiMainWindow.tempFileAction.addItems([self.tr("Just remove"), self.tr("Before remove, ask")])
 
-        self.setup_files_view()
+        self.setup_view_files()
 
     def setupAction(self):
         self.uiMainWindow.btnStartDl.clicked.connect(self.on_start_stop_handle)
         self.uiMainWindow.actionExit.triggered.connect(self.close)
 
         self.uiMainWindow.btnToolDir.clicked.connect(self.handle_video_dir)
-        self.uiMainWindow.refreshFiles.clicked.connect(self.setup_files_view)
+        self.uiMainWindow.refreshFiles.clicked.connect(self.setup_view_files)
 
         self.uiMainWindow.actionErroReporting.triggered.connect(self.onErroReporting)
         self.uiMainWindow.actionCheckNow.triggered.connect(self.onSearchUpdate)
@@ -280,7 +283,7 @@ class Loader(QtGui.QMainWindow):
                                           "You need to manually restart the program for the new language to take effect."))
 
     @base.LogOnError
-    def setup_files_view(self):
+    def setup_view_files(self):
         video_view = self.uiMainWindow.videosView
         video_view.setColumnCount(1)
         video_view.clear()
@@ -376,7 +379,7 @@ class Loader(QtGui.QMainWindow):
             resume_info.remove()
             file_manager.remove()
 
-            self.setup_files_view()
+            self.setup_view_files()
 
     def contextMenuEvent(self, event):
         if self.uiMainWindow.tabFiles == self.uiMainWindow.tabPanel.currentWidget():
@@ -400,17 +403,17 @@ class Loader(QtGui.QMainWindow):
     def add_table_row(self, ident):
         """ Agrupa items por linha """
         # relacionando  com o id para facilitar na atualização de dados
-        self.tableRows[ident] = TableRow(self.uiMainWindow.connectionInfo)
-        self.tableRows[ident].create(wCol=StreamManager.list_info.index("percent"))
-        return self.tableRows[ident]
+        self.table_rows[ident] = TableRow(self.uiMainWindow.connectionInfo)
+        self.table_rows[ident].create(wCol=StreamManager.list_info.index("percent"))
+        return self.table_rows[ident]
 
     def remove_table_row(self, identify):
-        row = self.tableRows.pop(identify)
+        row = self.table_rows.pop(identify)
         row.clear()
 
     def clear_table(self):
         """ removendo todas as 'rows' e dados relacionandos """
-        for identify in list(self.tableRows.keys()):
+        for identify in list(self.table_rows.keys()):
             self.remove_table_row(identify)
 
     @base.protected()
@@ -431,18 +434,14 @@ class Loader(QtGui.QMainWindow):
         self.uiMainWindow.globalEtaInfo.setText(self.manage.get_global_eta())
 
     @base.protected()
-    def update_connection_ui(self, sender, **kwargs):
-        """ interface de atualização das infos da conexão"""
-        # conexão que emitiu o sinal através de 'Info'.
-        sender = self.manage.ctrConnection.getById(sender)
-        # ignora conexões removidas.
-        if sender is None:
-            return
-        for name in kwargs["fields"]:
-            self.tableRows[sender.ident].update(
-                col=StreamManager.list_info.index(name),
-                value=Info.get(sender.ident, name)
-            )
+    def update_connection_ui(self, identify, **kwargs):
+        """ Interface de atualização das infos da conexão """
+        if identify in self.table_rows:
+            for name in kwargs["fields"]:
+                self.table_rows[identify].update(
+                    col=StreamManager.list_info.index(name),
+                    value=Info.get(identify, name)
+                )
 
     def update_table_exit(self):
         """ atualização de saída das tabelas. desativando todos os controles """
@@ -565,9 +564,6 @@ class Loader(QtGui.QMainWindow):
 
             self.videoLoad.setCancelDl(True)  # emit cancel
             self.change_button_dl_state("Download", False)
-
-            # Eventos gerados por atividade de conexões.
-            Info.update.disconnect(self.update_connection_ui)
             self.manage.ctrConnection.stopAll()
 
             self.clear_table()
@@ -599,13 +595,10 @@ class Loader(QtGui.QMainWindow):
 
             if self.get_location().findText(joined_url) < 0:
                 self.get_location().addItem(joined_url)
-
-            # Eventos gerados por atividade de conexões.
-            Info.update.connect(self.update_connection_ui)
             self.startup_connection_handle(default=response)
 
             self.mplayer.start(autostart=self.is_loading)
-            self.setup_files_view()
+            self.setup_view_files()
         else:
             self.dialog.setWindowTitle(self.tr("Download Failed"))
             self.dialog.btnCancel.setText(self.tr("Ok"))
