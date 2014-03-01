@@ -67,7 +67,6 @@ class Vk(SiteBase):
             raw_params = match_obj.group("vars").replace(r'\"', '"')
             params = dict([(a, (b or c)) for a, b, c in re.findall('"(.+?)"\s*:\s*(?:"(.*?)"|(-?\d*))', raw_params)])
             params["url"] = "http://cs%s.vk.com" % params.pop("host")
-            print(params)
         try:
             match_obj = re.search("<title>(.+?)</title>", web_data)
             title = match_obj.group(1)
@@ -97,6 +96,4 @@ class Vk(SiteBase):
         else:
             url_hd240 = url_hd360 = params["url"] + "u%s/videos/%s.flv" % (params["uid"], params["vtag"])
             ext = "flv"
-        print(url_hd240)
-        print(url_hd360)
         self.configs = {"title": title, "ext": ext, 1: url_hd240, 2: url_hd360}
