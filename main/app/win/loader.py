@@ -143,12 +143,9 @@ class Loader(QtGui.QMainWindow):
         self.setupAction()
 
         # restaurando configurações da ui
-        self.configUI()
+        self.config_ui()
 
         QtCore.QTimer.singleShot(1000 * 3, self._initAfter)
-
-        # Eventos gerados por atividade de conexões.
-        Info.update.connect(self.update_connection_ui)
 
     def __del__(self):
         del self.browser
@@ -436,6 +433,7 @@ class Loader(QtGui.QMainWindow):
     @base.Protected
     def update_connection_ui(self, identify, **kwargs):
         """ Interface de atualização das infos da conexão """
+        print(identify, ": ", identify in self.table_rows)
         if identify in self.table_rows:
             for name in kwargs["fields"]:
                 self.table_rows[identify].update(
@@ -564,6 +562,7 @@ class Loader(QtGui.QMainWindow):
 
             self.videoLoad.setCancelDl(True)  # emit cancel
             self.change_button_dl_state("Download", False)
+            Info.update.disconnect(self.update_connection_ui, dispatch_uid='update_connection_ui')
             self.manage.ctrConnection.stopAll()
 
             self.clear_table()
@@ -595,7 +594,9 @@ class Loader(QtGui.QMainWindow):
 
             if self.get_location().findText(joined_url) < 0:
                 self.get_location().addItem(joined_url)
+
             self.startup_connection_handle(default=response)
+            Info.update.connect(self.update_connection_ui, dispatch_uid='update_connection_ui')
 
             self.mplayer.start(autostart=self.is_loading)
             self.setup_view_files()
@@ -721,7 +722,7 @@ class Loader(QtGui.QMainWindow):
 
         conf["Prog"].setdefault("packetVersion", "1.6.9")
 
-    def configUI(self):
+    def config_ui(self):
         conf = self.config
         self.set_default_config(conf)
 
