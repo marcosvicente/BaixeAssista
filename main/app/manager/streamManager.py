@@ -22,7 +22,7 @@ class StreamManager(threading.Thread):
                  "total", "remainder", "percent", "speed"]
 
     # cache de bytes para extração do 'header' do vídeo.
-    cache_start_size = 256
+    cache_start_size = 2048
 
     class Synchronize(object):
         """ sicroniza as alterações sobre 'info' nas diferentes threads """
@@ -255,7 +255,7 @@ class StreamManager(threading.Thread):
                         break
 
                     # o servidor fechou a conexão
-                    if block_read > 0 and stream_len == 0 or self.check_stream_errors(stream) != -1:
+                    if block_read > 0 and stream_len == 0:
                         self.failure(_("Parado pelo servidor"), 2)
                         break
 
@@ -373,6 +373,8 @@ class StreamManager(threading.Thread):
                                     timeout=self.params["timeout"],
                                     login=False)
                 stream = self._stream.read(self.cache_start_size)
+                if self.check_stream_errors(stream) != -1:
+                    raise RuntimeError('Corrupt stream!')
                 stream, header = self.video_manager.get_stream_header(stream, seek_pos)
 
                 # verifica a validade a resposta
@@ -503,6 +505,8 @@ class StreamManager_(StreamManager):
                                 proxies=self.proxies, timeout=self.params["timeout"])
 
                 stream = self._stream.read(self.cache_start_size)
+                if self.check_stream_errors(stream) != -1:
+                    raise RuntimeError('Corrupt stream!')
                 stream, header = self.video_manager.get_stream_header(stream, seek_pos)
 
                 is_valid = self.video_manager.check_response(len(header),
