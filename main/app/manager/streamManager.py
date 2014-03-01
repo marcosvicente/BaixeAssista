@@ -293,7 +293,8 @@ class StreamManager(threading.Thread):
                             break
                     elif self.manage.position_sent() != seekpos:
                         self.slow_down(local_time, self.bytes_num)
-                except:
+                except Exception as err:
+                    self.logger.error("[%s] Reading: %s" % (self.__class__.__name__, err))
                     self.failure(_("Erro de leitura"), 2)
                     break
         self._finally()
@@ -503,7 +504,6 @@ class StreamManager_(StreamManager):
                 self._stream = self.video_manager.connect(link,
                                 headers={"Range": "bytes=%s-%s" % (seek_pos, video_size)},
                                 proxies=self.proxies, timeout=self.params["timeout"])
-
                 stream = self._stream.read(self.cache_start_size)
                 if self.check_stream_errors(stream) != -1:
                     raise RuntimeError('Corrupt stream!')
