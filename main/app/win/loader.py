@@ -560,7 +560,7 @@ class Loader(QtGui.QMainWindow):
 
             self.videoLoad.setCancelDl(True)  # emit cancel
             self.change_button_dl_state("Download", False)
-            Info.update.disconnect(self.update_connection_ui, weak=True, dispatch_uid='update_connection_ui')
+            Info.update.disconnect(self.update_connection_ui)
             self.manage.ctrConnection.stopAll()
 
             self.clear_table()
@@ -593,7 +593,7 @@ class Loader(QtGui.QMainWindow):
             if self.get_location().findText(joined_url) < 0:
                 self.get_location().addItem(joined_url)
 
-            Info.update.connect(self.update_connection_ui, weak=True, dispatch_uid='update_connection_ui')
+            Info.update.connect(self.update_connection_ui)
             self.startup_connection_handle(default=response)
 
             self.mplayer.start(autostart=self.is_loading)

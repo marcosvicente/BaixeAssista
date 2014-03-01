@@ -2,7 +2,20 @@
 import threading
 import time
 
-from django.dispatch import Signal
+
+class Signal(object):
+    def __init__(self):
+        self.callbacks = {}
+
+    def connect(self, callback):
+        self.callbacks[callback.__name__] = callback
+
+    def send(self, *args, **kwargs):
+        for object_id, callback in self.callbacks.items():
+            callback(*args, **kwargs)
+
+    def disconnect(self, callback):
+        del self.callbacks[callback.__name__]
 
 
 class Info(object):
@@ -10,7 +23,7 @@ class Info(object):
     ##
     # 'Signal' usado para notificar atualização dos dados de I/O
     ##
-    update = Signal(providing_args=["fields"])
+    update = Signal()
     lock = threading.RLock()
     update_sleep = 0.05
     info_timer = {}
