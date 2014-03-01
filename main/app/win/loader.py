@@ -145,7 +145,7 @@ class Loader(QtGui.QMainWindow):
         # restaurando configurações da ui
         self.config_ui()
 
-        QtCore.QTimer.singleShot(1000 * 3, self._initAfter)
+        QtCore.QTimer.singleShot(1000 * 3, self._init_after)
 
     def __del__(self):
         del self.browser
@@ -155,10 +155,10 @@ class Loader(QtGui.QMainWindow):
         about = DialogAbout(self, title=" - ".join([self.tr("About"), self.baixeAssista]))
         about.setDevInfoText(self.tr("BaixeAssista search uncomplicate viewing videos on the internet.\n"
                                      "Developer: geniofuturo@gmail.com"))
-        about.btnMakeDonation.clicked.connect(self.showDonationDialog)
+        about.btnMakeDonation.clicked.connect(self.show_donation_dialog)
         about.exec_()
 
-    def onErroReporting(self):
+    def on_error_reporting(self):
         dialogError = DialogError()
         dialogError.setDeveloperEmail(self.developerEmail)
         dialogError.setModal(True)
@@ -176,7 +176,7 @@ class Loader(QtGui.QMainWindow):
             self.browser.saveSettings()
 
             # ui settings
-            self.saveSettings()
+            self.save_settings()
 
     def on_update_ui(self):
         if self.is_loading:
@@ -185,7 +185,7 @@ class Loader(QtGui.QMainWindow):
     def on_update_ui_exit(self):
         if not self.is_loading: self.update_table_exit()
 
-    def showDonationDialog(self, event=None, show=True):
+    def show_donation_dialog(self, event=None, show=True):
         """ show: mostra o diálogo independente da decisão do usuário """
         if show or self.confWindow.as_bool("donationBoxIsOn"):
             donate = DialogDonate(self)
@@ -195,8 +195,8 @@ class Loader(QtGui.QMainWindow):
             # atualizando com decisão do usuário. sempre respeite isso!
             self.confWindow["donationBoxIsOn"] = donate.isOn
 
-    def _initAfter(self):
-        self.showDonationDialog(show=False)
+    def _init_after(self):
+        self.show_donation_dialog(show=False)
 
         # iniciando a procura por atualizações.
         if self.uiMainWindow.actionAutomaticSearch.isChecked():
@@ -224,7 +224,7 @@ class Loader(QtGui.QMainWindow):
         self.uiMainWindow.btnToolDir.clicked.connect(self.handle_video_dir)
         self.uiMainWindow.refreshFiles.clicked.connect(self.setup_view_files)
 
-        self.uiMainWindow.actionErroReporting.triggered.connect(self.onErroReporting)
+        self.uiMainWindow.actionErroReporting.triggered.connect(self.on_error_reporting)
         self.uiMainWindow.actionCheckNow.triggered.connect(self.onSearchUpdate)
 
         self.uiMainWindow.connectionActive.valueChanged.connect(self.startup_connection_handle)
@@ -770,7 +770,7 @@ class Loader(QtGui.QMainWindow):
 
         self.confProg = conf["Prog"]
 
-    def saveSettings(self, path=None):
+    def save_settings(self, path=None):
         self.confMenuUi["actionEmbedPlayer"] = self.uiMainWindow.actionEmbedPlayer.isChecked()
         self.confMenuUi["actionExternalPlayer"] = self.uiMainWindow.actionExternalPlayer.isChecked()
         self.confMenuUi["actionAutomaticSearch"] = self.uiMainWindow.actionAutomaticSearch.isChecked()
