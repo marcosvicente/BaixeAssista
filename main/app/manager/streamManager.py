@@ -4,6 +4,8 @@ import logging
 import math
 import time
 
+import requests
+
 from main.app.util import base, sites
 from .info import Info
 
@@ -246,7 +248,7 @@ class StreamManager(threading.Thread):
 
                     # inicia a leitura da stream
                     before = time.time()
-                    stream = self._stream.read(block_read)
+                    stream = self._stream.raw.read(block_read)
                     after = time.time()
 
                     stream_len = len(stream)  # número de bytes baixados
@@ -370,20 +372,22 @@ class StreamManager(threading.Thread):
             try:
                 Info.set(self.ident, "state", _("Conectando"))
                 Info.set(self.ident, "try", str(try_num + 1))
-                self._stream = self.video_manager.connect(link,
-                                    proxies=self.proxies,
-                                    timeout=self.params["timeout"],
-                                    login=False)
-                stream = self._stream.read(self.cache_start_size)
+
+                self._stream = requests.get(link, proxies=self.proxies,
+                                            timeout=self.params["timeout"],
+                                            stream=True)
+                stream = self._stream.raw.read(self.cache_start_size)
+
                 if self.check_stream_errors(stream) != -1:
                     raise RuntimeError('Corrupt stream!')
+
                 stream, header = self.video_manager.get_stream_header(stream, seek_pos)
 
                 # verifica a validade a resposta
-                is_valid = self.video_manager.check_response(len(header),
-                                     seek_pos, video_size,
-                                     self._stream.headers)
-                if is_valid and (self._stream.code == 200 or self._stream.code == 206):
+                is_valid = self.video_manager.check_response(len(header), seek_pos, video_size,
+                                                             self._stream.headers)
+
+                if is_valid and (self._stream.status_code == 200 or self._stream.status_code == 206):
                     if stream:
                         self.write(stream, len(stream))
                     if self.using_proxy:
@@ -502,18 +506,19 @@ class StreamManager_(StreamManager):
                 Info.set(self.ident, "state", _("Conectando"))
                 Info.set(self.ident, "try", str(try_num + 1))
 
-                self._stream = self.video_manager.connect(link,
-                                headers={"Range": "bytes=%s-%s" % (seek_pos, video_size)},
-                                proxies=self.proxies, timeout=self.params["timeout"])
+                self._stream = requests.get(link, headers={"Range": "bytes=%s-%s" % (seek_pos, video_size)},
+                                            proxies=self.proxies, timeout=self.params["timeout"])
+
                 stream = self._stream.read(self.cache_start_size)
+
                 if self.check_stream_errors(stream) != -1:
                     raise RuntimeError('Corrupt stream!')
+
                 stream, header = self.video_manager.get_stream_header(stream, seek_pos)
 
-                is_valid = self.video_manager.check_response(len(header),
-                                         seek_pos, video_size,
-                                         self._stream.headers)
-                if is_valid and (self._stream.code == 200 or self._stream.code == 206):
+                is_valid = self.video_manager.check_response(len(header), seek_pos, video_size,
+                                                             self._stream.headers)
+                if is_valid and (self._stream.status_code == 200 or self._stream.status_code == 206):
                     if stream:
                         self.write(stream, len(stream))
                     if self.using_proxy:
