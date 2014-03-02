@@ -3,3 +3,4 @@ pyside>=1.2.1
 south==0.8.4
 configobj==5.0.1
 pywin32==218
+requests
