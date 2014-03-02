@@ -6,19 +6,18 @@ from main import settings
 from . import player
 
 
-# -----------------------------------------------------------------------------
 class Player(player.Player):
-    defaultskin = "BlackWhite"
+    skin = "BlackWhite"
 
     template = "flowplayer.html"
-    filesdirname = "flowplayer"
-    playerapi = "flowplayer-3.2.11.min.js"
+    media = "flowplayer"
+    js_api = "flowplayer-3.2.11.min.js"
 
     # pasta com os arquivos do player
-    filesdir = os.path.join(settings.STATIC_PATH, filesdirname)
-    skinsdir = os.path.join(filesdir, "skins")
+    media_path = os.path.join(settings.STATIC_PATH, media)
+    skin_path = os.path.join(media_path, "skins")
 
-    flashplayer = "player-v3.2.15.swf"
+    swf_player = "player-v3.2.15.swf"
 
     def __init__(self, parent, **params):
         """ params: {}
@@ -27,11 +26,10 @@ class Player(player.Player):
         super(Player, self).__init__(parent, **params)
         self.reload()
 
-    def getParams(self):
-        params = super(Player, self).getParams()
-        params["pluginskin"] = "/".join([params["static"], self.filesdirname,
-                                         "plugins/flowplayer.pseudostreaming-3.2.11.swf"])
+    def get_params(self):
+        params = super(Player, self).get_params()
+        params["pluginskin"] = "/".join([
+            params["static"], self.media,
+            "plugins/flowplayer.pseudostreaming-3.2.11.swf"
+        ])
         return params
-    
-    
-    

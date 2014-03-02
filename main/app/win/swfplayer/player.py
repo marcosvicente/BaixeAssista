@@ -5,7 +5,7 @@ import urllib.request
 import urllib.parse
 import urllib.error
 
-from PySide import QtGui, QtWebKit
+from PySide import QtWebKit
 from django.template import Context, loader
 from django.core.urlresolvers import reverse
 
@@ -14,23 +14,30 @@ from main.app.manager.server import Server
 from main import settings
 
 
-class Player(QtGui.QWidget):
-    # template usando na renderização do player
-    template = ""
-    # nome da skin padrão usanda no playe
-    defaultskin = ""
-    # nome, base, do diretório do player
-    filesdirname = ""
-    # script que fará o carregamento do player, expondo seu dados e atributos.
-    playerapi = ""
-    # caminho, completo do diretório de arquivos do player
-    filesdir = ""
-    # caminho completo para o diretórios de skin do player
-    skinsdir = ""
-    # arquivos swfs
-    flashplayer = ""
+class Player(QtWebKit.QWebView):
 
-    relativeurl = reverse("player-loader")
+    # template usando na renderização do player
+    template = ''
+
+    # nome da skin padrão usanda no playe
+    skin = ''
+
+    # nome, base, do diretório do player
+    media = ''
+
+    # script que fará o carregamento do player, expondo seu dados e atributos.
+    js_api = ''
+
+    # caminho completo do diretório de arquivos do player
+    media_path = ''
+
+    # caminho completo para o diretórios de skin do player
+    skin_path = ''
+
+    # referência para o nome do arquivo swf player
+    swf_player = ''
+
+    loader_url = reverse("player-loader")
 
     def __init__(self, parent=None, **params):
         """params = {}
@@ -41,45 +48,39 @@ class Player(QtGui.QWidget):
         """
         super(Player, self).__init__(parent)
         self.params = params
+        self.set_default_params()
         self.skins = {}
-
-        # defaut params
-        params.setdefault("hostName", Server.HOST)
-        params.setdefault("portNumber", Server.PORT)
-        params.setdefault("skinName", self.defaultskin)
-        params.setdefault("autostart", False)
-
         try:
-            for filename in os.listdir(self.skinsdir):
+            for filename in os.listdir(self.skin_path):
                 name = os.path.splitext(filename)[0]
                 self.skins[name] = filename
         except:  # skin usada no primeiro carregamento.
-            self.skins[self.defaultskin] = self.defaultskin + ".swf"
+            self.skins[self.skin] = self.skin + ".swf"
 
-        if not self.hasSkinName(params["skinName"]):
-            self.params["skinName"] = self.defaultskin
+        if not self.has_skin(params["skinName"]):
+            self.params["skinName"] = self.skin
 
-        self.webview = QtWebKit.QWebView(self)
-        self.webview.settings().setAttribute(QtWebKit.QWebSettings.PluginsEnabled, True)
+        self.settings().setAttribute(QtWebKit.QWebSettings.PluginsEnabled, True)
 
-        vBox = QtGui.QVBoxLayout()
-        vBox.addWidget(self.webview)
-
-        self.setLayout(vBox)
+    def set_default_params(self):
+        self.params.setdefault("hostName", Server.HOST)
+        self.params.setdefault("portNumber", Server.PORT)
+        self.params.setdefault("skinName", self.skin)
+        self.params.setdefault("autostart", False)
 
     @classmethod
-    def getPlayerPage(cls, params):
+    def get_html(cls, params):
         try:
             tmpl = loader.get_template(cls.template)
         except:
             tmpl = loader.find_template(cls.template, dirs=(settings.TEMPLATE_PATH,))[0]
         return tmpl.render(Context({"params": params}))
 
-    def getSkinsNames(self):
+    def get_skins(self):
         """ retorna os nomes das skins disponiveis """
         return list(self.skins.keys())
 
-    def hasSkinName(self, name):
+    def has_skin(self, name):
         return name in self.skins
 
     def __setitem__(self, name, value):
@@ -91,7 +92,7 @@ class Player(QtGui.QWidget):
         return self.params[name]
 
     def stop(self):
-        self.webview.setHtml("")
+        self.setHtml('')
 
     def update(self, **kwargs):
         """ atualiza 'params' mas passa pela validação """
@@ -103,39 +104,39 @@ class Player(QtGui.QWidget):
         frame = self.webview.page().mainFrame()
         frame.evaluateJavaScript("BA_GLOBAL_PLAYER.stop();")
 
-    def getParams(self):
-        previmage = self.params.get("previewImage", "")
-        streamname = self.params.get("streamName", get_random_text(5) + ".flv")
+    def get_params(self):
+        prev_image = self.params.get("previewImage", "")
+        stream_name = self.params.get("streamName", get_random_text(5) + ".flv")
 
         hostname = self.params.get("hostName", Server.HOST)
-        portnumber = self.params.get("portNumber", Server.PORT)
+        port = self.params.get("portNumber", Server.PORT)
 
-        domain = "http://%s:%s" % (hostname, portnumber)
+        domain = "http://%s:%s" % (hostname, port)
         static = settings.STATIC_URL.rstrip("/")
 
-        jqueryscript = "/".join([static, "js", "jquery-1.8.2.min.js"])
-        jsonscript = "/".join([static, "js", "json2.js"])
-        playerscript = "/".join([static, self.filesdirname, "js", self.playerapi])
+        jquery = "/".join([static, "js", "jquery-1.8.2.min.js"])
+        json = "/".join([static, "js", "json2.js"])
+        js_api = "/".join([static, self.media, "js", self.js_api])
 
-        skinname = self.skins.get(self.params["skinName"], self.defaultskin)
-        skin = "/".join([static, self.filesdirname, "skins", skinname])
+        skin = self.skins.get(self.params["skinName"], self.skin)
+        skin = "/".join([static, self.media, "skins", skin])
 
-        swfplayer = "/".join([static, self.filesdirname, self.flashplayer])
+        swf_player = "/".join([static, self.media, self.swf_player])
         autostart = str(self.params["autostart"]).lower()
-        streamfile = "/".join(["/stream", streamname])
+        stream = "/".join(["/stream", stream_name])
 
         params = {
             "static": static,
             "hostdomain": domain,
-            "file": streamfile,
-            "jqueryscript": jqueryscript,
-            "jsonscript": jsonscript,
-            "playerscript": playerscript,
-            "swfplayer": swfplayer,
+            "file": stream,
+            "jqueryscript": jquery,
+            "jsonscript": json,
+            "playerscript": js_api,
+            "swfplayer": swf_player,
             "allowscriptaccess": "always",
             "allowfullscreen": "true",
             "http_startparam": "start",
-            "image": previmage,
+            "image": prev_image,
             "autostart": autostart,
             "provider": "pseudo",
             "skin": skin,
@@ -144,7 +145,7 @@ class Player(QtGui.QWidget):
 
     def reload(self):
         """ recarrega a página atualizando os parâmetros do player """
-        params = self.getParams()
+        params = self.get_params()
         params["template"] = self.template
-        fullurl = params["hostdomain"] + self.relativeurl + "?" + urllib.parse.urlencode(params)
-        self.webview.load(fullurl)
+        url = params["hostdomain"] + self.loader_url + "?" + urllib.parse.urlencode(params)
+        self.load(url)

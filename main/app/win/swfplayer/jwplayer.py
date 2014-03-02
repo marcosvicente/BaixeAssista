@@ -7,17 +7,17 @@ from . import player
 
 
 class Player(player.Player):
-    defaultskin = "chelseaskin"
+    skin = "chelseaskin"
 
     template = "jwplayer.html"
-    filesdirname = "jwplayer"
-    playerapi = "jwplayer.js"
+    media = "jwplayer"
+    js_api = "jwplayer.js"
 
     # pasta com os arquivos do player
-    filesdir = os.path.join(settings.STATIC_PATH, filesdirname)
-    skinsdir = os.path.join(filesdir, "skins")
+    media_path = os.path.join(settings.STATIC_PATH, media)
+    skin_path = os.path.join(media_path, "skins")
 
-    flashplayer = "player-v5.10.swf"
+    swf_player = "player-v5.10.swf"
 
     def __init__(self, parent, **params):
         """ params: {}
@@ -26,8 +26,8 @@ class Player(player.Player):
         super(Player, self).__init__(parent, **params)
         self.reload()
 
-    def getParams(self):
-        params = super(Player, self).getParams()
-        params["playerscript"] = "/".join([params["static"], self.filesdirname, "js", self.playerapi])
+    def get_params(self):
+        params = super(Player, self).get_params()
+        params["playerscript"] = "/".join([params["static"], self.media, "js", self.js_api])
         params["provider"] = "http"
         return params

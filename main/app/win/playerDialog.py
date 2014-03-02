@@ -108,8 +108,8 @@ class PlayerDialog(QtGui.QDialog):
         self.configs["embedPlayer"].setdefault("pos", self.pos().toTuple())
         self.configs["embedPlayer"].setdefault("player", flowplayer)
 
-        self.configs[flowplayer].setdefault("skinName", self.mFlowPlayer.defaultskin)
-        self.configs[jwplayer].setdefault("skinName", self.mJWPlayer.defaultskin)
+        self.configs[flowplayer].setdefault("skinName", self.mFlowPlayer.skin)
+        self.configs[jwplayer].setdefault("skinName", self.mJWPlayer.skin)
 
     def saveSettings(self):
         mplayer = self.mplayer.__class__.__module__
@@ -128,7 +128,7 @@ class PlayerDialog(QtGui.QDialog):
         actionSkinGroup = QtGui.QActionGroup(self)
         actionSkinGroup.triggered.connect(self.onSkinChange)
 
-        for skinName in self.mplayer.getSkinsNames():
+        for skinName in self.mplayer.get_skins():
             actionSkin = QtGui.QAction(skinName, self)
             actionSkin.setCheckable(True)
 
