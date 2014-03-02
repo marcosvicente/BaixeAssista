@@ -6,7 +6,8 @@ import urllib.error
 import urllib.request
 import urllib.error
 import urllib.parse
-from http import cookiejar
+
+import requests
 
 from main.app.generators import Universal
 from main.app.util import sites
@@ -16,13 +17,12 @@ class ConnectionBase(object):
     """ Processa conexões guardando 'cookies' e dados por ips """
 
     def __init__(self):
-        self.cookiejar = cookiejar.CookieJar()
-        self.cookie_processor = urllib.request.HTTPCookieProcessor(cookiejar=self.cookiejar)
-        self.logged = False
-        self.opener = None
+        self.session = requests.Session()
+        self.session.headers["User-Agent"] = "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:11.0) Gecko/20100101 Firefox/11.0"
+        self.logged = self.sign_in = False
 
-    def login(self, opener=None, timeout=0):
-        """ struct login"""
+    def login(self, url, **kwargs):
+        """ structs login"""
         return True
 
     @staticmethod
@@ -74,25 +74,12 @@ class ConnectionBase(object):
             is_valid = (seek_max == length)
         return is_valid
 
-    @staticmethod
-    def get_request(url, headers={}, data=None):
-        req = urllib.request.Request(url, headers=headers, data=data)
-        req.add_header("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:11.0) Gecko/20100101 Firefox/11.0")
-        req.add_header("Connection", "keep-alive")
-        return req
-
-    def connect(self, url="", headers={}, data=None, proxies={}, timeout=25, request=None, login=False):
-        """ conecta a url data e retorna o objeto criado """
-        if request is None:
-            request = self.get_request(url, headers, data)
-        self.opener = urllib.request.build_opener(self.cookie_processor, urllib.request.ProxyHandler(proxies))
-
-        # faz o login se necessário
-        if not self.logged or login:
-            self.logged = self.login(self.opener, timeout=timeout)
-            if not self.logged:
-                return
-        return self.opener.open(request, timeout=timeout)
+    def connect(self, url='', headers={}, data={}, proxies={}, timeout=30, **kwargs):
+        """ Conecta a url data e retorna o objeto criado. """
+        if self.sign_in and not self.logged:
+            self.logged = self.login(url, headers=headers, data=data, proxies=proxies,
+                                     timeout=timeout, **kwargs)
+        return self.session.get(url, proxies=proxies, timeout=timeout, data=data, **kwargs)
 
 
 class SiteBase(ConnectionBase):

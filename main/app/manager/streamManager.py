@@ -4,8 +4,6 @@ import logging
 import math
 import time
 
-import requests
-
 from main.app.util import base, sites
 from .info import Info
 
@@ -373,9 +371,9 @@ class StreamManager(threading.Thread):
                 Info.set(self.ident, "state", _("Conectando"))
                 Info.set(self.ident, "try", str(try_num + 1))
 
-                self._stream = requests.get(link, proxies=self.proxies,
-                                            timeout=self.params["timeout"],
-                                            stream=True)
+                self._stream = self.video_manager.connect(link, proxies=self.proxies,
+                                                          timeout=self.params["timeout"],
+                                                          stream=True)
                 stream = self._stream.raw.read(self.cache_start_size)
 
                 if self.check_stream_errors(stream) != -1:
@@ -506,9 +504,9 @@ class StreamManager_(StreamManager):
                 Info.set(self.ident, "state", _("Conectando"))
                 Info.set(self.ident, "try", str(try_num + 1))
 
-                self._stream = requests.get(link, headers={"Range": "bytes=%s-%s" % (seek_pos, video_size)},
+                self._stream = self.video_manager.connect(link,
+                                            headers={"Range": "bytes=%s-%s" % (seek_pos, video_size)},
                                             proxies=self.proxies, timeout=self.params["timeout"])
-
                 stream = self._stream.read(self.cache_start_size)
 
                 if self.check_stream_errors(stream) != -1:
