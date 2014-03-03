@@ -233,11 +233,10 @@ class SiteBase(ConnectionBase):
 
     def get_title(self):
         """ pega o titulo do video """
-        title = urllib.parse.unquote_plus(self.configs["title"])
-        title = sites.DECODE(title)  # decodifica o title
+        title = urllib.parse.unquote_plus(str(self.configs["title"]))
         # remove caracteres invalidos
         title = sites.clear_text(title)
-        return sites.limite_text(title, endchars="_")
+        return sites.limit_text(title, endchars="_")
 
     def get_size(self, proxies={}, timeout=60):
         """ retorna o tamanho do arquivo de vídeo, através do cabeçalho de resposta """
