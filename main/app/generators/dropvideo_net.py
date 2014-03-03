@@ -31,16 +31,17 @@ class DropVideo(SiteBase):
 
     def start_extraction(self, *args, **kwargs):
         video_id = Universal.get_video_id(self.basename, self.url)
-        fd = self.connect(self.embed_url % video_id, *args, **kwargs)
-        web_page = str(fd.read())
+        request = self.connect(self.embed_url % video_id, *args, **kwargs)
+        page = request.text
+        request.close()
         ##
         # var vurl = "http://fs004.dropvideo.com/v/5a2e3a944f6e498488c93b0aac9719a7.mp4?st=h6RJOM57p-4JgLLB2C2lRA"
         ##
-        match_obj = re.search('vurl\s*=\s*\"(.+?)\"', web_page, re.DOTALL)
+        match_obj = re.search('vurl\s*=\s*\"(.+?)\"', page, re.DOTALL)
         url = match_obj.group(1)
 
         try:
-            match_obj = re.search('vtitle\s*=\s*"(.+?)"', web_page, re.DOTALL)
+            match_obj = re.search('vtitle\s*=\s*"(.+?)"', page, re.DOTALL)
             title = match_obj.group(1)
         except:
             title = sites.get_random_text()

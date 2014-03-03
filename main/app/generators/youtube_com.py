@@ -8,11 +8,13 @@ from ._sitebase import SiteBase
 
 
 class Youtube(SiteBase):
-    ## normal: http://www.youtube.com/watch?v=bWDZ-od-otI
-    ## embutida: http://www.youtube.com/watch?feature=player_embedded&v=_PMU_jvOS4U
-    ## http://www.youtube.com/watch?v=VW51Q_YBsNk&feature=player_embedded
-    ## http://www.youtube.com/v/VW51Q_YBsNk?fs=1&hl=pt_BR&rel=0&color1=0x5d1719&color2=0xcd311b
-    ## http://www.youtube.com/embed/ulZZ4mG9Ums
+    ##
+    # normal: http://www.youtube.com/watch?v=bWDZ-od-otI
+    # embed: http://www.youtube.com/watch?feature=player_embedded&v=_PMU_jvOS4U
+    # http://www.youtube.com/watch?v=VW51Q_YBsNk&feature=player_embedded
+    # http://www.youtube.com/v/VW51Q_YBsNk?fs=1&hl=pt_BR&rel=0&color1=0x5d1719&color2=0xcd311b
+    # http://www.youtube.com/embed/ulZZ4mG9Ums
+    ##
     controller = {
         "url": "http://www.youtube.com/watch?v=%s",
         "patterns": (
@@ -32,20 +34,21 @@ class Youtube(SiteBase):
         self.basename = "youtube.com"
         self.video_info = {}
         self.url = url
+        self.data = None
 
     def random_mode(self):
         return True
 
-    def getFailReason(self):
+    def get_message_(self):
         try:
-            if self.raw_data["status"] == "fail":
-                reason = self.raw_data["reason"].decode("utf-8")
-                reason = "%s informa: %s" % (self.basename, reason)
+            if self.data["status"] == "fail":
+                message = str(self.data["reason"])
+                message = "%s informa: %s" % (self.basename, message)
             else:
-                reason = ""
+                message = ''
         except:
-            reason = ""
-        return reason
+            message = ''
+        return message
 
     def get_link(self):
         quality = self.params.get("quality", 2)
@@ -65,7 +68,7 @@ class Youtube(SiteBase):
 
     def extract_one(self):
         """ método de extração padrão. funciona na maioria das vezes """
-        stream_map = self.raw_data["url_encoded_fmt_stream_map"]
+        stream_map = self.data["url_encoded_fmt_stream_map"]
 
         def parse_qs(item):
             """ analizando os dados e removendo os indices """
@@ -82,22 +85,24 @@ class Youtube(SiteBase):
 
     def start_extraction(self, proxies={}, timeout=25):
         url = self.info_url % Universal.get_video_id(self.basename, self.url)
-        fd = self.connect(url, proxies=proxies, timeout=timeout)
-        self.raw_data = cgi.parse_qs(fd.read())
-        fd.close()
 
-        for key in list(self.raw_data.keys()):  # index remove
-            self.raw_data[key] = self.raw_data[key][0]
+        request = self.connect(url, proxies=proxies, timeout=timeout)
+        self.data = cgi.parse_qs(request.text)
 
-        self.message = self.getFailReason()
+        request.close()
+
+        for key in list(self.data.keys()):  # index remove
+            self.data[key] = self.data[key][0]
+
+        self.message = self.get_message_()
         self.video_info = self.extract_one()
 
         try:
-            self.configs["title"] = self.raw_data["title"]
+            self.configs["title"] = self.data["title"]
         except (KeyError, IndexError):
             self.configs["title"] = sites.get_random_text()
 
         try:
-            self.configs["thumbnail_url"] = self.raw_data["thumbnail_url"]
+            self.configs["thumbnail_url"] = self.data["thumbnail_url"]
         except (KeyError, IndexError):
-            self.configs["thumbnail_url"] = ""
+            self.configs["thumbnail_url"] = ''

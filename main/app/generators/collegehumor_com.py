@@ -24,19 +24,19 @@ class CollegeHumor(SiteBase):
 
     def start_extraction(self, proxies={}, timeout=25):
         video_id = Universal.get_video_id(self.basename, self.url)
-        fd = self.connect(self.url, proxies=proxies, timeout=timeout)
-        web_page = fd.read()
-        fd.close()
+        request = self.connect(self.url, proxies=proxies, timeout=timeout)
+        page = request.text
+        request.close()
 
-        matchobj = re.search(r'id="video:(?P<internalvideoid>[0-9]+)"', web_page)
+        matchobj = re.search(r'id="video:(?P<internalvideoid>[0-9]+)"', page)
         internal_video_id = matchobj.group('internalvideoid')
 
         info = {'id': video_id, 'internal_id': internal_video_id}
         xmlUrl = 'http://www.collegehumor.com/moogaloop/video:' + internal_video_id
 
-        fd = self.connect(xmlUrl, proxies=proxies, timeout=timeout)
-        xml_data = fd.read()
-        fd.close()
+        request = self.connect(xmlUrl, proxies=proxies, timeout=timeout)
+        xml_data = request.text
+        request.close()
 
         doc = xml.etree.ElementTree.fromstring(xml_data)
         video_node = doc.findall('./video')[0]

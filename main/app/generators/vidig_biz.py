@@ -55,17 +55,17 @@ class VidigBiz(SiteBase):
         self.url = url
 
     def start_extraction(self, proxies={}, timeout=25):
-        fd = self.connect(self.url, proxies=proxies, timeout=timeout)
-        web_page = str(fd.read())
-        fd.close()
+        request = self.connect(self.url, proxies=proxies, timeout=timeout)
+        page = request.text
+        request.close()
 
         pattern = re.compile('file\s*:\s*(?:"|\')(.+?)(?:"|\')', re.DOTALL)
 
         try:
-            match_obj = pattern.search(web_page)
+            match_obj = pattern.search(page)
             url = match_obj.group(1)
         except (AttributeError, re.error):
-            match_obj = re.search('eval\((.+)\)', web_page, re.DOTALL)
+            match_obj = re.search('eval\((.+)\)', page, re.DOTALL)
 
             data = match_obj.group(1)
             data = data.replace('\\', '')
@@ -76,7 +76,7 @@ class VidigBiz(SiteBase):
                 data)
 
             js = JavaScriptPacked(
-                "p:" + match_obj.group('encoded'),
+                "p:" + str(match_obj.group('encoded')),
                 int(match_obj.group('base')),
                 int(match_obj.group('counter')),
                 match_obj.group('params')
@@ -86,7 +86,7 @@ class VidigBiz(SiteBase):
             match_obj = pattern.search(unpacked)
             url = match_obj.group(1)
         try:
-            match_obj = re.search('duration: "(\d+)"', web_page, re.DOTALL)
+            match_obj = re.search('duration: "(\d+)"', page, re.DOTALL)
             duration = match_obj.group(1)
         except(AttributeError, re.error):
             duration = 0

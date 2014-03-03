@@ -2,10 +2,12 @@
 from ._sitebase import *
 from . import videobb_com
 
-###################################### USERPORN #######################################
+
 class Userporn(videobb_com.Videobb):
-    ## http://www.userporn.com/video/WZ8Nuf2blzw8
-    ## http://www.userporn.com/watch_video.php?v=WZ8Nuf2blzw8
+    ##
+    # http://www.userporn.com/video/WZ8Nuf2blzw8
+    # http://www.userporn.com/watch_video.php?v=WZ8Nuf2blzw8
+    ##
     controller = {
         "url": "http://www.userporn.com/video/%s",
         "patterns": re.compile(

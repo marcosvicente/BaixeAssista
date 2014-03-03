@@ -9,7 +9,9 @@ from main.app.util import sites
 
 class Metacafe(SiteBase):
     """ Information Extractor for metacafe.com """
+    ##
     # http://www.metacafe.com/watch/8492972/wheel_of_fortune_fail/
+    ##
     controller = {
         "url": "http://www.metacafe.com/watch/%s/",
         "patterns": re.compile("(?P<inner_url>(?:http://)?www\.metacafe\.com/watch/(?P<id>\w+)/.*)"),
@@ -33,11 +35,11 @@ class Metacafe(SiteBase):
         video_id = Universal.get_video_id(self.basename, self.url)
 
         url = "http://www.metacafe.com/watch/%s/" % video_id
-        fd = self.connect(url, proxies=proxies, timeout=timeout)
-        web_page = fd.read()
-        fd.close()
+        request = self.connect(url, proxies=proxies, timeout=timeout)
+        page = request.text
+        request.close()
 
-        matchobj = re.search("flashVarsCache\s*=\s*\{(.*?)\}", web_page)
+        matchobj = re.search("flashVarsCache\s*=\s*\{(.*?)\}", page)
         flashvars = urllib.parse.unquote_plus(matchobj.group(1))
 
         matchobj = re.search(
@@ -55,7 +57,7 @@ class Metacafe(SiteBase):
         high_url = high_url.replace("\/", "/")
 
         try:
-            title = re.search("<title>(.+)</title>", web_page).group(1)
+            title = re.search("<title>(.+)</title>", page).group(1)
         except:
             title = sites.get_random_text()
 

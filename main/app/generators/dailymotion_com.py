@@ -26,14 +26,14 @@ class Dailymotion(SiteBase):
 
     def start_extraction(self, proxies={}, timeout=25):
         video_id = Universal.get_video_id(self.basename, self.url)
-        fd = self.connect(self.url, proxies=proxies, timeout=timeout, headers={'Cookie': 'family_filter=off'})
-        web_page = fd.read()
-        fd.close()
+        request = self.connect(self.url, proxies=proxies, timeout=timeout, headers={'Cookie': 'family_filter=off'})
+        page = request.text
+        request.close()
 
         video_extension = 'flv'
 
         # Extract URL, uploader and title from web_page
-        match_obj = re.search(r'addVariable\(\"sequence\"\s*,\s*\"(.+?)\"\)', web_page, re.DOTALL | re.IGNORECASE)
+        match_obj = re.search(r'addVariable\(\"sequence\"\s*,\s*\"(.+?)\"\)', page, re.DOTALL | re.IGNORECASE)
 
         sequence = urllib.parse.unquote(match_obj.group(1))
         match_obj = re.search(r',\"sdURL\"\:\"([^\"]+?)\",', sequence)
@@ -44,12 +44,12 @@ class Dailymotion(SiteBase):
 
         try:
             html_parser = HTMLParser()
-            match_obj = re.search(r'<meta property="og:title" content="(?P<title>[^"]*)" />', web_page)
+            match_obj = re.search(r'<meta property="og:title" content="(?P<title>[^"]*)" />', page)
             video_title = html_parser.unescape(match_obj.group('title'))
         except:
             video_title = sites.get_random_text()
 
-        matchobj = re.search(r'(?im)<span class="owner[^\"]+?">[^<]+?<a [^>]+?>([^<]+?)</a></span>', web_page)
+        matchobj = re.search(r'(?im)<span class="owner[^\"]+?">[^<]+?<a [^>]+?>([^<]+?)</a></span>', page)
         video_uploader = matchobj.group(1)
 
         self.configs = {

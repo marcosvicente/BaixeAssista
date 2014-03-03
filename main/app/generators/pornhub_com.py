@@ -31,27 +31,27 @@ class Pornhub(SiteBase):
         return True
 
     def start_extraction(self, proxies={}, timeout=25):
-        fd = self.connect(self.url, proxies=proxies, timeout=timeout)
-        web_page = fd.read()
-        fd.close()
+        request = self.connect(self.url, proxies=proxies, timeout=timeout)
+        page = request.text
+        request.close()
         try:
             fs = ""
-            matchobj = re.search('''(?:"|')video_url(?:"|')\s*:\s*(?:"|')(.+?)(?:"|')''', web_page, re.DOTALL)
+            matchobj = re.search('''(?:"|')video_url(?:"|')\s*:\s*(?:"|')(.+?)(?:"|')''', page, re.DOTALL)
             try:
                 url = base64.b64decode(urllib.parse.unquote_plus(matchobj.group(1)))
             except:
                 url = urllib.parse.unquote_plus(matchobj.group(1))
 
-            matchobj = re.search('''(?:"|')video_title(?:"|')\s*:\s*(?:"|')(.*?)(?:"|')''', web_page, re.DOTALL)
+            matchobj = re.search('''(?:"|')video_title(?:"|')\s*:\s*(?:"|')(.*?)(?:"|')''', page, re.DOTALL)
             try:
                 title = urllib.parse.unquote_plus(matchobj.group(1))
             except:
                 title = sites.get_random_text()
         except:
             url_id = Universal.get_video_id(self.basename, self.url)
-            fd = self.connect(self.apiUrl % url_id, proxies=proxies, timeout=timeout)
-            xml_data = fd.read()
-            fd.close()
+            request = self.connect(self.apiUrl % url_id, proxies=proxies, timeout=timeout)
+            xml_data = request.text
+            request.close()
 
             url = re.search("""<video_url><!\[CDATA\[(.+)\]\]></video_url>""", xml_data).group(1)
 

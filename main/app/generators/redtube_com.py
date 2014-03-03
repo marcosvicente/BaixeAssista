@@ -14,7 +14,6 @@ class Redtube(SiteBase):
     }
 
     def __init__(self, url, **params):
-        """Constructor"""
         SiteBase.__init__(self, **params)
         self.basename = "redtube.com"
         self.url = url
@@ -23,18 +22,21 @@ class Redtube(SiteBase):
         return True
 
     def start_extraction(self, proxies={}, timeout=25):
-        fd = self.connect(self.url, proxies=proxies, timeout=timeout)
-        web_page = str(fd.read())
-        fd.close()
+        request = self.connect(self.url, proxies=proxies, timeout=timeout)
+        page = request.text
+        request.close()
 
-        match_obj = re.search("so\.addParam\((?:\"|')flashvars(?:\"|'),\s*(?:\"|')(.*?)(?:\"|')", web_page)
+        match_obj = re.search("so\.addParam\((?:\"|')flashvars(?:\"|'),\s*(?:\"|')(.*?)(?:\"|')", page)
         flash_vars = match_obj.group(1)
 
         video_data = urllib.parse.parse_qs(flash_vars)
 
         try:
-            title = re.search("<title>(.*?)</title>", web_page).group(1)
+            title = re.search("<title>(.*?)</title>", page).group(1)
         except:
             title = sites.get_random_text()
 
-        self.configs = {"url": video_data["flv_h264_url"][0] + "&ec_seek=", "title": title}
+        self.configs = {
+            "url": video_data["flv_h264_url"][0] + "&ec_seek=",
+            "title": title
+        }

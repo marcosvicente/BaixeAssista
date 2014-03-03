@@ -37,7 +37,6 @@ class Hostingbulk(SiteBase):
         while number:
             number, i = divmod(number, 36)
             base36 = alphabet[i] + base36
-
         return base36 or alphabet[0]
 
     @staticmethod
@@ -56,11 +55,11 @@ class Hostingbulk(SiteBase):
         video_id = Universal.get_video_id(self.basename, self.url)
         url = self.controller["url"] % video_id
 
-        fd = self.connect(url, proxies=proxies, timeout=timeout)
-        web_page = fd.read()
-        fd.close()
+        request = self.connect(url, proxies=proxies, timeout=timeout)
+        page = request.text
+        request.close()
 
-        match_obj = re.search("eval\(\s*function\s*\(.*\)\s*\{.*?\}\s*(.+)\)", web_page)
+        match_obj = re.search("eval\(\s*function\s*\(.*\)\s*\{.*?\}\s*(.+)\)", page)
 
         if match_obj:
             params = match_obj.group(1)
@@ -80,16 +79,16 @@ class Hostingbulk(SiteBase):
                 url = re.sub(pattern, str(search.group(1)) + "/d/", url)
             duration = 0
         else:
-            match_obj = re.search("setup\(\{.*?(?:'|\")file(?:'|\")\s*:\s*(?:'|\")(.+?)(?:'|\")", web_page, re.DOTALL)
+            match_obj = re.search("setup\(\{.*?(?:'|\")file(?:'|\")\s*:\s*(?:'|\")(.+?)(?:'|\")", page, re.DOTALL)
             url = match_obj.group(1)
             try:
-                match_obj = re.search("setup\(\{.*?(?:'|\")duration(?:'|\")\s*:\s*(?:'|\")(.+?)(?:'|\")", web_page,
+                match_obj = re.search("setup\(\{.*?(?:'|\")duration(?:'|\")\s*:\s*(?:'|\")(.+?)(?:'|\")", page,
                                       re.DOTALL)
                 duration = int(match_obj.group(1))
             except:
                 duration = 0
         try:
-            title = re.search("<title>(.+)</title>", web_page).group(1)
+            title = re.search("<title>(.+)</title>", page).group(1)
         except:
             title = sites.get_random_text()
 

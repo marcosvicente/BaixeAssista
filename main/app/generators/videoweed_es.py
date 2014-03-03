@@ -35,10 +35,10 @@ class Videoweed(SiteBase):
         return True
 
     @staticmethod
-    def get_site_message(web_page):
+    def get_message_(page):
         try:
-            matchobj = re.search("<center>(?P<message>.+?)(?:</div>|</center>)", web_page, re.DOTALL)
-            message = matchobj.group("message")
+            match_obj = re.search("<center>(?P<message>.+?)(?:</div>|</center>)", page, re.DOTALL)
+            message = match_obj.group("message")
             message = message.decode("utf-8", "ignore")
             message = re.sub("^[\s\t\n]+|[\n\s\t]+$", "", message)
         except:
@@ -47,39 +47,39 @@ class Videoweed(SiteBase):
 
     def get_link(self):
         video_quality = int(self.params.get("quality", 2))
+
         when_not_found = self.configs.get(1, None)
         when_not_found = self.configs.get(2, when_not_found)
         when_not_found = self.configs.get(3, when_not_found)
+
         return self.configs.get(video_quality, when_not_found)
 
     def start_extraction(self, proxies={}, timeout=25):
         url_id = Universal.get_video_id(self.basename, self.url)
-        url = self.video_url % url_id
-
-        fd = self.connect(url, proxies=proxies, timeout=timeout)
-        web_page = str(fd.read())
-        fd.close()
+        request = self.connect(self.video_url % url_id, proxies=proxies, timeout=timeout)
+        page = request.text
+        request.close()
 
         # message gerada caso o video tenha sido removido
-        self.message = self.get_site_message(web_page)
+        self.message = self.get_message_(page)
+
         ##
         # flashvars.filekey="189.24.243.113-505db61fc331db7a2a7fa91afb22e74d-"
         ##
-        matchobj = re.search('flashvars\.filekey="(.+?)"', web_page)
-        file_key = matchobj.group(1)
+        match_obj = re.search('flashvars\.filekey="(.+?)"', page)
+        file_key = match_obj.group(1)
 
         url = self.player_api % (file_key, url_id)  # ip; id
-        fd = self.connect(url, proxies=proxies, timeout=timeout)
-        info_data = str(fd.read())
-        fd.close()
-
-        params = dict(re.findall("(\w+)=(.*?)&", info_data))
+        request = self.connect(url, proxies=proxies, timeout=timeout)
+        params = dict(re.findall("(\w+)=(.*?)&", request.text))
+        request.close()
 
         url = urllib.parse.unquote_plus(params["url"])
         seek_parm = urllib.parse.unquote_plus(params["seekparm"])
 
         if not seek_parm:
             seek_parm = "?start="
+
         elif seek_parm.rfind("=") < 0:
             seek_parm += "="
 
@@ -88,4 +88,7 @@ class Videoweed(SiteBase):
         except:
             title = sites.get_random_text()
 
-        self.configs = {1: url + seek_parm, "title": title}
+        self.configs = {
+            1: url + seek_parm,
+            "title": title
+        }

@@ -27,14 +27,14 @@ class PutLocker(SiteBase):
 
     def __init__(self, url, **params):
         SiteBase.__init__(self, **params)
-        self.getFileBaseUrl = "http://www.putlocker.com"
+        self.base_url = "http://www.putlocker.com"
         self.basename = "putlocker.com"
         self.url = url
 
     def random_mode(self):
         return True
 
-    def get_site_message(self, web_page):
+    def get_message_(self, web_page):
         try:
             try:
                 msg = re.search("<div class='message t_\d+'>(?P<msg>.+?)</div>", web_page).group("msg")
@@ -56,54 +56,57 @@ class PutLocker(SiteBase):
     def start_extraction(self, proxies={}, timeout=25):
         # página web inicial
         url = self.url.replace("/embed", "/file")
-        fd = self.connect(url, proxies=proxies, timeout=timeout)
-        web_page = fd.read()
-        fd.close()
+        request = self.connect(url, proxies=proxies, timeout=timeout)
+        page = request.text
+        request.close()
 
         # messagem de erro. se houver alguma
-        self.message = self.get_site_message(web_page)
+        self.message = self.get_message_(page)
 
         # padrão captua de dados
-        match_obj = self.pattern_form.search(web_page)
-
+        match_obj = self.pattern_form.search(page)
         hash_value = match_obj.group("hash") or match_obj.group("hash_second")
         hash_name = match_obj.group("name") or match_obj.group("name_second")
         confirm = match_obj.group("confirm")
 
         data = urlencode({hash_name: hash_value, "confirm": confirm})
-        fd = self.connect(url, proxies=proxies, timeout=timeout, data=data)
-        web_page = fd.read()
-        fd.close()
+        request = self.connect(url, proxies=proxies, timeout=timeout, data=data)
+        page = request.text
+        request.close()
 
-        self.message = self.get_site_message(web_page)
+        self.message = self.get_message_(page)
 
         # extraindo o titulo.
         try:
-            title = re.search("<title>(.*?)</title>", web_page).group(1)
+            title = re.search("<title>(.*?)</title>", page).group(1)
         except:
             title = sites.get_random_text()
 
         # começa a extração do link vídeo.
         ## playlist: '/get_file.php?stream=WyJORVE0TkRjek5FUkdPRFJETkRKR05Eb3',
         pattern = "playlist:\s*(?:'|\")(/get_file\.php\?stream=.+?)(?:'|\")"
-        match_obj = re.search(pattern, web_page, re.DOTALL | re.IGNORECASE)
-        url = self.getFileBaseUrl + match_obj.group(1)
+        match_obj = re.search(pattern, page, re.DOTALL | re.IGNORECASE)
+        url = self.base_url + match_obj.group(1)
 
         # começa a análize do xml
-        fd = self.connect(url, proxies=proxies, timeout=timeout)
-        rssData = fd.read()
-        fd.close()
+        request = self.connect(url, proxies=proxies, timeout=timeout)
+        rss_data = request.text
+        request.close()
 
         ext = "flv"  # extensão padrão.
         ## print rssData
 
         # url do video.
-        url = re.search("<media:content url=\"(.+?)\"", rssData).group(1)
+        url = re.search("<media:content url=\"(.+?)\"", rss_data).group(1)
         url = self.unescape(url).replace("'", "").replace('"', "")
 
         try:
-            ext = re.search("type=\"video/([\w-]+)", rssData).group(1)
+            ext = re.search("type=\"video/([\w-]+)", rss_data).group(1)
         except:
-            pass  # usa a extensão padrão.
+            pass
 
-        self.configs = {"url": url, "title": title, "ext": ext}  #+"&start="
+        self.configs = {
+            "url": url,  #+"&start="
+            "title": title,
+            "ext": ext
+        }

@@ -6,8 +6,10 @@ from . import videoweed_es
 
 class NowVideo(videoweed_es.Videoweed):
     """ Novamov: segue a mesma sequência lógica de Videoweed """
-    ## http://embed.nowvideo.eu/embed.php?v=xhfpn4q7f8k3u&width=600&height=480
-    ## http://www.nowvideo.eu/video/frvtqye2xed4i
+    ##
+    # http://embed.nowvideo.eu/embed.php?v=xhfpn4q7f8k3u&width=600&height=480
+    # http://www.nowvideo.eu/video/frvtqye2xed4i
+    ##
     controller = {
         "url": "http://www.nowvideo.eu/video/%s",
         "basenames": ["embed.nowvideo", "nowvideo.eu"],

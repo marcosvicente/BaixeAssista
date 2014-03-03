@@ -23,21 +23,21 @@ class Supervideo(SiteBase):
         self.url = url
 
     def start_extraction(self, proxies={}, timeout=25):
-        fd = self.connect(self.url, proxies=proxies, timeout=timeout)
-        web_page = fd.read()
-        fd.close()
+        request = self.connect(self.url, proxies=proxies, timeout=timeout)
+        page = request.text
+        request.close()
 
-        matchobj = re.search("file\s*:\s*\"(.+?)\"", web_page, re.DOTALL)
-        url = matchobj.group(1)
+        match_obj = re.search("file\s*:\s*\"(.+?)\"", page, re.DOTALL)
+        url = match_obj.group(1)
 
-        matchobj = re.search("duration\s*:\s*\"(\d*?)\"", web_page, re.DOTALL)
+        match_obj = re.search("duration\s*:\s*\"(\d*?)\"", page, re.DOTALL)
         try:
-            duration = int(matchobj.group(1))
+            duration = int(match_obj.group(1))
         except:
             duration = None
 
         try:
-            title = re.search("<title>(.+?)</title>", web_page, re.DOTALL).group(1)
+            title = re.search("<title>(.+?)</title>", page, re.DOTALL).group(1)
         except:
             title = sites.get_random_text()
 

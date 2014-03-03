@@ -19,6 +19,6 @@ class Sockshare(putlocker_com.PutLocker):
 
     def __init__(self, url, **params):
         super(self.__class__, self).__init__(url, **params)
-        self.getFileBaseUrl = "http://www.sockshare.com"
+        self.base_url = "http://www.sockshare.com"
         self.basename = "sockshare.com"
         self.url = url

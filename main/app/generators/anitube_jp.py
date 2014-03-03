@@ -1,6 +1,6 @@
 import re
 
-from main.app.generators._sitebase import SiteBase
+from ._sitebase import SiteBase
 from main.app.util import sites
 
 
@@ -23,33 +23,33 @@ class Anitube(SiteBase):
         return True
 
     def start_extraction(self, proxies={}, timeout=25):
-        fd = self.connect(self.url, proxies=proxies, timeout=timeout)
-        web_page = fd.read()
-        fd.close()
+        request = self.connect(self.url, proxies=proxies, timeout=timeout)
+        page = request.text
+        request.close()
         ##
         # addParam("flashvars",'config=http://www.anitube.jp/nuevo/config.php?key=c3ce49fd327977f837ab')
         #<script type="text/javascript">var cnf=
         ##
         try:
-            match_obj = re.search("addParam\(\"flashvars\",\s*'config=\s*(?P<url>.+?)'\)", web_page, re.DOTALL)
+            match_obj = re.search("addParam\(\"flashvars\",\s*'config=\s*(?P<url>.+?)'\)", page, re.DOTALL)
             url = match_obj.group("url")
         except:
             match_obj = re.search("\<script type=\"text/javascript\"\>\s*var\s*cnf\s*=\s*(?:'|\")(?P<url>.+?)(?:'|\")",
-                                  web_page, re.DOTALL)
+                                  page, re.DOTALL)
             url = match_obj.group("url")
         ##
         # <file>http://lb01-wdc.anitube.com.br/42f56c9f566c1859da833f80131fdcd5/4fafe9c0/43595.flv</file>
         # <title>Saint Seiya Omega 07</title>
         ##
-        fd = self.connect(url, proxies=proxies, timeout=timeout)
-        xml_data = fd.read()
-        fd.close()
+        request = self.connect(url, proxies=proxies, timeout=timeout)
+        xml_data = request.text
+        request.close()
 
         if not re.match("http://www.anitube\.jp/nuevo/playlist\.php", url):
             play_url = re.search("<playlist>(.*?)</playlist>", xml_data).group(1)
-            fd = self.connect(play_url, proxies=proxies, timeout=timeout)
-            xml_data = fd.read()
-            fd.close()
+            request = self.connect(play_url, proxies=proxies, timeout=timeout)
+            xml_data = request.text
+            request.close()
 
         video_url = re.search("<file>(.*?)</file>", xml_data).group(1)
 

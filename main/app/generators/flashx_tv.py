@@ -36,17 +36,17 @@ class FlashxTv(SiteBase):
 
     def start_extraction(self, proxies={}, timeout=25):
         if Universal.isEmbed(self.url) and re.match(".+embed\.php\?vid=", self.url):
-            fd = self.connect(self.url, proxies=proxies, timeout=timeout)
-            web_page = fd.read()
-            fd.close()
-            video_id = re.search("hash=(\w+)&", web_page, re.DOTALL).group(1)
+            request = self.connect(self.url, proxies=proxies, timeout=timeout)
+            page = request.text
+            request.close()
+            video_id = re.search("hash=(\w+)&", page, re.DOTALL).group(1)
         else:
             video_id = Universal.get_video_id(self.basename, self.url)
-            web_page = None
+            page = None
 
-        fd = self.connect(self.xml_link % video_id, proxies=proxies, timeout=timeout)
-        xml_data = fd.read()
-        fd.close()
+        request = self.connect(self.xml_link % video_id, proxies=proxies, timeout=timeout)
+        xml_data = request.text
+        request.close()
 
         matchobj = re.search("<file>(.+)</file>", xml_data, re.DOTALL)
         url = matchobj.group(1)
@@ -57,14 +57,14 @@ class FlashxTv(SiteBase):
         except:
             http_params = "?start="
 
-        if web_page is None:
+        if page is None:
             try:
                 title = os.path.basename(self.url)
             except:
                 title = sites.get_random_text()
         else:
             try:
-                title = re.search("<title>(.+)</title>", web_page, re.DOTALL).group(1)
+                title = re.search("<title>(.+)</title>", page, re.DOTALL).group(1)
             except:
                 title = sites.get_random_text()
 

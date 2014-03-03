@@ -8,7 +8,9 @@ from main.app.generators import Universal
 
 class GoogleVideo(SiteBase):
     """ Information extractor for video.google.com """
+    ##
     # http://video.google.com.br/videoplay?docid=-1717800235769991478
+    ##
     controller = {
         "url": "http://video.google.com.br/videoplay?docid=%s",
         "patterns": re.compile(
@@ -26,19 +28,18 @@ class GoogleVideo(SiteBase):
         video_id = Universal.get_video_id(self.basename, self.url)
 
         url = "http://video.google.com/videoplay?docid=%s&hl=en&oe=utf-8" % video_id
-        fd = self.connect(url, proxies=proxies, timeout=timeout)
-        web_page = fd.read()
-        fd.close()
+        request = self.connect(url, proxies=proxies, timeout=timeout)
+        page = request.text
+        request.close()
 
         video_extension = "mp4"
 
         # Extract URL, uploader, and title from web_page
-        match_obj = re.search(r"download_url:'([^']+)'", web_page)
+        match_obj = re.search(r"download_url:'([^']+)'", page)
+
         if match_obj is None:
             video_extension = 'flv'
-            match_obj = re.search(r"(?i)videoUrl\\x3d(.+?)\\x26", web_page)
-        if match_obj is None:
-            return
+            match_obj = re.search(r"(?i)videoUrl\\x3d(.+?)\\x26", page)
 
         media_url = urllib.parse.unquote(match_obj.group(1))
         media_url = media_url.replace('\\x3d', '\x3d')
@@ -46,10 +47,8 @@ class GoogleVideo(SiteBase):
 
         video_url = media_url
 
-        match_obj = re.search(r'<title>(.*)</title>', web_page)
-        if match_obj is None: return
-
-        video_title = match_obj.group(1).decode('utf-8')
+        match_obj = re.search(r'<title>(.*)</title>', page)
+        video_title = str(match_obj.group(1))
 
         self.configs = {
             'id': video_id.decode('utf-8'),

@@ -7,7 +7,9 @@ from main.app.util import sites
 
 
 class Videomega(SiteBase):
+    ##
     # http://videomega.tv/iframe.php?ref=OEKgdSTMGQ&width=505&height=4
+    ##
     controller = {
         "url": "http://videomega.tv/iframe.php?ref=%s",
         "patterns": [re.compile(
@@ -24,19 +26,22 @@ class Videomega(SiteBase):
         return True
 
     def start_extraction(self, proxies={}, timeout=25):
-        fd = self.connect(self.url, proxies=proxies, timeout=timeout)
-        web_page = fd.read()
-        fd.close()
+        request = self.connect(self.url, proxies=proxies, timeout=timeout)
+        page = request.text
+        request.close()
 
-        match_obj = re.search("unescape\s*\((?:\"|')(.+)(?:\"|')\)", web_page)
+        match_obj = re.search("unescape\s*\((?:\"|')(.+)(?:\"|')\)", page)
         settings = urllib.parse.unquote_plus(match_obj.group(1))
 
         match_obj = re.search("file\s*:\s*(?:\"|')(.+?)(?:\"|')", settings)
         url = match_obj.group(1)
 
         try:
-            title = re.search("<title>(.+)</title>", web_page).group(1)
+            title = re.search("<title>(.+)</title>", page).group(1)
         except:
             title = sites.get_random_text()
 
-        self.configs = {"url": url, "title": title}  #+"&start="
+        self.configs = {
+            "url": url,  #+"&start="
+            "title": title
+        }

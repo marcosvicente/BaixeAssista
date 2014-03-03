@@ -1,6 +1,5 @@
 # coding: utf-8
 import base64
-import json
 import re
 
 from ._sitebase import SiteBase
@@ -115,11 +114,9 @@ class Videobb(SiteBase):
         video_id = Universal.get_video_id(self.basename, self.url)
         url = self.settings_url % video_id
 
-        fd = self.connect(url, proxies=proxies, timeout=timeout)
-        data = fd.read()
-        fd.close()
-
-        params = json.loads(data)
+        request = self.connect(url, proxies=proxies, timeout=timeout)
+        params = request.json()
+        request.close()
 
         try:
             urls = self.get_urls(params)

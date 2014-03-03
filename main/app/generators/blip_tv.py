@@ -1,8 +1,8 @@
 # coding: utf-8
-import json
 import os
+import re
 
-from ._sitebase import *
+from ._sitebase import SiteBase
 
 
 class BlipTV(SiteBase):
@@ -30,23 +30,18 @@ class BlipTV(SiteBase):
 
         ## http://blip.tv/rv-news-net/episode-6099740?skin=json&version=2&no_wrap=1
         json_url = self.url + c_char + "skin=json&version=2&no_wrap=1"
-        fd = self.connect(json_url, proxies=proxies, timeout=timeout)
+        request = self.connect(json_url, proxies=proxies, timeout=timeout)
 
-        if fd.headers.get("Content-Type", "").startswith("video/"):  # Direct download
+        if request.headers.get("Content-Type", "").startswith("video/"):  # Direct download
             basename = self.url.split("/")[-1]
             title, ext = os.path.splitext(basename)
             title = title.decode("UTF-8")
             ext = ext.replace(".", "")
 
-            info = {'id': title, 'url': fd, 'title': title, 'ext': ext}
+            info = {'id': title, 'url': request, 'title': title, 'ext': ext}
 
         if info is None:  # Regular URL
-            try:
-                json_code = fd.read()
-            except:
-                return  # erro lendo os dados
-
-            json_data = json.loads(json_code)
+            json_data = request.json()
             if 'Post' in json_data:
                 data = json_data['Post']
             else:

@@ -2,12 +2,13 @@ import re
 import urllib.parse
 
 from ._sitebase import SiteBase
-
 from main.app.util import sites
 
 
 class Xvideos(SiteBase):
-    ## http://www.xvideos.com/video2037621/mommy_and_daughter_spreading
+    ##
+    # http://www.xvideos.com/video2037621/mommy_and_daughter_spreading
+    ##
     controller = {
         "url": "http://www.xvideos.com/%s",
         "patterns": re.compile("(?P<inner_url>http://www.xvideos.com/(?P<id>video\w+)(?:/\w+)?)"),
@@ -24,18 +25,22 @@ class Xvideos(SiteBase):
         return True
 
     def start_extraction(self, proxies={}, timeout=25):
-        fd = self.connect(self.url, proxies=proxies, timeout=timeout)
-        web_page = str(fd.read())
-        fd.close()
+        request = self.connect(self.url, proxies=proxies, timeout=timeout)
+        page = request.text
+        request.close()
 
-        match_obj = re.search('\<embed\s*type.+flashvars="(.*?)"', web_page)
+        match_obj = re.search('\<embed\s*type.+flashvars="(.*?)"', page)
         flash_vars = match_obj.group(1)
 
-        video_data = urllib.parse.parse_qs(flash_vars)
+        data = urllib.parse.parse_qs(flash_vars)
+        url = data["flv_url"][0]
 
         try:
-            title = re.search("<title>(.*?)</title>", web_page).group(1)
+            title = re.search("<title>(.*?)</title>", page).group(1)
         except:
             title = sites.get_random_text()
 
-        self.configs = {"url": video_data["flv_url"][0] + "&fs=", "title": title}
+        self.configs = {
+            "url": url + "&fs=",
+            "title": title
+        }

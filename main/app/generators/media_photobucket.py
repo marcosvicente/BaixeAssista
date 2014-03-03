@@ -22,18 +22,18 @@ class Photobucket(SiteBase):
         self.url = url
 
     def start_extraction(self, proxies={}, timeout=25):
-        fd = self.connect(self.url, proxies=proxies, timeout=timeout)
-        web_page = fd.read()
-        fd.close()
+        request = self.connect(self.url, proxies=proxies, timeout=timeout)
+        page = request.text
+        request.close()
         video_extension = 'flv'
 
         # Extract URL, uploader, and title from web_page
-        matchobj = re.search(r'<link rel="video_src" href=".*\?file=([^"]+)" />', web_page)
+        matchobj = re.search(r'<link rel="video_src" href=".*\?file=([^"]+)" />', page)
         media_url = urllib.parse.unquote(matchobj.group(1))
         video_url = media_url
 
         try:
-            matchobj = re.search(r'<meta name="description" content="(.+)"', web_page)
+            matchobj = re.search(r'<meta name="description" content="(.+)"', page)
             video_title = matchobj.group(1).decode('utf-8')
         except:
             video_title = sites.get_random_text()

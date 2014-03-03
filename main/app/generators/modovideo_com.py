@@ -42,25 +42,25 @@ class Modovideo(SiteBase):
         video_id = Universal.get_video_id(self.basename, self.url)
         url = 'http://www.modovideo.com/video.php?v=%s' % video_id
 
-        fd = self.connect(url, proxies=proxies, timeout=timeout)
-        web_page = fd.read()
-        fd.close()
+        request = self.connect(url, proxies=proxies, timeout=timeout)
+        page = request.text
+        request.close()
 
         try:
-            self.configs["title"] = re.search("<title.*>(.+?)</title>", web_page).group(1)
+            self.configs["title"] = re.search("<title.*>(.+?)</title>", page).group(1)
         except:
             try:
-                self.configs["title"] = re.search("<meta name=\"title\" content=\"(.+?)\"\s*/>", web_page).group(1)
+                self.configs["title"] = re.search("<meta name=\"title\" content=\"(.+?)\"\s*/>", page).group(1)
             except:
-                self.configs["title"] = sites.get_random_text()  # usa um titulo gerado de caracteres aleat�rios
+                self.configs["title"] = sites.get_random_text()
 
         player_url = "http://www.modovideo.com/frame.php?v=%s" % video_id
-        fd = self.connect(player_url, proxies=proxies, timeout=timeout)
-        script = fd.read()
-        fd.close()
+        request = self.connect(player_url, proxies=proxies, timeout=timeout)
+        script = request.text
+        request.close()
 
-        matchobj = re.search("\.setup\(\{\s*flashplayer:\s*\"(.+)\"", script, re.DOTALL | re.IGNORECASE)
-        qs_dict = urllib.parser.parse_qs(matchobj.group(1))
+        match_obj = re.search("\.setup\(\{\s*flashplayer:\s*\"(.+)\"", script, re.DOTALL | re.IGNORECASE)
+        qs_dict = urllib.parser.parse_qs(match_obj.group(1))
         video_url = qs_dict["player5plugin.video"][0]
 
         # guarda a url para atualizar nas configs

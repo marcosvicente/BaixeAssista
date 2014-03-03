@@ -30,49 +30,50 @@ class Videoslasher(SiteBase):
     def random_mode(self):
         return True
 
-    def postPage(self, web_page, proxies, timeout):
-        matchobj = putlocker_com.PutLocker.pattern_form.search(web_page)
+    def post_page(self, page, proxies, timeout):
+        matchobj = putlocker_com.PutLocker.pattern_form.search(page)
 
         hash_value = matchobj.group("hash") or matchobj.group("hash_second")
         hash_name = matchobj.group("name") or matchobj.group("name_second")
         confirm = matchobj.group("confirm")
 
         data = urllib.parse.urlencode({hash_name: hash_value, "confirm": confirm})
-        fd = self.connect(self.url, proxies=proxies, timeout=timeout, data=data)
-        web_page = fd.read()
-        fd.close()
-        return web_page
+
+        request = self.connect(self.url, proxies=proxies, timeout=timeout, data=data)
+        page = request.text
+        request.close()
+        return page
 
     def start_extraction(self, proxies={}, timeout=25):
-        fd = self.connect(self.url, proxies=proxies, timeout=timeout)
-        web_page = fd.read()
-        fd.close()
+        request = self.connect(self.url, proxies=proxies, timeout=timeout)
+        page = request.text
+        request.close()
 
         try:
-            web_page = self.postPage(web_page, proxies, timeout)
+            page = self.post_page(page, proxies, timeout)
         except:
-            web_page = web_page
+            page = page
 
-        matchobj = re.search("""playlist:\s*(?:'|")(/playlist/\w+)(?:'|")""", web_page, re.DOTALL)
-        playlist_url = matchobj.group(1)
+        match_obj = re.search("playlist:\s*(?:'|\")(/playlist/\w+)(?:'|\")", page, re.DOTALL)
+        playlist_url = match_obj.group(1)
 
         if not playlist_url.endswith('/'):
             playlist_url += '/'
 
-        fd = self.connect(self.domain + playlist_url, proxies=proxies, timeout=timeout)
-        rss_data = fd.read()
-        fd.close()
+        request = self.connect(self.domain + playlist_url, proxies=proxies, timeout=timeout)
+        rss_data = request.text
+        request.close()
 
         for item in re.findall("<item>(.+?)</item>", rss_data, re.DOTALL):
-            matchobj = re.search('''\<media:content\s*url\s*=\s*"(.+?)"\s*type="video.+?"''', item, re.DOTALL)
-            if matchobj:
-                url = matchobj.group(1)
+            match_obj = re.search('''\<media:content\s*url\s*=\s*"(.+?)"\s*type="video.+?"''', item, re.DOTALL)
+            if match_obj:
+                url = match_obj.group(1)
                 break
         else:
             raise Exception
 
         try:
-            title = re.search("<title>(.+?)</title>", web_page, re.DOTALL).group(1)
+            title = re.search("<title>(.+?)</title>", page, re.DOTALL).group(1)
         except:
             title = sites.get_random_text()
 

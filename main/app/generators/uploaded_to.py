@@ -41,22 +41,23 @@ class Uploaded(SiteBase):
     def get_file_size(self, data):
         search = self.pattern_file_size.search(data)
         size, unit = search.group(1), search.group(2)
-        # convers�o da unidade para bytes
+        # conversão da unidade para bytes
         bytes_size = float(size.replace(",", ".")) * self.units[unit.upper()]
         return int(bytes_size)
 
     def start_extraction(self, proxies={}, timeout=25):
-        """ extrai as informa��es necess�rias, para a transfer�cia do arquivo de video """
+        """ extrai as informaões necessárias, para a transferêcia do arquivo de video """
         url_id = Universal.get_video_id(self.basename, self.url)
-
-        web_page = self.connect(self.url, proxies=proxies, timeout=timeout).read()
+        request = self.connect(self.url, proxies=proxies, timeout=timeout)
+        page = request.text
+        request.close()
 
         # tamanho aproximado do arquivo
-        self.stream_size = self.get_file_size(web_page)
+        self.stream_size = self.get_file_size(page)
 
         # nome do arquivo
         try:
-            title = re.search("<title>(.*)</title>", web_page).group(1)
+            title = re.search("<title>(.*)</title>", page).group(1)
         except:
             title = sites.get_random_text()
 
@@ -65,8 +66,11 @@ class Uploaded(SiteBase):
             ext = self.pattern_file_ext.search(title).group(1)
         except:
             ext = "file"
+        ##
+        # {type:'download',url:'http://stor1074.uploaded.to/dl/46d975ec-a24e-4e88-a4c9-4000ce5bd1aa'}
+        ##
+        request = self.connect(self.captcha_url % url_id, proxies=proxies, timeout=timeout)
+        url = re.search("url:\s*(?:'|\")(.*)(?:'|\")", request.text).group(1)
+        request.close()
 
-        ## {type:'download',url:'http://stor1074.uploaded.to/dl/46d975ec-a24e-4e88-a4c9-4000ce5bd1aa'}
-        data = self.connect(self.captcha_url % url_id, proxies=proxies, timeout=timeout).read()
-        url = re.search("url:\s*(?:'|\")(.*)(?:'|\")", data).group(1)
         self.configs = {"url": url, "ext": ext, "title": title}

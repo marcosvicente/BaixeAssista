@@ -4,11 +4,12 @@ from main.app.manager.urls import UrlManager
 from . import videoweed_es
 
 
-####################################### NOVAMOV #######################################
 class Novamov(videoweed_es.Videoweed):
     """ Novamov: segue a mesma sequência lógica de Videoweed """
-    ## http://www.novamov.com/video/cfqxscgot96pe
-    ## http://embed.novamov.com/embed.php?width=520&height=320&v=cfqxscgot96pe&px=1
+    ##
+    # http://www.novamov.com/video/cfqxscgot96pe
+    # http://embed.novamov.com/embed.php?width=520&height=320&v=cfqxscgot96pe&px=1
+    ##
     controller = {
         "url": "http://www.novamov.com/video/%s",
         "basenames": ["novamov.com", "embed.novamov"],

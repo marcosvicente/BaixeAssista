@@ -25,15 +25,15 @@ class Moviezer(SiteBase):
         return True
 
     def start_extraction(self, proxies={}, timeout=25):
-        fd = self.connect(self.url, proxies=proxies, timeout=timeout)
-        web_page = fd.read()
-        fd.close()
+        request = self.connect(self.url, proxies=proxies, timeout=timeout)
+        page = request.text
+        request.close()
 
-        matchobj = re.search("flashvars\s*=\s*\{.*?'file':\s*'(?P<url>.*?)'", web_page, re.DOTALL)
+        matchobj = re.search("flashvars\s*=\s*\{.*?'file':\s*'(?P<url>.*?)'", page, re.DOTALL)
         url = matchobj.group("url")
 
         try:
-            title = re.search("<title>(?P<title>.*?)</title>", web_page).group("title")
+            title = re.search("<title>(?P<title>.*?)</title>", page).group("title")
         except:
             title = sites.get_random_text()
 
