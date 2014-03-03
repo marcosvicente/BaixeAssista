@@ -102,7 +102,7 @@ class VideoLoad(threading.Thread, QtCore.QObject):
             except Exception as error:
                 self.responseError.emit(str(error))
                 break
-            proxy = self.manage.proxy_manager.get_formated()
+            proxy = self.manage.proxy_manager.get_formatted()
         else:
             self.responseFinish.emit(False)
         return False

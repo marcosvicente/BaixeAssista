@@ -157,7 +157,7 @@ class StreamManager(threading.Thread):
         Info.set(self.ident, "state", _("Iniciando"))
 
         if self.using_proxy:
-            self.proxies = self.manage.proxy_manager.get_formated()
+            self.proxies = self.manage.proxy_manager.get_formatted()
 
         if self.video_manager.get_video_info(proxies=self.proxies,
                                              timeout=self.params["timeout"]):
@@ -346,11 +346,11 @@ class StreamManager(threading.Thread):
 
         if not self.using_proxy:
             if self.params["typechange"]:
-                self.proxies = self.manage.proxy_manager.get_formated()
+                self.proxies = self.manage.proxy_manager.get_formatted()
 
         elif error_number == 1 or self.bytes_num < self.manage.interval.get_min_block():
             if not self.params["typechange"]:
-                self.proxies = self.manage.proxy_manager.get_formated()
+                self.proxies = self.manage.proxy_manager.get_formatted()
             else:
                 self.proxies = {}
 
@@ -455,7 +455,7 @@ class StreamManager_(StreamManager):
         Info.add(self.ident)
         Info.set(self.ident, "state", _("Iniciando"))
 
-        if self.using_proxy: self.proxies = self.manage.proxy_manager.get_formated()
+        if self.using_proxy: self.proxies = self.manage.proxy_manager.get_formatted()
 
         Info.set(self.ident, "http", self.proxies.get("http", _("Conexão Padrão")))
         self.link = self.getVideoLink()
@@ -472,11 +472,11 @@ class StreamManager_(StreamManager):
 
         if not self.using_proxy:
             if self.params["typechange"]:
-                self.proxies = self.manage.proxy_manager.get_formated()
+                self.proxies = self.manage.proxy_manager.get_formatted()
 
         elif error_number == 1 or self.bytes_num < self.manage.interval.get_min_block():
             if not self.params["typechange"]:
-                self.proxies = self.manage.proxy_manager.get_formated()
+                self.proxies = self.manage.proxy_manager.get_formatted()
             else:
                 self.proxies = {}
 

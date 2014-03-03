@@ -71,17 +71,10 @@ def checkSite(url, proxies={}, timeout=30, **params):
 
 #pxm = manager.ProxyManager()
 #for n in range(pxm.get_num()):
-#    proxies = pxm.get_formated()
+#    proxies = pxm.get_formatted()
 #    print proxies["http"]
 #    proxies = {}
 #pxm.set_bad( proxies )
 #del pxm
 
 checkSite("http://www.youtube.com/watch?v=1iTg20x7w2s", proxies={}, quality=3, debug=True)
-    
-    
-    
-    
-    
-    
-    
