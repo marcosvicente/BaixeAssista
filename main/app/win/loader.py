@@ -257,7 +257,7 @@ class Loader(QtGui.QMainWindow):
         self.uiMainWindow.actionReloadPlayer.triggered.connect(self.reload_player)
         self.uiMainWindow.actionChooseExternalPlayer.triggered.connect(self.choose_player_path)
 
-    @base.LogOnError
+    @base.LogException
     def setup_location(self):
         """ adiciona as urls dos vídeos baixados e adcionandos ao bd. """
         self.url_manager = UrlManager()
@@ -279,7 +279,7 @@ class Loader(QtGui.QMainWindow):
                                       self.tr(
                                           "You need to manually restart the program for the new language to take effect."))
 
-    @base.LogOnError
+    @base.LogException
     def setup_view_files(self):
         video_view = self.uiMainWindow.videosView
         video_view.setColumnCount(1)
@@ -503,7 +503,7 @@ class Loader(QtGui.QMainWindow):
         else:
             self.stop_video_dl()
 
-    @base.LogOnError
+    @base.LogException
     def start_video_dl(self):
         """ inicia todo o processo de download e transferênica do video """
         if not self.is_loading:

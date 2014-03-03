@@ -30,63 +30,65 @@ def trans_install(configs=None):
     translator.install()
 
 
-class LogOnError(object):
+class BaseWrap(object):
+    """ Excuta o método protegendo o escopo de excução """
+    f_error = "[On {name}] [In Method: {method}] [Error: {error}]"
+
+    def __init__(self, inst, method):
+        self.method = method
+        self.inst = inst
+
+    def execute(self, *args, **kwargs):
+        return self.method(self.inst, *args, **kwargs)
+
+    @property
+    def cls_name(self):
+        """ nome da classe que está no controle do méthodo """
+        return self.__class__.__name__
+
+    @property
+    def rm_name(self):
+        """ retorna o nome do método sendo excutado """
+        return self.method.__name__
+
+
+class LogException(object):
     """ Tenta executar o método, caso algo dê errado guarda a 
         mensagem de erro no arquivo de log.
     """
-
-    class wrap(object):
-        """ excuta o método protegendo o escopo de excução """
-
-        ferror = "[On {name}] [In Method: {method}] [Error: {error}]"
-
-        def __init__(self, inst, method):
-            self.method = method
-            self.inst = inst
-
-        def __run(self, *args, **kwargs):
-            return self.method(self.inst, *args, **kwargs)
-
-        @property
-        def cls_name(self):
-            """ nome da classe que está no controle do méthodo """
-            return self.__class__.__name__
-
-        @property
-        def rm_name(self):
-            """ retorna o nome do método sendo excutado """
-            return self.method.__name__
-
+    class Wrap(BaseWrap):
         def __call__(self, *args, **kwargs):
-            """ executa o método decorado """
             try:
-                return self.__run(*args, **kwargs)
+                return self.execute(*args, **kwargs)
             except Exception as err:
-                msg = self.ferror.format(name=self.cls_name,
-                                         method=self.rm_name,
-                                         error=err)
-                logger.error(msg)
+                logger.error(self.f_error.format(
+                    name=self.cls_name, method=self.rm_name, error=err
+                ))
 
-    def __init__(self, func):
-        self.func = func
+    def __init__(self, method):
+        self.method = method
 
     def __get__(self, inst, cls):
-        return self.wrap(inst, self.func)
+        return self.Wrap(inst, self.method)
 
 
 class Protected(object):
     """ Executa o método dentro de um try:except. Ignora errors """
 
+    class Wrap(BaseWrap):
+        def __call__(self, *args, **kwargs):
+            try:
+                return self.execute(*args, **kwargs)
+            except Exception as err:
+                print(self.f_error.format(
+                    name=self.cls_name, method=self.rm_name, error=err
+                ))
+
     def __init__(self, method):
         self.method = method
 
     def __get__(self, instance, owner):
-        def wrap(*args, **kwargs):
-            try:
-                return self.method(instance, *args, **kwargs)
-            except Exception as err:
-                print(("Warnning: '{!s}' Protected: {!s}".format(self.method.__name__, err)))
-        return wrap
+        return self.Wrap(instance, self.method)
 
 
 def calc_percent(byte_counter, data_len):
@@ -95,12 +97,12 @@ def calc_percent(byte_counter, data_len):
 
 
 def get_filename(filepath, fullname=True):
-    """
-    fullname: True  -> C:\\filedir\\file.txt -> file.txt
-    fullname: False -> C:\\filedir\\file.txt -> file
+    """ fullname: True  -> C:\\filedir\\file.txt -> file.txt
+        fullname: False -> C:\\filedir\\file.txt -> file
     """
     filename = os.path.split(filepath)[-1]
-    if not fullname: filename = os.path.splitext(filename)[0]
+    if not fullname:
+        filename = os.path.splitext(filename)[0]
     return filename
 
 
@@ -113,7 +115,7 @@ def security_save(filepath, _configobj=None, _list=None, newline="\n"):
     """
     try:  # criando o caminho para o arquivo de backup
         filename = get_filename(filepath)  # nome do arquivo no path.
-        bkfilepath = filepath.replace(filename, ("bk_" + filename))
+        backup_filepath = filepath.replace(filename, ("back_" + filename))
     except Exception as err:
         logger.error("Path to backup file: %s" % err)
         return False
@@ -121,25 +123,25 @@ def security_save(filepath, _configobj=None, _list=None, newline="\n"):
     # guarda o arquivo antigo temporariamente
     if os.path.exists(filepath):
         try:
-            os.rename(filepath, bkfilepath)
-        except Exception as err:
+            os.rename(filepath, backup_filepath)
+        except IOError as err:
             logger.error("Rename config to backup: %s" % err)
             return False
 
     try:  # começa a criação do novo arquivo de configuração
-        with open(filepath, "w") as configsfile:
+        with open(filepath, "w") as config_file:
             if type(_list) is list:
                 for data in _list:
-                    configsfile.write("%s%s" % (data, newline))
+                    config_file.write("%s%s" % (data, newline))
             elif isinstance(_configobj, configobj.ConfigObj):
-                _configobj.write(configsfile)
-            # levanta a exeção com o objetivo de recuperar o arquivo original
+                _configobj.write(config_file)
             else:
+                # levanta a exeção com o objetivo de recuperar o arquivo original
                 raise AttributeError("invalid config data")
         if os.path.exists(filepath):
             try:
-                os.remove(bkfilepath)
-            except:
+                os.remove(backup_filepath)
+            except IOError:
                 pass
     except Exception as err:
         logger.critical("Saving config file: %s" % err)
@@ -147,13 +149,13 @@ def security_save(filepath, _configobj=None, _list=None, newline="\n"):
         if os.path.exists(filepath):
             try:
                 os.remove(filepath)
-            except:
+            except IOError:
                 pass
         # restaura o arquivo original
         if not os.path.exists(filepath):
             try:
-                os.rename(bkfilepath, filepath)
-            except:
+                os.rename(backup_filepath, filepath)
+            except IOError:
                 pass
         return False
     return True

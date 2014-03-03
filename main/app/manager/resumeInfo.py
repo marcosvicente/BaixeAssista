@@ -33,6 +33,6 @@ class ResumeInfo(object):
     def is_empty(self):
         return self.q.pk is None
 
-    @base.LogOnError
+    @base.LogException
     def remove(self):
         self.q.delete()

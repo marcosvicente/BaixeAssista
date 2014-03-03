@@ -56,7 +56,7 @@ class FileManager(object):
     def open(self):
         self.file = self.fileGetOrCreate()
 
-    @base.LogOnError
+    @base.LogException
     def remove(self):
         os.remove(self.getFilePath())
 
