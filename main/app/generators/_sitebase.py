@@ -242,18 +242,17 @@ class SiteBase(ConnectionBase):
         """ retorna o tamanho do arquivo de vídeo, através do cabeçalho de resposta """
         link = self.get_link()
         try:
-            fd = self.connect(sites.get_with_seek(link, 0),
-                              headers={"Range": "bytes=0-"},
-                              proxies=proxies, timeout=timeout)
-            fd.close()
-            length = int(fd.headers.get("Content-Length", 0))
-            assert (length and (fd.code == 200 or fd.code == 206))
-        except:
+            request = self.connect(sites.get_with_seek(link, 0),
+                                   proxies=proxies, timeout=timeout,
+                                   headers={"Range": "bytes=0-"},
+                                   stream=True)
+        except requests.RequestException:
             link = link.rsplit("&", 1)[0]
-            fd = self.connect(url=link, timeout=timeout)
-            fd.close()
-            length = int(fd.headers.get("Content-Length", 0))
-            assert (length and (fd.code == 200 or fd.code == 206))
+            request = self.connect(url=link, timeout=timeout, stream=True)
+        finally:
+            request.close()
+        length = int(request.headers.get("Content-Length", 0))
+        assert (length and (request.status_code == 200 or request.status_code == 206))
         return length
 
     def get_video_size(self):
