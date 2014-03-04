@@ -458,7 +458,7 @@ class StreamManager_(StreamManager):
         if self.using_proxy: self.proxies = self.manage.proxy_manager.get_formatted()
 
         Info.set(self.ident, "http", self.proxies.get("http", _("Conexão Padrão")))
-        self.link = self.getVideoLink()
+        self.link = self.get_link()
 
     @base.LogException
     def failure(self, error_string, error_number):
@@ -482,10 +482,10 @@ class StreamManager_(StreamManager):
 
         self.using_proxy = bool(self.proxies)
         Info.set(self.ident, "http", self.proxies.get("http", _("Conexão Padrão")))
-        self.link = self.getVideoLink()
+        self.link = self.get_link()
 
     @base.LogException
-    def getVideoLink(self):
+    def get_link(self):
         data = self.video_manager.get_init_page(self.proxies)  # pagina incial
         link = self.video_manager.get_file_link(data)  # link de download
         for second in range(self.video_manager.get_count(data), 0, -1):
