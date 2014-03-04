@@ -505,8 +505,9 @@ class StreamManager_(StreamManager):
                 Info.set(self.ident, "try", str(try_num + 1))
 
                 self._stream = self.video_manager.connect(link,
-                                            headers={"Range": "bytes=%s-%s" % (seek_pos, video_size)},
-                                            proxies=self.proxies, timeout=self.params["timeout"])
+                                      headers={"Range": "bytes=%s-%s" % (seek_pos, video_size)},
+                                      proxies=self.proxies, timeout=self.params["timeout"],
+                                      stream=True)
                 stream = self._stream.read(self.cache_start_size)
 
                 if self.check_stream_errors(stream) != -1:
