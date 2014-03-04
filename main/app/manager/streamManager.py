@@ -508,7 +508,7 @@ class StreamManager_(StreamManager):
                                       headers={"Range": "bytes=%s-%s" % (seek_pos, video_size)},
                                       proxies=self.proxies, timeout=self.params["timeout"],
                                       stream=True)
-                stream = self._stream.read(self.cache_start_size)
+                stream = self._stream.raw.read(self.cache_start_size)
 
                 if self.check_stream_errors(stream) != -1:
                     raise RuntimeError('Corrupt stream!')
