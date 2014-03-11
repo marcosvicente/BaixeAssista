@@ -31,8 +31,8 @@ class FlvPlayer(threading.Thread):
         return super(self.__class__, self).start()
 
     @staticmethod
-    def runElevated(cmd, params):
-        """ executa um processo, porï¿½m requistando permissï¿½es. """
+    def permission_run(cmd, params):
+        """ Executa um processo, porï¿½m requistando permissï¿½es. """
         import win32com.shell.shell as shell
         from win32com.shell import shellcon
         from win32con import SW_NORMAL
@@ -43,31 +43,26 @@ class FlvPlayer(threading.Thread):
             lpVerb="runas", lpFile=cmd, fMask=shellcon.SEE_MASK_NOCLOSEPROCESS,
             lpParameters=params, nShow=SW_NORMAL
         )
-        hProcess = process["hProcess"]
-
-        class Process:
-            processHandle = hProcess
+        class Process(object):
+            processHandle = process["hProcess"]
 
             @staticmethod
             def terminate():
-                win32api.TerminateProcess(hProcess, 0)
+                win32api.TerminateProcess(process["hProcess"], 0)
 
             @staticmethod
             def wait():
-                win32event.WaitForSingleObject(hProcess, win32event.INFINITE)
+                win32event.WaitForSingleObject(process["hProcess"], win32event.INFINITE)
         return Process
 
     def run(self):
         try:
+            self.process = self.permission_run(self.cmd, self.url)
+            self.running = True
+            self.process.wait()
+        except ImportError:
             self.process = subprocess.Popen(self.url, executable=self.cmd)
             self.running = True
             self.process.wait()
-        except:
-            try:
-                self.process = self.runElevated(self.cmd, self.url)
-                self.running = True
-                self.process.wait()
-            except ImportError:
-                pass
         finally:
             self.running = False
