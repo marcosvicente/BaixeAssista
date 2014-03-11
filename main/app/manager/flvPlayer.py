@@ -59,16 +59,15 @@ class FlvPlayer(threading.Thread):
 
     def run(self):
         try:
-            self.process = self.runElevated(self.cmd, self.url)
-            self.running = True
-            self.process.wait()
-        except ImportError:
             self.process = subprocess.Popen(self.url, executable=self.cmd)
             self.running = True
             self.process.wait()
         except:
-            pass
+            try:
+                self.process = self.runElevated(self.cmd, self.url)
+                self.running = True
+                self.process.wait()
+            except ImportError:
+                pass
         finally:
             self.running = False
-            
-    
