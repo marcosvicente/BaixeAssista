@@ -360,7 +360,7 @@ class Manage(object):
         """ atualiza dados de transferência do arquivo de vídeo atual """
         start = self.interval.get_first_start()
         self.interval.sending = start
-        bytes_num = self.interval.nbytes.get(start, 0)
+        bytes_num = self.interval['nbytes'].get(start, 0)
 
         if start >= 0:
             absolute_start = start - self.interval.get_offset()

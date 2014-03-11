@@ -61,6 +61,12 @@ class Interval(object):
     def __getattr__(self, name):
         return self.meta[name]
 
+    def __getitem__(self, item):
+        return self.meta[item]
+
+    def __setitem__(self, key, value):
+        self.meta[key] = value
+
     def can_continue(self, obj_id):
         """
         Avalia se o objeto conexão pode continuar a leitura,

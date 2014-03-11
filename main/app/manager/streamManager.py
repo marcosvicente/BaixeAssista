@@ -217,7 +217,7 @@ class StreamManager(threading.Thread):
 
             # quanto ja foi baixado da stream
             self.manage.cache_bytes_total += bytes_num
-            self.manage.interval.nbytes[start] += bytes_num
+            self.manage.interval['nbytes'][start] += bytes_num
 
             # bytes lidos da conexão.
             self.bytes_num += bytes_num
