@@ -36,7 +36,8 @@ class FlvPlayer(threading.Thread):
         import win32com.shell.shell as shell
         from win32com.shell import shellcon
         from win32con import SW_NORMAL
-        import win32event, win32api
+        import win32event
+        import win32api
 
         process = shell.ShellExecuteEx(
             lpVerb="runas", lpFile=cmd, fMask=shellcon.SEE_MASK_NOCLOSEPROCESS,
@@ -54,7 +55,6 @@ class FlvPlayer(threading.Thread):
             @staticmethod
             def wait():
                 win32event.WaitForSingleObject(hProcess, win32event.INFINITE)
-
         return Process
 
     def run(self):
