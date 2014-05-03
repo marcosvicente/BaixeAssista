@@ -271,7 +271,7 @@ class Manage(object):
         return self.video_ext
 
     def position_sent(self):
-        return self.interval.sending
+        return self.interval['sending']
 
     def get_cache_bytes_total(self):
         return self.cache_bytes_total
@@ -359,7 +359,7 @@ class Manage(object):
     def update(self):
         """ atualiza dados de transferência do arquivo de vídeo atual """
         start = self.interval.get_first_start()
-        self.interval.sending = start
+        self.interval['sending'] = start
         bytes_num = self.interval['nbytes'].get(start, 0)
 
         if start >= 0:

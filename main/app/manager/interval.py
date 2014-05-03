@@ -58,9 +58,6 @@ class Interval(object):
         del self.blocks
         del self.pending
 
-    def __getattr__(self, name):
-        return self.meta[name]
-
     def __getitem__(self, item):
         return self.meta[item]
 
