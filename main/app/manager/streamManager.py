@@ -366,6 +366,7 @@ class StreamManager(threading.Thread):
         link = sites.get_with_seek(self.link, start)
         video_size = self.manage.get_video_size()
         try_num = 0
+        self.logger.info("%s link: %s" % (self.__class__.__name__, link))
         while self.is_running and try_num < self.params["reconexao"]:
             try:
                 Info.set(self.ident, "state", _("Conectando"))
